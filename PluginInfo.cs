@@ -23,20 +23,20 @@ namespace Seralyth
 {
     public class PluginInfo
     {
-        public const string GUID = "org.seralyth.gorillatag.seralythmenu";
-        public const string Name = "Seralyth Menu";
+        public const string GUID = "org.qubit.gorillatag.qubitmenu";
+        public const string Name = "Qubit";
         public const string Description = "Community powered mod menu for Gorilla Tag.";
-        public const string BuildTimestamp = "2026-08-14T22:16:39Z";
+        public const string BuildTimestamp = "2026-09-12T18:10:45Z";
         public const string Version = "5.0.2";
 
         public const string BaseDirectory =
 #if LEGAL || LEGAL_DEBUG
             "SeralythMenu/Legal";
 #else
-            "SeralythMenu";
+            "Qubit";
 #endif
-        public const string ClientResourcePath = "SeralythMenu.Resources.Client";
-        public const string ServerResourcePath = "https://raw.githubusercontent.com/Seralyth/Seralyth-Menu/master/Resources/Server";
+        public const string ClientResourcePath = "Quibit.Resources.Client";
+        public const string ServerResourcePath = "https://raw.githubusercontent.com/QubitGT/Qubit/master/Resources/Server/"; 
         public const string ServerAPI = "https://menu.seralyth.software";
         public const string Logo = @"
                                             %%%%%                                                   

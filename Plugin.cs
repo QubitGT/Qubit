@@ -31,13 +31,13 @@ namespace Seralyth
         // Don't merge these methods, it just doesn't work
         public static void Inject()
         {
-            var go = new GameObject("Seralyth");
+            var go = new GameObject("Qubit");
             go.AddComponent<Injector>();
         }
 
         public static void InjectDontDestroy()
         {
-            var go = new GameObject("Seralyth");
+            var go = new GameObject("Qubit");
             Object.DontDestroyOnLoad(go);
             go.AddComponent<Injector>();
         }

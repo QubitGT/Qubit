@@ -1,0 +1,200 @@
+using System;
+using System.IO;
+using System.Linq;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
+public static class QubitKeyboardBuilder
+{
+    const string Folder = "Assets/Qubit/Keyboard";
+    static readonly Color Purple = new Color32(177,115,250,255);
+    static Sprite rounded, gradient, logo;
+    static Font font;
+    static Material material;
+
+    [MenuItem("Qubit/Keyboard/Generate Prefab and Preview")]
+    public static void Generate()
+    {
+        Directory.CreateDirectory(Folder);
+        rounded = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Qubit/Generated/Rounded.png");
+        gradient = MakeGradient();
+        logo = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Qubit/Generated/QLogo.png");
+        material = AssetDatabase.LoadAssetAtPath<Material>("Assets/Qubit/Generated/Face.mat");
+        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        if(rounded==null || gradient==null || logo==null || material==null) throw new Exception("Generate the Qubit menu artwork first.");
+        var keyboard = CreateKeyboard();
+        PrefabUtility.SaveAsPrefabAsset(keyboard,Folder+"/QubitKeyboard.prefab");
+        UnityEngine.Object.DestroyImmediate(keyboard);
+
+        Scene previous=SceneManager.GetActiveScene();
+        if(string.IsNullOrEmpty(previous.path)) {
+            if(Application.isBatchMode) EditorSceneManager.SaveScene(previous,Folder+"/BuildScratch.unity");
+            else throw new InvalidOperationException("Save the current scene before generating the keyboard preview.");
+        }
+        var scene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Additive);
+        SceneManager.SetActiveScene(scene);
+        keyboard=CreateKeyboard();
+        var camera=new GameObject("Keyboard Preview Camera").AddComponent<Camera>();
+        camera.transform.position=new Vector3(0,0,-2);
+        camera.orthographic=true;
+        camera.orthographicSize=.22f;
+        camera.clearFlags=CameraClearFlags.SolidColor;
+        camera.backgroundColor=new Color32(65,65,69,255);
+        camera.nearClipPlane=.01f;
+        camera.farClipPlane=10;
+        EditorSceneManager.SaveScene(scene,Folder+"/QubitKeyboardPreview.unity");
+        var target=new RenderTexture(1600,880,24);
+        camera.targetTexture=target;
+        for(int i=0;i<3;i++) { Canvas.ForceUpdateCanvases(); camera.Render(); }
+        var previousTarget=RenderTexture.active;
+        RenderTexture.active=target;
+        var image=new Texture2D(1600,880,TextureFormat.RGB24,false);
+        image.ReadPixels(new Rect(0,0,1600,880),0,0);image.Apply();
+        Directory.CreateDirectory("QubitDelivery");
+        File.WriteAllBytes("QubitDelivery/QubitKeyboardPreview.png",image.EncodeToPNG());
+        camera.targetTexture=null;
+        RenderTexture.active=previousTarget;
+        target.Release();
+        UnityEngine.Object.DestroyImmediate(target);
+        UnityEngine.Object.DestroyImmediate(image);
+        EditorSceneManager.CloseScene(scene,true);
+        SceneManager.SetActiveScene(previous);
+        AssetDatabase.SaveAssets();
+        Debug.Log("QUBIT KEYBOARD: prefab and preview generated.");
+    }
+
+    static GameObject CreateKeyboard()
+    {
+        var root=new GameObject("QubitKeyboard");
+        root.transform.localScale=Vector3.one*.65f;
+        var face=new GameObject("Canvas",typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));
+        var rect=(RectTransform)face.transform;
+        rect.SetParent(root.transform,false);
+        rect.sizeDelta=new Vector2(1080,474);
+        rect.localScale=Vector3.one*.001f;
+        face.GetComponent<Canvas>().renderMode=RenderMode.WorldSpace;
+        face.GetComponent<CanvasScaler>().dynamicPixelsPerUnit=10;
+        var back=Panel(rect,"Background",0,0,1080,474,Color.black,rounded,32);
+        Panel(rect,"GradientFrame",0,70,1080,404,Color.white,gradient,32);
+        Panel(rect,"Logo",24,18,40,40,Color.white,logo,0);
+        Label(rect,"Title","QUBIT",78,21,180,32,25,Purple,TextAnchor.MiddleLeft);
+        Label(rect,"Subtitle","KEYBOARD",250,26,220,24,14,new Color32(153,137,175,255),TextAnchor.MiddleLeft);
+        var input=Panel(rect,"InputBar",20,86,1040,54,Color.black,rounded,15);
+        var inputText=Label(input,"InputText","",18,5,1004,44,22,Purple,TextAnchor.MiddleLeft);
+        var placeholder=Label(input,"Placeholder","Type here...",18,5,1004,44,20,new Color32(135,113,156,255),TextAnchor.MiddleLeft);
+        inputText.GetComponent<Text>().horizontalOverflow=HorizontalWrapMode.Wrap;
+        var keys=Box(rect,"Keys",0,0,1080,474);
+        Row(keys,154,new[]{"1","2","3","4","5","6","7","8","9","0","-","=","Backspace"},new[]{1f,1,1,1,1,1,1,1,1,1,1,1,2});
+        Row(keys,214,new[]{"q","w","e","r","t","y","u","i","o","p","[","]","\\"},Enumerable.Repeat(1f,13).ToArray());
+        Row(keys,274,new[]{"CapsLock","a","s","d","f","g","h","j","k","l",";","'","Enter"},new[]{1.7f,1,1,1,1,1,1,1,1,1,1,1,1.7f});
+        Row(keys,334,new[]{"Shift","z","x","c","v","b","n","m",",",".","/","Clear"},new[]{2f,1,1,1,1,1,1,1,1,1,1,2});
+        Row(keys,394,new[]{"Copy","Paste","Space","Escape"},new[]{1.6f,1.6f,8.8f,2});
+        var anchor=new GameObject("MenuSpawnPosition");
+        anchor.transform.SetParent(root.transform,false);
+        anchor.transform.localPosition=new Vector3(0,.54f,0);
+        return root;
+    }
+
+    static void Row(Transform parent,float y,string[] names,float[] weights)
+    {
+        float unit=(1040-8*(names.Length-1))/weights.Sum();
+        float x=20;
+        for(int i=0;i<names.Length;i++)
+        {
+            string name=names[i];float width=unit*weights[i];
+            var key=Panel(parent,name,x,y,width,50,Color.black,rounded,12);
+            var image=key.GetComponent<Image>();image.raycastTarget=true;
+            var button=key.gameObject.AddComponent<Button>();button.targetGraphic=image;
+            image.color=Color.white;
+            ColorBlock colors=button.colors;
+            colors.normalColor=Color.black;
+            colors.highlightedColor=new Color(.09f,.03f,.14f);
+            colors.pressedColor=new Color(.22f,.08f,.32f);
+            colors.selectedColor=colors.normalColor;
+            button.colors=colors;
+            button.transition=Selectable.Transition.ColorTint;
+            var navigation=button.navigation;navigation.mode=Navigation.Mode.None;button.navigation=navigation;
+            string title=name.Length==1?name.ToUpperInvariant():name=="CapsLock"?"CAPS":name=="Escape"?"CLOSE":name.ToUpperInvariant();
+            Label(key,"Label",title,3,2,width-6,46,name.Length==1?23:14,Purple,TextAnchor.MiddleCenter);
+            var collider=key.gameObject.AddComponent<BoxCollider>();
+            collider.center=new Vector3(width*.5f,-25,-5);
+            collider.size=new Vector3(width-4,46,8);collider.isTrigger=true;
+            x+=width+8;
+        }
+    }
+    static RectTransform Box(Transform parent,string name,float x,float y,float w,float h)
+    {
+        var go=new GameObject(name,typeof(RectTransform));var r=(RectTransform)go.transform;
+        r.SetParent(parent,false);r.anchorMin=r.anchorMax=new Vector2(0,1);r.pivot=new Vector2(0,1);
+        r.anchoredPosition=new Vector2(x,-y);r.sizeDelta=new Vector2(w,h);return r;
+    }
+    static Sprite MakeGradient()
+    {
+        const int width=1080,height=404;
+        var texture=new Texture2D(width,height,TextureFormat.RGBA32,false);
+        var pixels=new Color[width*height];
+        for(int y=0;y<height;y++)for(int x=0;x<width;x++) {
+            float qx=Mathf.Abs(x+.5f-width*.5f)-(width*.5f-32);
+            float qy=Mathf.Abs(y+.5f-height*.5f)-(height*.5f-32);
+            float distance=new Vector2(Mathf.Max(qx,0),Mathf.Max(qy,0)).magnitude+Mathf.Min(Mathf.Max(qx,qy),0)-32;
+            Color color=Color.Lerp(new Color32(149,131,252,255),new Color32(201,93,243,255),.7f*x/width+.3f*y/height);
+            color.a=Mathf.Clamp01(.5f-distance);
+            pixels[(height-1-y)*width+x]=color;
+        }
+        texture.SetPixels(pixels);texture.Apply();
+        string path=Folder+"/KeyboardGradient.png";
+        File.WriteAllBytes(path,texture.EncodeToPNG());
+        UnityEngine.Object.DestroyImmediate(texture);
+        AssetDatabase.ImportAsset(path);
+        var importer=(TextureImporter)AssetImporter.GetAtPath(path);
+        importer.textureType=TextureImporterType.Sprite;importer.spriteImportMode=SpriteImportMode.Single;
+        importer.alphaIsTransparency=true;importer.mipmapEnabled=false;
+        importer.textureCompression=TextureImporterCompression.Uncompressed;
+        importer.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+    }
+    static RectTransform Panel(Transform parent,string name,float x,float y,float w,float h,Color color,Sprite sprite,float radius)
+    {
+        var r=Box(parent,name,x,y,w,h);var image=r.gameObject.AddComponent<Image>();
+        image.sprite=sprite;image.color=color;image.material=material;image.raycastTarget=false;
+        image.type=sprite==rounded?Image.Type.Sliced:Image.Type.Simple;
+        if(sprite==rounded)image.pixelsPerUnitMultiplier=32/Mathf.Max(1,radius);
+        return r;
+    }
+    static RectTransform Label(Transform parent,string name,string value,float x,float y,float w,float h,int size,Color color,TextAnchor alignment)
+    {
+        var r=Box(parent,name,x,y,w,h);var text=r.gameObject.AddComponent<Text>();
+        text.font=font;text.material=material;text.text=value;text.fontSize=size;text.color=color;
+        text.alignment=alignment;text.raycastTarget=false;text.verticalOverflow=VerticalWrapMode.Overflow;
+        return r;
+    }
+
+    [MenuItem("Qubit/Keyboard/Build Windows AssetBundle")]
+    public static void Build()
+    {
+        if(!File.Exists(Folder+"/QubitKeyboard.prefab"))Generate();
+        Directory.CreateDirectory("QubitDelivery/KeyboardWindows");
+        var result=BuildPipeline.BuildAssetBundles("QubitDelivery/KeyboardWindows",new[]{new AssetBundleBuild {
+            assetBundleName="qubitkeyboard",assetNames=new[]{Folder+"/QubitKeyboard.prefab"},addressableNames=new[]{"QubitKeyboard"}
+        }},BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.StandaloneWindows64);
+        if(result==null)throw new Exception("Keyboard bundle build failed.");
+        var bundle=AssetBundle.LoadFromFile(Path.GetFullPath("QubitDelivery/KeyboardWindows/qubitkeyboard"));
+        if(bundle==null)throw new Exception("Keyboard bundle reload failed.");
+        try {
+            var prefab=bundle.LoadAsset<GameObject>("QubitKeyboard");
+            var keys=prefab.transform.Find("Canvas/Keys");
+            if(keys.childCount!=55)throw new Exception("Unexpected key count: "+keys.childCount);
+            foreach(Transform key in keys) {
+                if(key.GetComponent<Button>()==null || key.GetComponent<BoxCollider>()==null || key.Find("Label")==null)
+                    throw new Exception("Incomplete key: "+key.name);
+            }
+            foreach(Image image in prefab.GetComponentsInChildren<Image>())
+                if(image.sprite==null)throw new Exception("Missing sprite: "+image.name);
+            Debug.Log("QUBIT KEYBOARD PASS: bundle reload, 55 labeled buttons, colliders, and sprite references.");
+        } finally {bundle.Unload(true);}
+    }
+    public static void BuildAll() { Generate();Build(); }
+}

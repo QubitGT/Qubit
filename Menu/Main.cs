@@ -87,6 +87,8 @@ namespace Seralyth.Menu
             timeMenuStarted = Time.time;
             IsSteam = PlayFabAuthenticator.instance.platform;
 
+            RegisterQubitSettings();
+  QubitFonts.Register();
             InitializeFonts();
             activeFont = AgencyFB;
 
@@ -471,6 +473,7 @@ namespace Seralyth.Menu
                     fpsAvgTime = Time.time + 1f;
                 }
 
+                UpdateQubitDisplay();
                 if (fpsCount != null)
                 {
                     string textToSet = ftCount ? $"FT: {Mathf.Floor(1f / lastDeltaTime * 10000f) / 10f} ms" : $"FPS: {lastDeltaTime}";
@@ -829,10 +832,11 @@ namespace Seralyth.Menu
                     Vector2 js = leftJoystick;
                     if (Time.time > joystickDelay)
                     {
-                        int lastButton = PageSize;
+                        int lastButton = UseQubit ? qubitVisibleRows : PageSize;
 
                         if (joystickMenuSearching)
                             lastButton++;
+                        lastButton = Math.Max(1, lastButton);
 
                         if (js.x > 0.5f)
                         {
@@ -881,9 +885,9 @@ namespace Seralyth.Menu
                                 SoundManager.Play("Select");
 
                             ButtonInfo button = Buttons.GetIndex(joystickSelectedButton);
-                            if (button.incremental)
+                            if (button != null && button.incremental)
                                 ToggleIncremental(joystickSelectedButton, leftTrigger < 0.5f);
-                            else
+                            else if (button != null)
                                 Toggle(joystickSelectedButton, true);
                             ReloadMenu();
                             joystickDelay = Time.time + 0.2f;
@@ -1629,71 +1633,80 @@ namespace Seralyth.Menu
             }
         }
 
-        public static void PressKeyboardKey(string key)
-        {
-            switch (key)
+ public static void PressKeyboardKey(string key)
             {
-                case "Space":
-                    keyboardInput += " ";
-                    break;
-                case "Backspace":
-                    if (!string.IsNullOrEmpty(keyboardInput))
-                        keyboardInput = keyboardInput[..^1];
-                    break;
-                case "Shift":
-                    shift = !shift;
-                    break;
-                case "CapsLock":
-                    lockShift = !lockShift;
-                    break;
+   switch (key)
+{
+       case "Enter":
+  HandleSearchOrPrompt();
+                  return;
 
-                case "Clear":
-                    keyboardInput = "";
-                    break;
-                case "Copy":
-                    GUIUtility.systemCopyBuffer = keyboardInput;
-                    break;
-                case "Paste":
-                    keyboardInput += GUIUtility.systemCopyBuffer;
-                    break;
+    case "Escape":
+ if (isSearching) Toggle("Search");
+            else if (CurrentPrompt != null) Toggle("Decline Prompt");
+   else { Settings.DestroyKeyboard(); ReloadMenu(); }
+return;
+       case "Space":
+  keyboardInput += " ";
+                  break;
+    case "Backspace":
+ if (!string.IsNullOrEmpty(keyboardInput))
+            keyboardInput = keyboardInput[..^1];
+   break;
+case "Shift":
+       shift = !shift;
+  break;
+                  case "CapsLock":
+    lockShift = !lockShift;
 
-                default:
-                    Dictionary<string, string> shiftMap = new Dictionary<string, string>
-                    {
-                        { "1", "!" }, { "2", "@" }, { "3", "#" }, { "4", "$" }, { "5", "%" },
-                        { "6", "^" }, { "7", "&" }, { "8", "*" }, { "9", "(" }, { "0", ")" },
-                        { "-", "_" }, { "=", "+" }, { "[", "{" }, { "]", "}" }, { "\\", "|" },
-                        { ";", ":" }, { "'", "\"" }, { ",", "<" }, { ".", ">" }, { "/", "?" },
-                        { "`", "~" }
-                    };
+ break;
+            case "Clear":
+   keyboardInput = "";
+break;
+       case "Copy":
+  GUIUtility.systemCopyBuffer = keyboardInput;
+                  break;
+    case "Paste":
+ keyboardInput += GUIUtility.systemCopyBuffer;
+            break;
+   default:
+Dictionary<string, string> shiftMap = new Dictionary<string, string>
+       {
+  { "1", "!" }, { "2", "@" }, { "3", "#" }, { "4", "$" }, { "5", "%" },
+                  { "6", "^" }, { "7", "&" }, { "8", "*" }, { "9", "(" }, { "0", ")" },
+    { "-", "_" }, { "=", "+" }, { "[", "{" }, { "]", "}" }, { "\\", "|" },
+ { ";", ":" }, { "'", "\"" }, { ",", "<" }, { ".", ">" }, { "/", "?" },
 
-                    bool isShifted = lockShift ^ shift;
-                    string keyStr = key.ToLower();
+            { "`", "~" }
+   };
+bool isShifted = key.Length == 1 && char.IsLetter(key[0]) ? lockShift ^ shift : shift;
+       string keyStr = key.ToLower();
+  if (isShifted)
+                  {
+    if (shiftMap.TryGetValue(keyStr, out var value))
+ keyboardInput += value;
+            else
+   keyboardInput += keyStr.ToUpper();
+}
+       else
+  keyboardInput += keyStr.ToLower();
+                  shift = false;
+    break;
+ }
+            var qubitKeyboard = VRKeyboard != null ? VRKeyboard.GetComponent<QubitKeyboardView>() : null;
 
-                    if (isShifted)
-                    {
-                        if (shiftMap.TryGetValue(keyStr, out var value))
-                            keyboardInput += value;
-                        else
-                            keyboardInput += keyStr.ToUpper();
-                    }
-                    else
-                        keyboardInput += keyStr.ToLower();
-
-                    shift = false;
-                    break;
-
+   if (qubitKeyboard != null) qubitKeyboard.RefreshKeys();
+else
+       {
+  if (KeyboardKey.keyLookupDictionary.TryGetValue("CapsLock", out var caps) && caps != null)
+                  caps.gameObject.GetOrAddComponent<ColorChanger>().colors = buttonColors[lockShift ? 1 : 0];
+    if (KeyboardKey.keyLookupDictionary.TryGetValue("Shift", out var shiftKey) && shiftKey != null)
+ shiftKey.gameObject.GetOrAddComponent<ColorChanger>().colors = buttonColors[shift ? 1 : 0];
             }
-
-            KeyboardKey.keyLookupDictionary["CapsLock"].gameObject.GetOrAddComponent<ColorChanger>().colors = buttonColors[lockShift ? 1 : 0];
-            KeyboardKey.keyLookupDictionary["Shift"].gameObject.GetOrAddComponent<ColorChanger>().colors = buttonColors[shift ? 1 : 0];
-
-            pageNumber = 0;
-
-            if (!clickGUI)
-                ReloadMenu();
-        }
-
+   pageNumber = 0;
+if (!clickGUI)
+       ReloadMenu();
+  }
         private static void AddButton(float offset, int buttonIndex, ButtonInfo method)
         {
             bool shouldCreate = false;
@@ -2234,7 +2247,242 @@ namespace Seralyth.Menu
             }
         }
 
-        public static GameObject CreateMenu()
+ private static readonly Quaternion QubitFaceRotation = Quaternion.Euler(180f, 90f, 90f);
+            private static AssetBundle qubitBundle;
+   private static GameObject qubitPrefab;
+private static Transform qubitFront;
+       private static Canvas qubitFrontCanvas, qubitBackCanvas;
+  private static UnityEngine.UI.Text qubitClock, qubitDate, qubitStats, qubitSearch;
+                  private static float qubitStatsTime;
+
+    private static int qubitVisibleRows;
+ private static bool qubitLoadFailed;
+            private static bool UseQubit => !qubitLoadFailed && !clickGUI && CurrentPrompt == null;
+   private static int QubitPageCapacity => isSearching ? 5 : 6;
+private static void RegisterQubitSettings()
+       {
+  foreach (string name in new[] { "Hide Qubit Clock", "Hide Qubit Date", "Qubit Latency" })
+                  if (Buttons.GetIndex(name) == null)
+    Buttons.AddButton(Buttons.GetCategory("Menu Settings"), new ButtonInfo {
+ buttonText = name, enabled = name == "Qubit Latency", legal = true, isSetting = true,
+            toolTip = name == "Qubit Latency" ? "Shows network latency on the Qubit menu." :
+   "Hides the " + (name.EndsWith("Clock") ? "clock" : "date") + " on the Qubit menu. Disable this setting to show it."
+});
+       }
+  private static ButtonInfo[] GetQubitButtons()
+                  {
+    IEnumerable<ButtonInfo> result;
+
+ if (isSearching)
+            {
+   result = nonGlobalSearch && Buttons.CurrentCategoryName != "Main"
+? Buttons.buttons[Buttons.CurrentCategoryIndex]
+       : Buttons.buttons.SelectMany((list, i) =>
+  !isAdmin && (Buttons.categoryNames[i].Contains("Admin") || Buttons.categoryNames[i] == "Mod Givers")
+                  ? Array.Empty<ButtonInfo>() : list);
+    string query = (keyboardInput ?? "").Replace(" ", "").ToLowerInvariant();
+ result = result.Where(b => (!b.detected || allowDetected) &&
+            (b.aliases ?? Array.Empty<string>()).Concat(new[] { b.overlapText ?? b.buttonText })
+   .Any(t => t.ClearTags().Replace(" ", "").ToLowerInvariant().Contains(query)));
+}
+       else switch (Buttons.CurrentCategoryName)
+  {
+                  case "Main": result = Buttons.buttons[Buttons.CurrentCategoryIndex].Where(b => !skipButtons.Contains(b.buttonText)); break;
+    case "Favorite Mods": result = favorites.Select(Buttons.GetIndex).Where(b => b != null); break;
+ case "Enabled Mods":
+
+            result = new[] { Buttons.GetIndex("Exit Enabled Mods") }.Concat(
+   Buttons.buttons.SelectMany((list, i) =>
+(hideSettings && Buttons.categoryNames[i].Contains("Settings")) ||
+       (hideMacros && Buttons.categoryNames[i].Contains("Macro"))
+  ? Array.Empty<ButtonInfo>() : list.Where(b => b.enabled)));
+                  break;
+    default: result = Buttons.buttons[Buttons.CurrentCategoryIndex]; break;
+ }
+            result = result.Where(b => b != null);
+#if LEGAL || LEGAL_DEBUG
+result = result.Where(b => b.legal || b.label);
+#endif
+  if (isSearching || Buttons.GetIndex("Alphabetize Menu")?.enabled == true)
+                  result = result.OrderBy(b => (b.overlapText ?? b.buttonText).ClearTags());
+    return result.ToArray();
+ }
+            public static GameObject CreateMenu()
+
+   {
+qubitFront = null;
+       qubitClock = qubitDate = qubitStats = qubitSearch = null;
+  if (!UseQubit) return CreateLegacyMenu();
+                  try
+    {
+ if (qubitPrefab == null)
+            {
+   using (Stream stream = typeof(Main).Assembly.GetManifestResourceStream("Seralyth.Resources.qubitmenu"))
+{
+  using (var bytes = new MemoryStream())
+                  {
+    stream.CopyTo(bytes);
+ qubitBundle = AssetBundle.LoadFromMemory(bytes.ToArray());
+            }
+   }
+       qubitPrefab = qubitBundle.LoadAsset<GameObject>("QubitMenu");
+                  }
+    menu = new GameObject("Qubit Menu");
+ menu.transform.localScale = new Vector3(.1f, .3f, .3825f);
+            menuBackground = new GameObject("Menu Background Anchor");
+   menuBackground.transform.SetParent(menu.transform, false);
+menuBackground.transform.localPosition = new Vector3(.5f, 0, 0);
+       var art = Instantiate(qubitPrefab, menu.transform, false);
+  art.name = "Qubit Artwork";
+                  foreach (Canvas assetCanvas in art.GetComponentsInChildren<Canvas>(true))
+    {
+ assetCanvas.renderMode = RenderMode.WorldSpace;
+            assetCanvas.worldCamera = null;
+   assetCanvas.targetDisplay = 0;
+assetCanvas.enabled = true;
+
+       }
+  foreach (Transform child in art.GetComponentsInChildren<Transform>(true))
+                  child.gameObject.layer = 0;
+    art.transform.localPosition = new Vector3(.56f, 0, 0);
+ art.transform.localRotation = QubitFaceRotation;
+            art.transform.localScale = new Vector3(.6f / .3f, .6f / .3825f, .6f / .1f);
+  QubitMenuBody.Attach(art.transform);
+   qubitFront = art.transform.Find("Front");
+if (qubitFront == null || art.transform.Find("Back") == null)
+       throw new InvalidOperationException("Both Qubit faces are required.");
+  qubitFrontCanvas = qubitFront.GetComponent<Canvas>();
+                  qubitBackCanvas = art.transform.Find("Back").GetComponent<Canvas>();
+    foreach (Graphic graphic in art.GetComponentsInChildren<Graphic>(true))
+ graphic.material = null;
+       QubitFonts.Apply(art);
+            canvasObj = qubitFront.gameObject;
+   title = null; fpsCount = null; keyboardInputObject = null;
+qubitClock = qubitFront.Find("Clock").GetComponent<UnityEngine.UI.Text>();
+       qubitDate = qubitFront.Find("Date").GetComponent<UnityEngine.UI.Text>();
+
+  qubitStats = qubitFront.Find("Stats").GetComponent<UnityEngine.UI.Text>();
+                  qubitClock.rectTransform.anchorMin = qubitClock.rectTransform.anchorMax = new Vector2(0, 1);
+    qubitClock.rectTransform.pivot = new Vector2(0, 1);
+ qubitClock.rectTransform.anchoredPosition = new Vector2(30, -15);
+            qubitClock.rectTransform.sizeDelta = new Vector2(180, 33);
+   qubitClock.fontSize = 28;
+qubitClock.alignment = TextAnchor.UpperLeft;
+       qubitDate.rectTransform.anchorMin = qubitDate.rectTransform.anchorMax = new Vector2(0, 1);
+  qubitDate.rectTransform.pivot = new Vector2(0, 1);
+                  qubitDate.rectTransform.anchoredPosition = new Vector2(56, -46);
+    qubitDate.rectTransform.sizeDelta = new Vector2(135, 18);
+ qubitDate.fontSize = 14;
+            qubitDate.alignment = TextAnchor.UpperLeft;
+   qubitClock.color = qubitDate.color = new Color32(169, 119, 251, 255);
+BindQubitControl("Home", "Global Return", !disableReturnButton);
+       BindQubitControl("Disconnect", "Disconnect", !disableDisconnectButton);
+  BindQubitControl("OuterTab/OuterExit", "Disconnect", !disableDisconnectButton);
+
+                  BindQubitControl("Search", "Search", !disableSearchButton);
+    BindQubitControl("Next", "NextPage", !disablePageButtons);
+ BindQubitControl("Previous", "PreviousPage", !disablePageButtons);
+            var buttons = GetQubitButtons();
+   int capacity = QubitPageCapacity;
+pageNumber = Mathf.Clamp(pageNumber, 0, Math.Max(0, (buttons.Length - 1) / capacity));
+       pageOffset = Mathf.Clamp(pageOffset, 0, Math.Max(0, buttons.Length - capacity));
+  var visible = buttons.Skip(pageScrolling ? pageOffset : pageNumber * capacity).Take(capacity).ToArray();
+                  qubitVisibleRows = visible.Length;
+    joystickButtonSelected = Mathf.Clamp(joystickButtonSelected, 0, Math.Max(0, visible.Length - (joystickMenuSearching ? 0 : 1)));
+ joystickSelectedButton = "";
+            for (int i = 0; i < 6; i++)
+   {
+var row = (RectTransform)qubitFront.Find("Row" + i);
+       var label = row.Find("Label").GetComponent<UnityEngine.UI.Text>();
+  label.resizeTextForBestFit = true; label.resizeTextMinSize = 12; label.resizeTextMaxSize = 22;
+                  label.horizontalOverflow = HorizontalWrapMode.Wrap;
+
+    if (isSearching && i == 0) { qubitSearch = label; continue; }
+ int index = i - (isSearching ? 1 : 0);
+            if (index >= visible.Length) continue;
+   var info = visible[index];
+label.text = info.overlapText ?? info.buttonText;
+       row.GetComponent<Image>().color = info.enabled ? new Color(.16f, .07f, .23f) : Color.black;
+  if (joystickMenu && joystickButtonSelected == index)
+                  {
+    row.GetComponent<Image>().color = new Color(.27f, .13f, .38f);
+ joystickSelectedButton = info.buttonText;
+            }
+   if (!info.label)
+{
+       if (info.incremental && incrementalButtons)
+  {
+                  AddQubitHitbox(row, info.buttonText, -1, 0, 70);
+    AddQubitHitbox(row, info.buttonText, 1, 326, 70);
+
+ label.text = "−   " + label.text + "   +";
+            }
+   else AddQubitHitbox(row, info.buttonText);
+}
+       }
+  qubitFront.Find("Page").GetComponent<UnityEngine.UI.Text>().text = pageNumber.ToString();
+                  if (joystickMenuSearching && joystickButtonSelected == qubitVisibleRows) joystickSelectedButton = "Search";
+    menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? GTPlayer.Instance.scale * menuScale : menuScale;
+ qubitStatsTime = 0;
+            UpdateQubitDisplay();
+   RecenterMenu();
+return menu;
+       }
+  catch (Exception error)
+                  {
+    LogManager.LogError("Qubit menu could not load; using the original menu. " + error);
+ if (menu != null) { menu.SetActive(false); Destroy(menu); menu = null; }
+
+            qubitLoadFailed = true;
+   qubitFront = null;
+return CreateLegacyMenu();
+       }
+  }
+                  private static void BindQubitControl(string path, string action, bool visible)
+    {
+ var rect = (RectTransform)qubitFront.Find(path);
+            rect.gameObject.SetActive(visible);
+   if (visible) AddQubitHitbox(rect, action);
+}
+       private static void AddQubitHitbox(RectTransform rect, string action, int increment = 0, float x = 0, float width = -1)
+  {
+                  var hit = new GameObject("Hitbox " + action);
+    hit.transform.SetParent(rect, false);
+ hit.layer = !UnityInput.GetKey(Key.Q) && !isKeyboardPc ? 2 : 0;
+            var box = hit.AddComponent<BoxCollider>();
+
+   float w = width < 0 ? rect.rect.width : width;
+box.center = new Vector3(x + w * .5f, -rect.rect.height * .5f, -5);
+       box.size = new Vector3(w, rect.rect.height, 8);
+  box.isTrigger = true;
+                  var handler = hit.AddComponent<ButtonCollider>();
+    handler.qubitRoot = menu;
+ handler.qubitFront = qubitFront;
+            handler.relatedText = action;
+   handler.incremental = increment != 0;
+handler.positive = increment > 0;
+       }
+  private static void UpdateQubitDisplay()
+                  {
+    if (qubitFront == null || menu == null) return;
+ Vector3 viewer = isOnPC && TPC != null ? TPC.transform.position : GorillaTagger.Instance.headCollider.transform.position;
+            bool frontVisible = Vector3.Dot(viewer - qubitFront.position, -qubitFront.forward) >= 0;
+   qubitFrontCanvas.enabled = frontVisible;
+
+qubitBackCanvas.enabled = !frontVisible;
+       if (qubitSearch != null) qubitSearch.text = keyboardInput + (Time.frameCount / 45 % 2 == 0 ? "|" : " ");
+  if (Time.unscaledTime < qubitStatsTime) return;
+                  qubitStatsTime = Time.unscaledTime + .25f;
+    qubitClock.gameObject.SetActive(!Buttons.GetIndex("Hide Qubit Clock").enabled);
+ qubitDate.gameObject.SetActive(!Buttons.GetIndex("Hide Qubit Date").enabled);
+            DateTime now = DateTime.Now;
+   qubitClock.text = now.ToString("h:mm tt", CultureInfo.InvariantCulture);
+qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
+       bool latency = Buttons.GetIndex("Qubit Latency").enabled;
+  qubitStats.gameObject.SetActive(latency);
+                  qubitStats.text = latency ? (PhotonNetwork.InRoom ? PhotonNetwork.GetPing().ToString() : "--") + " ms" : "";
+    }
+        private static GameObject CreateLegacyMenu()
         {
             if (clickGUI)
             {
@@ -3024,10 +3272,15 @@ namespace Seralyth.Menu
             if (inTextInput && !isKeyboardPc && !clickGUI)
             {
                 menu.transform.position = menuSpawnPosition.transform.position;
-                menu.transform.rotation = menuSpawnPosition.transform.rotation;
-                Vector3 rotModify = menu.transform.rotation.eulerAngles;
-                rotModify += new Vector3(-90f, 90f, -90f);
-                menu.transform.rotation = Quaternion.Euler(rotModify);
+                if (VRKeyboard != null && VRKeyboard.GetComponent<QubitKeyboardView>() != null)
+                    menu.transform.rotation = menuSpawnPosition.transform.rotation * Quaternion.Euler(-90f, 90f, 0f);
+                else
+                {
+                    menu.transform.rotation = menuSpawnPosition.transform.rotation;
+                    Vector3 rotModify = menu.transform.rotation.eulerAngles;
+                    rotModify += new Vector3(-90f, 90f, -90f);
+                    menu.transform.rotation = Quaternion.Euler(rotModify);
+                }
             }
             if (isKeyboardCondition)
             {
@@ -5752,6 +6005,7 @@ namespace Seralyth.Menu
         {
             if (menu != null)
             {
+                menu.SetActive(false);
                 Destroy(menu);
                 menu = null;
 
@@ -6535,7 +6789,7 @@ jgs \_   _/ |Oo\
         public static int _pageSize = 8;
         public static int PageSize
         {
-            get => _pageSize - buttonOffset;
+            get => UseQubit ? 6 : _pageSize - buttonOffset;
             set => _pageSize = value;
         }
 
@@ -6543,6 +6797,7 @@ jgs \_   _/ |Oo\
         {
             get
             {
+                if (UseQubit) return GetQubitButtons().Length;
                 ButtonInfo[] list = Buttons.buttons[Buttons.CurrentCategoryIndex];
                 int count = list.Length;
 
@@ -6642,7 +6897,7 @@ jgs \_   _/ |Oo\
             get => 0.8f / (PageSize + buttonOffset);
         }
 
-        public static int LastPage => (DisplayedItemCount + PageSize - 1) / PageSize - 1;
+        public static int LastPage => Math.Max(0, (DisplayedItemCount + (UseQubit ? QubitPageCapacity : PageSize) - 1) / (UseQubit ? QubitPageCapacity : PageSize) - 1);
 
         [Obsolete("currentCategoryIndex is obsolete. Use Buttons.CurrentCategoryIndex instead.")]
 #pragma warning disable IDE1006 // Naming Styles

@@ -80,50 +80,8 @@ namespace Seralyth.Mods
             if (isKeyboardPc)
                 lastPressedKeys.Add(Key.Q);
 
-            if (!isKeyboardPc)
-            {
-                if (VRKeyboard == null)
-                {
-                    VRKeyboard = LoadObject<GameObject>("VRKeyboard");
-                    VRKeyboard.transform.position = GorillaTagger.Instance.bodyCollider.transform.position;
-                    VRKeyboard.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation;
-
-                    menuSpawnPosition = VRKeyboard.transform.Find("MenuSpawnPosition").gameObject;
-                    VRKeyboard.transform.Find("Canvas").AddComponent<ColorChanger>().colors = textColors[1];
-
-                    VRKeyboard.transform.localScale *= scaleWithPlayer ? GTPlayer.Instance.scale * menuScale : menuScale;
-                    menuSpawnPosition.transform.localScale *= scaleWithPlayer ? GTPlayer.Instance.scale * menuScale : menuScale;
-
-                    ColorChanger backgroundColorChanger = VRKeyboard.transform.Find("Background").gameObject.AddComponent<ColorChanger>();
-                    backgroundColorChanger.colors = menuBackgroundColor;
-
-                    foreach (GameObject key in VRKeyboard.transform.Find("Seperate").Children()
-                        .Select(t => t.gameObject)
-                        .Concat(new[] { VRKeyboard.transform.Find("Keys/default").gameObject }))
-                    {
-                        ColorChanger keyColorChanger = key.AddComponent<ColorChanger>();
-                        keyColorChanger.colors = buttonColors[0];
-                    }
-
-                    if (shouldOutline)
-                        OutlineObject(VRKeyboard.transform.Find("Background").gameObject, true);
-
-                    var keys = new[] { "Numbers", "Letters", "Special", "Seperate" }
-                        .Select(name => VRKeyboard.transform.Find(name))
-                        .Where(t => t != null)
-                        .SelectMany(t => t.Children())
-                        .Select(t => t.gameObject);
-
-                    foreach (GameObject v in keys)
-                    {
-                        v.AddComponent<KeyboardKey>().key = v.name;
-                        v.layer = 2;
-
-                        if (shouldOutline)
-                            OutlineObject(v, true);
-                    }
-                }
-            }
+            if (!isKeyboardPc && VRKeyboard == null)
+                VRKeyboard = QubitKeyboardView.Create();
 
             if (lKeyReference == null)
             {
@@ -171,6 +129,7 @@ namespace Seralyth.Mods
 
             if (VRKeyboard != null)
             {
+                VRKeyboard.SetActive(false);
                 Object.Destroy(VRKeyboard);
                 VRKeyboard = null;
             }

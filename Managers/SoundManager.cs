@@ -69,15 +69,15 @@ namespace Seralyth.Managers
 
             ["Menu"] = new Dictionary<string, object>
             {
-                { "Next", "Audio/Menu/next.ogg" },
-                { "Previous", "Audio/Menu/prev.ogg" },
+                { "Next", "next.ogg" },
+                { "Previous", "previous.ogg" },
                 { "Up", "Audio/Menu/up.ogg" },
                 { "Down", "Audio/Menu/down.ogg" },
-                { "Open", "Audio/Menu/open.ogg" },
-                { "Close", "Audio/Menu/close.ogg" },
-                { "Select", "Audio/Menu/select.ogg" },
+                { "Open", "open.ogg" },
+                { "Close", "close.ogg" },
+                { "Select", "click.ogg" },
                 { "Achievement", "Audio/Menu/achievement.ogg" },
-                { "Admin", "Audio/Menu/admin.ogg" },
+                { "Admin", "notification.ogg" },
                 { "Patreon", "Audio/Menu/patreon.ogg" }
             },
 

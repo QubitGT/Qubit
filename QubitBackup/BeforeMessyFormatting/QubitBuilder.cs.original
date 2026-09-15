@@ -1,0 +1,256 @@
+using System;
+using System.IO;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
+public static class QubitBuilder
+{
+    const string Root = "Assets/Qubit/Generated";
+    static readonly Color Purple = new Color32(169, 119, 251, 255);
+    static Font font;
+    static Material faceMaterial;
+    static Sprite round, gradient, logo, home, exit, search, next, previous;
+
+    [MenuItem("Qubit/Generate Prefab and Preview")]
+    public static void Generate()
+    {
+        Directory.CreateDirectory(Root);
+        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        faceMaterial = AssetDatabase.LoadAssetAtPath<Material>(Root+"/Face.mat");
+        if (faceMaterial == null) { faceMaterial = new Material(Shader.Find("Qubit/Face UI")); AssetDatabase.CreateAsset(faceMaterial,Root+"/Face.mat"); }
+        round = Texture("Rounded", 128, 128, (x,y) => new Color(1,1,1, Rounded(x,y,128,128,32)) , true);
+        gradient = Texture("GradientPanel", 444, 526, (x,y) => {
+            Color c = Color.Lerp(new Color32(149,131,252,255), new Color32(201,93,243,255), (x+y)/970f);
+            c.a = Rounded(x,y,444,526,40); return c;
+        });
+        logo = Texture("QLogo", 256,256, (x,y) => {
+            float dx=x-128, dy=y-128;
+            float r=Mathf.Sqrt(dx*dx+dy*dy);
+            bool ring=r<=126 && r>=80;
+            float diagonal = x - .78f * (y-150);
+            if (y>150 && ((diagonal>105 && diagonal<123) || (diagonal>173 && diagonal<190))) ring=false;
+            bool tail=Polygon(x,y,new[]{new Vector2(122,150),new Vector2(174,150),new Vector2(253,252),new Vector2(201,252)});
+            Color c=Color.Lerp(new Color32(151,131,252,255),new Color32(200,94,244,255),(x+y)/512f);
+            c.a=ring||tail?1:0; return c;
+        });
+        home = Icon("Home", new[]{P(9,29,29,10),P(29,10,49,29),P(12,27,12,49),P(12,49,23,49),P(23,49,23,36),P(23,36,35,36),P(35,36,35,49),P(35,49,46,49),P(46,49,46,27)}, false);
+        exit = Icon("Exit", new[]{P(28,12,12,12),P(12,12,12,48),P(12,48,28,48),P(28,48,28,12),P(24,30,48,30),P(40,22,48,30),P(48,30,40,38)}, false);
+        search = Icon("Search", new[]{P(37,37,51,51)}, true);
+        next = Icon("Next",new[]{P(17,10,43,30),P(43,30,17,50)},false);
+        previous = Icon("Previous",new[]{P(43,10,17,30),P(17,30,43,50)},false);
+
+        GameObject menu = new GameObject("QubitMenu");
+        var front = Face(menu.transform,"Front",false);
+        Front(front);
+        var back = Face(menu.transform,"Back",true);
+        Back(back);
+        PrefabUtility.SaveAsPrefabAsset(menu,Root+"/QubitMenu.prefab");
+        UnityEngine.Object.DestroyImmediate(menu);
+
+        Scene prior = SceneManager.GetActiveScene();
+        if (string.IsNullOrEmpty(prior.path)) { if (Application.isBatchMode) EditorSceneManager.SaveScene(prior, Root+"/BuildScratch.unity"); else throw new InvalidOperationException("Save your current scene once before generating the Qubit preview."); }
+        Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Additive);
+        SceneManager.SetActiveScene(scene);
+        GameObject left = new GameObject("Back preview");
+        Back(Face(left.transform,"Back",false));
+        left.transform.position=new Vector3(-.365f,0,0);
+        GameObject right = new GameObject("Front preview");
+        Front(Face(right.transform,"Front",false));
+        right.transform.position=new Vector3(.365f,0,0);
+        var camera = new GameObject("Preview Camera").AddComponent<Camera>();
+        camera.transform.position=new Vector3(0,0,-2);
+        camera.orthographic=true;
+        camera.orthographicSize=.425f;
+        camera.clearFlags=CameraClearFlags.SolidColor;
+        camera.backgroundColor=new Color32(89,89,89,255);
+        camera.nearClipPlane=.01f;
+        camera.farClipPlane=10;
+        EditorSceneManager.SaveScene(scene,Root+"/QubitPreview.unity");
+        Directory.CreateDirectory("QubitDelivery");
+        var rt=new RenderTexture(1500,850,24);
+        camera.targetTexture=rt;
+        Canvas.ForceUpdateCanvases();
+        camera.Render();
+        Canvas.ForceUpdateCanvases();
+        camera.Render();
+        RenderTexture previousRT=RenderTexture.active;
+        RenderTexture.active=rt;
+        var capture=new Texture2D(1500,850,TextureFormat.RGB24,false);
+        capture.ReadPixels(new Rect(0,0,1500,850),0,0);
+        capture.Apply();
+        File.WriteAllBytes("QubitDelivery/QubitPreview.png",capture.EncodeToPNG());
+        camera.targetTexture=null;
+        RenderTexture.active=previousRT;
+        UnityEngine.Object.DestroyImmediate(capture);
+        rt.Release();
+        UnityEngine.Object.DestroyImmediate(rt);
+        EditorSceneManager.CloseScene(scene,true);
+        SceneManager.SetActiveScene(prior);
+        AssetDatabase.SaveAssets();
+        Debug.Log("QUBIT: prefab and preview generated successfully.");
+    }
+
+    [MenuItem("Qubit/Build Windows AssetBundle")]
+    public static void Build()
+    {
+        if (!File.Exists(Root+"/QubitMenu.prefab")) Generate();
+        Directory.CreateDirectory("QubitDelivery/Windows");
+        var result=BuildPipeline.BuildAssetBundles("QubitDelivery/Windows",new[]{new AssetBundleBuild {
+            assetBundleName="qubitmenu",assetNames=new[]{Root+"/QubitMenu.prefab"},addressableNames=new[]{"QubitMenu"}
+        }},BuildAssetBundleOptions.ChunkBasedCompression,BuildTarget.StandaloneWindows64);
+        if(result==null) throw new Exception("Qubit AssetBundle build failed.");
+        Debug.Log("QUBIT: Windows bundle built successfully.");
+    }
+    public static void BuildAll() { Generate(); Build(); ValidateBundle(); }
+
+    [MenuItem("Qubit/Validate Built Bundle")]
+    public static void ValidateBundle()
+    {
+        var bundle = AssetBundle.LoadFromFile(Path.GetFullPath("QubitDelivery/Windows/qubitmenu"));
+        if (bundle == null) throw new Exception("Built bundle could not be reloaded.");
+        try
+        {
+            var prefab = bundle.LoadAsset<GameObject>("QubitMenu");
+            if (prefab == null || prefab.transform.Find("Back") == null) throw new Exception("Menu faces missing.");
+            var front = prefab.transform.Find("Front");
+            for (int i=0;i<6;i++)
+                if(front.Find("Row"+i)?.GetComponent<Button>() == null) throw new Exception("Missing row " + i);
+            foreach (var graphic in prefab.GetComponentsInChildren<Image>(true))
+                if (graphic.sprite == null || graphic.material == null || graphic.material.shader == null)
+                    throw new Exception("Missing visual asset: " + graphic.name);
+            foreach (var text in prefab.GetComponentsInChildren<Text>(true))
+                if (text.font == null) throw new Exception("Missing font: " + text.name);
+            Debug.Log("QUBIT: Reload validation passed: two faces, six rows, all sprites/materials/fonts present.");
+        }
+        finally { bundle.Unload(true); }
+    }
+
+    static Transform Face(Transform parent,string name,bool reverse)
+    {
+        var go=new GameObject(name,typeof(RectTransform),typeof(Canvas),typeof(CanvasScaler),typeof(GraphicRaycaster));
+        go.transform.SetParent(parent,false);
+        var rect=(RectTransform)go.transform;
+        rect.sizeDelta=new Vector2(620,620);
+        rect.localScale=Vector3.one*.001f;
+        rect.localPosition=new Vector3(0,0,reverse?.002f:-.002f);
+        if(reverse) rect.localRotation=Quaternion.Euler(0,180,0);
+        go.GetComponent<Canvas>().renderMode=RenderMode.WorldSpace;
+        go.GetComponent<CanvasScaler>().dynamicPixelsPerUnit=10;
+        return go.transform;
+    }
+    static void Front(Transform p)
+    {
+        Panel(p,"Header",0,0,544,295,Color.black,round);
+        Panel(p,"NextTab",395,307,118,108,Color.black,round);
+        Panel(p,"PreviousTab",395,421,118,108,Color.black,round);
+        Panel(p,"GradientFrame",0,75,444,526,Color.white,gradient);
+        for(int i=0;i<6;i++) {
+            var row=Panel(p,"Row"+i,24,102+i*80.5f,396,70,Color.black,round);
+            row.gameObject.AddComponent<Button>().targetGraphic=row.GetComponent<Image>();
+            Text(row,"Label","",0,0,396,70,22,Purple,TextAnchor.MiddleCenter);
+        }
+        Text(p,"Clock","12:00 AM",30,15,155,33,28,Purple);
+        Text(p,"Date","09/10/2026",56,46,135,18,14,Purple);
+        Text(p,"Stats","",235,22,199,35,16,Purple);
+        Panel(p,"Logo",466,20,58,58,Color.white,logo);
+        Control(p,"Home",465,89,59,59,home,true);
+        Control(p,"Disconnect",465,153,59,59,exit,true);
+        Control(p,"Search",465,216,59,59,search,true);
+        Control(p,"Next",468,333,35,55,next,false);
+        Control(p,"Previous",468,447,35,55,previous,false);
+        var outTab=Panel(p,"OuterTab",527,334,54,54,Color.black,round);
+        Control(outTab,"OuterExit",2,2,50,50,exit,false);
+        Panel(p,"PageBackground",520,398,40,40,Color.black,round);
+        Text(p,"Page","0",520,398,40,40,28,Purple,TextAnchor.MiddleCenter);
+    }
+    static void Back(Transform p)
+    {
+        Panel(p,"Header",30,0,544,295,Color.black,round);
+        Panel(p,"UpperTab",67,307,165,108,Color.black,round);
+        Panel(p,"LowerTab",67,421,165,108,Color.black,round);
+        Panel(p,"Body",130,180,444,426,Color.black,round);
+        Panel(p,"OuterTab",0,334,54,54,Color.black,round);
+        Panel(p,"SmallTab",26,398,40,40,Color.black,round);
+        Panel(p,"Logo",241,192,222,222,Color.white,logo);
+        var version=Text(p,"Version","Qubit Version 0.0.1",53,267,255,32,28,new Color32(31,31,31,255));
+        version.localRotation=Quaternion.Euler(0,0,90);
+    }
+    static RectTransform Rect(Transform p,string name,float x,float y,float w,float h)
+    {
+        var go=new GameObject(name,typeof(RectTransform));
+        var r=(RectTransform)go.transform;
+        r.SetParent(p,false);r.anchorMin=r.anchorMax=new Vector2(0,1);r.pivot=new Vector2(0,1);
+        r.anchoredPosition=new Vector2(x,-y);r.sizeDelta=new Vector2(w,h);
+        return r;
+    }
+    static RectTransform Panel(Transform p,string name,float x,float y,float w,float h,Color color,Sprite sprite)
+    {
+        var r=Rect(p,name,x,y,w,h);var img=r.gameObject.AddComponent<Image>();
+        img.material=faceMaterial;img.sprite=sprite;img.color=color;img.type=sprite==round?Image.Type.Sliced:Image.Type.Simple;
+        if (sprite == round) { float radius = name.StartsWith("Row") ? 24 : name == "Header" || name == "Body" ? 40 : w < 45 ? 12 : w < 70 ? 18 : 36; img.pixelsPerUnitMultiplier = 32f/radius; }
+        img.raycastTarget=false; return r;
+    }
+    static RectTransform Text(Transform p,string name,string value,float x,float y,float w,float h,int size,Color color,TextAnchor alignment=TextAnchor.UpperLeft)
+    {
+        var r=Rect(p,name,x,y,w,h);var text=r.gameObject.AddComponent<Text>();
+        text.material=faceMaterial;text.font=font;text.text=value;text.fontSize=size;text.color=color;text.alignment=alignment;
+        text.raycastTarget=false;text.horizontalOverflow=HorizontalWrapMode.Overflow;
+        text.verticalOverflow=VerticalWrapMode.Overflow; return r;
+    }
+    static void Control(Transform p,string name,float x,float y,float w,float h,Sprite icon,bool filled)
+    {
+        var r=Panel(p,name,x,y,w,h,filled?new Color32(187,105,247,255):Color.clear,round);
+        var img=r.GetComponent<Image>();img.raycastTarget=true;
+        r.gameObject.AddComponent<Button>().targetGraphic=img;
+        Panel(r,"Icon",filled?5:0,filled?5:0,filled?w-10:w,filled?h-10:h,filled?Color.black:Purple,icon);
+    }
+    static float Rounded(float x,float y,float w,float h,float radius)
+    {
+        float qx=Mathf.Abs(x-w/2)-(w/2-radius),qy=Mathf.Abs(y-h/2)-(h/2-radius);
+        float d=Mathf.Sqrt(Mathf.Max(qx,0)*Mathf.Max(qx,0)+Mathf.Max(qy,0)*Mathf.Max(qy,0))+Mathf.Min(Mathf.Max(qx,qy),0)-radius;
+        return Mathf.Clamp01(.5f-d);
+    }
+    static Vector4 P(float x,float y,float xx,float yy) => new Vector4(x,y,xx,yy);
+    static Sprite Icon(string name,Vector4[] lines,bool circle) => Texture(name,120,120,(x,y)=> {
+        Vector2 point=new Vector2(x/2,y/2);float distance=100;
+        foreach(var l in lines) {
+            Vector2 a=new Vector2(l.x,l.y), b=new Vector2(l.z,l.w),d=b-a;
+            distance=Mathf.Min(distance,Vector2.Distance(point,a+Mathf.Clamp01(Vector2.Dot(point-a,d)/d.sqrMagnitude)*d));
+        }
+        if(circle)distance=Mathf.Min(distance,Mathf.Abs(Vector2.Distance(point,new Vector2(25,25))-17));
+        return new Color(1,1,1,Mathf.Clamp01(((name == "Next" || name == "Previous" ? 4f : 2.4f)-distance)*2));
+    });
+    static bool Polygon(float x,float y,Vector2[] poly)
+    {
+        bool inside=false;
+        for(int i=0,j=poly.Length-1;i<poly.Length;j=i++)
+            if((poly[i].y>y)!=(poly[j].y>y) && x<(poly[j].x-poly[i].x)*(y-poly[i].y)/(poly[j].y-poly[i].y)+poly[i].x)inside=!inside;
+        return inside;
+    }
+    static Sprite Texture(string name,int w,int h,Func<float,float,Color> pixel,bool sliced=false)
+    {
+        var texture=new Texture2D(w,h,TextureFormat.RGBA32,false);
+        var pixels=new Color[w*h];
+        for(int y=0;y<h;y++)for(int x=0;x<w;x++)pixels[(h-1-y)*w+x]=(pixel(x+.25f,y+.25f)+pixel(x+.75f,y+.25f)+pixel(x+.25f,y+.75f)+pixel(x+.75f,y+.75f))*.25f;
+        texture.SetPixels(pixels);texture.Apply();
+        string path=Root+"/"+name+".png";
+        File.WriteAllBytes(path,texture.EncodeToPNG());UnityEngine.Object.DestroyImmediate(texture);
+        AssetDatabase.ImportAsset(path);
+        var importer=(TextureImporter)AssetImporter.GetAtPath(path);
+        importer.textureType=TextureImporterType.Sprite;importer.spriteImportMode=SpriteImportMode.Single;importer.spritePixelsPerUnit=100;
+        importer.alphaIsTransparency=true;importer.mipmapEnabled=false;
+        importer.textureCompression=TextureImporterCompression.Uncompressed;
+        importer.spriteBorder=sliced?new Vector4(32,32,32,32):Vector4.zero;
+        importer.SaveAndReimport();
+        var sprite = AssetDatabase.LoadAssetAtPath<Sprite>(path); if (sprite == null) throw new Exception("Sprite import failed: " + path); return sprite;
+    }
+}
+
+
+
+
+
+

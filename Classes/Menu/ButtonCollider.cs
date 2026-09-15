@@ -32,8 +32,17 @@ namespace Seralyth.Classes.Menu
         public bool incremental;
         public bool positive;
 
+        public GameObject qubitRoot;
+        public Transform qubitFront;
+
         public void OnTriggerEnter(Collider collider)
         {
+            if (qubitFront != null)
+            {
+                if (qubitRoot != menu || !qubitRoot.activeInHierarchy) return;
+                Vector3 source = isOnPC && TPC != null ? TPC.transform.position : collider.bounds.center;
+                if (Vector3.Dot(source - qubitFront.position, -qubitFront.forward) <= 0f) return;
+            }
             if (!(Time.time > buttonCooldown) ||
                 (collider != buttonCollider && collider != lKeyCollider && collider != rKeyCollider) || joystickMenu ||
                 menu == null) return;
