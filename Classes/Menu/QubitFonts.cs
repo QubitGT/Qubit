@@ -62,11 +62,23 @@ namespace Seralyth.Classes.Menu
        }
  }
  private static Font Resolve()
+            => Resolve(selected);
+
+ public static IReadOnlyList<string> Options => options;
+ public static string Selected => selected;
+ public static void Select(string name)
+ {
+     if (!options.Contains(name)) return;
+     setting.value = name;
+     Restore();
+     Preferences.SaveButton(setting);
+ }
+ public static Font Resolve(string name)
             {
-  if(cache.TryGetValue(selected,out var found))return found;
+  if(cache.TryGetValue(name,out var found))return found;
        Font font;
- if(selected == "System Default")font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            else if(selected.StartsWith("Windows: ",StringComparison.Ordinal))font = Font.CreateDynamicFontFromOSFont(selected.Substring(9),28);
+ if(name == "System Default")font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            else if(name.StartsWith("Windows: ",StringComparison.Ordinal))font = Font.CreateDynamicFontFromOSFont(name.Substring(9),28);
   else
        {
  if(bundle == null)
@@ -78,9 +90,9 @@ namespace Seralyth.Classes.Menu
   bundle = AssetBundle.LoadFromMemory(memory.ToArray());
        }
  }
-            font = bundle.LoadAsset<Font>(selected);
+            font = bundle.LoadAsset<Font>(name);
   }
-       cache.Add(selected,font);
+       cache.Add(name,font);
  return font;
             }
     }

@@ -36,6 +36,17 @@ namespace Seralyth.Classes.Menu
  Add(art,"PageTab",520,398,40,40,12);
     }
 
+        public static void AttachDetails(Transform art, Transform panel)
+        {
+            
+            const float size = .8f;
+            const float width = 420 * size, height = 601 * size;
+            Add(art, "InfoPanel", 645, 0, width, height, 16 * size);
+            panel.localScale = new Vector3(.001f * size, .001f * size, .001f);
+            panel.localPosition = new Vector3((645 + width * .5f - 310) * .001f,
+                (310 - height * .5f) * .001f, -HalfDepth - .0003f);
+        }
+
  private static void Place(Transform back,string name,float x,float y,float w,float h)
        {
   var rect = (RectTransform)back.Find(name);

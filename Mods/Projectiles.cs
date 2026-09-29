@@ -398,7 +398,7 @@ namespace Seralyth.Mods
                         options = new RaiseEventOptions
                         {
                             TargetActors = NetworkSystem.Instance.PlayerListOthers
-                                .Where(p => FriendManager.IsPlayerFriend(p))
+                                //.Where(p => FriendManager.IsPlayerFriend(p))
                                 .Select(p => p.ActorNumber)
                                 .Concat(new[] { NetworkSystem.Instance.LocalPlayer.ActorNumber })
                                 .ToArray()
@@ -446,7 +446,7 @@ namespace Seralyth.Mods
                                 projectileSendData[6] = GrowingSnowball.GetValidSizeLevel(SnowballSize);
                                 projectileSendData[7] = index;
 
-                                PhotonNetwork.RaiseEvent(FriendManager.FriendByte, projectileSendData, options, SendOptions.SendReliable);
+                                //PhotonNetwork.RaiseEvent(FriendManager.FriendByte, projectileSendData, options, SendOptions.SendReliable);
                                 LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.GetValidSizeLevel(SnowballSize), index, color.Value, VRRig.LocalRig);
                             }
                             else if (NetworkSystem.Instance.InRoom)
@@ -513,7 +513,7 @@ namespace Seralyth.Mods
                             LaunchLocalProjectile(position, velocity, (byte)ToProjectileSource(hand), index, true, color32, friendSided ? friendProjectileScale : 1, Throwable.ProjectileHash, VRRig.LocalRig);
                         else
                         {
-                            PhotonNetwork.RaiseEvent(friendSided ? FriendManager.FriendByte : Constants.Network.ROOM_SYSTEM, sendEventData.ToArray(), options, SendOptions.SendReliable);
+                            //PhotonNetwork.RaiseEvent(friendSided ? FriendManager.FriendByte : Constants.Network.ROOM_SYSTEM, sendEventData.ToArray(), options, SendOptions.SendReliable);
                             SendSerialize(VRRig.LocalRig.GetPhotonView());
                             RPCProtection();
                         }

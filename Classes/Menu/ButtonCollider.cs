@@ -34,6 +34,7 @@ namespace Seralyth.Classes.Menu
 
         public GameObject qubitRoot;
         public Transform qubitFront;
+        public System.Action qubitAction;
 
         public void OnTriggerEnter(Collider collider)
         {
@@ -46,7 +47,16 @@ namespace Seralyth.Classes.Menu
             if (!(Time.time > buttonCooldown) ||
                 (collider != buttonCollider && collider != lKeyCollider && collider != rKeyCollider) || joystickMenu ||
                 menu == null) return;
+            Press();
+        }
+
+        public void Press(bool fromRay = false)
+        {
+            if (menu == null || Time.time <= buttonCooldown) return;
+            if (qubitFront != null && (qubitRoot != menu || !qubitRoot.activeInHierarchy)) return;
             buttonCooldown = Time.time + 0.2f;
+            if (qubitAction != null) { qubitAction(); return; }
+            if (qubitFront != null) QubitDetails.Inspect(relatedText);
             if (relatedText != "Global Return") // HARDCODED GLOBAL RETURN CHECK (im gonna forget)
                 SoundManager.Play(SoundManager.DefaultSounds["Button"], buttonText: relatedText);
 
@@ -60,9 +70,9 @@ namespace Seralyth.Classes.Menu
             }
 
             if (incremental)
-                ToggleIncremental(relatedText, positive);
+                ToggleIncremental(relatedText, positive, ignoreForce: fromRay);
             else
-                Toggle(relatedText, true);
+                Toggle(relatedText, true, fromRay);
         }
     }
 }

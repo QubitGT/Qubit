@@ -89,6 +89,7 @@ namespace Seralyth.Menu
 
             RegisterQubitSettings();
   QubitFonts.Register();
+            QubitDetails.Register();
             InitializeFonts();
             activeFont = AgencyFB;
 
@@ -120,7 +121,7 @@ namespace Seralyth.Menu
 
             if (ServerData.ServerDataEnabled)
             {
-                ConsoleObject.AddComponent<FriendManager>();
+                //ConsoleObject.AddComponent<FriendManager>();
                 ConsoleObject.AddComponent<PatreonManager>();
             }
 
@@ -2414,6 +2415,7 @@ label.text = info.overlapText ?? info.buttonText;
   {
                   AddQubitHitbox(row, info.buttonText, -1, 0, 70);
     AddQubitHitbox(row, info.buttonText, 1, 326, 70);
+    AddQubitHitbox(row, info.buttonText, 0, 70, 256, true);
 
  label.text = "−   " + label.text + "   +";
             }
@@ -2421,6 +2423,7 @@ label.text = info.overlapText ?? info.buttonText;
 }
        }
   qubitFront.Find("Page").GetComponent<UnityEngine.UI.Text>().text = pageNumber.ToString();
+                  QubitDetails.Attach(art.transform, qubitFront);
                   if (joystickMenuSearching && joystickButtonSelected == qubitVisibleRows) joystickSelectedButton = "Search";
     menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? GTPlayer.Instance.scale * menuScale : menuScale;
  qubitStatsTime = 0;
@@ -2444,7 +2447,7 @@ return CreateLegacyMenu();
             rect.gameObject.SetActive(visible);
    if (visible) AddQubitHitbox(rect, action);
 }
-       private static void AddQubitHitbox(RectTransform rect, string action, int increment = 0, float x = 0, float width = -1)
+       private static void AddQubitHitbox(RectTransform rect, string action, int increment = 0, float x = 0, float width = -1, bool inspectOnly = false)
   {
                   var hit = new GameObject("Hitbox " + action);
     hit.transform.SetParent(rect, false);
@@ -2461,6 +2464,7 @@ box.center = new Vector3(x + w * .5f, -rect.rect.height * .5f, -5);
             handler.relatedText = action;
    handler.incremental = increment != 0;
 handler.positive = increment > 0;
+ if (inspectOnly) handler.qubitAction = () => { QubitDetails.Inspect(action); QubitDetails.Preview(action, true); };
        }
   private static void UpdateQubitDisplay()
                   {
@@ -5347,7 +5351,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
         }
 
         public static bool ShouldBypassChecks(NetPlayer Player) =>
-             Player == NetworkSystem.Instance.LocalPlayer || FriendManager.IsPlayerFriend(Player) || ServerData.Administrators.ContainsKey(Player.UserId);
+             Player == NetworkSystem.Instance.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);
 
         [Obsolete("PlayerIsTagged is obsolete. Use VRRigExtensions.IsTagged instead.")]
         public static bool PlayerIsTagged(VRRig Player) =>
@@ -6143,6 +6147,8 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
         /// <param name="ignoreForce">true to bypass force-related checks and restrictions during the toggle operation; otherwise, false.</param>
         public static void Toggle(string buttonText, bool fromMenu = false, bool ignoreForce = false)
         {
+            if (fromMenu && QubitDetails.Preview(buttonText, true)) return;
+            if (fromMenu) QubitDetails.Inspect(buttonText);
             switch (buttonText)
             {
                 case "PreviousPage":
@@ -6395,8 +6401,9 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
         /// multiple times. A notification is displayed to inform the user of the action taken.</remarks>
         /// <param name="buttonText">The text label of the button to be toggled. This is used to identify the target button.</param>
         /// <param name="increment">true to apply the incremental action; false to apply the decremental action.</param>
-        public static void ToggleIncremental(string buttonText, bool increment, bool reload = true)
+        public static void ToggleIncremental(string buttonText, bool increment, bool reload = true, bool ignoreForce = false)
         {
+            if (!Preferences.IsApplyingPreferences && QubitDetails.Preview(buttonText, increment)) return;
             ButtonInfo target = Buttons.GetIndex(buttonText);
             if (target != null)
             {
@@ -6413,7 +6420,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
 
                 switch (true)
                 {
-                    case true when menuButtonIndex != 2 && ((leftGrab && !joystickMenu) || (joystickMenu && rightJoystick.y > 0.5f && leftTrigger > 0.5f)):
+                    case true when !ignoreForce && menuButtonIndex != 2 && ((leftGrab && !joystickMenu) || (joystickMenu && rightJoystick.y > 0.5f && leftTrigger > 0.5f)):
                         {
                             if (IsBinding)
                             {
@@ -6484,7 +6491,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
 
                             break;
                         }
-                    case true when menuButtonIndex != 3 && leftTrigger > 0.5f && !joystickMenu:
+                    case true when !ignoreForce && menuButtonIndex != 3 && leftTrigger > 0.5f && !joystickMenu:
                         {
                             if (!quickActions.Contains(target.buttonText))
                             {

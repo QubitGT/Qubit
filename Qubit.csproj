@@ -39,6 +39,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="AssetBundleProject\**\*.cs" />
+    <EmbeddedResource Include="Resources\qubitdetails" LogicalName="Seralyth.Resources.qubitdetails" />
     <EmbeddedResource Include="Resources\qubitmenu" LogicalName="Seralyth.Resources.qubitmenu" />
     <EmbeddedResource Include="Resources\qubitkeyboard" LogicalName="Seralyth.Resources.qubitkeyboard" />
     <EmbeddedResource Include="Resources\qubitfonts" LogicalName="Seralyth.Resources.qubitfonts" />
