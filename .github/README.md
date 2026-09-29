@@ -20,13 +20,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/QubitManagement/Qubit-Menu/releases">
-    <img src="https://img.shields.io/github/v/release/QubitManagement/Qubit-Menu?style=for-the-badge&label=VERSION&color=9747FF&logo=github" alt="Latest release" />
+  <a href="https://github.com/QubitGT/Qubit/releases">
+    <img src="https://img.shields.io/github/v/release/QubitGT/Qubit?style=for-the-badge&label=VERSION&color=9747FF&logo=github" alt="Latest release" />
   </a>
-  <a href="https://github.com/QubitManagement/Qubit-Menu/releases/latest">
-    <img src="https://img.shields.io/github/downloads/QubitManagement/Qubit-Menu/latest/Qubit-Menu.dll?style=for-the-badge&label=DOWNLOADS&color=8B5CF6&logo=windows" alt="Downloads" />
+  <a href="https://github.com/QubitGT/Qubit/releases/latest">
+    <img src="https://img.shields.io/github/downloads/QubitGT/Qubit/latest/Qubit-Menu.dll?style=for-the-badge&label=DOWNLOADS&color=8B5CF6&logo=windows" alt="Downloads" />
   </a>
-  <a href="https://discord.gg/2PVfydMxyc">
+  <a href="https://discord.gg/qubit">
     <img src="https://img.shields.io/badge/DISCORD-JOIN%20THE%20COMMUNITY-9747FF?style=for-the-badge&logo=discord&logoColor=white" alt="Join Discord" />
   </a>
 </p>
