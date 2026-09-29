@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Seralyth Menu</AssemblyName>
+    <AssemblyName>Qubit Menu</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -12,19 +12,19 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Legal'">
-    <AssemblyName>Seralyth Menu Legal</AssemblyName>
+    <AssemblyName>Qubit Menu Legal</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Legal Debug'">
-    <AssemblyName>Seralyth Menu Legal Debug</AssemblyName>
+    <AssemblyName>Qubit Menu Legal Debug</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'LEGAL_DEBUG'">
-    <AssemblyName>Seralyth Menu Legal Debug</AssemblyName>
+    <AssemblyName>Qubit Menu Legal Debug</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'DEBUG' Or '$(Configuration)' == 'Debug'">
-    <AssemblyName>Seralyth Menu Debug</AssemblyName>
+    <AssemblyName>Qubit Menu Debug</AssemblyName>
   </PropertyGroup>
   
   <PropertyGroup> 
@@ -40,10 +40,10 @@
 
   <ItemGroup>
     <Compile Remove="AssetBundleProject\**\*.cs" />
-    <EmbeddedResource Include="Resources\qubitdetails" LogicalName="Seralyth.Resources.qubitdetails" />
-    <EmbeddedResource Include="Resources\qubitmenu" LogicalName="Seralyth.Resources.qubitmenu" />
-    <EmbeddedResource Include="Resources\qubitkeyboard" LogicalName="Seralyth.Resources.qubitkeyboard" />
-    <EmbeddedResource Include="Resources\qubitfonts" LogicalName="Seralyth.Resources.qubitfonts" />
+    <EmbeddedResource Include="Resources\qubitdetails" LogicalName="Qubit.Resources.qubitdetails" />
+    <EmbeddedResource Include="Resources\qubitmenu" LogicalName="Qubit.Resources.qubitmenu" />
+    <EmbeddedResource Include="Resources\qubitkeyboard" LogicalName="Qubit.Resources.qubitkeyboard" />
+    <EmbeddedResource Include="Resources\qubitfonts" LogicalName="Qubit.Resources.qubitfonts" />
     <EmbeddedResource Include="LICENSE" />
     <EmbeddedResource Include="Resources\Client\*" />
   </ItemGroup>

@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Patches/Menu/TorsoPatch.cs
+ * Qubit Menu  Patches/Menu/TorsoPatch.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,12 @@
  */
 
 using HarmonyLib;
-using Seralyth.Mods;
+using Qubit.Mods;
 using System;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-namespace Seralyth.Patches.Menu
+namespace Qubit.Patches.Menu
 {
     [HarmonyPatch(typeof(VRRig), nameof(VRRig.PostTick))]
     public class TorsoPatch

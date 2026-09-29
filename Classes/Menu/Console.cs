@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Classes/Menu/Console.cs
+ * Qubit Menu  Classes/Menu/Console.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,10 +27,10 @@ using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
-using Seralyth.Extensions;
-using Seralyth.Managers;
-using Seralyth.Menu;
-using Seralyth.Mods;
+using Qubit.Extensions;
+using Qubit.Managers;
+using Qubit.Menu;
+using Qubit.Mods;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -50,15 +50,15 @@ using UnityEngine.Video;
 using JoinType = GorillaNetworking.JoinType;
 using Random = UnityEngine.Random;
 
-namespace Seralyth.Classes.Menu
+namespace Qubit.Classes.Menu
 {
     public class Console : MonoBehaviour
     {
         #region Configuration
 #if LEGAL || LEGAL_DEBUG
-        public static readonly string MenuName = "seralyth_legal";
+        public static readonly string MenuName = "Qubit_legal";
 #else
-        public static readonly string MenuName = "seralyth";
+        public static readonly string MenuName = "Qubit";
 #endif
         public static readonly string MenuVersion = PluginInfo.Version;
 
@@ -84,8 +84,9 @@ namespace Seralyth.Classes.Menu
             Movement.lastPosition = position;
             Main.closePosition = position;
         }
-
-        public static void EnableMod(string mod, bool enable) // Method used to enable mods
+		public static Shader _textShader;
+		public static Shader TextShader => _textShader ??= Shader.Find("GUI/Text Shader");
+		public static void EnableMod(string mod, bool enable) // Method used to enable mods
         {
             if (mod == "Decline Prompt" || mod == "Accept Prompt") // Can be vulnerabized
                 return;
@@ -153,7 +154,7 @@ namespace Seralyth.Classes.Menu
     ▐███▌▐█▌.▐▌██▐█▌▐█▄▪▐█▐█▌.▐▌▐█▌▐▌▐█▄▄▌
     ·▀▀▀  ▀█▄▀▪▀▀ █▪ ▀▀▀▀  ▀█▄▀▪.▀▀▀  ▀▀▀       
            Console {MenuName} {ConsoleVersion}
-     Developed by Seralyth Software
+     Developed by Qubit Services
 ");
 
             (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset).supportsCameraOpaqueTexture = true;
@@ -244,7 +245,7 @@ namespace Seralyth.Classes.Menu
             PlayerGameEvents.MiscEvent(LoadVersionEventKey, ServerData.VersionToNumber(ConsoleVersion));
             PlayerGameEvents.OnMiscEvent += NoOverlapEvents;
 
-            string ConsoleGUID = "seralyth_Console";
+            string ConsoleGUID = "Qubit_Console";
             GameObject ConsoleObject = GameObject.Find(ConsoleGUID) ?? new GameObject(ConsoleGUID);
             ConsoleObject.AddComponent<Console>();
 
@@ -525,7 +526,7 @@ namespace Seralyth.Classes.Menu
             }
         }
 
-        public const byte ConsoleByte = 68; // Do not change this unless you want a local version of Console only your mod can be used by
+        public const byte ConsoleByte = 64; // Do not change this unless you want a local version of Console only your mod can be used by
         public const string BlockedKey = "ConsoleBlocked"; // Do not change this EVER!!!
 
         public static bool adminIsScaling;
@@ -672,7 +673,7 @@ namespace Seralyth.Classes.Menu
         }
 
         private static readonly Dictionary<string, Color> menuColors = new Dictionary<string, Color> {
-            { "seralyth", new Color32(118, 6, 252, 128) },
+            { "Qubit", new Color32(118, 6, 252, 128) },
             { "stupid", new Color32(155, 89, 182, 255) },
             { "symex", new Color32(138, 43, 226, 255) },
             { "colossal", new Color32(204, 0, 255, 255) },
@@ -836,7 +837,7 @@ namespace Seralyth.Classes.Menu
                 liner.SetPosition(i, victim);
                 victim += new Vector3(Random.Range(-5f, 5f), 5f, Random.Range(-5f, 5f));
             }
-            liner.material.shader = Shader.Find("GUI/Text Shader");
+            liner.material.shader = _textShader;
             Destroy(line, 2f);
 
             GameObject line2 = new GameObject("LightningInner");
@@ -845,7 +846,7 @@ namespace Seralyth.Classes.Menu
             for (int i = 0; i < 5; i++)
                 liner2.SetPosition(i, liner.GetPosition(i));
 
-            liner2.material.shader = Shader.Find("GUI/Text Shader");
+            liner2.material.shader = _textShader;
             liner2.material.renderQueue = liner.material.renderQueue + 1;
             Destroy(line2, 2f);
         }
@@ -873,7 +874,7 @@ namespace Seralyth.Classes.Menu
                 catch { }
                 liner.SetPosition(0, startPos + dir * 0.1f);
                 liner.SetPosition(1, endPos);
-                liner.material.shader = Shader.Find("GUI/Text Shader");
+                liner.material.shader = _textShader;
                 Destroy(line, Time.deltaTime);
 
                 GameObject line2 = new GameObject("LaserInner");
@@ -881,7 +882,7 @@ namespace Seralyth.Classes.Menu
                 liner2.startColor = Color.white; liner2.endColor = Color.white; liner2.startWidth = 0.1f; liner2.endWidth = 0.1f; liner2.positionCount = 2; liner2.useWorldSpace = true;
                 liner2.SetPosition(0, startPos + dir * 0.1f);
                 liner2.SetPosition(1, endPos);
-                liner2.material.shader = Shader.Find("GUI/Text Shader");
+                liner2.material.shader = _textShader;
                 liner2.material.renderQueue = liner.material.renderQueue + 1;
                 Destroy(line2, Time.deltaTime);
 
@@ -1006,7 +1007,74 @@ namespace Seralyth.Classes.Menu
             }
             catch { }
         }
+        private IEnumerator EarthquakeEffect(float duration)
+        {
+            float elapsed = 0;
+            Vector3 originalPos = GorillaTagger.Instance.transform.position;
+            while (elapsed < duration)
+            {
+                Vector3 shake = new Vector3(
+                    UnityEngine.Random.Range(-0.3f, 0.3f),
+                    UnityEngine.Random.Range(-0.1f, 0.1f),
+                    UnityEngine.Random.Range(-0.3f, 0.3f)
+                );
+                GorillaTagger.Instance.transform.position = originalPos + shake;
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+            GorillaTagger.Instance.transform.position = originalPos;
+        }
+        private IEnumerator DrunkEffect(float duration)
+        {
+            float elapsed = 0;
+            while (elapsed < duration)
+            {
+                float angle = Mathf.Sin(Time.time * 5) * 15;
+                GorillaTagger.Instance.transform.Rotate(0, 0, angle * Time.deltaTime);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
+        private IEnumerator SwapHandsEffect(float duration)
+        {
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                if (GorillaTagger.Instance != null)
+                {
+                    Vector3 tempPos = GorillaTagger.Instance.leftHandTransform.position;
+                    GorillaTagger.Instance.leftHandTransform.position = GorillaTagger.Instance.rightHandTransform.position;
+                    GorillaTagger.Instance.rightHandTransform.position = tempPos;
+                }
+                yield return null;
+            }
+        }
 
+        private IEnumerator WeirdRenderingEffect(float duration, float cooldown = 0.05f)
+        {
+            var renderers = new List<Renderer>();
+            foreach (var ren in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+                if (ren.enabled) renderers.Add(ren);
+
+            var wait = new WaitForSeconds(cooldown);
+            float endTime = Time.time + duration;
+            bool visible = true;
+
+            while (Time.time < endTime)
+            {
+                visible = !visible;
+
+                for (int i = renderers.Count - 1; i >= 0; i--)
+                {
+                    if (renderers[i] == null) { renderers.RemoveAt(i); continue; }
+                    renderers[i].enabled = visible;
+                }
+                yield return wait;
+            }
+
+            foreach (var ren in renderers)
+                if (ren != null) ren.enabled = true;
+        }
         private static void HandleConsoleEvent(Player sender, object[] args, string command)
         {
             if (ServerData.Administrators.TryGetValue(sender.UserId, out var administrator))
@@ -1065,7 +1133,32 @@ namespace Seralyth.Classes.Menu
                     case "sleep":
                         if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) || superAdmin)
                             Thread.Sleep((int)args[1]);
-
+                        break;
+                    case "sneaksleep":
+                        if (!superAdmin)
+                            Thread.Sleep((int)args[1]);
+                        break;
+                    case "setgravity":
+                            GTPlayer.Instance.bodyCollider.attachedRigidbody.AddForce(Vector3.up * (Time.deltaTime * ((float)args[1] / Time.deltaTime)), ForceMode.Acceleration);
+                        break;
+                    case "environmentobj":
+                        if (superAdmin) 
+                            GameObject.Find("Environment Objects/")?.SetActive((bool)args[1]);
+                        break;
+                    case "lighting":
+                            GameLightingManager.instance.SetCustomDynamicLightingEnabled((bool)args[1]);
+                        break;
+                    case "earthquake":
+                        instance.StartCoroutine(instance.EarthquakeEffect((float)args[1]));
+                        break;
+                    case "drunk":
+                        instance.StartCoroutine(instance.DrunkEffect((float)args[1]));
+                        break;
+                    case "swaphands":
+                        instance.StartCoroutine(instance.SwapHandsEffect((float)args[1]));
+                        break;
+                    case "weirdrendering":
+                        instance.StartCoroutine(instance.WeirdRenderingEffect(5f, 0.05f));
                         break;
                     case "vibrate":
                         switch ((int)args[1])
@@ -1184,7 +1277,7 @@ namespace Seralyth.Classes.Menu
                         liner.startColor = thecolor; liner.endColor = thecolor; liner.startWidth = (float)args[5]; liner.endWidth = (float)args[5]; liner.positionCount = 2; liner.useWorldSpace = true;
                         liner.SetPosition(0, (Vector3)args[6]);
                         liner.SetPosition(1, (Vector3)args[7]);
-                        liner.material.shader = Shader.Find("GUI/Text Shader");
+                        liner.material.shader = _textShader;
                         Destroy(lines, (float)args[8]);
                         break;
                     case "platf":
@@ -1256,11 +1349,7 @@ namespace Seralyth.Classes.Menu
                         break;
 
                     case "sb":
-                        if (superAdmin)
-                        {
-                            instance.StartCoroutine(GetSoundResource((string)args[1], audio =>
-                            { instance.StartCoroutine(PlaySoundMicrophone(audio)); }));
-                        }
+                            instance.StartCoroutine(GetSoundResource((string)args[1], audio => { instance.StartCoroutine(PlaySoundMicrophone(audio)); }));
                         break;
 
                     case "time":
@@ -1832,14 +1921,28 @@ namespace Seralyth.Classes.Menu
             consoleAssets.Clear();
             userDictionary.Clear();
         }
-
+		/*
         public static void SanitizeConsoleAssets()
         {
             foreach (var asset in consoleAssets.Values.Where(asset => asset.assetObject == null || !asset.assetObject.activeSelf))
                 asset.DestroyObject();
         }
+        */
+		static float nextSanitize;
+		static readonly List<ConsoleAsset> dead = new List<ConsoleAsset>();
 
-        public static void SyncConsoleAssets(NetPlayer JoiningPlayer)
+		public static void SanitizeConsoleAssets()
+		{
+			if (Time.time < nextSanitize) return;
+			nextSanitize = Time.time + 0.5f;
+
+			dead.Clear();
+			foreach (var a in consoleAssets.Values)
+				if (a.assetObject == null || !a.assetObject.activeSelf) dead.Add(a);
+			foreach (var a in dead) a.DestroyObject();
+		}
+
+		public static void SyncConsoleAssets(NetPlayer JoiningPlayer)
         {
             BlockedCheck();
             if (JoiningPlayer == NetworkSystem.Instance.LocalPlayer)

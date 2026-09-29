@@ -1,9 +1,9 @@
 ﻿/*
- * Seralyth Menu  Managers/SoundManager.cs
+ * Qubit Menu  Managers/SoundManager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 using Photon.Pun;
-using Seralyth.Menu;
+using Qubit.Menu;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Seralyth.Menu.Main;
-using static Seralyth.Utilities.AssetUtilities;
+using static Qubit.Menu.Main;
+using static Qubit.Utilities.AssetUtilities;
 
-namespace Seralyth.Managers
+namespace Qubit.Managers
 {
     public class SoundManager
     {

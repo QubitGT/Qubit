@@ -1,9 +1,9 @@
 ﻿/*
- * Seralyth Menu  Managers/CustomBoardManager.cs
+ * Qubit Menu  Managers/CustomBoardManager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,16 +20,16 @@
  */
 
 using GorillaNetworking;
-using Seralyth.Extensions;
+using Qubit.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using static Seralyth.Menu.Main;
+using static Qubit.Menu.Main;
 
-namespace Seralyth.Managers
+namespace Qubit.Managers
 {
     public class CustomBoardManager : MonoBehaviour
     {
@@ -174,10 +174,10 @@ namespace Seralyth.Managers
         public const int ForestLeaderboardIndex = 6;
 
         public static bool motdTextDirty = true;
-        public static string motdTemplate = "You are using build {0}. This menu was created by Seralyth Software. " +
+        public static string motdTemplate = "You are using build {0}. This menu was created by Qubit Software. " +
         "This menu is completely free and open sourced, if you paid for this menu you have been scammed. " +
         "There are a total of <b>{1}</b> mods on this menu. " +
-        "<color=red>Seralyth is not responsible for any bans using this menu.</color> " +
+        "<color=red>Qubit is not responsible for any bans using this menu.</color> " +
         "If you get banned while using this, it's your responsibility.\n\nCurrent menu status: <b>Loading...</b>\nMade with <3 by the community.\n\n<alpha=128>{2} {0} {3}<alpha=255>";
 
         public Material forestMaterial;

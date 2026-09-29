@@ -1,4 +1,4 @@
-﻿namespace Seralyth.Managers.DiscordRPC.Logging
+﻿namespace Qubit.Managers.DiscordRPC.Logging
 {
     /// <summary>
     /// Logs the outputs to a file

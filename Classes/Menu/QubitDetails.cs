@@ -2,15 +2,15 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Seralyth.Menu;
-using Seralyth.Mods;
-using Seralyth.Utilities;
+using Qubit.Menu;
+using Qubit.Mods;
+using Qubit.Utilities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-namespace Seralyth.Classes.Menu
+namespace Qubit.Classes.Menu
 {
     
     public sealed class QubitDetails : MonoBehaviour
@@ -76,7 +76,7 @@ namespace Seralyth.Classes.Menu
             {
                 if (bundle == null)
                 {
-                    using (var stream = typeof(QubitDetails).Assembly.GetManifestResourceStream("Seralyth.Resources.qubitdetails"))
+                    using (var stream = typeof(QubitDetails).Assembly.GetManifestResourceStream("Qubit.Resources.qubitdetails"))
                     using (var memory = new MemoryStream())
                     { stream.CopyTo(memory); bundle = AssetBundle.LoadFromMemory(memory.ToArray()); }
                 }
@@ -109,7 +109,7 @@ namespace Seralyth.Classes.Menu
                 ApplyTheme(Main.menu);
                 current.Refresh();
             }
-            catch (Exception ex) { Seralyth.Managers.LogManager.LogError("Qubit details failed to load: " + ex); }
+            catch (Exception ex) { Qubit.Managers.LogManager.LogError("Qubit details failed to load: " + ex); }
         }
         private void Bind(string name, Action action)
         {

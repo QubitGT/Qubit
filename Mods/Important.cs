@@ -1,9 +1,9 @@
 ﻿/*
- * Seralyth Menu  Mods/Important.cs
+ * Qubit Menu  Mods/Important.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,13 +25,13 @@ using GorillaNetworking;
 using GorillaTagScripts;
 using HarmonyLib;
 using Photon.Pun;
-using Seralyth.Classes.Menu;
-using Seralyth.Extensions;
-using Seralyth.Managers;
-using Seralyth.Managers.DiscordRPC;
-using Seralyth.Menu;
-using Seralyth.Patches.Menu;
-using Seralyth.Utilities;
+using Qubit.Classes.Menu;
+using Qubit.Extensions;
+using Qubit.Managers;
+using Qubit.Managers.DiscordRPC;
+using Qubit.Menu;
+using Qubit.Patches.Menu;
+using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -51,13 +51,13 @@ using UnityEngine.TextCore;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using Valve.Newtonsoft.Json;
-using static Seralyth.Menu.Main;
-using static Seralyth.Utilities.AssetUtilities;
-using static Seralyth.Utilities.RandomUtilities;
+using static Qubit.Menu.Main;
+using static Qubit.Utilities.AssetUtilities;
+using static Qubit.Utilities.RandomUtilities;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Object = UnityEngine.Object;
 
-namespace Seralyth.Mods
+namespace Qubit.Mods
 {
     public static class Important
     {
@@ -330,7 +330,7 @@ namespace Seralyth.Mods
                 .Aggregate("", (current, line) => current + (Environment.NewLine + "echo      " + line));
 
             string restartScript = @"@echo off
-title Seralyth Menu - Restarting Gorilla Tag
+title Qubit Menu - Restarting Gorilla Tag
 color 5
 
 cls
@@ -409,7 +409,7 @@ exit";
                     Assets = new Managers.DiscordRPC.Assets
                     {
                         LargeImageKey = "cone",
-                        LargeImageText = "Seralyth Menu",
+                        LargeImageText = "Qubit Menu",
                         SmallImageKey = inRoom ? "online" : "offline",
                         SmallImageText = inRoom ? "Online" : "Offline"
                     },
@@ -427,7 +427,7 @@ exit";
                         new Button
                         {
                             Label = "Download",
-                            Url = "https://github.com/Seralyth/Seralyth-Menu/"
+                            Url = "https://github.com/QubitGT/Qubit/"
                         }
                     }
                 });
@@ -452,7 +452,7 @@ exit";
             {
                 Prompt("This mod requires the \"QuickSong\" library. Would you like to automatically download it? (16.3mb)", () =>
                 {
-                    using UnityWebRequest request = UnityWebRequest.Get("https://github.com/Seralyth/QuickSong/releases/latest/download/QuickSong.exe");
+                    using UnityWebRequest request = UnityWebRequest.Get("https://github.com/Qubit/QuickSong/releases/latest/download/QuickSong.exe");
                     UnityWebRequestAsyncOperation operation = request.SendWebRequest();
 
                     while (!operation.isDone) { }
@@ -580,7 +580,7 @@ exit";
                 if (_mediaSpriteSheet == null)
                 {
                     _mediaSpriteSheet = ScriptableObject.CreateInstance<TMP_SpriteAsset>();
-                    _mediaSpriteSheet.name = "Seralyth_SpriteSheet";
+                    _mediaSpriteSheet.name = "Qubit_SpriteSheet";
 
                     var textureList = new List<Texture2D>();
                     var spriteDataList = new List<(string name, int index)>();
@@ -674,7 +674,7 @@ exit";
 
                 if (mediaText == null)
                 {
-                    GameObject textHolder = new GameObject("Seralyth_MediaText");
+                    GameObject textHolder = new GameObject("Qubit_MediaText");
 
                     TextMeshPro text = textHolder.GetOrAddComponent<TextMeshPro>();
                     text.color = Color.white;

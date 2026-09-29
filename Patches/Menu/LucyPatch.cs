@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Patches/Menu/LucyPatch.cs
+ * Qubit Menu  Patches/Menu/LucyPatch.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 using HarmonyLib;
 
-namespace Seralyth.Patches.Menu
+namespace Qubit.Patches.Menu
 {
     [HarmonyPatch(typeof(HalloweenGhostChaser), nameof(HalloweenGhostChaser.LateUpdate))]
     public class LucyPatch

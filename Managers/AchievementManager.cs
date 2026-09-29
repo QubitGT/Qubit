@@ -1,9 +1,9 @@
 ﻿/*
- * Seralyth Menu  Managers/AchievementManager.cs
+ * Qubit Menu  Managers/AchievementManager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,17 +19,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Seralyth.Classes.Menu;
-using Seralyth.Extensions;
-using Seralyth.Menu;
+using Qubit.Classes.Menu;
+using Qubit.Extensions;
+using Qubit.Menu;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Valve.Newtonsoft.Json.Linq;
-using static Seralyth.Menu.Main;
-using static Seralyth.Utilities.AssetUtilities;
+using static Qubit.Menu.Main;
+using static Qubit.Utilities.AssetUtilities;
 
-namespace Seralyth.Managers
+namespace Qubit.Managers
 {
     public static class AchievementManager
     {

@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Menu/UI.cs
+ * Qubit Menu  Menu/UI.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
 
 using GorillaNetworking;
 using Photon.Pun;
-using Seralyth.Classes.Menu;
-using Seralyth.Extensions;
-using Seralyth.Managers;
+using Qubit.Classes.Menu;
+using Qubit.Extensions;
+using Qubit.Managers;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,10 +32,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using static Seralyth.Menu.Main;
-using static Seralyth.Utilities.AssetUtilities;
+using static Qubit.Menu.Main;
+using static Qubit.Utilities.AssetUtilities;
 
-namespace Seralyth.Menu
+namespace Qubit.Menu
 {
     public class UI : MonoBehaviour
     {
@@ -430,7 +430,7 @@ namespace Seralyth.Menu
                 uiPrefab.SetActive(false);
         }
 
-        private readonly string hideGUIPath = $"{PluginInfo.BaseDirectory}/Seralyth_HideGUI.txt";
+        private readonly string hideGUIPath = $"{PluginInfo.BaseDirectory}/Qubit_HideGUI.txt";
         private void ToggleGUI()
         {
             isOpen = !isOpen;
@@ -445,7 +445,7 @@ namespace Seralyth.Menu
                 else
                 {
                     if (!File.Exists(hideGUIPath))
-                        File.WriteAllText(hideGUIPath, "Text file generated with Seralyth Menu");
+                        File.WriteAllText(hideGUIPath, "Text file generated with Qubit Menu");
                 }
             }
             catch { }

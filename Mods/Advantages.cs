@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Mods/Advantages.cs
+ * Qubit Menu  Mods/Advantages.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,19 +24,19 @@ using GorillaGameModes;
 using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
-using Seralyth.Extensions;
-using Seralyth.Managers;
-using Seralyth.Menu;
-using Seralyth.Patches.Menu;
+using Qubit.Extensions;
+using Qubit.Managers;
+using Qubit.Menu;
+using Qubit.Patches.Menu;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Seralyth.Menu.Main;
-using static Seralyth.Utilities.GameModeUtilities;
-using static Seralyth.Utilities.RandomUtilities;
-using static Seralyth.Utilities.RigUtilities;
+using static Qubit.Menu.Main;
+using static Qubit.Utilities.GameModeUtilities;
+using static Qubit.Utilities.RandomUtilities;
+using static Qubit.Utilities.RigUtilities;
 
-namespace Seralyth.Mods
+namespace Qubit.Mods
 {
     public static class Advantages
     {

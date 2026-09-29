@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Menu/Buttons.cs
+ * Qubit Menu  Menu/Buttons.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,13 +24,13 @@ using GorillaNetworking;
 using GorillaTagScripts;
 using GorillaTagScripts.ObstacleCourse;
 using Photon.Pun;
-using Seralyth.Classes.Menu;
-using Seralyth.Extensions;
-using Seralyth.Managers;
-using Seralyth.Mods;
-using Seralyth.Patches.Menu;
-using Seralyth.Patches.Safety;
-using Seralyth.Utilities;
+using Qubit.Classes.Menu;
+using Qubit.Extensions;
+using Qubit.Managers;
+using Qubit.Mods;
+using Qubit.Patches.Menu;
+using Qubit.Patches.Safety;
+using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -38,13 +38,13 @@ using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using static Seralyth.Menu.Main;
-using static Seralyth.Utilities.RandomUtilities;
-using static Seralyth.Utilities.RigUtilities;
-using Console = Seralyth.Classes.Menu.Console;
+using static Qubit.Menu.Main;
+using static Qubit.Utilities.RandomUtilities;
+using static Qubit.Utilities.RigUtilities;
+using Console = Qubit.Classes.Menu.Console;
 using Random = UnityEngine.Random;
 
-namespace Seralyth.Menu
+namespace Qubit.Menu
 {
     public static class Buttons
     {
@@ -52,7 +52,7 @@ namespace Seralyth.Menu
         {
             new[] { // Main [0]
 
-                new ButtonInfo { buttonText = "Join Discord", method = Important.JoinDiscord, isTogglable = false, toolTip = "Invites you to join the <b>Seralyth</b> Discord server.", legal = true},
+                new ButtonInfo { buttonText = "Join Discord", method = Important.JoinDiscord, isTogglable = false, toolTip = "Invites you to join the <b>Qubit</b> Discord server.", legal = true},
 
                 new ButtonInfo { buttonText = "Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Opens the settings tab.", legal = true},
                 new ButtonInfo { buttonText = "Players", method = Settings.PlayersTab, isTogglable = false, toolTip = "Opens the players tab.", legal = true},
@@ -137,7 +137,7 @@ namespace Seralyth.Menu
                 new ButtonInfo { buttonText = "Menu Collisions", enableMethod =() => menuCollisions = true, disableMethod =() => menuCollisions = false, toolTip = "Gives the menu collisions when dropping it.", legal = true},
                 new ButtonInfo { buttonText = "Player Scale Menu", enableMethod =() => scaleWithPlayer = true, disableMethod =() => scaleWithPlayer = false, toolTip = "Scales the menu with your player scale.", legal = true},
                 new ButtonInfo { buttonText = "Alphabetize Menu", toolTip = "Alphabetizes the entire menu.", legal = true},
-                new ButtonInfo { buttonText = "Custom Menu Name", enableMethod = Settings.CustomMenuName, disableMethod =() => doCustomName = false, toolTip = $"Changes the name of the menu to whatever. You can change the text inside of your Gorilla Tag files ({PluginInfo.BaseDirectory}/Seralyth_CustomMenuName.txt).", legal = true},
+                new ButtonInfo { buttonText = "Custom Menu Name", enableMethod = Settings.CustomMenuName, disableMethod =() => doCustomName = false, toolTip = $"Changes the name of the menu to whatever. You can change the text inside of your Gorilla Tag files ({PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt).", legal = true},
                 new ButtonInfo { buttonText = "Menu Trail", enableMethod =() => menuTrail = true, disableMethod =() => menuTrail = false, toolTip = "Gives the menu a trail when you drop.", legal = true},
 
                 new ButtonInfo { buttonText = "Dynamic Animations", enableMethod =() => dynamicAnimations = true, disableMethod =() => dynamicAnimations = false, toolTip = "Adds more animations to the menu, giving you a better sense of control.", legal = true},
@@ -197,7 +197,7 @@ namespace Seralyth.Menu
                 ButtonHelper.CreateNumeric("Change Arrow Type", 0, arrowTypes.Length - 1, arrowType, Settings.ApplyArrowType, toolTip: "Changes the type of arrows on the page buttons.", legal: true),
                 ButtonHelper.CreateNumeric("Change Font Type", 0, 14, fontCycle, Settings.ApplyFontType, toolTip: "Changes the type of font.", legal: true),
                 new ButtonInfo { buttonText = "Rapid Font Changer", method = Settings.ChangeFontRapid, toolTip = "Changes the type of font every menu refresh.", legal = true},
-                new ButtonInfo { buttonText = "Custom Font Type", enableMethod = Settings.CustomFontType, method = Settings.PersistCustomFont, disableMethod = Settings.DisableCustomFont, toolTip = $"Changes the font type on the menu to a custom font. You can change the photo inside of your Gorilla Tag files ({PluginInfo.BaseDirectory}/Seralyth_CustomWatermark.txt).", legal = true},
+                new ButtonInfo { buttonText = "Custom Font Type", enableMethod = Settings.CustomFontType, method = Settings.PersistCustomFont, disableMethod = Settings.DisableCustomFont, toolTip = $"Changes the font type on the menu to a custom font. You can change the photo inside of your Gorilla Tag files ({PluginInfo.BaseDirectory}/Qubit_CustomWatermark.txt).", legal = true},
                 ButtonHelper.CreateNumeric("Change Font Style Type", 0, 3, Settings.fontStyleType, Settings.ApplyFontStyleType, toolTip: "Changes the style of the font.", legal: true),
                 ButtonHelper.Create("Change Input Text Color", () => Settings.InputColorNames, Settings.inputTextColorInt, Settings.ApplyInputTextColor, "Changes the color of the input indicator next to the buttons.", legal: true),
                 new ButtonInfo { buttonText = "Vibrant Text Colors", enableMethod =() => vibrantColors = true, disableMethod =() => vibrantColors = false, toolTip = "Makes certain green and purple colors more vibrant.", legal = true},
@@ -259,10 +259,10 @@ namespace Seralyth.Menu
                 new ButtonInfo { buttonText = "No Prefix Narration", enableMethod =() => NotificationManager.noPrefix = true, disableMethod =() => NotificationManager.noPrefix = false, toolTip = "Stops the prefix on notifications from narrating itself.", legal = true},
                 new ButtonInfo { buttonText = "Hide Notification Brackets", enableMethod =() => hideBrackets = true, disableMethod =() => hideBrackets = false, toolTip = "Hides brackets on all notifications.", legal = true},
 
-                new ButtonInfo { buttonText = "Conduct Notifications", enableMethod =() => { GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>().text = "Seralyth Menu"; GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().richText = true; }, method =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().text = NotificationManager.notificationText.text, toolTip = "Shows notifications on the code of conduct instead.", legal = true},
+                new ButtonInfo { buttonText = "Conduct Notifications", enableMethod =() => { GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>().text = "Qubit Menu"; GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().richText = true; }, method =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().text = NotificationManager.notificationText.text, toolTip = "Shows notifications on the code of conduct instead.", legal = true},
                 new ButtonInfo { buttonText = "Disable Notification Rich Text", enableMethod =() => NotificationManager.noRichText = true, disableMethod =() => NotificationManager.noRichText = false, toolTip = "Removes rich text from notifications.", legal = true},
 
-                new ButtonInfo { buttonText = "Disable RPC Protection", enableMethod =() => Seralyth.Patches.Safety.RPCProtection.OpRaiseEventPatch.enabled = false, disableMethod =() => Seralyth.Patches.Safety.RPCProtection.OpRaiseEventPatch.enabled = true, toolTip = "Disables the client-side protection limiting you to sending 500 RPCs a second.", legal = true},
+                new ButtonInfo { buttonText = "Disable RPC Protection", enableMethod =() => Qubit.Patches.Safety.RPCProtection.OpRaiseEventPatch.enabled = false, disableMethod =() => Qubit.Patches.Safety.RPCProtection.OpRaiseEventPatch.enabled = true, toolTip = "Disables the client-side protection limiting you to sending 500 RPCs a second.", legal = true},
                 new ButtonInfo { buttonText = "Disable Notifications", enableMethod =() => disableNotifications = true, disableMethod =() => disableNotifications = false, toolTip = "Disables all notifications.", legal = true},
                 new ButtonInfo { buttonText = "Disable Master Client Notifications", enableMethod =() => disableMasterClientNotifications = true, disableMethod =() => disableMasterClientNotifications = false, toolTip = "Disables all notifications regarding master client.", legal = true},
                 new ButtonInfo { buttonText = "Disable Room Notifications", enableMethod =() => disableRoomNotifications = true, disableMethod =() => disableRoomNotifications = false, toolTip = "Disables all notifications regarding the room.", legal = true},
@@ -435,7 +435,7 @@ namespace Seralyth.Menu
                 new ButtonInfo { buttonText = "Create Private", method =() => Important.CreateRoom(Important.RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
 
                 new ButtonInfo { buttonText = "Fast Disconnect", method =() => SinglePlayerPatch.enabled = true, disableMethod =() =>  SinglePlayerPatch.enabled = false, toolTip = "Uses the fastest method of disconnecting possible.", legal = true},
-                new ButtonInfo { buttonText = "Join Menu Room", method =() => PhotonNetworkController.Instance.AttemptToJoinSpecificRoom($"<$SERALYTH_{PluginInfo.Version}>", JoinType.Solo), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Seralyth Menu</b> users.", legal = true},
+                new ButtonInfo { buttonText = "Join Menu Room", method =() => PhotonNetworkController.Instance.AttemptToJoinSpecificRoom($"<$Qubit_{PluginInfo.Version}>", JoinType.Solo), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Qubit Menu</b> users.", legal = true},
 
                 new ButtonInfo { buttonText = "Bypass Join Room Type", enableMethod =() => JoinedRoomPatch.enabled = true, disableMethod =() => JoinedRoomPatch.enabled = false, toolTip = "Bypasses the immediate disconnection when trying to join a room that is in another map."},
 
@@ -484,7 +484,7 @@ namespace Seralyth.Menu
                 new ButtonInfo { buttonText = "Restart Gorilla Tag", aliases = new[] { "Restart Game", "Restart App" }, method = () => Prompt("Are you sure you want to restart Gorilla Tag?", Important.RestartGame), isTogglable = false, toolTip = "Restarts Gorilla Tag.", legal = true},
                 new ButtonInfo { buttonText = "Open Gorilla Tag Folder", method = Important.OpenGorillaTagFolder, isTogglable = false, toolTip = "Opens the folder in which your game is located.", legal = true},
 
-                new ButtonInfo { buttonText = "Discord RPC", aliases = new[] { "Self Tracker" }, method = Important.DiscordRPC, disableMethod = Important.DisableDiscordRPC, toolTip = "Gives you a indicator on Discord that you are using Seralyth Menu.", legal = true},
+                new ButtonInfo { buttonText = "Discord RPC", aliases = new[] { "Self Tracker" }, method = Important.DiscordRPC, disableMethod = Important.DisableDiscordRPC, toolTip = "Gives you a indicator on Discord that you are using Qubit Menu.", legal = true},
                 new ButtonInfo { buttonText = "Media Integration", aliases = new[] { "Spotify" }, enableMethod = Important.EnsureIntegrationProgram, method = Important.MediaIntegration, disableMethod = Important.DisableMediaIntegration, toolTip = "Shows you what media you are watching/listening to in the top left. To switch media, open the menu and use your left joystick.", legal = true},
 
                 new ButtonInfo { buttonText = "Anti Hand Tap", enableMethod =() => HandTapPatch.enabled = true, disableMethod =() => HandTapPatch.enabled = false, toolTip = "Stops all hand tap sounds from being played."},
@@ -1204,14 +1204,14 @@ namespace Seralyth.Menu
                 new ButtonInfo { buttonText = "Get Builder Watch", method = Fun.GiveBuilderWatch, isTogglable = false, toolTip = "Gives you the builder watch without needing to be in attic."},
                 new ButtonInfo { buttonText = "Remove Builder Watch", method = Fun.RemoveBuilderWatch, isTogglable = false, toolTip = "Disables the builder watch."},
 
-                new ButtonInfo { buttonText = "Joystick Rope Control <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Overpowered.JoystickRopeControl, toolTip = "Control the ropes in the direction of your joystick."},
+                //new ButtonInfo { buttonText = "Joystick Rope Control <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Overpowered.JoystickRopeControl, toolTip = "Control the ropes in the direction of your joystick."},
 
-                new ButtonInfo { buttonText = "Broken Ropes", method = Overpowered.SpazGrabbedRopes, toolTip = "Gives any ropes currently being held onto a seizure."},
-                new ButtonInfo { buttonText = "Spaz Rope Gun", method = Overpowered.SpazRopeGun, toolTip = "Gives whatever rope your hand desires a seizure."},
-                new ButtonInfo { buttonText = "Spaz All Ropes <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.SpazAllRopes, toolTip = "Gives every rope a seizure when holding <color=green>trigger</color>."},
+                //new ButtonInfo { buttonText = "Broken Ropes", method = Overpowered.SpazGrabbedRopes, toolTip = "Gives any ropes currently being held onto a seizure."},
+                //new ButtonInfo { buttonText = "Spaz Rope Gun", method = Overpowered.SpazRopeGun, toolTip = "Gives whatever rope your hand desires a seizure."},
+                //new ButtonInfo { buttonText = "Spaz All Ropes <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.SpazAllRopes, toolTip = "Gives every rope a seizure when holding <color=green>trigger</color>."},
 
-                new ButtonInfo { buttonText = "Fling Rope Gun", method = Overpowered.FlingRopeGun, toolTip = "Flings whatever rope your hand desires away from you."},
-                new ButtonInfo { buttonText = "Fling All Ropes Gun", method = Overpowered.FlingAllRopesGun, toolTip = "Flings every rope in whatever direction your hand desires."},
+                //new ButtonInfo { buttonText = "Fling Rope Gun", method = Overpowered.FlingRopeGun, toolTip = "Flings whatever rope your hand desires away from you."},
+                //new ButtonInfo { buttonText = "Fling All Ropes Gun", method = Overpowered.FlingAllRopesGun, toolTip = "Flings every rope in whatever direction your hand desires."},
 
                 new ButtonInfo { buttonText = "Fast Gliders", enableMethod =() => Fun.ModifyGliderSpeed(0.5f, 0.5f), disableMethod =() => Fun.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders fast."},
                 new ButtonInfo { buttonText = "Slow Gliders", enableMethod =() => Fun.ModifyGliderSpeed(0.05f, 0.05f), disableMethod =() => Fun.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders slow."},
@@ -2124,27 +2124,27 @@ namespace Seralyth.Menu
                 new ButtonInfo { buttonText = "Deafen Gun", method = Overpowered.DeafenGun, toolTip = "Makes whoever your hand deseries not be able to hear anyone else."},
                 new ButtonInfo { buttonText = "Deafen All", method = Overpowered.DeafenAll, toolTip = "Makes everyone not be able to hear anyone except you."},
 
-                new ButtonInfo { buttonText = "Anti Report <color=grey>[</color><color=green>Lag</color><color=grey>]</color>", method = Overpowered.AntiReportLag, toolTip = "Lags whoever tries to report you."},
+                //new ButtonInfo { buttonText = "Anti Report <color=grey>[</color><color=green>Lag</color><color=grey>]</color>", method = Overpowered.AntiReportLag, toolTip = "Lags whoever tries to report you."},
 
-                new ButtonInfo { buttonText = "Barrel Punch Mod", method = Overpowered.BarrelPunchMod, toolTip = "Flings people when you punch them."},
+                //new ButtonInfo { buttonText = "Barrel Punch Mod", method = Overpowered.BarrelPunchMod, toolTip = "Flings people when you punch them."},
 
-                new ButtonInfo { buttonText = "Barrel Fling Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingGun, toolTip = "Flings whoever your hand desires using the barrels."},
-                new ButtonInfo { buttonText = "Barrel Fling All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Fling Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingGun, toolTip = "Flings whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Fling All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels."},
 
-                new ButtonInfo { buttonText = "Barrel Fling Towards Gun", overlapText = "Barrel Bring Gun", aliases = new[] { "Barrel Fling Towards Gun" }, enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsGun, toolTip = "Flings whoever your hand desires using the barrels towards you."},
-                new ButtonInfo { buttonText = "Barrel Fling Towards All", overlapText = "Barrel Bring All", aliases = new[] { "Barrel Fling Towards All" }, enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels towards you."},
+                //new ButtonInfo { buttonText = "Barrel Fling Towards Gun", overlapText = "Barrel Bring Gun", aliases = new[] { "Barrel Fling Towards Gun" }, enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsGun, toolTip = "Flings whoever your hand desires using the barrels towards you."},
+                //new ButtonInfo { buttonText = "Barrel Fling Towards All", overlapText = "Barrel Bring All", aliases = new[] { "Barrel Fling Towards All" }, enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels towards you."},
 
-                new ButtonInfo { buttonText = "Barrel Kick Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickGun, toolTip = "Kicks whoever your hand desires using the barrels."},
-                new ButtonInfo { buttonText = "Barrel Kick All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Kick Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickGun, toolTip = "Kicks whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Kick All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room using the barrels."},
 
-                new ButtonInfo { buttonText = "Barrel Crash Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashGun, toolTip = "Crashes whoever your hand desires using the barrels."},
-                new ButtonInfo { buttonText = "Barrel Crash All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Crash Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashGun, toolTip = "Crashes whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Crash All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room using the barrels."},
 
-                new ButtonInfo { buttonText = "Barrel Obliterate Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateGun, toolTip = "Obliterates whoever your hand desires using the barrels."},
-                new ButtonInfo { buttonText = "Barrel Obliterate All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateAll, toolTip = "Obliterates everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Obliterate Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateGun, toolTip = "Obliterates whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Obliterate All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateAll, toolTip = "Obliterates everyone in the room using the barrels."},
 
-                new ButtonInfo { buttonText = "Barrel City Kick Gun", method = Overpowered.CityKickGun, toolTip = "Flings whoever your hand desires using the barrels into the clouds map to kick them."},
-                new ButtonInfo { buttonText = "Barrel City Kick All", method = Overpowered.CityKickAll, toolTip = "Flings everyone in the room using the barrels into the clouds map to kick them."},
+                //new ButtonInfo { buttonText = "Barrel City Kick Gun", method = Overpowered.CityKickGun, toolTip = "Flings whoever your hand desires using the barrels into the clouds map to kick them."},
+                //new ButtonInfo { buttonText = "Barrel City Kick All", method = Overpowered.CityKickAll, toolTip = "Flings everyone in the room using the barrels into the clouds map to kick them."},
 
                 new ButtonInfo { buttonText = "Lock Room", method =() => Overpowered.SetRoomStatus(false), isTogglable = false, toolTip = "Locks the room so no one else can join."},
                 new ButtonInfo { buttonText = "Unlock Room", method =() => Overpowered.SetRoomStatus(true), isTogglable = false, toolTip = "Unlocks the room so anyone can join."},
@@ -2384,6 +2384,43 @@ namespace Seralyth.Menu
 
                 new ButtonInfo { buttonText = "Admin Platform Exclude Gun", method =() => Experimental.AdminPlatToggleGun(true), toolTip = "Puts a player who is included for platform networking to be excluded.", legal = true},
                 new ButtonInfo { buttonText = "Admin Platform Include Gun", method =() => Experimental.AdminPlatToggleGun(false), toolTip = "Puts a player who is excluded for platform networking to be included.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Dark Gun", method = Experimental.DarkGun, toolTip = "Makes selected player's view dark.", legal = true},
+                new ButtonInfo { buttonText = "Admin Dark All", method = Experimental.DarkAllUsing, isTogglable = false, toolTip = "Makes all using's view dark.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Light Gun", method = Experimental.LightGun, toolTip = "Fix lighting of selected player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Light All", method = Experimental.LightAllUsing, isTogglable = false, toolTip = "Fix lighting of all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin No Gravity Gun", method = Experimental.ZeroGravityGun, toolTip = "Zero gravity for selected player.", legal = true},
+                new ButtonInfo { buttonText = "Admin No Gravity All", method = Experimental.ZeroGravityAllUsing, isTogglable = false, toolTip = "Zero gravity for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Low Gravity Gun", method = Experimental.LowGravityGun, toolTip = "Low gravity for selected player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Low Gravity All", method = Experimental.LowGravityAllUsing, isTogglable = false, toolTip = "Low gravity for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin High Gravity Gun", method = Experimental.HighGravityGun, toolTip = "High gravity for selected player.", legal = true},
+                new ButtonInfo { buttonText = "Admin High Gravity All", method = Experimental.HighGravityAllUsing, isTogglable = false, toolTip = "High gravity for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Reset Gravity Gun", method = Experimental.ResetGravityGun, toolTip = "Fix gravity for selected player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Reset Gravity All", method = Experimental.ResetGravityAllUsing, isTogglable = false, toolTip = "Fix gravity for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Creeper Gun", method = Experimental.CreeperGun, toolTip = "Swaps hands of selected player for 5 seconds.", legal = true},
+                new ButtonInfo { buttonText = "Admin Creeper All", method = Experimental.CreeperAllUsing, isTogglable = false, toolTip = "Swaps hands of all using for 5 seconds.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Earthquake Gun", method = Experimental.EarthquakeGun, toolTip = "Shakes the view of selected player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Earthquake All", method = Experimental.EarthquakeAllUsing, isTogglable = false, toolTip = "Shakes the view of all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Drunk Gun", method = Experimental.DrunkGun, toolTip = "Spins the camera of the selected player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Drunk All", method = Experimental.DrunkAllUsing, isTogglable = false, toolTip = "Spins the camera of all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Rendering Gun", method = Experimental.WeirdGun, toolTip = "Makes selected players rendering tweak.", legal = true},
+                new ButtonInfo { buttonText = "Admin Rendering All", method = Experimental.WeirdAllUsing, isTogglable = false, toolTip = "Makes all using rendering tweak.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin World Off Gun", method = Experimental.WorldOffGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin World Off All", method = Experimental.WorldOffAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin World On Gun", method = Experimental.WorldOnGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin World On All", method = Experimental.WorldOnAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
             },
 
             new[] { // Enabled Mods [24]
@@ -2394,7 +2431,7 @@ namespace Seralyth.Menu
                 new ButtonInfo { buttonText = "Search", method = Settings.Search, isTogglable = false, toolTip = "Lets you search for specific mods.", legal = true},
                 new ButtonInfo { buttonText = "Global Return", method = Settings.GlobalReturn, isTogglable = false, toolTip = "Returns you to the previous category.", legal = true},
                 new ButtonInfo { buttonText = "Info Screen", method = Settings.Debug, enableMethod = Settings.ShowDebug, disableMethod = Settings.HideDebug, toolTip = "Shows game and modding related information.", legal = true},
-                new ButtonInfo { buttonText = "Donate Button", method =() => { NotificationManager.ClearAllNotifications(); acceptedDonations = true; File.WriteAllText($"{PluginInfo.BaseDirectory}/Seralyth_HideDonationButton.txt", "true"); Prompt($"If you like this menu and would like to support, you should join our Patreon! ", () => Process.Start("https://patreon.com/Seralyth")); }, isTogglable = false, toolTip = "An advertisement for Seralyth's Patreon.", legal = true},
+                new ButtonInfo { buttonText = "Donate Button", method =() => { NotificationManager.ClearAllNotifications(); acceptedDonations = true; File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_HideDonationButton.txt", "true"); Prompt($"If you like this menu and would like to support, you should join our Patreon! ", () => Process.Start("https://patreon.com/Qubit")); }, isTogglable = false, toolTip = "An advertisement for Qubit's Patreon.", legal = true},
                 new ButtonInfo { buttonText = "Update Button", method =() => UpdatePrompt(), isTogglable = false, toolTip = "Prompts you to update the menu.", legal = true },
 
                 new ButtonInfo { buttonText = "Accept Prompt", method =() => { NotificationManager.ClearAllNotifications(); if (inTextInput) Settings.DestroyKeyboard(); CurrentPrompt.AcceptAction?.Invoke(); Settings.StopCurrentPrompt(); }, isTogglable = false, legal = true},
@@ -2563,8 +2600,8 @@ namespace Seralyth.Menu
             new[] { // Credits [38]
                 new ButtonInfo { buttonText = "Exit Credits", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new ButtonInfo { buttonText = "Multifactor", method =() => Process.Start("https://github.com/multifactorrr"), isTogglable = false, toolTip = "Multifactor is the current owner of Seralyth and Seralyth Menu, previously a developer of Seralyth." },
-                new ButtonInfo { buttonText = "Kingofnetflix", isTogglable = false, toolTip = "Kingofnetflix is the creator of <b>Seralyth (Menu)</b>, and was a developer for ii's <b>Stupid</b> Menu. Quit modding and the modding community August 2026." },
+                new ButtonInfo { buttonText = "Multifactor", method =() => Process.Start("https://github.com/multifactorrr"), isTogglable = false, toolTip = "Multifactor is the current owner of Qubit and Qubit Menu, previously a developer of Qubit." },
+                new ButtonInfo { buttonText = "Kingofnetflix", isTogglable = false, toolTip = "Kingofnetflix is the creator of <b>Qubit (Menu)</b>, and was a developer for ii's <b>Stupid</b> Menu. Quit modding and the modding community August 2026." },
                 new ButtonInfo { buttonText = "iiDk", method =() => Process.Start("https://github.com/iiDk-the-actual"), isTogglable = false, toolTip = "iiDk is the creator of ii's <b>Stupid</b> Menu (which this menu is forked from), and was working on it since 2023. He was also the owner of ii's Stupid Mods. Both have shut down ever since 2/24/2026.", legal = true},
                 new ButtonInfo { buttonText = "Twigcore", method =() => Process.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twigcore is one of the main owners of Console, the admin system in the menu. He helps with asset ideas, moderate users, contributed to the menu, and much more."},
 

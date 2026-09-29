@@ -2,7 +2,7 @@
 
 using Valve.Newtonsoft.Json;
 
-namespace Seralyth.Managers.DiscordRPC.Message
+namespace Qubit.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Called when the ipc is ready to send arguments.

@@ -1,7 +1,7 @@
-﻿using Seralyth.Managers.DiscordRPC.Logging;
+﻿using Qubit.Managers.DiscordRPC.Logging;
 using System;
 
-namespace Seralyth.Managers.DiscordRPC.IO
+namespace Qubit.Managers.DiscordRPC.IO
 {
     /// <summary>
     /// Pipe Client used to communicate with Discord.

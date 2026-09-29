@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Seralyth.Managers.DiscordRPC.Message
+namespace Qubit.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Messages received from discord.

@@ -1,4 +1,4 @@
-﻿namespace Seralyth.Managers.DiscordRPC
+﻿namespace Qubit.Managers.DiscordRPC
 {
     /// <summary>
     /// Rich Presence activity type

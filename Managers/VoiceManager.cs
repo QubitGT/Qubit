@@ -1,9 +1,9 @@
 ﻿/*
- * Seralyth Menu  Managers/VoiceManager.cs
+ * Qubit Menu  Managers/VoiceManager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,12 +23,12 @@
 // For anyone else snooping in this class hoping to use it, you need to make sure that your recorder source type is a Factory and that the Factory is a new instance of this class.
 // You may use VoiceManager.Get()
 using Photon.Voice;
-using Seralyth.Mods;
+using Qubit.Mods;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Seralyth.Managers
+namespace Qubit.Managers
 {
     public class VoiceManager : IAudioReader<float>
     {

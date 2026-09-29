@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Patches/Safety/AntiCheatPatches.cs
+ * Qubit Menu  Patches/Safety/AntiCheatPatches.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,11 +21,11 @@
 
 using HarmonyLib;
 using Photon.Pun;
-using Seralyth.Managers;
+using Qubit.Managers;
 using UnityEngine;
-using static Seralyth.Patches.PatchHandler;
+using static Qubit.Patches.PatchHandler;
 
-namespace Seralyth.Patches.Safety
+namespace Qubit.Patches.Safety
 {
     public class AntiCheatPatches
     {

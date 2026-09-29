@@ -1,7 +1,7 @@
-﻿using Seralyth.Managers.DiscordRPC.RPC.Payload;
+﻿using Qubit.Managers.DiscordRPC.RPC.Payload;
 using Valve.Newtonsoft.Json;
 
-namespace Seralyth.Managers.DiscordRPC.RPC.Commands
+namespace Qubit.Managers.DiscordRPC.RPC.Commands
 {
     internal class PresenceCommand : ICommand
     {

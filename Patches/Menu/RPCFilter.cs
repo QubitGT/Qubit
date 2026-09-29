@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Patches/Menu/RPCFilter.cs
+ * Qubit Menu  Patches/Menu/RPCFilter.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,11 +22,11 @@
 using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
-using Seralyth.Managers;
+using Qubit.Managers;
 using System;
 using System.Collections.Generic;
 
-namespace Seralyth.Patches.Menu
+namespace Qubit.Patches.Menu
 {
     [HarmonyPatch(typeof(PhotonNetwork), nameof(PhotonNetwork.RPC), typeof(PhotonView), typeof(string), typeof(RpcTarget), typeof(Player), typeof(bool), typeof(object[]))]
     public class RPCFilter

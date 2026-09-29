@@ -1,4 +1,4 @@
-﻿namespace Seralyth.Managers.DiscordRPC.Logging
+﻿namespace Qubit.Managers.DiscordRPC.Logging
 {
     /// <summary>
     /// Level of logging to use.

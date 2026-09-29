@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Patches/Menu/GetLaunchPatch.cs
+ * Qubit Menu  Patches/Menu/GetLaunchPatch.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +20,14 @@
  */
 
 using HarmonyLib;
-using Seralyth.Extensions;
+using Qubit.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Seralyth.Menu.Main;
-using static Seralyth.Utilities.GameModeUtilities;
+using static Qubit.Menu.Main;
+using static Qubit.Utilities.GameModeUtilities;
 
-namespace Seralyth.Patches.Menu
+namespace Qubit.Patches.Menu
 {
     [HarmonyPatch(typeof(Slingshot), nameof(Slingshot.GetLaunchVelocity))]
     public class GetLaunchPatch

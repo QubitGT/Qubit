@@ -1,11 +1,11 @@
-﻿using Seralyth.Managers.DiscordRPC.Logging;
+﻿using Qubit.Managers.DiscordRPC.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Pipes;
 using System.Threading;
 
-namespace Seralyth.Managers.DiscordRPC.IO
+namespace Qubit.Managers.DiscordRPC.IO
 {
     /// <summary>
     /// A named pipe client using the .NET framework <see cref="NamedPipeClientStream"/>

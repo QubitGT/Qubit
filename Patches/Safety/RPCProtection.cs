@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Patches/Safety/RPCProtection.cs
+ * Qubit Menu  Patches/Safety/RPCProtection.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using UnityEngine;
 
-namespace Seralyth.Patches.Safety
+namespace Qubit.Patches.Safety
 {
     public class RPCProtection
     {

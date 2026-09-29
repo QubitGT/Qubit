@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Plugin.cs
+ * Qubit Menu  Plugin.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Seralyth.Managers;
-using Seralyth.Menu;
+using Qubit.Managers;
+using Qubit.Menu;
 using UnityEngine;
 
-namespace Seralyth
+namespace Qubit
 {
     public static class Plugin
     {

@@ -1,9 +1,9 @@
 ﻿/*
- * Seralyth Menu  PluginInfo.cs
+ * Qubit Menu  PluginInfo.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  * 
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-namespace Seralyth
+namespace Qubit
 {
     public class PluginInfo
     {
@@ -31,13 +31,13 @@ namespace Seralyth
 
         public const string BaseDirectory =
 #if LEGAL || LEGAL_DEBUG
-            "SeralythMenu/Legal";
+            "QubitMenu/Legal";
 #else
             "Qubit";
 #endif
         public const string ClientResourcePath = "Quibit.Resources.Client";
         public const string ServerResourcePath = "https://raw.githubusercontent.com/QubitGT/Qubit/master/Resources/Server/"; 
-        public const string ServerAPI = "https://menu.seralyth.software";
+        public const string ServerAPI = "https://menu.Qubit.software";
         public const string Logo = @"
                                             %%%%%                                                   
                                            %%% %%%%                                                 

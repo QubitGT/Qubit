@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Mods/Experimental.cs
+ * Qubit Menu  Mods/Experimental.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,12 +25,12 @@ using GorillaNetworking;
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using Photon.Pun;
 using Photon.Realtime;
-using Seralyth.Classes.Menu;
-using Seralyth.Extensions;
-using Seralyth.Managers;
-using Seralyth.Menu;
-using Seralyth.Patches.Menu;
-using Seralyth.Utilities;
+using Qubit.Classes.Menu;
+using Qubit.Extensions;
+using Qubit.Managers;
+using Qubit.Menu;
+using Qubit.Patches.Menu;
+using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -39,14 +39,14 @@ using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using static Seralyth.Menu.Main;
-using static Seralyth.Utilities.RandomUtilities;
-using static Seralyth.Utilities.RigUtilities;
-using Console = Seralyth.Classes.Menu.Console;
+using static Qubit.Menu.Main;
+using static Qubit.Utilities.RandomUtilities;
+using static Qubit.Utilities.RigUtilities;
+using Console = Qubit.Classes.Menu.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Seralyth.Mods
+namespace Qubit.Mods
 {
     public static class Experimental
     {
@@ -123,7 +123,7 @@ namespace Seralyth.Mods
                 i++;
             }
             text += "\n====================================\n";
-            text += "Text file generated with Seralyth Menu";
+            text += "Text file generated with Qubit Menu";
             string fileName = $"{PluginInfo.BaseDirectory}/SoundData.txt";
 
             File.WriteAllText(fileName, text);
@@ -145,7 +145,7 @@ namespace Seralyth.Mods
                 catch { LogManager.Log("Failed to log hat"); }
             }
             text += "\n====================================\n";
-            text += "Text file generated with Seralyth Menu";
+            text += "Text file generated with Qubit Menu";
             string fileName = $"{PluginInfo.BaseDirectory}/CosmeticData.txt";
 
             File.WriteAllText(fileName, text);
@@ -188,7 +188,7 @@ namespace Seralyth.Mods
                 i++;
             }
             text += "\n====================================\n";
-            text += "Text file generated with Seralyth Menu";
+            text += "Text file generated with Qubit Menu";
             string fileName = $"{PluginInfo.BaseDirectory}/RPCData.txt";
 
             File.WriteAllText(fileName, text);
@@ -1253,7 +1253,7 @@ namespace Seralyth.Mods
                                 VRRig vrrig = GetVRRigFromPlayer(sender);
                                 if (!nametags.TryGetValue(vrrig, out var nametag))
                                 {
-                                    GameObject go = new GameObject("Seralyth_MenuUserNametag");
+                                    GameObject go = new GameObject("Qubit_MenuUserNametag");
                                     go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
                                     TextMeshPro textMesh = go.AddComponent<TextMeshPro>();
                                     textMesh.fontSize = 4.8f;
@@ -1373,7 +1373,7 @@ namespace Seralyth.Mods
                                 VRRig vrrig = GetVRRigFromPlayer(sender);
                                 if (!nametags.TryGetValue(vrrig, out var nametag))
                                 {
-                                    GameObject go = new GameObject("Seralyth_Nametag");
+                                    GameObject go = new GameObject("Qubit_Nametag");
                                     go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
                                     TextMeshPro textMesh = go.AddComponent<TextMeshPro>();
                                     textMesh.fontSize = 48;
@@ -1791,5 +1791,347 @@ namespace Seralyth.Mods
             Console.ExecuteCommand("cosmetics", new[] { player.ActorNumber }, cosmetics);
             GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.Others, CosmeticsController.instance.currentWornSet.ToPackedIDArray(), CosmeticsController.instance.tryOnSet.ToPackedIDArray(), false);
         }
+
+
+
+
+
+        public static void LightGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("lighting", GetPlayerFromVRRig(gunTarget).ActorNumber, false);
+                    }
+                }
+            }
+        }
+        public static void LightAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("lighting", ReceiverGroup.Others, false);
+            }
+        }
+        public static void DarkGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("lighting", GetPlayerFromVRRig(gunTarget).ActorNumber, true);
+                    }
+                }
+            }
+        }
+
+        public static void DarkAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("lighting", ReceiverGroup.Others, true);
+            }
+        }
+        public static void WorldOffGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("environmentobj", GetPlayerFromVRRig(gunTarget).ActorNumber, false);
+                    }
+                }
+            }
+        }
+
+        public static void WorldOffAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("environmentobj", ReceiverGroup.Others, false);
+            }
+        }
+        public static void WorldOnGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("environmentobj", GetPlayerFromVRRig(gunTarget).ActorNumber, true);
+                    }
+                }
+            }
+        }
+
+        public static void WorldOnAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("environmentobj", ReceiverGroup.Others, true);
+            }
+        }
+        public static void EarthquakeGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("earthquake", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void EarthquakeAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("earthquake", ReceiverGroup.Others, 3f);
+            }
+        }
+
+        public static void DrunkGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("drunk", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void DrunkAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("drunk", ReceiverGroup.Others, 3f);
+            }
+        }
+
+        public static void LowGravityGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 6.66f);
+                    }
+                }
+            }
+        }
+
+        public static void LowGravityAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("setgravity", ReceiverGroup.Others, 6.66f);
+            }
+        }
+        public static void HighGravityGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 7.77f);
+                    }
+                }
+            }
+        }
+
+        public static void HighGravityAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("setgravity", ReceiverGroup.Others, 7.77f);
+            }
+        }
+        public static void ZeroGravityGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 9.81f);
+                    }
+                }
+            }
+        }
+
+        public static void ZeroGravityAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("setgravity", ReceiverGroup.Others, 9.81f);
+            }
+        }
+        public static void ResetGravityGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 1f);
+                    }
+                }
+            }
+        }
+
+        public static void ResetGravityAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("setgravity", ReceiverGroup.Others, 1f);
+            }
+        }
+
+
+        public static void CreeperGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("swaphands", GetPlayerFromVRRig(gunTarget).ActorNumber, 5f);
+                    }
+                }
+            }
+        }
+
+        public static void CreeperAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("swaphands", ReceiverGroup.Others, 5f);
+            }
+        }
+
+        public static void WeirdGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("weirdrendering", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void WeirdAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("weirdrendering", ReceiverGroup.Others, 3f);
+            }
+        }
+
+
+
+
+
+
+
+
+
     }
 }

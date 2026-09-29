@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Seralyth.Menu;
+using Qubit.Menu;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Seralyth.Classes.Menu
+namespace Qubit.Classes.Menu
 {
  public static class QubitFonts
     {
@@ -83,7 +83,7 @@ namespace Seralyth.Classes.Menu
        {
  if(bundle == null)
             {
-  using(Stream stream = typeof(QubitFonts).Assembly.GetManifestResourceStream("Seralyth.Resources.qubitfonts"))
+  using(Stream stream = typeof(QubitFonts).Assembly.GetManifestResourceStream("Qubit.Resources.qubitfonts"))
        using(var memory = new MemoryStream())
  {
             stream.CopyTo(memory);

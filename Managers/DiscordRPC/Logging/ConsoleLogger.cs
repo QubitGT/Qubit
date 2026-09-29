@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Seralyth.Managers.DiscordRPC.Logging
+namespace Qubit.Managers.DiscordRPC.Logging
 {
     /// <summary>
     /// Logs the outputs to the console using <see cref="Console.WriteLine()"/>

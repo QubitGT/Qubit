@@ -1,6 +1,6 @@
-﻿using Seralyth.Managers.DiscordRPC.RPC.Payload;
+﻿using Qubit.Managers.DiscordRPC.RPC.Payload;
 
-namespace Seralyth.Managers.DiscordRPC.Message
+namespace Qubit.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Called as validation of a subscribe

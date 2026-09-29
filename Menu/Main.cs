@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Menu/Main.cs
+ * Qubit Menu  Menu/Main.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,14 +28,14 @@ using GorillaTagScripts;
 using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
-using Seralyth.Classes.Menu;
-using Seralyth.Classes.Mods;
-using Seralyth.Extensions;
-using Seralyth.Managers;
-using Seralyth.Mods;
-using Seralyth.Patches;
-using Seralyth.Patches.Menu;
-using Seralyth.Utilities;
+using Qubit.Classes.Menu;
+using Qubit.Classes.Mods;
+using Qubit.Extensions;
+using Qubit.Managers;
+using Qubit.Mods;
+using Qubit.Patches;
+using Qubit.Patches.Menu;
+using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -58,17 +58,17 @@ using UnityEngine.XR;
 using Valve.Newtonsoft.Json;
 using Valve.VR;
 using WebSocketSharp;
-using static Seralyth.Utilities.AssetUtilities;
-using static Seralyth.Utilities.FileUtilities;
-using static Seralyth.Utilities.RandomUtilities;
-using ButtonCollider = Seralyth.Classes.Menu.ButtonCollider;
+using static Qubit.Utilities.AssetUtilities;
+using static Qubit.Utilities.FileUtilities;
+using static Qubit.Utilities.RandomUtilities;
+using ButtonCollider = Qubit.Classes.Menu.ButtonCollider;
 using CommonUsages = UnityEngine.XR.CommonUsages;
-using Console = Seralyth.Classes.Menu.Console;
+using Console = Qubit.Classes.Menu.Console;
 using JoinType = GorillaNetworking.JoinType;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Seralyth.Menu
+namespace Qubit.Menu
 {
     [HarmonyPatch(typeof(GTPlayer), nameof(GTPlayer.LateUpdate))]
     public class Main : MonoBehaviour
@@ -96,9 +96,9 @@ namespace Seralyth.Menu
             //if (Plugin.FirstLaunch)
             //    Prompt("It seems like this is your first time using the menu. Would you like to watch a quick tutorial to get to know how to use it?", Settings.ShowTutorial);
             //else
-            //    acceptedDonations = File.Exists($"{PluginInfo.BaseDirectory}/Seralyth_HideDonationButton.txt");
+            //    acceptedDonations = File.Exists($"{PluginInfo.BaseDirectory}/Qubit_HideDonationButton.txt");
             if (!Bootstrapper.FirstLaunch)
-                acceptedDonations = File.Exists($"{PluginInfo.BaseDirectory}/Seralyth_HideDonationButton.txt");
+                acceptedDonations = File.Exists($"{PluginInfo.BaseDirectory}/Qubit_HideDonationButton.txt");
 
             NetworkSystem.Instance.OnJoinedRoomEvent += OnJoinRoom;
             NetworkSystem.Instance.OnReturnedToSinglePlayer += OnLeaveRoom;
@@ -530,7 +530,7 @@ namespace Seralyth.Menu
 
                 if (animatedTitle && title != null)
                 {
-                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Seralyth Menu";
+                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Qubit Menu";
                     int length = (int)Mathf.PingPong(Time.time / 0.25f, targetString.Length + 1);
                     title.text = length > 0 ? targetString[..length] : "";
                 }
@@ -1873,7 +1873,7 @@ if (!clickGUI)
             {
                 if (buttonSpriteSheet != null) return buttonSpriteSheet;
                 buttonSpriteSheet = ScriptableObject.CreateInstance<TMP_SpriteAsset>();
-                buttonSpriteSheet.name = "Seralyth_SpriteSheet";
+                buttonSpriteSheet.name = "Qubit_SpriteSheet";
 
                 var textureList = new List<Texture2D>();
                 var spriteDataList = new List<(string name, int index)>();
@@ -2318,7 +2318,7 @@ qubitFront = null;
     {
  if (qubitPrefab == null)
             {
-   using (Stream stream = typeof(Main).Assembly.GetManifestResourceStream("Seralyth.Resources.qubitmenu"))
+   using (Stream stream = typeof(Main).Assembly.GetManifestResourceStream("Qubit.Resources.qubitmenu"))
 {
   using (var bytes = new MemoryStream())
                   {
@@ -2626,7 +2626,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
                     case 61:
                         if (videoPlayer == null)
                         {
-                            videoPlayer = new GameObject("Seralyth_VideoPlayer").AddComponent<VideoPlayer>();
+                            videoPlayer = new GameObject("Qubit_VideoPlayer").AddComponent<VideoPlayer>();
                             videoPlayer.playOnAwake = true;
                             videoPlayer.isLooping = true;
                             videoPlayer.url = $"{PluginInfo.ServerResourcePath}/Videos/Themes/badapple.mp4";
@@ -2686,7 +2686,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
                     }
                 }.AddComponent<TextMeshPro>();
                 title.font = activeFont;
-                title.text = translate ? "Seralyth" : "<b>Seralyth</b>";
+                title.text = translate ? "Qubit" : "<b>Qubit</b>";
 
                 if (doCustomName)
                     title.text = customMenuName;
@@ -2729,7 +2729,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
 
                 if (animatedTitle)
                 {
-                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Seralyth Menu";
+                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Qubit Menu";
                     int length = (int)Mathf.PingPong(Time.time / 0.25f, targetString.Length);
                     title.text = length > 0 ? targetString[..length] : "";
                 }
@@ -3719,7 +3719,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
                     case "webm":
                     case "mov":
                         {
-                            promptVideoPlayer = new GameObject("Seralyth_PromptVideoPlayer").AddComponent<VideoPlayer>();
+                            promptVideoPlayer = new GameObject("Qubit_PromptVideoPlayer").AddComponent<VideoPlayer>();
                             promptVideoPlayer.playOnAwake = true;
                             promptVideoPlayer.isLooping = true;
                             promptVideoPlayer.url = promptImageUrl;
@@ -4542,7 +4542,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
             if (disableGunLine) return (Ray, GunPointer);
             if (GunLine == null)
             {
-                GameObject line = new GameObject("Seralyth_GunLine");
+                GameObject line = new GameObject("Qubit_GunLine");
                 GunLine = line.AddComponent<LineRenderer>();
             }
 
@@ -7063,9 +7063,9 @@ jgs \_   _/ |Oo\
         public static string customMenuName = "Your Text Here";
         public static readonly string menuName =
 #if LEGAL
-            "<b>Seralyth</b> Legal";
+            "<b>Qubit</b> Legal";
 #else
-            "<b>Seralyth</b> Menu";
+            "<b>Qubit</b> Menu";
 #endif
         public static bool doCustomMenuBackground;
         public static bool menuTrail;

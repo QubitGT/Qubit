@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Seralyth.Classes.Menu
+namespace Qubit.Classes.Menu
 {
  public static class QubitMenuBody
     {

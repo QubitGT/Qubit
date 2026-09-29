@@ -1,16 +1,16 @@
-﻿using Seralyth.Managers.DiscordRPC.Events;
-using Seralyth.Managers.DiscordRPC.Helper;
-using Seralyth.Managers.DiscordRPC.IO;
-using Seralyth.Managers.DiscordRPC.Logging;
-using Seralyth.Managers.DiscordRPC.Message;
-using Seralyth.Managers.DiscordRPC.RPC.Commands;
-using Seralyth.Managers.DiscordRPC.RPC.Payload;
+﻿using Qubit.Managers.DiscordRPC.Events;
+using Qubit.Managers.DiscordRPC.Helper;
+using Qubit.Managers.DiscordRPC.IO;
+using Qubit.Managers.DiscordRPC.Logging;
+using Qubit.Managers.DiscordRPC.Message;
+using Qubit.Managers.DiscordRPC.RPC.Commands;
+using Qubit.Managers.DiscordRPC.RPC.Payload;
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using Valve.Newtonsoft.Json;
 
-namespace Seralyth.Managers.DiscordRPC.RPC
+namespace Qubit.Managers.DiscordRPC.RPC
 {
     /// <summary>
     /// Communicates between the client and discord through RPC

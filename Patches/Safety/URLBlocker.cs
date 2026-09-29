@@ -1,9 +1,9 @@
 ﻿/*
- * Seralyth Menu  Managers/URLBlocker.cs
+ * Qubit Menu  Managers/URLBlocker.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 
 // The purpose of this class is to block known malicious URLs from being accessed by the game or mods
 using HarmonyLib;
-using Seralyth.Managers;
+using Qubit.Managers;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -33,7 +33,7 @@ using System.Threading.Tasks;
 using UnityEngine.Networking;
 using Valve.Newtonsoft.Json;
 
-namespace Seralyth.Patches.Safety
+namespace Qubit.Patches.Safety
 {
     public class URLBlocker
     {
@@ -56,7 +56,7 @@ namespace Seralyth.Patches.Safety
                 {
                     using (HttpClient client = new HttpClient())
                     {
-                        string json = await client.GetStringAsync("https://menu.seralyth.software/banned_urls");
+                        string json = await client.GetStringAsync("https://menu.Qubit.software/banned_urls");
                         var parsed = JsonConvert.DeserializeObject<BanResponse>(json);
 
                         if (parsed?.banned != null)
@@ -120,7 +120,7 @@ namespace Seralyth.Patches.Safety
                 shouldLog = notifiedAssemblies.Add(assemblyName);
 
             if (shouldLog)
-                LogManager.Log($"HEY!! Seralyth Menu blocked a potentionally DANGEROUS REQUEST to: {url} | Reason: {reason} | Assumed Assembly: {assemblyName} | Assumed File: {fileName}");
+                LogManager.Log($"HEY!! Qubit Menu blocked a potentionally DANGEROUS REQUEST to: {url} | Reason: {reason} | Assumed Assembly: {assemblyName} | Assumed File: {fileName}");
         }
 
         private static string NormalizeHost(string host)
@@ -329,7 +329,7 @@ namespace Seralyth.Patches.Safety
 
                     var response = new HttpResponseMessage(HttpStatusCode.Forbidden)
                     {
-                        Content = new StringContent("This request has been blocked by Seralyth Menu, as it has been marked as a unsafe site.")
+                        Content = new StringContent("This request has been blocked by Qubit Menu, as it has been marked as a unsafe site.")
                     };
 
                     __result = Task.FromResult(response);

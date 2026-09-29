@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Classes/Mods/ClampColor.cs
+ * Qubit Menu  Classes/Mods/ClampColor.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,11 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Seralyth.Classes.Menu;
-using Seralyth.Managers;
+using Qubit.Classes.Menu;
+using Qubit.Managers;
 using UnityEngine;
 
-namespace Seralyth.Classes.Mods
+namespace Qubit.Classes.Mods
 {
     public class ClampColor : MonoBehaviour
     {

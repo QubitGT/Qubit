@@ -1,6 +1,6 @@
-﻿using Seralyth.Managers.DiscordRPC.Message;
+﻿using Qubit.Managers.DiscordRPC.Message;
 
-namespace Seralyth.Managers.DiscordRPC.Events
+namespace Qubit.Managers.DiscordRPC.Events
 {
     /// <summary>
     /// Called when the Discord Client is ready to send and receive messages.

@@ -1,9 +1,9 @@
-﻿using Seralyth.Managers.DiscordRPC.Exceptions;
+﻿using Qubit.Managers.DiscordRPC.Exceptions;
 using System;
 using System.Text;
 using Valve.Newtonsoft.Json;
 
-namespace Seralyth.Managers.DiscordRPC
+namespace Qubit.Managers.DiscordRPC
 {
     /// <summary>
     /// The secrets used for Joining. Secrets are obfuscated data of your choosing. They could be match ids, player ids, lobby ids, etc.

@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Classes/Menu/KeyboardCollider.cs
+ * Qubit Menu  Classes/Menu/KeyboardCollider.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,9 +21,9 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using static Seralyth.Menu.Main;
+using static Qubit.Menu.Main;
 
-namespace Seralyth.Classes.Menu
+namespace Qubit.Classes.Menu
 {
     public class KeyboardKey : MonoBehaviour
     {
@@ -39,7 +39,7 @@ namespace Seralyth.Classes.Menu
         {
             if ((collider != lKeyCollider && collider != rKeyCollider) || menu == null || !(Time.time > delay)) return;
             if (qubitKeyboard != null && !qubitKeyboard.CanTouch(collider)) return;
-            if (!Seralyth.Menu.Buttons.GetIndex("Disable Keyboard Delay").enabled)
+            if (!Qubit.Menu.Buttons.GetIndex("Disable Keyboard Delay").enabled)
                 delay = Time.time + 0.1f;
 
             if (doButtonsVibrate)

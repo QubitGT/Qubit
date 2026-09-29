@@ -1,9 +1,9 @@
 ﻿/*
- * Seralyth Menu  Mods/Preferences.cs
+ * Qubit Menu  Mods/Preferences.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
  */
 
 using Photon.Pun;
-using Seralyth.Managers;
-using Seralyth.Menu;
-using Seralyth.Mods;
+using Qubit.Managers;
+using Qubit.Menu;
+using Qubit.Mods;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -30,14 +30,14 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using Valve.Newtonsoft.Json;
-using static Seralyth.Menu.Main;
+using static Qubit.Menu.Main;
 
-namespace Seralyth.Classes.Menu
+namespace Qubit.Classes.Menu
 {
     public static class Preferences
     {
-        private const string FileName = "Seralyth_Preferences.json";
-        private const string LegacyFileName = "Seralyth_Preferences.txt";
+        private const string FileName = "Qubit_Preferences.json";
+        private const string LegacyFileName = "Qubit_Preferences.txt";
         internal static bool DisableAutoSave = false;
 
         private const int MinWriteIntervalMs = 250;

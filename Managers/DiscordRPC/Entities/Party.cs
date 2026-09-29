@@ -1,8 +1,8 @@
-﻿using Seralyth.Managers.DiscordRPC.Helper;
+﻿using Qubit.Managers.DiscordRPC.Helper;
 using System;
 using Valve.Newtonsoft.Json;
 
-namespace Seralyth.Managers.DiscordRPC
+namespace Qubit.Managers.DiscordRPC
 {
     /// <summary>
     /// Structure representing the part the player is in.

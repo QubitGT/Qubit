@@ -1,6 +1,6 @@
 ﻿
 
-namespace Seralyth.Managers.DiscordRPC.Message
+namespace Qubit.Managers.DiscordRPC.Message
 {
     /// <summary>
     /// Representation of the message received by discord when the presence has been updated.

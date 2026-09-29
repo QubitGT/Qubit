@@ -1,9 +1,9 @@
 /*
- * Seralyth Menu  Classes/Menu/ButtonInfo.cs
+ * Qubit Menu  Classes/Menu/ButtonInfo.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
- * Copyright (C) 2026  Seralyth Software
- * https://github.com/Seralyth/Seralyth-Menu
+ * Copyright (C) 2026  Qubit Software
+ * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,10 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Seralyth.Managers;
+using Qubit.Managers;
 using System;
 
-namespace Seralyth.Classes.Menu
+namespace Qubit.Classes.Menu
 {
     public class ButtonInfo
     {

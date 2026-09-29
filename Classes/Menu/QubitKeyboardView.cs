@@ -3,8 +3,8 @@
    using GorillaLocomotion;
 using UnityEngine;
        using UnityEngine.UI;
-  using static Seralyth.Menu.Main;
-                  namespace Seralyth.Classes.Menu
+  using static Qubit.Menu.Main;
+                  namespace Qubit.Classes.Menu
 
     {
  public sealed class QubitKeyboardView : MonoBehaviour
@@ -24,7 +24,7 @@ private float pressedUntil;
                   if (prefab == null)
     {
 
- using (Stream stream = typeof(QubitKeyboardView).Assembly.GetManifestResourceStream("Seralyth.Resources.qubitkeyboard"))
+ using (Stream stream = typeof(QubitKeyboardView).Assembly.GetManifestResourceStream("Qubit.Resources.qubitkeyboard"))
             {
 using (var memory = new MemoryStream())
        {
