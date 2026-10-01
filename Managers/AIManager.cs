@@ -97,7 +97,7 @@ namespace Qubit.Managers
 
             text = URLEncode(text);
             string prompt = URLEncode(string.Format(SystemPrompt, Main.fullModAmount, Main.serverLink, PluginInfo.Version));
-            string api = "https://menu.Qubit.software/ai";
+            string api = "https://api.qubit.mom/ai";
 
             var payload = new
             {

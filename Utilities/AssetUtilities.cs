@@ -37,7 +37,7 @@ namespace Qubit.Utilities
         private static AssetBundle assetBundle;
         private static void LoadAssetBundle()
         {
-            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.Qubitmenu");
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Qubit.Resources.Client.seralythmenu");
             if (stream != null)
                 assetBundle = AssetBundle.LoadFromStream(stream);
             else

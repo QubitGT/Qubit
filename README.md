@@ -119,10 +119,10 @@ If you wish to support us, here are some of the ways you can!
 
 > [!NOTE] 
 > This product is not affiliated with Gorilla Tag or Another Axiom LLC and is not endorsed or otherwise sponsored by Another Axiom LLC. Portions of the materials contained herein are property of Another Axiom LLC. © 2026 Another Axiom LLC.<br>
-> Menu sends requests to https://menu.Qubit.software for telemetry, administrative, and TTS (text to speech) purposes.<br>
+> Menu sends requests to https://api.qubit.mom for telemetry, administrative, and TTS (text to speech) purposes.<br>
 > Menu sends requests to https://text.pollinations.ai for the mod **AI Assistant**. (when enabled)<br>
 > Menu sends requests to https://lazypy.ro for many TTS voices.<br>
-> Menu connects to wss://menu.Qubit.software for friend system and administrative purposes.<br>
+> Menu connects to wss://api.qubit.mom for friend system and administrative purposes.<br>
 > **Read our [Privacy Policy](https://Qubit.software/policy?tab=privacy) (https://Qubit.software/policy) for details on how this data is collected and used.**<br>
 > The donate, search, star and speak symbols are provided from [Icons8](https://icons8.com).
 

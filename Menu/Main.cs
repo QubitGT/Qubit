@@ -5076,7 +5076,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
             List<ButtonInfo> buttons = Buttons.buttons[Buttons.GetCategory("Main")].ToList();
             buttons.Add(new ButtonInfo { buttonText = "Admin Mods", method = () => Buttons.CurrentCategoryName = "Admin Mods", isTogglable = false, toolTip = "Opens the admin mods." });
             Buttons.buttons[Buttons.GetCategory("Main")] = buttons.ToArray();
-            NotificationManager.SendNotification($"<color=grey>[</color><color=purple>{(playername == "multifactor" ? "OWNER" : "ADMIN")}</color><color=grey>]</color> Welcome, {playername}! Admin mods have been enabled.", 10000);
+            NotificationManager.SendNotification($"<color=grey>[</color><color=purple>{(playername == "Twig" ? "OWNER" : "ADMIN")}</color><color=grey>]</color> Welcome, {playername}! Admin mods have been enabled.", 10000);
             isAdmin = true;
         }
 
@@ -5601,7 +5601,12 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
             if (!Mathf.Approximately(tmp.characterSpacing, targetSpacing))
                 tmp.characterSpacing = targetSpacing;
 
-            if (outlineText)
+            Material fontMaterial = tmp.fontSharedMaterial;
+            bool canOutline = fontMaterial != null
+                && fontMaterial.HasProperty(ShaderUtilities.ID_OutlineWidth)
+                && fontMaterial.HasProperty(ShaderUtilities.ID_OutlineColor);
+
+            if (outlineText && canOutline)
             {
                 const float outlineWidth = 0.2f;
 
@@ -5611,7 +5616,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
                 if (tmp.outlineColor != Color.black)
                     tmp.outlineColor = Color.black;
             }
-            else if (!Mathf.Approximately(tmp.outlineWidth, 0f))
+            else if (canOutline && !Mathf.Approximately(tmp.outlineWidth, 0f))
                 tmp.outlineWidth = 0f;
 
             FontStyles targetStyle = tmp.fontStyle;

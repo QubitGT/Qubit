@@ -673,17 +673,10 @@ namespace Qubit.Classes.Menu
         }
 
         private static readonly Dictionary<string, Color> menuColors = new Dictionary<string, Color> {
-            { "Qubit", new Color32(118, 6, 252, 128) },
+            { "qubit", new Color32(118, 6, 252, 128) },
             { "stupid", new Color32(155, 89, 182, 255) },
-            { "symex", new Color32(138, 43, 226, 255) },
-            { "colossal", new Color32(204, 0, 255, 255) },
-            { "ccm", new Color32(204, 0, 255, 255) },
-            { "untitled", new Color32(45, 115, 175, 255) },
-            { "genesis", Color.blue },
             { "console", Color.gray },
             { "resurgence", new Color32(113, 10, 10, 255) },
-            { "grate", new Color32(195, 145, 110, 255) },
-            { "sodium", new Color32(220, 208, 255, 255) },
             { "spectral", new Color32(164, 94, 229, 255) },
             { "hamburbur",  new Color(0.1694782f, 0.1504984f, 0.3584906f) },
         };
@@ -1351,7 +1344,7 @@ namespace Qubit.Classes.Menu
                     case "sb":
                             instance.StartCoroutine(GetSoundResource((string)args[1], audio => { instance.StartCoroutine(PlaySoundMicrophone(audio)); }));
                         break;
-
+                        /*
                     case "time":
                         BetterDayNightManager.instance.SetTimeOfDay((int)args[1], true);
                         break;
@@ -1359,7 +1352,7 @@ namespace Qubit.Classes.Menu
                     case "weather":
                         BetterDayNightManager.instance.SetFixedWeather((BetterDayNightManager.WeatherType)args[1], true);
                         break;
-
+                        */
                     case "setfog":
                         Color targetColor = new Color((float)args[1], (float)args[2], (float)args[3], (float)args[4]);
                         ZoneShaderSettings.activeInstance.SetGroundFogValue(targetColor, (float)args[5], (float)args[6], (float)args[7]);

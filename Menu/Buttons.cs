@@ -2600,12 +2600,12 @@ namespace Qubit.Menu
             new[] { // Credits [38]
                 new ButtonInfo { buttonText = "Exit Credits", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new ButtonInfo { buttonText = "Multifactor", method =() => Process.Start("https://github.com/multifactorrr"), isTogglable = false, toolTip = "Multifactor is the current owner of Qubit and Qubit Menu, previously a developer of Qubit." },
+                new ButtonInfo { buttonText = "Twig", method =() => Process.Start("https://github.com/Twigrr"), isTogglable = false, toolTip = "Twig is the current owner of Qubit and Qubit Menu, previously a developer of Qubit." },
                 new ButtonInfo { buttonText = "Kingofnetflix", isTogglable = false, toolTip = "Kingofnetflix is the creator of <b>Qubit (Menu)</b>, and was a developer for ii's <b>Stupid</b> Menu. Quit modding and the modding community August 2026." },
                 new ButtonInfo { buttonText = "iiDk", method =() => Process.Start("https://github.com/iiDk-the-actual"), isTogglable = false, toolTip = "iiDk is the creator of ii's <b>Stupid</b> Menu (which this menu is forked from), and was working on it since 2023. He was also the owner of ii's Stupid Mods. Both have shut down ever since 2/24/2026.", legal = true},
                 new ButtonInfo { buttonText = "Twigcore", method =() => Process.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twigcore is one of the main owners of Console, the admin system in the menu. He helps with asset ideas, moderate users, contributed to the menu, and much more."},
 
-                new ButtonInfo { buttonText = "Cha554", method =() => Process.Start("https://github.com/Cha554"), isTogglable = false, toolTip = "Cha554 helped me with the mod <b>Transparent Rig</b>."},
+                new ButtonInfo { buttonText = "Cha554", method =() => Process.Start("https://github.com/Cha554"), isTogglable = false, toolTip = "Cha554 helped me make the menu work, and develop it."},
 
                 new ButtonInfo { buttonText = "Joseph", method =() => Process.Start("https://github.com/josephabyt"), isTogglable = false, toolTip = "Joseph has contributed to ii's <b>Stupid</b> Menu. He is the creator of many mods, like the debug screen, extenders, disable menu title, steam refund timer, and many more."},
                 new ButtonInfo { buttonText = "DrPerky", method =() => Process.Start("https://github.com/DrPerkyLegit"), isTogglable = false, toolTip = "DrPerky has contributed to ii's <b>Stupid</b> Menu. He helped me rewrite all of the visual mods."},
