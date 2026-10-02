@@ -2687,22 +2687,14 @@ namespace Qubit.Mods
         {
             get
             {
-                _lucy ??= GetObject("Environment Objects/05Maze_PersistentObjects/2025_Halloween1_PersistentObjects/Halloween Ghosts/Lucy/Halloween Ghost/FloatingChaseSkeleton").GetComponent<HalloweenGhostChaser>();
+                _lucy ??= GameObject.Find("Environment Objects/05Maze_PersistentObjects/Ghosts/Halloween Ghost/FloatingChaseSkeleton").GetComponent<HalloweenGhostChaser>();
                 return _lucy;
             }
             set => _lucy = value;
         }
+        public static HalloweenGhostChaser GetChaser() => Lucy;
 
-        public static LurkerGhost _lurker;
-        public static LurkerGhost Lurker
-        {
-            get
-            {
-                _lurker ??= GetObject("Environment Objects/05Maze_PersistentObjects/2025_Halloween1_PersistentObjects/Halloween Ghosts/Lurker Ghost/GhostLurker_Prefab").GetComponent<LurkerGhost>();
-                return _lurker;
-            }
-            set => _lurker = value;
-        }
+        
 
         public static void SpawnBlueLucy()
         {
@@ -2975,183 +2967,7 @@ namespace Qubit.Mods
             else NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
         }
 
-        public static void SpawnLurker()
-        {
-            if (Lurker.IsMine)
-                Lurker.currentState = LurkerGhost.ghostState.patrol;
-            else NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-        }
-
-        public static void MoveLurkerGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                {
-                    if (Lurker.IsMine)
-                        Lurker.transform.position = NewPointer.transform.position + Vector3.up;
-                    else NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                }
-            }
-        }
-
-        public static void DespawnLurker()
-        {
-            if (Lurker.IsMine)
-            {
-                Lurker.currentState = LurkerGhost.ghostState.patrol;
-            }
-            else NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-        }
-
-        public static void LurkerAttack(NetPlayer player)
-        {
-            if (Lurker.IsMine)
-            {
-                if (Lurker.targetPlayer != player)
-                {
-                    Lurker.ChangeState(LurkerGhost.ghostState.patrol);
-                    SendSerialize(Lurker.GetView);
-                }
-
-                Lurker.currentState = LurkerGhost.ghostState.possess;
-                Lurker.targetPlayer = player;
-            }
-            else NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-        }
-
-        public static void LurkerAttackGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    LurkerAttack(lockTarget.GetPlayer());
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
-
-        public static void LurkerAttackAll()
-        {
-            if (SerializePatch.OverrideSerialization != null)
-            {
-                SerializePatch.OverrideSerialization = () =>
-                {
-                    MassSerialize(true, new[] { Lurker.GetView });
-                    return false;
-                };
-            }
-
-            if (Lurker.IsMine)
-            {
-                if (Lurker.currentState != LurkerGhost.ghostState.possess)
-                {
-                    foreach (NetPlayer player in NetworkSystem.Instance.PlayerListOthers)
-                    {
-                        Lurker.currentState = LurkerGhost.ghostState.possess;
-                        Lurker.targetPlayer = player;
-                        SendSerialize(Lucy.GetView, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
-                    }
-                }
-            }
-            else
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-        }
-
-        public static float lurkerDelay;
-        public static void SpazLurker()
-        {
-            if (Lurker.IsMine)
-            {
-                if (Time.time > lurkerDelay)
-                {
-                    Lurker.currentState = Lurker.currentState == LurkerGhost.ghostState.charge ? LurkerGhost.ghostState.seek : LurkerGhost.ghostState.charge;
-                    Lurker.targetPlayer = GetRandomPlayer(true);
-                    lurkerDelay = Time.time + 0.1f;
-                }
-            }
-            else NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-        }
-
-        public static void BreakLurker()
-        {
-            if (Lurker.IsMine)
-            {
-                Lurker.currentState = Lurker.currentState == LurkerGhost.ghostState.charge ? LurkerGhost.ghostState.possess : LurkerGhost.ghostState.charge;
-                Lurker.targetPlayer = GetRandomPlayer(true);
-
-                SendSerialize(Lurker.GetView);
-            }
-            else NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-        }
-
-        public static void AnnoyingLurker()
-        {
-            if (Lurker.IsMine)
-            {
-                if (Time.time > lurkerDelay)
-                {
-                    Lurker.currentState = Lurker.currentState == LurkerGhost.ghostState.possess ? LurkerGhost.ghostState.charge : LurkerGhost.ghostState.possess;
-                    Lurker.targetPlayer = GetRandomPlayer(true);
-                    lurkerDelay = Time.time + 0.1f;
-                }
-            }
-            else NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-        }
-
-        public static void BecomeLurker()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient)
-            {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                return;
-            }
-
-            if (Lurker != null)
-            {
-                VRRig.LocalRig.enabled = false;
-                VRRig.LocalRig.transform.position = GorillaTagger.Instance.bodyCollider.transform.position - Vector3.up * 99999f;
-
-                Lurker.transform.position = GorillaTagger.Instance.bodyCollider.transform.position;
-                Lurker.transform.rotation = GorillaTagger.Instance.headCollider.transform.rotation;
-
-                Lurker.currentState = LurkerGhost.ghostState.seek;
-                SerializePatch.OverrideSerialization = () =>
-                {
-                    MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
-
-                    foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
-                    {
-                        Lurker.targetPlayer = Player;
-                        SendSerialize(Lurker.GetView, new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                    }
-
-                    RPCProtection();
-
-                    return false;
-                };
-            }
-        }
-
+        
         public static void BetaSetVelocityPlayer(NetPlayer victim, Vector3 velocity)
         {
             if (velocity.sqrMagnitude > 20f)

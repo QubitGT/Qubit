@@ -79,7 +79,7 @@ namespace Qubit.Managers
                 ?? Buttons.buttons.SelectMany(b => b).FirstOrDefault(b => (b.overlapText ?? b.buttonText).Contains(spaced, StringComparison.OrdinalIgnoreCase))
                 ?? Buttons.buttons.SelectMany(b => b).FirstOrDefault(b => spaced.ToLower().Split(' ').All(word => (b.overlapText ?? b.buttonText).ToLower().Contains(word)));
         }
-
+         
         public static IEnumerator AskAI(string text)
         {
             generating = true;
