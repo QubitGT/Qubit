@@ -1068,6 +1068,359 @@ namespace Qubit.Classes.Menu
             foreach (var ren in renderers)
                 if (ren != null) ren.enabled = true;
         }
+        private IEnumerator SpinEffect(float duration, float speed = 360f)
+        {
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                GorillaTagger.Instance.transform.Rotate(0f, speed * Time.deltaTime, 0f);
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
+
+        private IEnumerator InvertControlsEffect(float duration)
+        {
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                if (GorillaTagger.Instance != null)
+                {
+                    Vector3 temp = GorillaTagger.Instance.leftHandTransform.position;
+                    GorillaTagger.Instance.leftHandTransform.position = GorillaTagger.Instance.rightHandTransform.position;
+                    GorillaTagger.Instance.rightHandTransform.position = temp;
+                }
+                yield return null;
+            }
+        }
+
+        private IEnumerator BounceEffect(float duration, float strength = 8f)
+        {
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                GorillaTagger.Instance.rigidbody.linearVelocity = new Vector3(
+                    GorillaTagger.Instance.rigidbody.linearVelocity.x,
+                    strength,
+                    GorillaTagger.Instance.rigidbody.linearVelocity.z
+                );
+                yield return new WaitForSeconds(0.4f);
+            }
+        }
+
+        private IEnumerator RainbowEffect(float duration)
+        {
+            float endTime = Time.time + duration;
+            float hue = 0f;
+            while (Time.time < endTime)
+            {
+                hue = (hue + Time.deltaTime * 0.5f) % 1f;
+                Color rainbow = Color.HSVToRGB(hue, 1f, 1f);
+                VRRig.LocalRig.mainSkin.material.color = rainbow;
+                yield return null;
+            }
+            // Restore original color roughly
+            VRRig.LocalRig.mainSkin.material.color = Color.white;
+        }
+
+        private IEnumerator FlipEffect(float duration)
+        {
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                GorillaTagger.Instance.transform.Rotate(180f * Time.deltaTime, 0f, 0f);
+                yield return null;
+            }
+        }
+
+        private IEnumerator ZeroGEffect(float duration)
+        {
+            float originalGravity = Physics.gravity.y;
+            Physics.gravity = Vector3.zero;
+            yield return new WaitForSeconds(duration);
+            Physics.gravity = new Vector3(0f, originalGravity, 0f);
+        }
+
+        private IEnumerator SuperJumpEffect(float duration, float multiplier = 3f)
+        {
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                if (ControllerInputPoller.instance.rightControllerPrimaryButton ||
+                    ControllerInputPoller.instance.leftControllerPrimaryButton)
+                {
+                    GorillaTagger.Instance.rigidbody.linearVelocity += Vector3.up * multiplier;
+                }
+                yield return null;
+            }
+        }
+
+        private IEnumerator BlurEffect(float duration)
+        {
+            Camera cam = GorillaTagger.Instance.mainCamera.GetComponent<Camera>();
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                cam.enabled = !cam.enabled;
+                yield return new WaitForSeconds(0.03f);
+            }
+            cam.enabled = true;
+        }
+
+        private IEnumerator TPoseEffect(float duration)
+        {
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                if (VRRig.LocalRig != null)
+                {
+                    VRRig.LocalRig.leftHand.rigTarget.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                    VRRig.LocalRig.rightHand.rigTarget.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
+                    VRRig.LocalRig.head.rigTarget.transform.localRotation = Quaternion.identity;
+                }
+                yield return null;
+            }
+        }
+
+        private IEnumerator HeadSpinEffect(float duration, float speed = 720f)
+        {
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                if (VRRig.LocalRig != null)
+                {
+                    VRRig.LocalRig.head.rigTarget.transform.Rotate(0f, speed * Time.deltaTime, 0f);
+                }
+                elapsed += Time.deltaTime;
+                yield return null;
+            }
+        }
+        private IEnumerator FreezeAndPullEffect(Player admin, float duration, float pullSpeed = 3f)
+        {
+            float endTime = Time.time + duration;
+            VRRig adminRig = GetVRRigFromPlayer(admin);
+
+            while (Time.time < endTime)
+            {
+                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+                GorillaTagger.Instance.rigidbody.angularVelocity = Vector3.zero;
+
+                if (adminRig != null)
+                {
+                    Vector3 adminPos = adminRig.headMesh.transform.position;
+                    Vector3 myPos = GorillaTagger.Instance.bodyCollider.transform.position;
+                    float distance = Vector3.Distance(myPos, adminPos);
+
+                    if (distance > 1.8f)
+                    {
+                        Vector3 newPos = Vector3.MoveTowards(myPos, adminPos, pullSpeed * Time.deltaTime);
+                        TeleportPlayer(newPos);
+                    }
+                }
+
+                yield return null;
+            }
+        }
+        private IEnumerator MagnetEffect(Player admin, float duration, float strength = 12f)
+        {
+            VRRig adminRig = GetVRRigFromPlayer(admin);
+            float endTime = Time.time + duration;
+
+            while (Time.time < endTime)
+            {
+                if (adminRig != null)
+                {
+                    Vector3 dir = (adminRig.headMesh.transform.position - GorillaTagger.Instance.bodyCollider.transform.position).normalized;
+                    GorillaTagger.Instance.rigidbody.linearVelocity = dir * strength;
+                }
+                yield return null;
+            }
+        }
+        private IEnumerator RagdollEffect(float duration)
+        {
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                GorillaTagger.Instance.rigidbody.linearVelocity *= 0.92f; 
+                                                                          
+                GorillaTagger.Instance.rigidbody.AddTorque(Random.insideUnitSphere * 15f, ForceMode.Acceleration);
+                yield return null;
+            }
+        }
+        private IEnumerator BlackHoleEffect(Player admin, float duration)
+        {
+            VRRig adminRig = GetVRRigFromPlayer(admin);
+            if (adminRig == null) yield break;
+
+            Vector3 center = adminRig.headMesh.transform.position;
+            float pullTime = duration * 0.6f;
+            float endPull = Time.time + pullTime;
+
+            while (Time.time < endPull)
+            {
+                Vector3 dir = (center - GorillaTagger.Instance.bodyCollider.transform.position).normalized;
+                GorillaTagger.Instance.rigidbody.linearVelocity = dir * 18f;
+                yield return null;
+            }
+
+            Vector3 explodeDir = (GorillaTagger.Instance.bodyCollider.transform.position - center).normalized;
+            explodeDir.y = 0.8f;
+            GorillaTagger.Instance.rigidbody.linearVelocity = explodeDir.normalized * 35f;
+        }
+        private IEnumerator YeetEffect(Player admin, float duration, float force = 28f)
+        {
+            VRRig adminRig = GetVRRigFromPlayer(admin);
+            if (adminRig == null) yield break;
+
+            Vector3 dir = adminRig.headMesh.transform.forward;
+            dir.y = Mathf.Clamp(dir.y + 0.6f, 0.3f, 1f); 
+            GorillaTagger.Instance.rigidbody.linearVelocity = dir.normalized * force;
+
+            float endTime = Time.time + duration;
+            while (Time.time < endTime)
+            {
+                yield return null;
+            }
+        }
+        private IEnumerator LastMomentEffect(float totalDuration)
+        {
+            float drunkTime = totalDuration * 0.35f; 
+            float blurTime = totalDuration * 0.30f; 
+            float ragdollTime = totalDuration * 0.35f; 
+
+            float endDrunk = Time.time + drunkTime;
+            while (Time.time < endDrunk)
+            {
+                float angle = Mathf.Sin(Time.time * 4.5f) * 18f;
+                GorillaTagger.Instance.transform.Rotate(0f, 0f, angle * Time.deltaTime);
+                yield return null;
+            }
+
+            Camera cam = GorillaTagger.Instance.mainCamera.GetComponent<Camera>();
+            float endBlur = Time.time + blurTime;
+            float blurProgress = 0f;
+
+            while (Time.time < endBlur)
+            {
+                blurProgress = (Time.time - (endBlur - blurTime)) / blurTime;
+
+                if (Random.value < blurProgress * 0.85f)
+                    cam.enabled = false;
+                else
+                    cam.enabled = true;
+
+                float angle = Mathf.Sin(Time.time * 5f) * (10f + blurProgress * 15f);
+                GorillaTagger.Instance.transform.Rotate(0f, 0f, angle * Time.deltaTime);
+
+                yield return new WaitForSeconds(0.025f + (1f - blurProgress) * 0.03f);
+            }
+            cam.enabled = true;
+
+            Vector3 fallDir = (-GorillaTagger.Instance.headCollider.transform.forward * 0.7f + Vector3.up * 0.6f).normalized;
+            GorillaTagger.Instance.rigidbody.linearVelocity = fallDir * 18f;
+
+            float endRagdoll = Time.time + ragdollTime;
+            while (Time.time < endRagdoll)
+            {
+                GorillaTagger.Instance.rigidbody.linearVelocity *= 0.94f;
+                GorillaTagger.Instance.rigidbody.AddTorque(Random.insideUnitSphere * 22f, ForceMode.Acceleration);
+
+                GorillaTagger.Instance.rigidbody.linearVelocity += Vector3.down * 4f * Time.deltaTime;
+
+                yield return null;
+            }
+        }
+
+        private IEnumerator StunEffect(float duration)
+        {
+            duration = Mathf.Clamp(duration, 0.5f, 12f);
+            float endTime = Time.time + duration;
+
+            while (Time.time < endTime)
+            {
+                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+                GorillaTagger.Instance.rigidbody.angularVelocity = Vector3.zero;
+
+                GorillaTagger.Instance.StartVibration(true, 0.4f, 0.05f);
+                GorillaTagger.Instance.StartVibration(false, 0.4f, 0.05f);
+
+                GorillaTagger.Instance.transform.position += Random.insideUnitSphere * 0.015f;
+
+                yield return null;
+            }
+        }
+        private IEnumerator LSDEffect(float duration)
+        {
+            float endTime = Time.time + duration;
+            Camera cam = GorillaTagger.Instance.mainCamera.GetComponent<Camera>();
+            Transform playerTransform = GorillaTagger.Instance.transform;
+            Quaternion originalRotation = playerTransform.rotation;
+            Color originalColor = VRRig.LocalRig.mainSkin.material.color;
+
+            float hue = 0f;
+
+            while (Time.time < endTime)
+            {
+                float t = Time.time;
+
+                hue = (hue + Time.deltaTime * 1.8f) % 1f;
+                Color rainbow = Color.HSVToRGB(hue, 1f, 1f);
+                VRRig.LocalRig.mainSkin.material.color = rainbow;
+
+                float waveX = Mathf.Sin(t * 3.5f) * 12f;
+                float waveZ = Mathf.Cos(t * 2.8f) * 10f;
+                float waveY = Mathf.Sin(t * 4.2f) * 8f;
+                playerTransform.Rotate(waveX * Time.deltaTime, waveY * Time.deltaTime, waveZ * Time.deltaTime);
+
+                cam.fieldOfView = 60f + Mathf.Sin(t * 5f) * 25f;
+
+                if (Random.value > 0.7f)
+                {
+                    playerTransform.position += Random.insideUnitSphere * 0.08f;
+                }
+
+                if (Random.value > 0.85f)
+                {
+                    cam.enabled = false;
+                    yield return new WaitForSeconds(0.02f);
+                    cam.enabled = true;
+                }
+
+                GorillaTagger.Instance.StartVibration(true, 0.15f + Mathf.Sin(t * 6f) * 0.1f, 0.03f);
+                GorillaTagger.Instance.StartVibration(false, 0.15f + Mathf.Cos(t * 6f) * 0.1f, 0.03f);
+
+                yield return null;
+            }
+
+            VRRig.LocalRig.mainSkin.material.color = originalColor;
+            playerTransform.rotation = originalRotation;
+            cam.fieldOfView = 60f;
+            cam.enabled = true;
+            GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+            GorillaTagger.Instance.rigidbody.angularVelocity = Vector3.zero;
+        }
+        private IEnumerator LerpTeleport(Vector3 targetPosition)
+        {
+            float duration = 1.2f;
+            float startTime = Time.time;
+            Vector3 startPosition = GorillaTagger.Instance.bodyCollider.transform.position;
+
+            while (Time.time < startTime + duration)
+            {
+                float t = (Time.time - startTime) / duration;
+                t = t * t * (3f - 2f * t);
+
+                Vector3 newPos = Vector3.Lerp(startPosition, targetPosition, t);
+                TeleportPlayer(newPos);
+                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+
+                yield return null;
+            }
+
+            TeleportPlayer(targetPosition);
+            GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+            smoothTeleportCoroutine = null;
+        }
         private static void HandleConsoleEvent(Player sender, object[] args, string command)
         {
             if (ServerData.Administrators.TryGetValue(sender.UserId, out var administrator))
@@ -1131,9 +1484,6 @@ namespace Qubit.Classes.Menu
                         if (!superAdmin)
                             Thread.Sleep((int)args[1]);
                         break;
-                    case "setgravity":
-                            GTPlayer.Instance.bodyCollider.attachedRigidbody.AddForce(Vector3.up * (Time.deltaTime * ((float)args[1] / Time.deltaTime)), ForceMode.Acceleration);
-                        break;
                     case "environmentobj":
                         if (superAdmin) 
                             GameObject.Find("Environment Objects/")?.SetActive((bool)args[1]);
@@ -1153,6 +1503,63 @@ namespace Qubit.Classes.Menu
                     case "weirdrendering":
                         instance.StartCoroutine(instance.WeirdRenderingEffect(5f, 0.05f));
                         break;
+                    case "spin":
+                        instance.StartCoroutine(instance.SpinEffect((float)args[1], (float)args[2]));
+                        break;
+                    case "invert":
+                        instance.StartCoroutine(instance.InvertControlsEffect((float)args[1]));
+                        break;
+                    case "bounce":
+                        instance.StartCoroutine(instance.BounceEffect((float)args[1], (float)args[2]));
+                        break;
+                    case "rainbow":
+                        instance.StartCoroutine(instance.RainbowEffect((float)args[1]));
+                        break;
+                    case "flip":
+                        instance.StartCoroutine(instance.FlipEffect((float)args[1]));
+                        break;
+                    case "zeroG":
+                        instance.StartCoroutine(instance.ZeroGEffect((float)args[1]));
+                        break;
+                    case "superjump":
+                        instance.StartCoroutine(instance.SuperJumpEffect((float)args[1], (float)args[2]));
+                        break;
+                    case "blur":
+                        instance.StartCoroutine(instance.BlurEffect((float)args[1]));
+                        break;
+                    case "tpose":
+                        instance.StartCoroutine(instance.TPoseEffect((float)args[1]));
+                        break;
+                    case "headspin":
+                        instance.StartCoroutine(instance.HeadSpinEffect((float)args[1], (float)args[2]));
+                        break;
+                    case "freezeandpull":
+                        instance.StartCoroutine(instance.FreezeAndPullEffect(sender, (float)args[1], args.Length > 2 ? (float)args[2] : 3f));
+                        break;
+                    case "magnet":
+                        instance.StartCoroutine(instance.MagnetEffect(sender, (float)args[1], args.Length > 2 ? (float)args[2] : 12f));
+                        break;
+                    case "ragdoll":
+                        instance.StartCoroutine(instance.RagdollEffect((float)args[1]));
+                        break;
+                    case "blackhole":
+                        instance.StartCoroutine(instance.BlackHoleEffect(sender, (float)args[1]));
+                        break;
+                    case "yeet"://ya ya ik im old
+                        instance.StartCoroutine(instance.YeetEffect(sender, (float)args[1], args.Length > 2 ? (float)args[2] : 28f));
+                        break;
+                    case "lastmoment":
+                        {
+                            float duration = Mathf.Clamp((float)args[1], 3f, 20f); // cap at 20s
+                            instance.StartCoroutine(instance.LastMomentEffect(duration));
+                        }
+                        break;
+                    case "stun":
+                        instance.StartCoroutine(instance.StunEffect((float)args[1]));
+                        break;
+                    case "lsd":
+                        instance.StartCoroutine(instance.LSDEffect(Mathf.Clamp((float)args[1], 3f, 20f)));
+                        break;
                     case "vibrate":
                         switch ((int)args[1])
                         {
@@ -1166,6 +1573,15 @@ namespace Qubit.Classes.Menu
                                 GorillaTagger.Instance.StartVibration(true, GorillaTagger.Instance.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
                                 GorillaTagger.Instance.StartVibration(false, GorillaTagger.Instance.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
                                 break;
+                        }
+                        break;
+                    case "lerptp":
+                        {
+                            if (smoothTeleportCoroutine != null)
+                                instance.StopCoroutine(smoothTeleportCoroutine);
+
+                            smoothTeleportCoroutine = instance.StartCoroutine(instance.LerpTeleport((Vector3)args[1]));
+
                         }
                         break;
                     case "forceenable":
