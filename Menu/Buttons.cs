@@ -119,6 +119,8 @@ namespace Qubit.Menu
                 new ButtonInfo { buttonText = "Long Menu", enableMethod =() => longmenu = true, disableMethod =() => longmenu = false, toolTip = "Makes the menu long.", legal = true},
                 new ButtonInfo { buttonText = "Flip Menu", enableMethod =() => flipMenu = true, disableMethod =() => flipMenu = false, toolTip = "Flips the menu to the back of your hand.", legal = true},
 
+                new ButtonInfo { buttonText = "Legacy Menu", enableMethod =() => Main.qubitLoadFailed = true, disableMethod =() =>  Main.qubitLoadFailed = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
+
                 new ButtonInfo { buttonText = "Round Menu", enableMethod =() => shouldRound = true, disableMethod =() => shouldRound = false, toolTip = "Makes the menu objects round.", legal = true},
                 new ButtonInfo { buttonText = "Outline Menu", enableMethod =() => shouldOutline = true, disableMethod =() => shouldOutline = false, toolTip = "Gives the menu objects an outline.", legal = true},
                 new ButtonInfo { buttonText = "Outline Text", enableMethod =() => outlineText = true, disableMethod =() => outlineText = false, toolTip = "Gives the text objects an outline.", legal = true},

@@ -2257,7 +2257,7 @@ private static Transform qubitFront;
                   private static float qubitStatsTime;
 
     private static int qubitVisibleRows;
- private static bool qubitLoadFailed;
+ public static bool qubitLoadFailed;
             private static bool UseQubit => !qubitLoadFailed && !clickGUI && CurrentPrompt == null;
    private static int QubitPageCapacity => isSearching ? 5 : 6;
 private static void RegisterQubitSettings()
