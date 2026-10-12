@@ -2444,6 +2444,73 @@ namespace Qubit.Menu
                 new ButtonInfo { buttonText = "Admin World On Gun", method = Experimental.WorldOnGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
                 new ButtonInfo { buttonText = "Admin World On All", method = Experimental.WorldOnAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
+
+
+
+
+                new ButtonInfo { buttonText = "Admin Spin Gun", method = Experimental.SpinGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Spin All", method = Experimental.SpinAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Invert Gun", method = Experimental.InvertGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Invert All", method = Experimental.InvertAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new ButtonInfo { buttonText = "Admin Bounce Gun", method = Experimental.BounceGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Bounce All", method = Experimental.BounceAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Rainbow Gun", method = Experimental.RainbowGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Rainbow All", method = Experimental.RainbowAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new ButtonInfo { buttonText = "Admin Flip Gun", method = Experimental.FlipGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Flip All", method = Experimental.FlipAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Zero-G Gun", method = Experimental.ZeroGGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Zero-G All", method = Experimental.ZeroGAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new ButtonInfo { buttonText = "Admin Super Jump Gun", method = Experimental.SuperjumpGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Super Jump All", method = Experimental.SuperjumpAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Blur Gun", method = Experimental.BlurGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Blur All", method = Experimental.BlurAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new ButtonInfo { buttonText = "Admin Tpose Gun", method = Experimental.TposeGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Tpose All", method = Experimental.TposeAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Headspin Gun", method = Experimental.HeadspinGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Headspin All", method = Experimental.HeadspinAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new ButtonInfo { buttonText = "Admin F&P Gun", method = Experimental.FreezeandpullGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin F&P All", method = Experimental.FreezeandpullAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Magnet Gun", method = Experimental.MagnetGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Magnet All", method = Experimental.MagnetAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new ButtonInfo { buttonText = "Admin Ragdoll Gun", method = Experimental.RagdollGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Ragdoll All", method = Experimental.RagdollAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Blackhole Gun", method = Experimental.BlackholeGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Blackhole All", method = Experimental.BlackholeAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new ButtonInfo { buttonText = "Admin Yeet Gun", method = Experimental.YeetGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Yeet All", method = Experimental.YeetAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin Lastmoment Gun", method = Experimental.LastmomentGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Lastmoment All", method = Experimental.LastmomentAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new ButtonInfo { buttonText = "Admin Stun Gun", method = Experimental.StunGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin Stun All", method = Experimental.StunAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new ButtonInfo { buttonText = "Admin LSD Gun", method = Experimental.LSDGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new ButtonInfo { buttonText = "Admin LSD All", method = Experimental.LSDAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
             },
 
             new[] { // Enabled Mods [24]

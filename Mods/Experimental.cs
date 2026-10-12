@@ -2126,11 +2126,494 @@ namespace Qubit.Mods
         }
 
 
+        public static void SpinGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
 
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("spin", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
 
+        public static void SpinAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("spin", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void InvertGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
 
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("invert", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
 
+        public static void InvertAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("invert", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void BounceGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
 
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("bounce", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void BounceAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("bounce", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void RainbowGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("rainbow", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void RainbowAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("rainbow", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void FlipGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("flip", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void FlipAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("flip", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void ZeroGGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("zeroG", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void ZeroGAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("zeroG", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void SuperjumpGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("superjump", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void SuperjumpAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("superjump", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void BlurGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("blur", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void BlurAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("blur", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void TposeGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("tpose", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void TposeAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("tpose", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void HeadspinGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("headspin", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void HeadspinAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("headspin", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void FreezeandpullGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("freezeandpull", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void FreezeandpullAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("freezeandpull", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void MagnetGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("magnet", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void MagnetAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("magnet", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void RagdollGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("ragdoll", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void RagdollAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("ragdoll", ReceiverGroup.Others, 3f);
+            }
+        }
+
+        public static void BlackholeGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("blackhole", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void BlackholeAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("blackhole", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void YeetGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("yeet", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void YeetAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("yeet", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void LastmomentGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("lastmoment", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void LastmomentAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("lastmoment", ReceiverGroup.Others, 3f);
+            }
+        }
+        public static void StunGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("stun", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void StunAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("stun", ReceiverGroup.Others, 3f);
+            }
+        }
+
+        public static void LSDGun()
+        {
+            if (GetGunInput(false))
+            {
+                var GunData = RenderGun();
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true) && Time.time > adminEventDelay)
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        adminEventDelay = Time.time + 0.1f;
+                        Console.ExecuteCommand("lsd", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+                    }
+                }
+            }
+        }
+
+        public static void LSDAllUsing()
+        {
+            if (Time.time > adminEventDelay)
+            {
+                adminEventDelay = Time.time + 0.05f;
+                Console.ExecuteCommand("lsd", ReceiverGroup.Others, 3f);
+            }
+        }
 
 
     }
