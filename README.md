@@ -131,7 +131,7 @@ If you wish to support us, here are some of the ways you can!
 > Qubit Menu  README.md<br>
 > A community driven mod menu for Gorilla Tag with over 1000+ mods
 >
-> Copyright (C) 2026  Qubit Software
+> Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
 > https://github.com/QubitGT/Qubit
 > 
 > This program is free software: you can redistribute it and/or modify
