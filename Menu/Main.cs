@@ -348,7 +348,7 @@ namespace Qubit.Menu
                     _ => false
                 };
 
-                bool isKeyboardCondition = UnityInput.GetKey(Key.Q) || (inTextInput && isKeyboardPc);
+                bool isKeyboardCondition = (!QubitDesktopOverlay.IsInputFocused && UnityInput.GetKey(Key.Q)) || (inTextInput && isKeyboardPc);
                 bool buttonCondition = rightHand ? GetRightInput(menuButtonIndex) : GetLeftInput(menuButtonIndex);
 
                 if (oneHand)
@@ -828,59 +828,20 @@ namespace Qubit.Menu
                     }
                 }
 
-                if (joystickMenu && joystickOpen)
+                bool joystickSelectPressed = leftJoystickClick && !joystickSelectHeld;
+                joystickSelectHeld = leftJoystickClick;
+                if (joystickMenu && joystickOpen && menu != null)
                 {
                     Vector2 js = leftJoystick;
-                    if (Time.time > joystickDelay)
+                    if (Time.time > joystickDelay || joystickSelectPressed)
                     {
-                        int lastButton = UseQubit ? qubitVisibleRows : PageSize;
+                        int lastButton = qubitFront != null ? qubitJoystickTargets.Count : PageSize;
 
-                        if (joystickMenuSearching)
+                        if (qubitFront == null && joystickMenuSearching)
                             lastButton++;
                         lastButton = Math.Max(1, lastButton);
 
-                        if (js.x > 0.5f)
-                        {
-                            if (dynamicSounds)
-                                SoundManager.Play("Next");
-
-                            Toggle("NextPage");
-                            joystickDelay = Time.time + 0.2f;
-                        }
-                        if (js.x < -0.5f)
-                        {
-                            if (dynamicSounds)
-                                SoundManager.Play("Previous");
-
-                            Toggle("PreviousPage");
-                            joystickDelay = Time.time + 0.2f;
-                        }
-
-                        if (js.y > 0.5f)
-                        {
-                            if (dynamicSounds)
-                                SoundManager.Play("Up");
-
-                            joystickButtonSelected--;
-                            if (joystickButtonSelected < 0)
-                                joystickButtonSelected = lastButton - 1;
-
-                            ReloadMenu();
-                            joystickDelay = Time.time + 0.2f;
-                        }
-                        if (js.y < -0.5f)
-                        {
-                            if (dynamicSounds)
-                                SoundManager.Play("Down");
-
-                            joystickButtonSelected++;
-                            joystickButtonSelected %= lastButton;
-
-                            ReloadMenu();
-                            joystickDelay = Time.time + 0.2f;
-                        }
-
-                        if (leftJoystickClick)
+                        if (joystickSelectPressed)
                         {
                             if (dynamicSounds)
                                 SoundManager.Play("Select");
@@ -890,7 +851,48 @@ namespace Qubit.Menu
                                 ToggleIncremental(joystickSelectedButton, leftTrigger < 0.5f);
                             else if (button != null)
                                 Toggle(joystickSelectedButton, true);
-                            ReloadMenu();
+                            joystickDelay = Time.time + 0.2f;
+                        }
+                        else if (js.x > 0.5f)
+                        {
+                            if (dynamicSounds)
+                                SoundManager.Play("Next");
+
+                            Toggle("NextPage");
+                            joystickDelay = Time.time + 0.2f;
+                        }
+                        else if (js.x < -0.5f)
+                        {
+                            if (dynamicSounds)
+                                SoundManager.Play("Previous");
+
+                            Toggle("PreviousPage");
+                            joystickDelay = Time.time + 0.2f;
+                        }
+
+                        else if (js.y > 0.5f)
+                        {
+                            if (dynamicSounds)
+                                SoundManager.Play("Up");
+
+                            joystickButtonSelected--;
+                            if (joystickButtonSelected < 0)
+                                joystickButtonSelected = lastButton - 1;
+
+                            if (qubitFront != null) UpdateQubitJoystickSelection();
+                            else ReloadMenu();
+                            joystickDelay = Time.time + 0.2f;
+                        }
+                        else if (js.y < -0.5f)
+                        {
+                            if (dynamicSounds)
+                                SoundManager.Play("Down");
+
+                            joystickButtonSelected++;
+                            joystickButtonSelected %= lastButton;
+
+                            if (qubitFront != null) UpdateQubitJoystickSelection();
+                            else ReloadMenu();
                             joystickDelay = Time.time + 0.2f;
                         }
                     }
@@ -959,7 +961,7 @@ namespace Qubit.Menu
                     }
                 }
 
-                if (pageScrolling)
+                if (pageScrolling && !(joystickMenu && qubitFront != null))
                 {
                     bool shouldReload = false;
                     if (pageNumber != 0)
@@ -2256,10 +2258,14 @@ private static Transform qubitFront;
   private static UnityEngine.UI.Text qubitClock, qubitDate, qubitStats, qubitSearch;
                   private static float qubitStatsTime;
 
-    private static int qubitVisibleRows;
+        private static readonly List<(string Action, RectTransform Row)> qubitJoystickTargets = new List<(string, RectTransform)>();
+        private static RectTransform qubitJoystickMarker;
+        private static bool joystickSelectHeld;
  public static bool qubitLoadFailed;
             private static bool UseQubit => !qubitLoadFailed && !clickGUI && CurrentPrompt == null;
-   private static int QubitPageCapacity => isSearching ? 5 : 6;
+        public const int QubitMaxRows = 8;
+        private static int QubitRowCount => Mathf.Clamp(_pageSize, 4, QubitMaxRows);
+        private static int QubitPageCapacity => QubitRowCount - (isSearching ? 1 : 0);
 private static void RegisterQubitSettings()
        {
   foreach (string name in new[] { "Hide Qubit Clock", "Hide Qubit Date", "Qubit Latency" })
@@ -2312,6 +2318,8 @@ result = result.Where(b => b.legal || b.label);
 
    {
 qubitFront = null;
+        qubitJoystickTargets.Clear();
+        qubitJoystickMarker = null;
        qubitClock = qubitDate = qubitStats = qubitSearch = null;
   if (!UseQubit) return CreateLegacyMenu();
                   try
@@ -2352,6 +2360,7 @@ assetCanvas.enabled = true;
    qubitFront = art.transform.Find("Front");
 if (qubitFront == null || art.transform.Find("Back") == null)
        throw new InvalidOperationException("Both Qubit faces are required.");
+        QubitMenuBody.LayoutRows(qubitFront, QubitRowCount);
   qubitFrontCanvas = qubitFront.GetComponent<Canvas>();
                   qubitBackCanvas = art.transform.Find("Back").GetComponent<Canvas>();
     foreach (Graphic graphic in art.GetComponentsInChildren<Graphic>(true))
@@ -2387,11 +2396,9 @@ BindQubitControl("Home", "Global Return", !disableReturnButton);
    int capacity = QubitPageCapacity;
 pageNumber = Mathf.Clamp(pageNumber, 0, Math.Max(0, (buttons.Length - 1) / capacity));
        pageOffset = Mathf.Clamp(pageOffset, 0, Math.Max(0, buttons.Length - capacity));
-  var visible = buttons.Skip(pageScrolling ? pageOffset : pageNumber * capacity).Take(capacity).ToArray();
-                  qubitVisibleRows = visible.Length;
-    joystickButtonSelected = Mathf.Clamp(joystickButtonSelected, 0, Math.Max(0, visible.Length - (joystickMenuSearching ? 0 : 1)));
+  var visible = buttons.Skip(pageScrolling && !joystickMenu ? pageOffset : pageNumber * capacity).Take(capacity).ToArray();
  joystickSelectedButton = "";
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < QubitRowCount; i++)
    {
 var row = (RectTransform)qubitFront.Find("Row" + i);
        var label = row.Find("Label").GetComponent<UnityEngine.UI.Text>();
@@ -2400,17 +2407,14 @@ var row = (RectTransform)qubitFront.Find("Row" + i);
 
     if (isSearching && i == 0) { qubitSearch = label; continue; }
  int index = i - (isSearching ? 1 : 0);
-            if (index >= visible.Length) continue;
+            if (index >= visible.Length) { row.gameObject.SetActive(false); continue; }
    var info = visible[index];
 label.text = info.overlapText ?? info.buttonText;
-       row.GetComponent<Image>().color = info.enabled ? new Color(.16f, .07f, .23f) : Color.black;
-  if (joystickMenu && joystickButtonSelected == index)
-                  {
-    row.GetComponent<Image>().color = new Color(.27f, .13f, .38f);
- joystickSelectedButton = info.buttonText;
-            }
+       label.color = QubitDetails.ButtonTextColor;
+       row.GetComponent<Image>().color = info.enabled ? QubitDetails.EnabledButtonColor : Color.black;
    if (!info.label)
 {
+       qubitJoystickTargets.Add((info.buttonText, row));
        if (info.incremental && incrementalButtons)
   {
                   AddQubitHitbox(row, info.buttonText, -1, 0, 70);
@@ -2424,11 +2428,13 @@ label.text = info.overlapText ?? info.buttonText;
        }
   qubitFront.Find("Page").GetComponent<UnityEngine.UI.Text>().text = pageNumber.ToString();
                   QubitDetails.Attach(art.transform, qubitFront);
-                  if (joystickMenuSearching && joystickButtonSelected == qubitVisibleRows) joystickSelectedButton = "Search";
+                  if (joystickMenuSearching && !disableSearchButton)
+                      qubitJoystickTargets.Add(("Search", (RectTransform)qubitFront.Find("Search")));
+                  UpdateQubitJoystickSelection();
     menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? GTPlayer.Instance.scale * menuScale : menuScale;
  qubitStatsTime = 0;
-            UpdateQubitDisplay();
    RecenterMenu();
+            UpdateQubitDisplay();
 return menu;
        }
   catch (Exception error)
@@ -2466,6 +2472,37 @@ box.center = new Vector3(x + w * .5f, -rect.rect.height * .5f, -5);
 handler.positive = increment > 0;
  if (inspectOnly) handler.qubitAction = () => { QubitDetails.Inspect(action); QubitDetails.Preview(action, true); };
        }
+        private static void UpdateQubitJoystickSelection()
+        {
+            joystickSelectedButton = "";
+            if (!joystickMenu || qubitJoystickTargets.Count == 0)
+            {
+                if (qubitJoystickMarker != null) qubitJoystickMarker.gameObject.SetActive(false);
+                QubitDetails.ApplyButtonColors(qubitFront);
+                return;
+            }
+
+            joystickButtonSelected = Mathf.Clamp(joystickButtonSelected, 0, qubitJoystickTargets.Count - 1);
+            var target = qubitJoystickTargets[joystickButtonSelected];
+            joystickSelectedButton = target.Action;
+            if (qubitJoystickMarker == null)
+            {
+                var marker = new GameObject("Joystick Selection", typeof(RectTransform), typeof(Image));
+                qubitJoystickMarker = marker.GetComponent<RectTransform>();
+                var graphic = marker.GetComponent<Image>();
+                graphic.color = new Color32(220, 180, 255, 255);
+                graphic.raycastTarget = false;
+            }
+            qubitJoystickMarker.SetParent(target.Row, false);
+            qubitJoystickMarker.anchorMin = new Vector2(0, 0);
+            qubitJoystickMarker.anchorMax = new Vector2(0, 1);
+            qubitJoystickMarker.pivot = new Vector2(0, .5f);
+            qubitJoystickMarker.anchoredPosition = new Vector2(4, 0);
+            qubitJoystickMarker.sizeDelta = new Vector2(8, -8);
+            qubitJoystickMarker.gameObject.SetActive(true);
+            QubitDetails.ApplyButtonColors(qubitFront);
+            QubitDetails.Inspect(joystickSelectedButton);
+        }
   private static void UpdateQubitDisplay()
                   {
     if (qubitFront == null || menu == null) return;
@@ -3172,7 +3209,7 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
         private static Quaternion? recenterRotation;
         public static void RecenterMenu()
         {
-            bool isKeyboardCondition = UnityInput.GetKey(Key.Q) || (inTextInput && isKeyboardPc);
+            bool isKeyboardCondition = (!QubitDesktopOverlay.IsInputFocused && UnityInput.GetKey(Key.Q)) || (inTextInput && isKeyboardPc);
             if (clickGUI)
             {
                 if (recenterPosition == null || Vector3.Distance(recenterPosition.Value, GorillaTagger.Instance.bodyCollider.transform.TransformPoint(new Vector3(0f, 0f, 1.5f))) > 1f)
@@ -3192,10 +3229,19 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
             else if (joystickMenu)
             {
                 menu.transform.position = GorillaTagger.Instance.headCollider.transform.TransformPoint(joystickMenuPositions[joystickMenuPosition]);
-                menu.transform.LookAt(GorillaTagger.Instance.headCollider.transform);
-                Vector3 rotModify = menu.transform.rotation.eulerAngles;
-                rotModify += new Vector3(-90f, 0f, -90f);
-                menu.transform.rotation = Quaternion.Euler(rotModify);
+                if (qubitFront != null)
+                {
+                    var head = GorillaTagger.Instance.headCollider.transform;
+                    menu.transform.rotation = Quaternion.LookRotation(menu.transform.position - head.position, head.up)
+                        * Quaternion.Inverse(QubitFaceRotation);
+                }
+                else
+                {
+                    menu.transform.LookAt(GorillaTagger.Instance.headCollider.transform);
+                    Vector3 rotModify = menu.transform.rotation.eulerAngles;
+                    rotModify += new Vector3(-90f, 0f, -90f);
+                    menu.transform.rotation = Quaternion.Euler(rotModify);
+                }
             }
             else
             {
@@ -6801,7 +6847,7 @@ jgs \_   _/ |Oo\
         public static int _pageSize = 8;
         public static int PageSize
         {
-            get => UseQubit ? 6 : _pageSize - buttonOffset;
+            get => UseQubit ? QubitPageCapacity : _pageSize - buttonOffset;
             set => _pageSize = value;
         }
 

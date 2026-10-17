@@ -19,9 +19,13 @@ namespace Qubit.Classes.Menu
         private static QubitDetails current;
         private static string selectedMod;
         private static int mode, candidate, descriptionPage;
-        private static ButtonInfo dotVisible, lineVisible, dotSize, dotOpacity, lineWidth, lineOpacity, pointerColor, themeEnabled;
+        private static ButtonInfo dotVisible, lineVisible, dotSize, dotOpacity, lineWidth, lineOpacity, pointerColor, themeEnabled, purpleButtonText;
         private static readonly Color Purple = new Color32(178, 112, 251, 255);
+        public static readonly Color EnabledButtonColor = new Color32(81, 24, 128, 255);
+        private static readonly Color SelectedButtonColor = new Color32(112, 36, 174, 255);
+        public static Color ButtonTextColor => purpleButtonText != null && purpleButtonText.enabled ? Purple : Color.white;
         private Transform face;
+        private Transform panelBody;
         private Canvas canvas;
         private GameObject pointer;
         private Transform dot;
@@ -31,6 +35,8 @@ namespace Qubit.Classes.Menu
         private bool touchWasVisible;
         private ButtonCollider[] targets;
         private bool wasPressed = true;
+        private UnityEngine.UI.Outline hoverOutline;
+        private readonly System.Collections.Generic.Dictionary<Image, UnityEngine.UI.Outline> hoverOutlines = new System.Collections.Generic.Dictionary<Image, UnityEngine.UI.Outline>();
         private readonly System.Collections.Generic.Dictionary<Graphic, Color> originalColors = new System.Collections.Generic.Dictionary<Graphic, Color>();
         private readonly System.Collections.Generic.Dictionary<Image, Sprite> originalSprites = new System.Collections.Generic.Dictionary<Image, Sprite>();
         private readonly System.Collections.Generic.Dictionary<Image, Image.Type> originalTypes = new System.Collections.Generic.Dictionary<Image, Image.Type>();
@@ -47,6 +53,11 @@ namespace Qubit.Classes.Menu
             pointerColor = Number("Qubit Pointer Color", new[] { 0f, 1f, 2f, 3f }, 0f, "(0 purple, 1 white, 2 cyan, 3 pink)");
             themeEnabled = Setting("Qubit Apply Theme Colors", "Applies the chosen menu theme to Qubit. Disable to restore the picture's purple and black colors.", false);
             themeEnabled.enableMethod = themeEnabled.disableMethod = () => { if (Main.menu != null) ApplyTheme(Main.menu); };
+            purpleButtonText = Setting("Qubit Purple Button Text", "Uses the original purple mod button text instead of white.", false);
+            purpleButtonText.enableMethod = purpleButtonText.disableMethod = () => {
+                if (Main.menu != null) ApplyTheme(Main.menu);
+                if (current != null) current.PreviewColors();
+            };
         }
         private static ButtonInfo Setting(string name, string tip, bool enabled)
         {
@@ -82,8 +93,10 @@ namespace Qubit.Classes.Menu
                 }
                 var panel = Instantiate(bundle.LoadAsset<GameObject>("QubitDetails"), art, false);
                 panel.transform.localRotation = Quaternion.identity;
-                QubitMenuBody.AttachDetails(art, panel.transform);
+                var body = QubitMenuBody.AttachDetails(art, panel.transform);
                 current = panel.AddComponent<QubitDetails>();
+                current.panelBody = body;
+                current.UpdatePanelSide();
                 current.face = front;
                 current.canvas = panel.GetComponent<Canvas>();
                 current.canvas.renderMode = RenderMode.WorldSpace;
@@ -100,8 +113,10 @@ namespace Qubit.Classes.Menu
                 current.dot = current.pointer.transform.Find("Dot");
                 current.line = current.pointer.GetComponent<LineRenderer>();
                 current.lineMaterial = new Material(current.line.sharedMaterial);
+                current.lineMaterial.shader = Shader.Find("GorillaTag/UberShader");
                 current.line.sharedMaterial = current.lineMaterial;
                 current.dotMaterial = new Material(current.dot.GetComponent<Renderer>().sharedMaterial);
+                current.dotMaterial.shader = Shader.Find("GorillaTag/UberShader");
                 current.dot.GetComponent<Renderer>().sharedMaterial = current.dotMaterial;
                 current.targets = Main.menu.GetComponentsInChildren<ButtonCollider>();
                 foreach (var graphic in front.GetComponentsInChildren<Graphic>(true)) current.originalColors[graphic] = graphic.color;
@@ -196,7 +211,7 @@ namespace Qubit.Classes.Menu
             var theme = mode == 2 ? Settings.Themes[candidate] : null;
             transform.Find("Preview").GetComponent<Image>().color = theme == null ? Purple : theme.Background().GetCurrentColor();
             transform.Find("PreviewRow").GetComponent<Image>().color = theme == null ? Color.black : theme.ButtonColors()[0].GetCurrentColor();
-            Label("PreviewText").color = theme == null ? Purple : theme.TextColors()[1].GetCurrentColor();
+            Label("PreviewText").color = ButtonTextColor;
             Label("PreviewSample").color = Label("PreviewHeading").color = theme == null ? Color.black : theme.TextColors()[0].GetCurrentColor();
         }
         public static void ApplyTheme(GameObject root)
@@ -209,6 +224,7 @@ namespace Qubit.Classes.Menu
                 foreach (var pair in current.originalColors) if (pair.Key != null) pair.Key.color = pair.Value;
                 foreach (var pair in current.originalSprites) if (pair.Key != null) pair.Key.sprite = pair.Value;
                 foreach (var pair in current.originalTypes) if (pair.Key != null) pair.Key.type = pair.Value;
+                ApplyButtonColors(front);
                 return;
             }
             foreach (var image in front.GetComponentsInChildren<Image>(true))
@@ -230,10 +246,61 @@ namespace Qubit.Classes.Menu
                 bool enabled = action != null && Buttons.GetIndex(action.relatedText)?.enabled == true;
                 text.color = Main.textColors[enabled ? 2 : 1].GetCurrentColor();
             }
+            ApplyButtonColors(front);
+        }
+        public static void ApplyButtonColors(Transform front)
+        {
+            bool themed = themeEnabled != null && themeEnabled.enabled;
+            foreach (Transform row in front)
+            {
+                if (!row.name.StartsWith("Row", StringComparison.Ordinal)) continue;
+                var action = row.GetComponentInChildren<ButtonCollider>(true);
+                bool enabled = action != null && Buttons.GetIndex(action.relatedText)?.enabled == true;
+                bool selected = Main.joystickMenu && action != null && action.relatedText == Main.joystickSelectedButton;
+                var image = row.GetComponent<Image>();
+                if (image != null)
+                    image.color = selected ? SelectedButtonColor : themed
+                        ? Main.buttonColors[enabled ? 1 : 0].GetCurrentColor()
+                        : enabled ? EnabledButtonColor : Color.black;
+                var label = row.Find("Label")?.GetComponent<Text>();
+                if (label != null) label.color = ButtonTextColor;
+            }
+        }
+        private void UpdatePanelSide()
+        {
+            bool rightHand = Main.rightHand || (Main.bothHands && ControllerInputPoller.instance.rightControllerSecondaryButton);
+            float side = rightHand ? -1f : 1f;
+            var position = transform.localPosition;
+            position.x = Mathf.Abs(position.x) * side;
+            transform.localPosition = position;
+            position = panelBody.localPosition;
+            position.x = Mathf.Abs(position.x) * side;
+            panelBody.localPosition = position;
+        }
+        private void SetHover(ButtonCollider target)
+        {
+            var image = target == null ? null : target.GetComponentInParent<Image>();
+            if (image != null && (image.transform.parent != face
+                || !image.name.StartsWith("Row", StringComparison.Ordinal)))
+                image = null;
+            UnityEngine.UI.Outline next = null;
+            if (image != null && !hoverOutlines.TryGetValue(image, out next))
+            {
+                next = image.gameObject.AddComponent<UnityEngine.UI.Outline>();
+                next.effectColor = new Color32(230, 204, 255, 255);
+                next.effectDistance = new Vector2(4, -4);
+                next.useGraphicAlpha = false;
+                hoverOutlines.Add(image, next);
+            }
+            if (hoverOutline == next) return;
+            if (hoverOutline != null) hoverOutline.enabled = false;
+            hoverOutline = next;
+            if (hoverOutline != null) hoverOutline.enabled = true;
         }
         private void LateUpdate()
         {
-            if (Main.menu == null || !transform.IsChildOf(Main.menu.transform)) { pointer.SetActive(false); return; }
+            if (Main.menu == null || !transform.IsChildOf(Main.menu.transform)) { SetHover(null); pointer.SetActive(false); return; }
+            UpdatePanelSide();
             var touch = Main.reference == null ? null : Main.reference.GetComponent<Renderer>();
             if (touch != touchRenderer)
             {
@@ -246,9 +313,15 @@ namespace Qubit.Classes.Menu
             var viewer = pc ? Main.TPC.transform.position : GorillaTagger.Instance.headCollider.transform.position;
             canvas.enabled = Vector3.Dot(viewer - face.position, -face.forward) >= 0;
             pointer.SetActive(canvas.enabled);
-            if (!canvas.enabled) return;
+            if (!canvas.enabled) { SetHover(null); return; }
             if (Time.unscaledTime >= refreshAt) { PreviewColors(); if (themeEnabled.enabled) ApplyTheme(Main.menu); refreshAt = Time.unscaledTime + .1f; }
-            if (Main.joystickMenu) Inspect(Main.joystickSelectedButton);
+            if (Main.joystickMenu)
+            {
+                SetHover(null);
+                Inspect(Main.joystickSelectedButton);
+                pointer.SetActive(false);
+                return;
+            }
             bool left = Main.reference != null && Main.reference.transform.parent == GorillaTagger.Instance.leftHandTransform;
             var hand = ControllerUtilities.GetTrueHandPosition(left);
             Ray ray = pc && Mouse.current != null ? Main.TPC.ScreenPointToRay(Mouse.current.position.ReadValue()) : new Ray(hand.position, hand.forward);
@@ -261,6 +334,7 @@ namespace Qubit.Classes.Menu
                 if (collider != null && collider.Raycast(ray, out var hit, distance)) { distance = hit.distance; closest = hit; target = item; }
             }
             bool hitMenu = target != null && Vector3.Dot(ray.origin - face.position, -face.forward) > 0;
+            SetHover(hitMenu ? target : null);
             dot.gameObject.SetActive(hitMenu && dotVisible.enabled);
             line.enabled = hitMenu && lineVisible.enabled;
             if (hitMenu)
@@ -282,6 +356,8 @@ namespace Qubit.Classes.Menu
         private void OnDestroy()
         {
             if (current == this) current = null;
+            foreach (var outline in hoverOutlines.Values)
+                if (outline != null) Object.Destroy(outline);
             if (dotMaterial != null) Object.Destroy(dotMaterial);
             if (lineMaterial != null) Object.Destroy(lineMaterial);
         }
@@ -290,6 +366,6 @@ namespace Qubit.Classes.Menu
             if (touchRenderer != null) touchRenderer.enabled = touchWasVisible;
             touchRenderer = null;
         }
-        private void OnDisable() { RestoreTouchPointer(); wasPressed = true; }
+        private void OnDisable() { SetHover(null); RestoreTouchPointer(); wasPressed = true; }
     }
 }

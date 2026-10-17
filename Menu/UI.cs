@@ -39,7 +39,6 @@ namespace Qubit.Menu
 {
     public class UI : MonoBehaviour
     {
-        // TODO: Convert this class to the assetbundle during TMPro migration
         public static UI Instance;
         public static Texture2D watermarkImage;
 
@@ -161,6 +160,13 @@ namespace Qubit.Menu
                 versionLabelDefaultPosition = versionLabel.rectTransform.anchoredPosition;
             }
 
+            desktopOverlay = QubitDesktopOverlay.Attach(uiPrefab.transform);
+            if (desktopOverlay != null)
+            {
+                foreach (Transform child in canvas)
+                    if (child.gameObject != debugUI && child.GetComponentInChildren<UnityEngine.EventSystems.EventSystem>(true) == null)
+                        child.gameObject.SetActive(false);
+            }
             Update();
         }
 
@@ -169,6 +175,7 @@ namespace Qubit.Menu
 
         private GameObject uiPrefab;
         private GameObject debugUI;
+        private QubitDesktopOverlay desktopOverlay;
 
         private Image watermark;
         private TextMeshProUGUI versionLabel;
@@ -207,6 +214,12 @@ namespace Qubit.Menu
 
                 if (Keyboard.current?.backquoteKey.wasPressedThisFrame == true)
                     ToggleDebug();
+
+                if (desktopOverlay != null)
+                {
+                    desktopOverlay.Refresh();
+                    return;
+                }
 
                 Color guiColor = Buttons.GetIndex("Swap GUI Colors").enabled
                     ? textColors[1].GetCurrentColor()

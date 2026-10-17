@@ -188,7 +188,7 @@ namespace Qubit.Menu
                 ButtonHelper.CreateNumeric("Change Notification Scale", 1, 20, 6, Settings.ApplyNotificationScale, v => v.ToString(), "Changes the scale of the notifications.", legal: true),
                 ButtonHelper.CreateNumeric("Change Arraylist Scale", 1, 20, 4, Settings.ApplyArraylistScale, v => v.ToString(), "Changes the scale of the arraylist.", legal: true),
                 ButtonHelper.CreateNumeric("Change Overlay Scale", 1, 20, 6, Settings.ApplyOverlayScale, v => v.ToString(), "Changes the scale of the overlay.", legal: true),
-                ButtonHelper.CreateNumeric("Change Page Size", 4, 16, _pageSize, Settings.ApplyPageSize, v => v.ToString(), "Changes the amount of buttons per page.", legal: true),
+                ButtonHelper.CreateNumeric("Change Page Size", 4, QubitMaxRows, _pageSize, Settings.ApplyPageSize, v => v.ToString(), "Changes the amount of rows per page, from 4 to 8. Search uses one row for the query.", legal: true),
                 ButtonHelper.CreateNumeric("Change Character Distance", 0, 15, characterDistance, Settings.ApplyCharacterDistance, v => (v + 1).ToString(), "Changes the distance between characters on the menu.", legal: true),
                 new ButtonInfo { buttonText = "Custom Menu Theme", enableMethod = Settings.CustomMenuTheme, disableMethod = Settings.FixTheme, toolTip = "Changes the theme of the menu to a custom one.", legal = true},
                 new ButtonInfo { buttonText = "Change Custom Menu Theme", method = Settings.ChangeCustomMenuTheme, isTogglable = false, toolTip = "Changes the theme of custom the menu.", legal = true},

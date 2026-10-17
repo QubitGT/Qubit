@@ -36,15 +36,58 @@ namespace Qubit.Classes.Menu
  Add(art,"PageTab",520,398,40,40,12);
     }
 
-        public static void AttachDetails(Transform art, Transform panel)
+        public static void LayoutRows(Transform front, int count)
+        {
+            var first = (RectTransform)front.Find("Row0");
+            var second = (RectTransform)front.Find("Row1");
+            var last = (RectTransform)front.Find("Row5");
+            float top = first.anchoredPosition.y + first.rect.yMax;
+            float bottom = last.anchoredPosition.y + last.rect.yMin;
+            float gap = Mathf.Max(0, first.anchoredPosition.y + first.rect.yMin
+                - second.anchoredPosition.y - second.rect.yMax);
+            float height = (top - bottom - gap * (count - 1)) / count;
+            for (int i = count; ; i++)
+            {
+                var unused = front.Find("Row" + i);
+                if (unused == null) break;
+                unused.gameObject.SetActive(false);
+            }
+            var rows = new RectTransform[count];
+            for (int i = 0; i < count; i++)
+            {
+                rows[i] = (RectTransform)front.Find("Row" + i);
+                if (rows[i] == null)
+                {
+                    rows[i] = Object.Instantiate(first, front, false);
+                    rows[i].name = "Row" + i;
+                }
+            }
+            for (int i = 0; i < count; i++)
+            {
+                var row = rows[i];
+                row.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height);
+                var position = row.anchoredPosition;
+                position.y = top - i * (height + gap) - (1 - row.pivot.y) * height;
+                row.anchoredPosition = position;
+
+                var label = (RectTransform)row.Find("Label");
+                label.anchorMin = new Vector2(label.anchorMin.x, 0);
+                label.anchorMax = new Vector2(label.anchorMax.x, 1);
+                label.sizeDelta = new Vector2(label.sizeDelta.x, 0);
+                label.anchoredPosition = new Vector2(label.anchoredPosition.x, 0);
+            }
+        }
+
+        public static Transform AttachDetails(Transform art, Transform panel)
         {
             
             const float size = .8f;
             const float width = 420 * size, height = 601 * size;
-            Add(art, "InfoPanel", 645, 0, width, height, 16 * size);
+            var body = Add(art, "InfoPanel", 645, 0, width, height, 16 * size);
             panel.localScale = new Vector3(.001f * size, .001f * size, .001f);
             panel.localPosition = new Vector3((645 + width * .5f - 310) * .001f,
                 (310 - height * .5f) * .001f, -HalfDepth - .0003f);
+            return body;
         }
 
  private static void Place(Transform back,string name,float x,float y,float w,float h)
@@ -53,7 +96,7 @@ namespace Qubit.Classes.Menu
             rect.anchoredPosition = new Vector2(x,-y);
  rect.sizeDelta = new Vector2(w,h);
        }
-  private static void Add(Transform art,string name,float x,float y,float w,float h,float radius)
+  private static Transform Add(Transform art,string name,float x,float y,float w,float h,float radius)
             {
  var size = new Vector3(w,h,radius);
        if (!meshes.TryGetValue(size,out var mesh))
@@ -68,6 +111,7 @@ namespace Qubit.Classes.Menu
   body.GetComponent<MeshRenderer>().sharedMaterial = material;
             body.GetComponent<MeshRenderer>().shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
  body.GetComponent<MeshRenderer>().receiveShadows = false;
+ return body.transform;
        }
 
   private static Mesh Build(float width,float height,float radius)

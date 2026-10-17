@@ -44,6 +44,7 @@
     <EmbeddedResource Include="Resources\qubitmenu" LogicalName="Qubit.Resources.qubitmenu" />
     <EmbeddedResource Include="Resources\qubitkeyboard" LogicalName="Qubit.Resources.qubitkeyboard" />
     <EmbeddedResource Include="Resources\qubitfonts" LogicalName="Qubit.Resources.qubitfonts" />
+    <EmbeddedResource Include="Resources\qubitdesktop" LogicalName="Qubit.Resources.qubitdesktop" />
     <EmbeddedResource Include="LICENSE" />
     <EmbeddedResource Include="Resources\Client\*" />
   </ItemGroup>
