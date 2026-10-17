@@ -375,3 +375,8 @@ Managers/AIManager.cs
 
 # Ignore the gitignore itself (keeps local ignore edits out of the tree)
 .gitignore
+# Freebuff / AI working data (local-only, never commit)
+.freebuff/
+.freebuff
+ai/
+**/ai/

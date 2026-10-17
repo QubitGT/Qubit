@@ -72,7 +72,6 @@ namespace Qubit.Patches.Menu
             }
         }
 
-        // ChatGPT used for math.. because I'm only 14 and haven't learned this yet and am not taking a class for a Gorilla Tag mod - iiDk
         private static Vector3 CalcMinSpeed(Vector3 origin, VRRig targetRig)
         {
             Vector3 targetPos = targetRig.headMesh.transform.position;
