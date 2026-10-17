@@ -1,13 +1,15 @@
 <p align="center">
-  <a href="#"><img src="Resources/GitHub/icon-transparent.png" width="130"></a><a href="#"><img src="Resources/GitHub/title.png" width="500"></a>
+  <br><br>
+  <a href="#"><img src="Resources/GitHub/title.png" width="700"></a>
+  <br><br>
 </p>
 
 ---
 
 <p align="center">
-	<a href="https://github.com/QubitGT/Qubit/releases"><img src="https://img.shields.io/github/v/release/Qubit/Qubit-Menu?label=version&style=for-the-badge"></a>
-	<a href="https://github.com/QubitGT/Qubit/releases/latest"><img src="https://img.shields.io/github/downloads/Qubit/Qubit-Menu/latest/Qubit-Menu.dll?style=for-the-badge"></a>
-	<a href="https://discord.gg/Qubit"><img src="https://img.shields.io/discord/1500168360787447909?label=discord&style=for-the-badge&color=blueviolet"></a>
+	<a href="https://github.com/QubitGT/Qubit/releases"><img src="https://img.shields.io/github/v/release/QubitGT/Qubit?label=version&style=for-the-badge"></a>
+	<a href="https://github.com/QubitGT/Qubit/releases/latest"><img src="https://img.shields.io/github/downloads/QubitGT/Qubit/latest/Qubit.Menu.dll?style=for-the-badge"></a>
+	<a href="https://discord.gg/qubit"><img src="https://img.shields.io/discord/1500168360787447909?label=discord&style=for-the-badge&color=blueviolet"></a>
 </p>
 
 ---
@@ -148,3 +150,8 @@ If you wish to support us, here are some of the ways you can!
 > This product is not affiliated with Another Axiom Inc. or its videogames Gorilla Tag and Orion Drift and is not endorsed or otherwise sponsored by Another Axiom. Portions of the materials contained herein are property of Another Axiom. ©2021 Another Axiom Inc.
 
 > The names "Qubit", "Qubit Software", logos, artwork, and branding are not covered by this license.
+
+<p align="center">
+  <b>QUBIT</b><br>
+  <sub>Built by the community. Powered by imagination.</sub>
+</p>
