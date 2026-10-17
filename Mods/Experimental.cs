@@ -2,7 +2,11 @@
  * Qubit Menu  Mods/Experimental.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -72,6 +76,7 @@ namespace Qubit.Mods
         }
 
         private static readonly Dictionary<Renderer, Material> oldMats = new Dictionary<Renderer, Material>();
+<<<<<<< HEAD
         public static void BetterFPSBoost()
         {
             foreach (Renderer v in Resources.FindObjectsOfTypeAll<Renderer>())
@@ -86,6 +91,60 @@ namespace Qubit.Mods
                             color = v.material.color
                         };
                         v.material = replacement;
+=======
+        private static readonly HashSet<Material> boostReplacements = new HashSet<Material>();
+        private static bool IsMapGeometry(Renderer v)
+        {
+            try
+            {
+                Transform t = v.transform;
+                while (t != null)
+                {
+                    string n = t.name;
+                    if (n == "Environment Objects" || n == "LocalObjects_Prefab" || n == "Terrain" || n == "pitgeo")
+                        return true;
+                    t = t.parent;
+                }
+                string own = v.gameObject.name.ToLowerInvariant();
+                if (own.Contains("pit") || own.Contains("terrain") || own.Contains("ground") || own.Contains("water") || own.Contains("sky"))
+                    return true;
+            }
+            catch { }
+            return false;
+        }
+        public static void BetterFPSBoost()
+        {
+            Shader uber = Shader.Find("GorillaTag/UberShader");
+            if (uber == null) return; // Never assign a null shader — that turns the whole map magenta.
+            // Scene objects only: Resources.FindObjectsOfTypeAll also returns prefabs/assets,
+            // and rewriting those corrupts the map (purple ground) across reloads.
+            foreach (Renderer v in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                try
+                {
+                    if (v == null || v.gameObject == null) continue;
+                    if (IsMapGeometry(v)) continue; // never flatten terrain/ground/water/sky
+                    Material source;
+                    try { source = v.sharedMaterial; } catch { continue; }
+                    if (source == null || source.shader == null) continue;
+                    if (boostReplacements.Contains(source)) continue;
+                    if (source.shader.name == "GorillaTag/UberShader" && !oldMats.ContainsKey(v))
+                    {
+                        oldMats.Add(v, source);
+                        // Clone the FULL material (all textures, floats, vectors, colors) then
+                        // pin the shader, instead of building a blank material with only color
+                        // + textures. A blank clone drops atlas-slice/float props and renders
+                        // map tints (e.g. pitground purple) as a flat solid color.
+                        Material replacement = new Material(source);
+                        replacement.shader = uber;
+                        replacement.renderQueue = source.renderQueue;
+                        foreach (string keyword in source.shaderKeywords)
+                        {
+                            try { replacement.EnableKeyword(keyword); } catch { }
+                        }
+                        boostReplacements.Add(replacement);
+                        try { v.sharedMaterial = replacement; } catch { v.material = replacement; }
+>>>>>>> da96021c (Fixes)
                     }
                 }
                 catch (Exception exception) { LogManager.LogError(string.Format("mat error {1} - {0}", exception.Message, exception.StackTrace)); }
@@ -94,8 +153,29 @@ namespace Qubit.Mods
 
         public static void DisableBetterFPSBoost()
         {
+<<<<<<< HEAD
             foreach (KeyValuePair<Renderer, Material> v in oldMats)
                 v.Key.material = v.Value;
+=======
+            // Per-renderer restore so one destroyed renderer can't abort the loop and
+            // leave the rest (e.g. pit ground) stuck on the flat replacement material.
+            var keys = new List<Renderer>(oldMats.Keys);
+            foreach (Renderer r in keys)
+            {
+                try
+                {
+                    if (r == null) continue;
+                    Material original = oldMats[r];
+                    if (original == null) continue;
+                    Material current = null;
+                    try { current = r.sharedMaterial; } catch { }
+                    try { r.sharedMaterial = original; } catch { try { r.material = original; } catch { } }
+                    try { if (current != null && boostReplacements.Contains(current)) { boostReplacements.Remove(current); Object.Destroy(current); } } catch { }
+                }
+                catch (Exception exception) { LogManager.LogError(string.Format("restore mat error {1} - {0}", exception.Message, exception.StackTrace)); }
+            }
+            oldMats.Clear();
+>>>>>>> da96021c (Fixes)
         }
 
         public static void OnlySerializeNecessary()

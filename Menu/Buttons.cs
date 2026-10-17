@@ -2,7 +2,11 @@
  * Qubit Menu  Menu/Buttons.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -935,7 +939,11 @@ namespace Qubit.Menu
                 new ButtonInfo { buttonText = "Info Watch", enableMethod = Visuals.WatchOn, method = Visuals.WatchStep, disableMethod = Visuals.WatchOff, toolTip = "Puts a watch on your hand that tells you the time and your FPS."},
                 new ButtonInfo { buttonText = "Leaderboard Info", enableMethod =() => UpdatePatch.enabled = true, method = Visuals.LeaderboardInfo, disableMethod =() => UpdatePatch.enabled = false, toolTip = "Shows info next to players' names on the leaderboard."},
 
+<<<<<<< HEAD
                 new ButtonInfo { buttonText = "FPS Boost", aliases = new[] { "Low Quality" }, enableMethod =() => QualitySettings.globalTextureMipmapLimit = int.MaxValue, disableMethod =() => QualitySettings.globalTextureMipmapLimit = 1, toolTip = "Makes everything low quality in an attempt to boost your FPS.", },
+=======
+                new ButtonInfo { buttonText = "FPS Boost", aliases = new[] { "Low Quality" }, enableMethod =() => QualitySettings.globalTextureMipmapLimit = 3, disableMethod =() => QualitySettings.globalTextureMipmapLimit = 0, toolTip = "Makes everything low quality in an attempt to boost your FPS.", },
+>>>>>>> da96021c (Fixes)
                 new ButtonInfo { buttonText = "Freeze In Background", enableMethod =() => Application.runInBackground = false, disableMethod =() => Application.runInBackground = true, toolTip = "Freezes the game when the application is not focused.", legal = true},
 
                 new ButtonInfo { buttonText = "Fake Unban Self", method = Visuals.FakeUnbanSelf, isTogglable = false, toolTip = "Makes it appear as if you're not banned." },

@@ -24,6 +24,13 @@ namespace Qubit.Classes.Menu
         private Button join, disconnect;
         private RectTransform roomPanel, modsPanel, content, rowTemplate;
         private GameObject empty, brand;
+<<<<<<< HEAD
+=======
+        private GameObject promptPanel;
+        private Text promptMessage, promptAcceptLabel, promptDeclineLabel;
+        private Button promptAccept, promptDecline;
+        private string lastPromptSignature;
+>>>>>>> da96021c (Fixes)
         private ScrollRect scroll;
         private readonly List<RectTransform> rows = new List<RectTransform>();
         private float nextRefresh;
@@ -109,6 +116,10 @@ namespace Qubit.Classes.Menu
                 feedback.text = "Player color updated.";
             });
             ApplyLayout(setName);
+<<<<<<< HEAD
+=======
+            BuildPromptPanel();
+>>>>>>> da96021c (Fixes)
             if (EventSystem.current == null)
             {
                 var events = new GameObject("Qubit Overlay Events", typeof(EventSystem), typeof(InputSystemUIInputModule));
@@ -118,6 +129,87 @@ namespace Qubit.Classes.Menu
             Refresh();
         }
 
+<<<<<<< HEAD
+=======
+        /// <summary>
+        /// Desktop users can't reach the VR world-space menu, so a VR prompt (achievements,
+        /// room-size questions, etc.) would hide every button with no way to answer it.
+        /// This screen-space panel mirrors the current prompt with clickable buttons.
+        /// </summary>
+        private void BuildPromptPanel()
+        {
+            var resources = new DefaultControls.Resources();
+            GameObject panel = DefaultControls.CreatePanel(resources);
+            panel.name = "QubitPromptPanel";
+            panel.transform.SetParent(transform, false);
+            var rect = panel.GetComponent<RectTransform>();
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = Vector2.zero;
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 430);
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 230);
+            var bg = panel.GetComponent<Image>();
+            if (bg != null) { bg.color = new Color(0.08f, 0.08f, 0.1f, 0.96f); Round(bg); }
+
+            GameObject msgObj = DefaultControls.CreateText(resources);
+            msgObj.name = "Message";
+            msgObj.transform.SetParent(panel.transform, false);
+            promptMessage = msgObj.GetComponent<Text>();
+            promptMessage.alignment = TextAnchor.MiddleCenter;
+            promptMessage.fontSize = 18;
+            promptMessage.supportRichText = true;
+            var msgRect = msgObj.GetComponent<RectTransform>();
+            msgRect.anchorMin = new Vector2(0.5f, 1f); msgRect.anchorMax = new Vector2(0.5f, 1f); msgRect.pivot = new Vector2(0.5f, 1f);
+            msgRect.anchoredPosition = new Vector2(0, -12);
+            msgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 390);
+            msgRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 120);
+
+            GameObject acceptObj = DefaultControls.CreateButton(resources);
+            acceptObj.name = "Accept";
+            acceptObj.transform.SetParent(panel.transform, false);
+            promptAccept = acceptObj.GetComponent<Button>();
+            promptAcceptLabel = acceptObj.GetComponentInChildren<Text>();
+            var acceptRect = acceptObj.GetComponent<RectTransform>();
+            acceptRect.anchorMin = acceptRect.anchorMax = acceptRect.pivot = new Vector2(0.5f, 0f);
+            acceptRect.anchoredPosition = new Vector2(-90, 16);
+            acceptRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 150);
+            acceptRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 40);
+            promptAccept.onClick.AddListener(() => Main.Toggle("Accept Prompt"));
+
+            GameObject declineObj = DefaultControls.CreateButton(resources);
+            declineObj.name = "Decline";
+            declineObj.transform.SetParent(panel.transform, false);
+            promptDecline = declineObj.GetComponent<Button>();
+            promptDeclineLabel = declineObj.GetComponentInChildren<Text>();
+            var declineRect = declineObj.GetComponent<RectTransform>();
+            declineRect.anchorMin = declineRect.anchorMax = declineRect.pivot = new Vector2(0.5f, 0f);
+            declineRect.anchoredPosition = new Vector2(90, 16);
+            declineRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 150);
+            declineRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, 40);
+            promptDecline.onClick.AddListener(() => Main.Toggle("Decline Prompt"));
+
+            promptPanel = panel;
+            promptPanel.SetActive(false);
+        }
+
+        private void UpdatePromptPanel()
+        {
+            var prompt = Main.CurrentPrompt;
+            if (promptPanel == null) return;
+            promptPanel.SetActive(prompt != null);
+            if (prompt == null) { lastPromptSignature = null; return; }
+            string signature = prompt.Message + "|" + prompt.AcceptText + "|" + prompt.DeclineText;
+            if (signature == lastPromptSignature) return;
+            lastPromptSignature = signature;
+            // Strip image/video embed tags (<url>) — the VR menu renders those as pictures.
+            string text = System.Text.RegularExpressions.Regex.Replace(prompt.Message ?? "", "<[^>]+>", "").Trim();
+            promptMessage.text = Main.NoRichtextTags(text);
+            promptAcceptLabel.text = string.IsNullOrEmpty(prompt.AcceptText) ? "Ok" : Main.NoRichtextTags(prompt.AcceptText);
+            bool hasDecline = !string.IsNullOrEmpty(prompt.DeclineText);
+            promptDecline.gameObject.SetActive(hasDecline);
+            if (hasDecline) promptDeclineLabel.text = Main.NoRichtextTags(prompt.DeclineText);
+        }
+
+>>>>>>> da96021c (Fixes)
         private static void SetSize(RectTransform rect, float width, float height)
         {
             rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, width);
@@ -311,6 +403,10 @@ namespace Qubit.Classes.Menu
             disconnect.interactable = inRoom;
             join.interactable = PhotonNetworkController.Instance != null;
             brand.SetActive(!Main.disableWatermark);
+<<<<<<< HEAD
+=======
+            UpdatePromptPanel();
+>>>>>>> da96021c (Fixes)
 
             if (flipped != Main.flipArraylist)
             {

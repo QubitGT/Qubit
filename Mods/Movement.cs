@@ -2,7 +2,11 @@
  * Qubit Menu  Mods/Movement.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -487,6 +491,13 @@ namespace Qubit.Mods
 
         public static void WASDFly()
         {
+<<<<<<< HEAD
+=======
+            // Don't fly while typing in search/prompts/PC inputs — Space/WASD would both type and levitate.
+            if (Main.inTextInput || Main.isSearching || UI.FocusedOnPCInput)
+                return;
+
+>>>>>>> da96021c (Fixes)
             bool stationary = !Buttons.GetIndex("Disable Stationary WASD Fly").enabled;
 
             bool W = UnityInput.GetKey(Key.W);

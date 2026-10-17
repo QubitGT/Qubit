@@ -2,7 +2,11 @@
  * Qubit Menu  Patches/Menu/UpdatePatch.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify

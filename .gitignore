@@ -364,3 +364,14 @@ FodyWeavers.xsd
 
 .vscode
 .idea
+
+# AI files (local-only AI references and artefacts)
+References/Managed/Meta.WitAi*.dll
+References/Managed/Unity.AI.*.dll
+References/Managed/UnityEngine.AIModule.dll
+Managers/AIManager.cs
+**/*artificialintelligence*
+**/*artificial-intelligence*
+
+# Ignore the gitignore itself (keeps local ignore edits out of the tree)
+.gitignore

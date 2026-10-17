@@ -2,7 +2,11 @@
  * Qubit Menu  Mods/Settings.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -152,8 +156,16 @@ namespace Qubit.Mods
                 StopCurrentPrompt();
         }
 
+<<<<<<< HEAD
         public static void StopCurrentPrompt() =>
             prompts.RemoveAt(0);
+=======
+        public static void StopCurrentPrompt()
+        {
+            if (prompts.Count > 0)
+                prompts.RemoveAt(0);
+        }
+>>>>>>> da96021c (Fixes)
 
         public static GameObject TutorialObject;
         public static LineRenderer TutorialSelector;

@@ -2,7 +2,11 @@
  * Qubit Menu  Managers/AchievementManager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -41,11 +45,22 @@ namespace Qubit.Managers
                 if (_achievements != null) return _achievements;
                 _achievements = new List<Achievement>();
 
+<<<<<<< HEAD
                 string[] files = Directory.GetFiles($"{PluginInfo.BaseDirectory}/Achievements");
                 foreach (string file in files)
                 {
                     if (file.EndsWith(".json"))
                         _achievements.Add(Achievement.FromJObject(JObject.Parse(File.ReadAllText(file))));
+=======
+                string[] files;
+                try { files = Directory.GetFiles($"{PluginInfo.BaseDirectory}/Achievements"); }
+                catch { files = System.Array.Empty<string>(); }
+                foreach (string file in files)
+                {
+                    if (!file.EndsWith(".json")) continue;
+                    try { _achievements.Add(Achievement.FromJObject(JObject.Parse(File.ReadAllText(file)))); }
+                    catch (System.Exception ex) { LogManager.LogError($"Skipping corrupt achievement file '{file}': {ex.Message}"); }
+>>>>>>> da96021c (Fixes)
                 }
 
                 return _achievements;
@@ -99,7 +114,16 @@ namespace Qubit.Managers
             NotificationManager.SendNotification($"<color=grey>[</color><color=purple>ACHIEVEMENT</color><color=grey>]</color> Achievement unlocked! \"{achievement.name}\"");
 
             Achievements.Add(achievement);
+<<<<<<< HEAD
             File.WriteAllText($"{PluginInfo.BaseDirectory}/Achievements/{achievement.name.Hash()}.json", achievement.ToJObject().ToString());
+=======
+            try
+            {
+                Directory.CreateDirectory($"{PluginInfo.BaseDirectory}/Achievements");
+                File.WriteAllText($"{PluginInfo.BaseDirectory}/Achievements/{achievement.name.Hash()}.json", achievement.ToJObject().ToString());
+            }
+            catch (System.Exception ex) { LogManager.LogError($"Failed to save achievement '{achievement.name}': {ex.Message}"); }
+>>>>>>> da96021c (Fixes)
         }
 
         public struct Achievement

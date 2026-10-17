@@ -2,7 +2,11 @@
  * Qubit Menu  Classes/Menu/Console.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -40,6 +44,10 @@ using System.Net.Http;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+<<<<<<< HEAD
+=======
+using Valve.Newtonsoft.Json.Linq;
+>>>>>>> da96021c (Fixes)
 using TMPro;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -145,6 +153,10 @@ namespace Qubit.Classes.Menu
 
             instance.StartCoroutine(DownloadAdminTextures());
             instance.StartCoroutine(PreloadAssets());
+<<<<<<< HEAD
+=======
+            instance.StartCoroutine(LogTeamBanner());
+>>>>>>> da96021c (Fixes)
 
             Log($@"
 
@@ -161,6 +173,52 @@ namespace Qubit.Classes.Menu
             (GraphicsSettings.currentRenderPipeline as UniversalRenderPipelineAsset).supportsCameraDepthTexture = true;
         }
 
+<<<<<<< HEAD
+=======
+        private static readonly string TeamBannerArt = @"
+                            ▀█▄▄▄▀█          ▄▄░▀▀▄ ▄▄▄▀▀▀█
+                             █   █           █  ▓█   █   █
+  ▀▄▄▄▄▄▄▄▀     ▀▄▄▄ ▄▄▄▀    █ ░ █           █░░▀█   █ ░ █▄▄▄
+ ██▓██▀██▓██   ██▓██ ██▓██   █░▒░█            ▀▀▀    █░▒░▀▓█▀▀
+█▓▒▓     ▓▒▓█ █▓▒▓     ▓▒▓█  █▒▓▒█░▀▀▀▀■▄   ▀█▒▓▒█▀  █▒▓▒██░█
+█▒░▒▓   ▓▒░▒█ █▒░▒▓   ▓▒░▒█  █▓█▓█   ░░▒ ░   █▓█▓░   █▓█▓░▒▀
+█░ ░▓   ▓░ ░█ █░ ░▓   ▓░ ░█  ██░█░   ▐▒▓░▌▌  █ ░ ▒   █ ░ ▒░
+ █ ░▒ ▄ ▒░ ██  █ ░▒▄ ▄▒░ █  ▄█░▒░▒   ▓▓ ▓▓   █░▒░▓   █░▒░▓▓▄■▄
+  ▀▄▄▄■▄■░█░█   ▀▄▄▄▄▄▄▄▀    ▀▀▀▀▄▄▄▀▀▀▀▄   ▄█■▀▀ ▄  ■▀▀▀▄▀▀▀▀
+        █▒█▒█                                       ▀▀
+        █▓▄▓█
+        ▀▀▀▀▀";
+
+        // Prints the team banner right after the console startup banner. The menu
+        // version is read live from the server; any failure falls back to the
+        // build version so a dead server can never break startup.
+        private static IEnumerator LogTeamBanner()
+        {
+            string version = PluginInfo.Version;
+            UnityWebRequest request = null;
+            try { request = UnityWebRequest.Get(ServerData.ServerDataEndpoint); }
+            catch { request = null; }
+            if (request != null)
+            {
+                using (request)
+                {
+                    yield return request.SendWebRequest();
+                    if (request.result == UnityWebRequest.Result.Success)
+                    {
+                        try
+                        {
+                            string serverVersion = (string)JObject.Parse(request.downloadHandler.text)["menu-version"];
+                            if (!string.IsNullOrEmpty(serverVersion))
+                                version = serverVersion;
+                        }
+                        catch { }
+                    }
+                }
+            }
+            Log(TeamBannerArt + "\nMade by Qubit Team\nVersion: " + version + "\nDiscord: discord.gg/qubit");
+        }
+
+>>>>>>> da96021c (Fixes)
         public static void LoadConsole() =>
             GorillaTagger.OnPlayerSpawned(() => LoadConsoleImmediately());
 

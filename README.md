@@ -1,15 +1,25 @@
 <p align="center">
+<<<<<<< HEAD
   <br><br>
   <a href="#"><img src="Resources/GitHub/title.png" width="700"></a>
   <br><br>
+=======
+  <a href="#"><img src="Resources/GitHub/icon-transparent.png" width="130"></a><a href="#"><img src="Resources/GitHub/title.png" width="500"></a>
+>>>>>>> da96021c (Fixes)
 </p>
 
 ---
 
 <p align="center">
+<<<<<<< HEAD
 	<a href="https://github.com/QubitGT/Qubit/releases"><img src="https://img.shields.io/github/v/release/QubitGT/Qubit?label=version&style=for-the-badge"></a>
 	<a href="https://github.com/QubitGT/Qubit/releases/latest"><img src="https://img.shields.io/github/downloads/QubitGT/Qubit/latest/Qubit.Menu.dll?style=for-the-badge"></a>
 	<a href="https://discord.gg/qubit"><img src="https://img.shields.io/discord/1500168360787447909?label=discord&style=for-the-badge&color=blueviolet"></a>
+=======
+	<a href="https://github.com/QubitGT/Qubit/releases"><img src="https://img.shields.io/github/v/release/Qubit/Qubit-Menu?label=version&style=for-the-badge"></a>
+	<a href="https://github.com/QubitGT/Qubit/releases/latest"><img src="https://img.shields.io/github/downloads/Qubit/Qubit-Menu/latest/Qubit-Menu.dll?style=for-the-badge"></a>
+	<a href="https://discord.gg/Qubit"><img src="https://img.shields.io/discord/1500168360787447909?label=discord&style=for-the-badge&color=blueviolet"></a>
+>>>>>>> da96021c (Fixes)
 </p>
 
 ---
@@ -102,7 +112,11 @@ Let's bring back the collaboration of modding. No paywalls, no secrets, no malwa
 <details>
   <summary><b>🗣️ Contact Information</b></summary>
 	
+<<<<<<< HEAD
 Join our [Discord](https://discord.gg/qubit)!
+=======
+Join our [Discord](https://discord.gg/Qubit)!
+>>>>>>> da96021c (Fixes)
 
 </details>
 
@@ -125,13 +139,21 @@ If you wish to support us, here are some of the ways you can!
 > Menu sends requests to https://text.pollinations.ai for the mod **AI Assistant**. (when enabled)<br>
 > Menu sends requests to https://lazypy.ro for many TTS voices.<br>
 > Menu connects to wss://api.qubit.mom for friend system and administrative purposes.<br>
+<<<<<<< HEAD
 > **Read our [Privacy Policy](https://qubit.mom/policy) (https://qubit.mom/policy) for details on how this data is collected and used.**<br>
+=======
+> **Read our [Privacy Policy](https://Qubit.software/policy?tab=privacy) (https://Qubit.software/policy) for details on how this data is collected and used.**<br>
+>>>>>>> da96021c (Fixes)
 > The donate, search, star and speak symbols are provided from [Icons8](https://icons8.com).
 
 > Qubit Menu  README.md<br>
 > A community driven mod menu for Gorilla Tag with over 1000+ mods
 >
+<<<<<<< HEAD
 > Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+> Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
 > https://github.com/QubitGT/Qubit
 > 
 > This program is free software: you can redistribute it and/or modify
@@ -150,8 +172,11 @@ If you wish to support us, here are some of the ways you can!
 > This product is not affiliated with Another Axiom Inc. or its videogames Gorilla Tag and Orion Drift and is not endorsed or otherwise sponsored by Another Axiom. Portions of the materials contained herein are property of Another Axiom. ©2021 Another Axiom Inc.
 
 > The names "Qubit", "Qubit Software", logos, artwork, and branding are not covered by this license.
+<<<<<<< HEAD
 
 <p align="center">
   <b>QUBIT</b><br>
   <sub>Built by the community. Powered by imagination.</sub>
 </p>
+=======
+>>>>>>> da96021c (Fixes)

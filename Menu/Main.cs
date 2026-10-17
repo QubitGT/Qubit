@@ -2,7 +2,11 @@
  * Qubit Menu  Menu/Main.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -3439,6 +3443,10 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
         public static event Action OnMenuOpened;
         public static void OpenMenu()
         {
+<<<<<<< HEAD
+=======
+            try { UI.ClearPCInputFocus(); } catch { }
+>>>>>>> da96021c (Fixes)
             try
             {
                 OnMenuOpened?.Invoke();
@@ -3483,6 +3491,10 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
         public static event Action OnMenuClosed;
         public static void CloseMenu()
         {
+<<<<<<< HEAD
+=======
+            try { UI.ClearPCInputFocus(); } catch { }
+>>>>>>> da96021c (Fixes)
             try
             {
                 OnMenuClosed?.Invoke();
@@ -3757,7 +3769,11 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
                     case "png":
                     case "jpg":
                         {
+<<<<<<< HEAD
                             promptImage.material.SetTexture("_MainTex", LoadTextureFromURL(promptImageUrl, fileName));
+=======
+                            promptImage.material.SetTexture("_MainTex", LoadPromptTextureSafe(promptImageUrl, fileName));
+>>>>>>> da96021c (Fixes)
                             promptImage.material.color = Color.white;
                         }
                         break;
@@ -3933,6 +3949,23 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
             return match.Success ? match.Groups["url"].Value : null;
         }
 
+<<<<<<< HEAD
+=======
+        // Prompt images download synchronously during the menu rebuild; a blocked or
+        // unreachable URL (e.g. achievement icons) must never kill the whole menu.
+        private static Texture2D LoadPromptTextureSafe(string url, string fileName)
+        {
+            try { return LoadTextureFromURL(url, fileName); }
+            catch (Exception ex)
+            {
+                LogManager.LogError($"Prompt image failed ({fileName}): {ex.Message}");
+                return null;
+            }
+        }
+
+
+
+>>>>>>> da96021c (Fixes)
         private static GameObject AdvancedAddButton(string buttonName, Vector3 scale, Vector3 position, Vector3 textPosition, ExtGradient color, Vector2? textSize, int arrowIndex)
         {
             GameObject button = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -6066,8 +6099,38 @@ qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
 
                 if (CurrentPrompt != null && CurrentPrompt.IsText && !inTextInput)
                     Settings.SpawnKeyboard();
+<<<<<<< HEAD
 
                 CreateMenu();
+=======
+            }
+
+            // CreateMenu can throw (e.g. a prompt image that fails to download,
+            // like achievement icons when the resource server is unreachable).
+            // Never strand an opened menu as null/invisible — drop the poisoned
+            // prompt and retry once so the menu always comes back. (menuOpenCount
+            // guards this so menu-less startup/desktop flows never spawn a menu.)
+            if (menu == null && menuOpenCount > 0)
+            {
+                try
+                {
+                    CreateMenu();
+                }
+                catch (Exception ex)
+                {
+                    LogManager.LogError($"ReloadMenu CreateMenu failed, dropping prompt and retrying: {ex.Message}");
+                    try
+                    {
+                        if (prompts.Count > 0)
+                            prompts.RemoveAt(0);
+                        CreateMenu();
+                    }
+                    catch (Exception ex2)
+                    {
+                        LogManager.LogError($"ReloadMenu retry failed: {ex2.Message}");
+                    }
+                }
+>>>>>>> da96021c (Fixes)
             }
 
             if (reference == null) return;

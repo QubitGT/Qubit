@@ -2,7 +2,11 @@
  * Qubit Menu  Managers/CustomBoardManager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -89,6 +93,7 @@ namespace Qubit.Managers
                         catch { }
                     }
 
+<<<<<<< HEAD
                     var stumpChildren = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom").transform.Children()
                                    .Where(x => x.name.Contains("UnityTempFile"))
                                    .ToList();
@@ -108,6 +113,27 @@ namespace Qubit.Managers
                     {
                         var forestBoard = forestChildren[ForestLeaderboardIndex];
                         if (forestBoard != null && instance.forestMaterial != null)
+=======
+                    GameObject stumpRoot = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom");
+                    if (stumpRoot != null && instance.stumpMaterial != null)
+                    {
+                        var stumpChildren = stumpRoot.transform.Children()
+                                       .Where(x => x.name.Contains("UnityTempFile"))
+                                       .ToList();
+                        var stumpBoard = FindLeaderboardCandidate(stumpChildren, null, instance.stumpMaterial, StumpLeaderboardIndex);
+                        if (stumpBoard != null)
+                            stumpBoard.GetComponent<Renderer>().material = instance.stumpMaterial;
+                    }
+
+                    GameObject forestRoot = GetObject("Environment Objects/LocalObjects_Prefab/Forest");
+                    if (forestRoot != null && instance.forestMaterial != null)
+                    {
+                        var forestChildren = forestRoot.transform.Children()
+                            .Where(x => x.name.Contains("UnityTempFile"))
+                            .ToList();
+                        var forestBoard = FindLeaderboardCandidate(forestChildren, ForestScoreboardAnchorPath, instance.forestMaterial, ForestLeaderboardIndex);
+                        if (forestBoard != null)
+>>>>>>> da96021c (Fixes)
                             forestBoard.GetComponent<Renderer>().material = instance.forestMaterial;
                     }
 
@@ -173,6 +199,146 @@ namespace Qubit.Managers
         public const int StumpLeaderboardIndex = 3;
         public const int ForestLeaderboardIndex = 6;
 
+<<<<<<< HEAD
+=======
+        private const string ForestScoreboardAnchorPath = "Environment Objects/LocalObjects_Prefab/Forest/ForestScoreboardAnchor/GorillaScoreBoard";
+
+        // A leaderboard backplate is a few meters across; terrain/ground chunks are far bigger.
+        // Never paint BoardMaterial onto something huge — that is what turned the whole
+        // forest floor solid purple when the hardcoded child index drifted onto map geometry.
+        private static bool IsSafeBoardTarget(GameObject obj)
+        {
+            if (obj == null) return false;
+            try
+            {
+                Renderer r = obj.GetComponent<Renderer>();
+                if (r == null) return false;
+                if (r.bounds.size.magnitude > 60f) return false;
+            }
+            catch { return false; }
+            return true;
+        }
+
+        // The forest/stump leaderboards are found by child index into the UnityTempFile
+        // meshes, which breaks whenever the game adds or reorders them. Live log proves
+        // position matching can never work (all 21 forest meshes sit 86.2m from the
+        // anchor), so identify the board by material: the mesh sharing a non-text
+        // material with the live scoreboard assembly under the anchor. The legacy index
+        // is only a guarded last resort, and the size check guarantees map geometry
+        // can never be painted purple again.
+        private static GameObject FindLeaderboardCandidate(List<GameObject> children, string anchorPath, Material knownOriginal, int fallbackIndex)
+        {
+            if (children == null || children.Count == 0) return null;
+            if (knownOriginal != null)
+            {
+                foreach (GameObject c in children)
+                {
+                    try
+                    {
+                        if (c == null) continue;
+                        Renderer r = c.GetComponent<Renderer>();
+                        if (r == null || r.sharedMaterial == null) continue;
+                        if ((r.sharedMaterial == knownOriginal || r.sharedMaterial.name == knownOriginal.name)
+                            && IsSafeBoardTarget(c))
+                            return c;
+                    }
+                    catch { }
+                }
+            }
+            if (!string.IsNullOrEmpty(anchorPath))
+            {
+                try
+                {
+                    GameObject anchor = GetObject(anchorPath);
+                    if (anchor != null)
+                    {
+                        var anchorMats = new HashSet<string>();
+                        foreach (Renderer ar in anchor.GetComponentsInChildren<Renderer>(true))
+                        {
+                            if (ar == null) continue;
+                            try
+                            {
+                                foreach (Material am in ar.sharedMaterials)
+                                {
+                                    if (am == null || am.shader == null) continue;
+                                    if (am.shader.name.Contains("TextMeshPro")) continue;
+                                    anchorMats.Add(am.name);
+                                }
+                            }
+                            catch { }
+                        }
+                        if (anchorMats.Count > 0)
+                        {
+                            foreach (GameObject c in children)
+                            {
+                                if (c == null || !IsSafeBoardTarget(c)) continue;
+                                try
+                                {
+                                    Renderer r = c.GetComponent<Renderer>();
+                                    if (r == null) continue;
+                                    foreach (Material m in r.sharedMaterials)
+                                    {
+                                        if (m != null && anchorMats.Contains(m.name)) return c;
+                                    }
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                }
+                catch { }
+            }
+            if (fallbackIndex >= 0 && fallbackIndex < children.Count)
+            {
+                GameObject c = children[fallbackIndex];
+                if (c != null && IsSafeBoardTarget(c)) return c;
+            }
+            return null;
+        }
+
+        private static readonly HashSet<string> boardDiagLogged = new HashSet<string>();
+        // One-shot diagnostics: when no candidate is found, dump the meshes to the
+        // BepInEx log once (index / renderer size / distance to anchor) so the real
+        // board mesh can be identified without guessing.
+        private static void LogBoardDiag(string map, List<GameObject> children, string anchorPath)
+        {
+            if (!boardDiagLogged.Add(map)) return;
+            try
+            {
+                Vector3 anchorPos = Vector3.zero;
+                bool hasAnchor = false;
+                if (!string.IsNullOrEmpty(anchorPath))
+                {
+                    GameObject anchor = GetObject(anchorPath);
+                    if (anchor != null) { anchorPos = anchor.transform.position; hasAnchor = true; }
+                }
+                LogManager.Log($"[Boards] {map}: no candidate among {children.Count} UnityTempFile meshes (anchor found: {hasAnchor})");
+                for (int i = 0; i < children.Count; i++)
+                {
+                    GameObject c = children[i];
+                    if (c == null) continue;
+                    Renderer r = c.GetComponent<Renderer>();
+                    string size = r == null ? "no-renderer" : r.bounds.size.ToString();
+                    string dist = hasAnchor ? (c.transform.position - anchorPos).magnitude.ToString("F1") + "m" : "n/a";
+                    string mats = "none";
+                    if (r != null)
+                    {
+                        try
+                        {
+                            var names = new List<string>();
+                            foreach (Material m in r.sharedMaterials)
+                                names.Add(m == null ? "null" : m.name + "/" + (m.shader == null ? "noshader" : m.shader.name));
+                            mats = string.Join("|", names);
+                        }
+                        catch { mats = "err"; }
+                    }
+                    LogManager.Log($"[Boards] {map}[{i}] size={size} distToAnchor={dist} mats=[{mats}]");
+                }
+            }
+            catch (Exception ex) { LogManager.LogError($"[Boards] diag failed: {ex.Message}"); }
+        }
+
+>>>>>>> da96021c (Fixes)
         public static bool motdTextDirty = true;
         public static string motdTemplate = "You are using build {0}. This menu was created by Qubit Software. " +
         "This menu is completely free and open sourced, if you paid for this menu you have been scammed. " +
@@ -212,6 +378,7 @@ namespace Qubit.Managers
 
                     objectBoards.Clear();
 
+<<<<<<< HEAD
                     var stumpChildren = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom").transform.Children()
                        .Where(x => x.name.Contains("UnityTempFile"))
                        .ToList();
@@ -244,6 +411,51 @@ namespace Qubit.Managers
                         }
                     }
 
+=======
+                    bool stumpDone = false;
+                    GameObject stumpRoot = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom");
+                    if (stumpRoot != null)
+                    {
+                        var stumpChildren = stumpRoot.transform.Children()
+                           .Where(x => x.name.Contains("UnityTempFile"))
+                           .ToList();
+                        var stumpBoard = FindLeaderboardCandidate(stumpChildren, null, stumpMaterial, StumpLeaderboardIndex);
+                        if (stumpBoard != null)
+                        {
+                            if (stumpMaterial == null)
+                                stumpMaterial = stumpBoard.GetComponent<Renderer>().sharedMaterial;
+
+                            stumpBoard.GetComponent<Renderer>().material = BoardMaterial;
+                            stumpDone = true;
+                        }
+                        else
+                            LogBoardDiag("stump", stumpChildren, null);
+                    }
+
+                    bool forestDone = false;
+                    GameObject forestRoot = GetObject("Environment Objects/LocalObjects_Prefab/Forest");
+                    if (forestRoot != null)
+                    {
+                        var forestChildren = forestRoot.transform.Children()
+                            .Where(x => x.name.Contains("UnityTempFile"))
+                            .ToList();
+                        var forestBoard = FindLeaderboardCandidate(forestChildren, ForestScoreboardAnchorPath, forestMaterial, ForestLeaderboardIndex);
+                        if (forestBoard != null)
+                        {
+                            if (forestMaterial == null)
+                                forestMaterial = forestBoard.GetComponent<Renderer>().sharedMaterial;
+
+                            forestBoard.GetComponent<Renderer>().material = BoardMaterial;
+                            forestDone = true;
+                        }
+                        else
+                            LogBoardDiag("forest", forestChildren, ForestScoreboardAnchorPath);
+                    }
+
+                    // stumpDone/forestDone are combined into hasFoundAllBoards below:
+                    // keep retrying until both boards are actually painted.
+
+>>>>>>> da96021c (Fixes)
                     foreach (GorillaNetworkJoinTrigger joinTrigger in PhotonNetworkController.Instance.allJoinTriggers)
                     {
                         try
@@ -298,7 +510,13 @@ namespace Qubit.Managers
                             textMeshPro.Add(text);
                     }
 
+<<<<<<< HEAD
                     hasFoundAllBoards = true;
+=======
+                    // A missing map or a drifting child index must never silently give up
+                    // and leave the default (or wrong) board material in place.
+                    hasFoundAllBoards = stumpDone && forestDone;
+>>>>>>> da96021c (Fixes)
                 }
                 catch (Exception exc)
                 {

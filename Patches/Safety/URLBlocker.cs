@@ -2,7 +2,11 @@
  * Qubit Menu  Managers/URLBlocker.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -37,6 +41,44 @@ namespace Qubit.Patches.Safety
 {
     public class URLBlocker
     {
+<<<<<<< HEAD
+=======
+        /// <summary>Master switch — set false to disable all URL blocking (e.g. if a legit texture/CDN download is ever blocked).</summary>
+        public static bool Enabled = true;
+
+        // Hosts that must NEVER be blocked: the menu's own infra plus Gorilla Tag / platform CDNs.
+        // Blocking these is what leaves the ground (or menu assets) as untextured magenta.
+        private static readonly string[] AlwaysAllowedHostSuffixes = new[]
+        {
+            "qubit.mom",
+            "githubusercontent.com",
+            "github.com",
+            "playfabapi.com",
+            "playfab.com",
+            "photonengine.com",
+            "oculus.com",
+            "meta.com",
+            "unity3d.com",
+            "unity.com",
+            "gorillatag.com",
+        };
+
+        private static bool IsAlwaysAllowed(string url)
+        {
+            try
+            {
+                string host = NormalizeHost(new Uri(url).Host);
+                foreach (string suffix in AlwaysAllowedHostSuffixes)
+                {
+                    if (host == suffix || host.EndsWith("." + suffix))
+                        return true;
+                }
+            }
+            catch { }
+            return false;
+        }
+
+>>>>>>> da96021c (Fixes)
         private static Dictionary<string, string> banned = new Dictionary<string, string>();
         private static readonly object locker = new object();
 
@@ -144,7 +186,14 @@ namespace Qubit.Patches.Safety
         {
             reason = null;
 
+<<<<<<< HEAD
             if (string.IsNullOrEmpty(url))
+=======
+            if (!Enabled || string.IsNullOrEmpty(url))
+                return false;
+
+            if (IsAlwaysAllowed(url))
+>>>>>>> da96021c (Fixes)
                 return false;
 
             try

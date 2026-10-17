@@ -2,7 +2,11 @@
  * Qubit Menu  Menu/UI.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
+<<<<<<< HEAD
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+=======
+ * Copyright (C) 2026  Qubit Software
+>>>>>>> da96021c (Fixes)
  * https://github.com/QubitGT/Qubit
  *
  * This program is free software: you can redistribute it and/or modify
@@ -98,12 +102,48 @@ namespace Qubit.Menu
             if (nameButton != null)
                 nameButton.onClick.AddListener(() => ChangeName(textInput?.text ?? ""));
 
+<<<<<<< HEAD
+=======
+            // Any focused PC input deselects the others so only one caret blinks,
+            // and clears EventSystem focus when the menu toggles so R/G/B can't trap the menu open key.
+            TMP_InputField[] pcInputs = new[] { r, g, b, textInput };
+            foreach (TMP_InputField pcInput in pcInputs)
+            {
+                if (pcInput == null) continue;
+                TMP_InputField captured = pcInput;
+                captured.onSelect.AddListener(_ =>
+                {
+                    FocusedOnPCInput = true;
+                    foreach (TMP_InputField other in pcInputs)
+                    {
+                        if (other != null && other != captured && other.isFocused)
+                            other.DeactivateInputField();
+                    }
+                });
+                captured.onDeselect.AddListener(_ =>
+                {
+                    if (pcInputs.All(i => i == null || !i.isFocused))
+                        FocusedOnPCInput = false;
+                });
+            }
+
+>>>>>>> da96021c (Fixes)
             TMP_InputField inputField = debugUI?.transform.Find("TextInput")?.gameObject.GetComponent<TMP_InputField>();
 
             if (inputField != null)
             {
+<<<<<<< HEAD
                 inputField.onSelect.AddListener(_ => focusedOnDebug = true);
                 inputField.onDeselect.AddListener(_ => focusedOnDebug = false);
+=======
+                inputField.onSelect.AddListener(_ => { focusedOnDebug = true; FocusedOnPCInput = true; });
+                inputField.onDeselect.AddListener(_ =>
+                {
+                    focusedOnDebug = false;
+                    if (pcInputs.All(i => i == null || !i.isFocused))
+                        FocusedOnPCInput = false;
+                });
+>>>>>>> da96021c (Fixes)
 
                 inputField.onEndEdit.AddListener((string text) =>
                 {
@@ -141,6 +181,13 @@ namespace Qubit.Menu
                 debugUI?.transform.Find("Lines")?.GetComponent<Image>()
             }.Where(imageObject => imageObject != null).ToList();
 
+<<<<<<< HEAD
+=======
+            // Debug console removed from the ` hotkey per user request — keep it hidden
+            // so it can never pop up over gameplay. (ToggleDebug stays for programmatic use.)
+            try { if (debugUI != null) debugUI.SetActive(false); } catch { }
+
+>>>>>>> da96021c (Fixes)
             if (watermark != null)
                 watermark.material = new Material(watermark.material);
 
@@ -173,6 +220,12 @@ namespace Qubit.Menu
         private bool isOpen = true;
         private bool focusedOnDebug;
 
+<<<<<<< HEAD
+=======
+        /// <summary>True while any PC ControlUI input (R/G/B/TextInput) or the debug input has focus. Used to keep menu toggles from fighting typing.</summary>
+        public static bool FocusedOnPCInput { get; private set; }
+
+>>>>>>> da96021c (Fixes)
         private GameObject uiPrefab;
         private GameObject debugUI;
         private QubitDesktopOverlay desktopOverlay;
@@ -212,8 +265,13 @@ namespace Qubit.Menu
             {
                 uiPrefab.SetActive(true);
 
+<<<<<<< HEAD
                 if (Keyboard.current?.backquoteKey.wasPressedThisFrame == true)
                     ToggleDebug();
+=======
+                // Backquote debug console removed: it conflicted with in-game chat/typing
+                // and opened unexpectedly. Debug UI can still be toggled programmatically.
+>>>>>>> da96021c (Fixes)
 
                 if (desktopOverlay != null)
                 {
@@ -444,8 +502,26 @@ namespace Qubit.Menu
         }
 
         private readonly string hideGUIPath = $"{PluginInfo.BaseDirectory}/Qubit_HideGUI.txt";
+<<<<<<< HEAD
         private void ToggleGUI()
         {
+=======
+        /// <summary>Clears EventSystem selection so a focused R/G/B/TextInput can't swallow the next menu toggle or leave extra carets blinking.</summary>
+        public static void ClearPCInputFocus()
+        {
+            try
+            {
+                var es = UnityEngine.EventSystems.EventSystem.current;
+                if (es != null) es.SetSelectedGameObject(null);
+            }
+            catch { }
+            FocusedOnPCInput = false;
+        }
+
+        private void ToggleGUI()
+        {
+            ClearPCInputFocus();
+>>>>>>> da96021c (Fixes)
             isOpen = !isOpen;
 
             try
