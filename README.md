@@ -102,7 +102,7 @@ Let's bring back the collaboration of modding. No paywalls, no secrets, no malwa
 <details>
   <summary><b>🗣️ Contact Information</b></summary>
 	
-Join our [Discord](https://discord.gg/Qubit)!
+Join our [Discord](https://discord.gg/qubit)!
 
 </details>
 
@@ -125,7 +125,7 @@ If you wish to support us, here are some of the ways you can!
 > Menu sends requests to https://text.pollinations.ai for the mod **AI Assistant**. (when enabled)<br>
 > Menu sends requests to https://lazypy.ro for many TTS voices.<br>
 > Menu connects to wss://api.qubit.mom for friend system and administrative purposes.<br>
-> **Read our [Privacy Policy](https://Qubit.software/policy?tab=privacy) (https://Qubit.software/policy) for details on how this data is collected and used.**<br>
+> **Read our [Privacy Policy](https://qubit.mom/policy) (https://qubit.mom/policy) for details on how this data is collected and used.**<br>
 > The donate, search, star and speak symbols are provided from [Icons8](https://icons8.com).
 
 > Qubit Menu  README.md<br>
