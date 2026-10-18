@@ -33,7 +33,7 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Language;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Netcode;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -132,7 +132,8 @@ namespace Qubit.Modules.Categories
             LeftSecondaryButton,
             RightSecondaryButton,
             JoystickClick,
-            LeftOverride
+            LeftOverride,
+            Keyboard
         }
         #endregion
 
@@ -2521,7 +2522,8 @@ namespace Qubit.Modules.Categories
             { ControllerBinding.LeftTrigger, Key.Minus },
             { ControllerBinding.RightTrigger, Key.Equals },
             { ControllerBinding.JoystickClick, Key.Enter },
-            { ControllerBinding.LeftOverride, Key.LeftAlt }
+            { ControllerBinding.LeftOverride, Key.LeftAlt },
+            { ControllerBinding.Keyboard, Key.Q }
         };
         public static bool watchUsed;
         public static float watchTimer;
@@ -2552,7 +2554,7 @@ namespace Qubit.Modules.Categories
             lockShift = false;
 
             if (isKeyboardPc)
-                lastPressedKeys.Add(Key.Q);
+                lastPressedKeys.Add(KeyboardBind);
 
             if (!isKeyboardPc && VRKeyboard == null)
                 VRKeyboard = Qubit.Frontend.Keyboard.View.Create();
@@ -3120,7 +3122,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (VRRig rig in Blocked)
                 rig.BreakHandLinks();
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 if (Blocked.Count == 0)
                     return true;
@@ -3793,14 +3795,14 @@ exit 0";
 
             textureFileDirectory.Remove("CustomBackground.png");
 
-            doCustomMenuBackground = true;
+            customMenuBackground = true;
             customMenuBackgroundImage = LoadTextureFromFile("CustomBackground.png");
         }
 
         public static void FixMenuBackground()
         {
             customMenuBackgroundImage = null;
-            doCustomMenuBackground = false;
+            customMenuBackground = false;
         }
 
         public static void EnableWatermark()
@@ -3881,7 +3883,7 @@ exit 0";
             }
         }
         public static void ApplyInputTextColor(int index) { inputTextColorInt = index; inputTextColor = RealInputColors[index]; }
-        public static void ApplyPCUI(int index) => pcbg = index;
+        public static void ApplyPCUI(int index) => pcBackgroundIndex = index;
         public static void ApplyJoystickMenuPosition(int index) => joystickMenuPosition = index;
         public static void ApplyNotificationTime(int index) => notificationDecayTime = index * 1000;
 
@@ -5151,7 +5153,7 @@ exit 0";
                 notificationDecayTime.ToString(),
                 fontStyleType.ToString(),
                 arrowType.ToString(),
-                pcbg.ToString(),
+                pcBackgroundIndex.ToString(),
                 Important.reconnectDelay.ToString(),
                 "0",//Safety.fpsSpoofValue.ToString(),
                 Sounds.DefaultSounds["Button"],
@@ -5344,8 +5346,8 @@ exit 0";
                 arrowType = int.Parse(data[12]);
                 RestoreCycle("Change Arrow Type", arrowType);
 
-                pcbg = int.Parse(data[13]);
-                RestoreCycle("Change PC Menu Background", pcbg);
+                pcBackgroundIndex = int.Parse(data[13]);
+                RestoreCycle("Change PC Menu Background", pcBackgroundIndex);
 
                 Important.reconnectDelay = int.Parse(data[14]);
                 RestoreCycle("Change Reconnect Time", Important.reconnectDelay);
@@ -5615,6 +5617,7 @@ exit 0";
             {
                 string data = File.ReadAllText(fileName);
                 string[] lines = data.Split('\n');
+                var defaults = new Dictionary<ControllerBinding, Key>(pcBindings);
                 pcBindings.Clear();
 
                 foreach (string line in lines)
@@ -5629,6 +5632,17 @@ exit 0";
                     if (Enum.TryParse(splitData[1], out ControllerBinding binding) && Enum.TryParse(splitData[0], out Key key))
                         pcBindings[binding] = key;
                 }
+
+                bool addedDefaults = false; // files saved before a binding existed would otherwise lose it
+                foreach (var pair in defaults)
+                {
+                    if (pcBindings.ContainsKey(pair.Key)) continue;
+                    pcBindings[pair.Key] = pair.Value;
+                    addedDefaults = true;
+                }
+
+                if (addedDefaults)
+                    File.WriteAllLines(fileName, pcBindings.Select(pair => $"{pair.Value} - {pair.Key}"));
             }
             else
             {
@@ -5716,6 +5730,7 @@ exit 0";
             body.SafeSetText(text);
         }
 
+        [RunOnLaunch(13)]
         public static void InitializePCControls()
         {
             try

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
@@ -129,6 +130,7 @@ namespace Qubit.Libraries.Core
             };
         }
 
+        [RunOnLaunch(14)]
         public static void CheckVeteran()
         {
             if (new DirectoryInfo(Path.Combine(Files.GetGamePath(), PluginInfo.ClientResourcePath)).CreationTime >= DateTime.Now.AddYears(1))

@@ -36,7 +36,9 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Locomotion;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Rigs;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -1013,7 +1015,7 @@ namespace Qubit.Modules.Categories
         public static void ApplyDriveSpeed(int index) => driveSpeed = DriveSpeedAmounts[index];
         // Fixed: previously read speedamounts[driveInt]/speedNames[driveInt] here instead of
         // the fastRopesInt index it had just cycled - a pre-existing copy-paste bug.
-        public static void ApplyFastRopesSpeed(int index) => RopePatch.amplifier = FastRopesSpeedAmounts[index];
+        public static void ApplyFastRopesSpeed(int index) => RopeAttach.amplifier = FastRopesSpeedAmounts[index];
         public static void Drive()
         {
             Vector2 joy = leftJoystick;
@@ -3066,8 +3068,8 @@ namespace Qubit.Modules.Categories
 
         public static void SetBodyPatch(bool enabled, int mode = 0)
         {
-            TorsoPatch.enabled = enabled;
-            TorsoPatch.mode = mode;
+            Torso.enabled = enabled;
+            Torso.mode = mode;
 
             if (!enabled && recBodyRotary != null)
                 Object.Destroy(recBodyRotary);
@@ -3390,7 +3392,7 @@ namespace Qubit.Modules.Categories
                 if (!hasAdded)
                 {
                     hasAdded = true;
-                    TorsoPatch.VRRigLateUpdate += StareAtTarget;
+                    Torso.VRRigLateUpdate += StareAtTarget;
                 }
 
                 gunLocked = true;
@@ -3403,7 +3405,7 @@ namespace Qubit.Modules.Categories
                         if (hasAdded)
                         {
                             hasAdded = false;
-                            TorsoPatch.VRRigLateUpdate -= StareAtTarget;
+                            Torso.VRRigLateUpdate -= StareAtTarget;
                         }
                     }
                 } });
@@ -3411,7 +3413,7 @@ namespace Qubit.Modules.Categories
 
         public static void StareAtAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -3505,7 +3507,7 @@ namespace Qubit.Modules.Categories
         {
             if (enable)
             {
-                SerializePatch.OverrideSerialization ??= () =>
+                ViewSerialization.OverrideSerialization ??= () =>
                 {
                     if (!Networking.InRoom)
                         return true;
@@ -3519,7 +3521,7 @@ namespace Qubit.Modules.Categories
                 };
             }
             else if (!enable)
-                SerializePatch.OverrideSerialization = null;
+                ViewSerialization.OverrideSerialization = null;
         }
 
         public static void Rotate(Quaternion rot) =>
@@ -4409,7 +4411,7 @@ namespace Qubit.Modules.Categories
 
         public static void PiggybackAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4495,7 +4497,7 @@ namespace Qubit.Modules.Categories
 
         public static void CopyMovementAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4606,7 +4608,7 @@ namespace Qubit.Modules.Categories
         }
         public static void FollowAllPlayers()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4727,7 +4729,7 @@ namespace Qubit.Modules.Categories
 
         public static void OrbitAllPlayers()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4839,7 +4841,7 @@ namespace Qubit.Modules.Categories
 
         public static void JumpscareAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4953,7 +4955,7 @@ namespace Qubit.Modules.Categories
 
         public static void AnnoyAllPlayers()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -5119,7 +5121,7 @@ namespace Qubit.Modules.Categories
 
         public static void IntercourseAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -5356,7 +5358,7 @@ namespace Qubit.Modules.Categories
 
         public static void HeadAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -5559,6 +5561,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
+        [RunOnLaunch(11)]
         public static void Initialize()
         {
             try

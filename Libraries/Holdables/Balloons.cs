@@ -52,7 +52,6 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
 using Qubit.Utilities;
 using System;
 using System.Collections;

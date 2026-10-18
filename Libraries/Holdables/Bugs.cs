@@ -52,7 +52,7 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Netcode;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -124,13 +124,13 @@ namespace Qubit.Libraries.Holdables
 
         public static void PermanentOwnership(string objectName)
         {
-            OwnershipPatch.enabled = true;
+            Ownership.enabled = true;
 
             ThrowableBug bugObject = GetBugObject(objectName);
 
             if (!Qubit.Core.Networking.InRoom)
             {
-                OwnershipPatch.blacklistedGuards.Clear();
+                Ownership.blacklistedGuards.Clear();
                 return;
             }
 
@@ -140,8 +140,8 @@ namespace Qubit.Libraries.Holdables
             if (bugObject.targetRig != References.LocalRig)
                 bugObject.SetTargetRig(References.LocalRig);
 
-            if (!OwnershipPatch.blacklistedGuards.Contains(bugObject.worldShareableInstance.guard))
-                OwnershipPatch.blacklistedGuards.Add(bugObject.worldShareableInstance.guard);
+            if (!Ownership.blacklistedGuards.Contains(bugObject.worldShareableInstance.guard))
+                Ownership.blacklistedGuards.Add(bugObject.worldShareableInstance.guard);
         }
         public static ThrowableBug GetBugObject(string name)
         {
@@ -388,7 +388,7 @@ namespace Qubit.Libraries.Holdables
 
         public static void EnableBugVibrateAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 ThrowableBug Bug = GetBug("Floating Bug Holdable");
                 ThrowableBug Firefly = Bug != null ? GetBug("Firefly") : Bug;

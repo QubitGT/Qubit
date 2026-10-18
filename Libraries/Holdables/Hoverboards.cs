@@ -25,6 +25,7 @@ using Overpowered = Qubit.Modules.Categories.Overpowered;
 using Manager = Qubit.Modules.Manager;
 using Module = Qubit.Modules.Module;
 using Qubit.Frontend.Colors;
+using Qubit.Patches.Netcode;
 using System.Text;
 using TMPro;
 using UnityEngine.InputSystem;
@@ -64,7 +65,6 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -220,7 +220,7 @@ namespace Qubit.Libraries.Holdables
 
         public static void HoverboardScreenAll(Color color)
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 if (Qubit.Core.Networking.InRoom)
                 {

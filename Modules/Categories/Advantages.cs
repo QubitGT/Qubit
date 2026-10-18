@@ -27,7 +27,8 @@ using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Tagging;
 using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
@@ -96,7 +97,7 @@ namespace Qubit.Modules.Categories
                     TurnOff();
 
                     if (instantTag)
-                        SerializePatch.OverrideSerialization = null;
+                        ViewSerialization.OverrideSerialization = null;
                 }
                 else
                 {
@@ -108,7 +109,7 @@ namespace Qubit.Modules.Categories
 
                     if (instantTag)
                     {
-                        SerializePatch.OverrideSerialization = () =>
+                        ViewSerialization.OverrideSerialization = () =>
                         {
                             if (References.LocalRig.IsTagged())
                                 return true;
@@ -165,8 +166,8 @@ namespace Qubit.Modules.Categories
             {
                 if (PhotonNetwork.IsMasterClient)
                 {
-                    if (!ReportTagPatch.invinciblePlayers.Contains(Networking.LocalPlayer))
-                        ReportTagPatch.invinciblePlayers.Add(Networking.LocalPlayer);
+                    if (!TagReports.invinciblePlayers.Contains(Networking.LocalPlayer))
+                        TagReports.invinciblePlayers.Add(Networking.LocalPlayer);
                 }
                 else
                 {
@@ -177,7 +178,7 @@ namespace Qubit.Modules.Categories
             else
             {
                 TagOnJoin();
-                ReportTagPatch.invinciblePlayers.Clear();
+                TagReports.invinciblePlayers.Clear();
             }
         }
 
@@ -187,8 +188,8 @@ namespace Qubit.Modules.Categories
             {
                 if (PhotonNetwork.IsMasterClient)
                 {
-                    if (ReportTagPatch.invinciblePlayers.Contains(Networking.LocalPlayer))
-                        ReportTagPatch.invinciblePlayers.Remove(Networking.LocalPlayer);
+                    if (TagReports.invinciblePlayers.Contains(Networking.LocalPlayer))
+                        TagReports.invinciblePlayers.Remove(Networking.LocalPlayer);
                 }
                 NoTagOnJoin();
             }
@@ -201,12 +202,12 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.IsMasterClient)
                 {
                     if (lockTarget != null)
-                        ReportTagPatch.invinciblePlayers.Remove(lockTarget.GetPlayer());
+                        TagReports.invinciblePlayers.Remove(lockTarget.GetPlayer());
 
                     gunLocked = true;
                     lockTarget = gunTarget;
 
-                    ReportTagPatch.invinciblePlayers.Add(GetPlayerFromVRRig(gunTarget));
+                    TagReports.invinciblePlayers.Add(GetPlayerFromVRRig(gunTarget));
 
                 }
                 else
@@ -216,7 +217,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        ReportTagPatch.invinciblePlayers.Remove(lockTarget.GetPlayer());
+                        TagReports.invinciblePlayers.Remove(lockTarget.GetPlayer());
                     }
                 } });
         }
@@ -699,7 +700,7 @@ namespace Qubit.Modules.Categories
 
         public static void ReportAntiTag()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 if (References.LocalRig.IsTagged())
                     return true;
@@ -871,9 +872,9 @@ namespace Qubit.Modules.Categories
 
         public static void FakeLag()
         {
-            PlayerSerializePatch.delay = Manager.GetIndex("Fake Lag Others").enabled ? Movement.fakeLagDelay : (float?)null;
+            RigSerialization.delay = Manager.GetIndex("Fake Lag Others").enabled ? Movement.fakeLagDelay : (float?)null;
 
-            SerializePatch.OverrideSerialization = !Manager.GetIndex("Disable Fake Lag Self").enabled
+            ViewSerialization.OverrideSerialization = !Manager.GetIndex("Disable Fake Lag Self").enabled
                 ? (() =>
                 {
                     MassSerialize(true, delay: Movement.fakeLagDelay);
@@ -903,15 +904,15 @@ namespace Qubit.Modules.Categories
         }
         public static void Blink()
         {
-            SerializePatch.OverrideSerialization = () => false;
-            PlayerSerializePatch.stopSerialization = true;
+            ViewSerialization.OverrideSerialization = () => false;
+            RigSerialization.stopSerialization = true;
             Movement.isBlinking = true;
         }
 
         public static void DisableBlink()
         {
-            SerializePatch.OverrideSerialization = null;
-            PlayerSerializePatch.stopSerialization = false;
+            ViewSerialization.OverrideSerialization = null;
+            RigSerialization.stopSerialization = false;
             Movement.isBlinking = false;
         }
         #endregion

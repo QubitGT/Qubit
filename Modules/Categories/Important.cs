@@ -32,7 +32,8 @@ using Qubit.Libraries.Core;
 using Qubit.Libraries.DiscordRPC;
 using Qubit.Libraries.DiscordRPC.Entities;
 using Qubit.Libraries.Interface;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Events;
+using Qubit.Patches.Terms;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -673,11 +674,11 @@ exit";
 
                     PrivateUIRoom.StopOverlay();
                     PrivateUIRoom.overlayForcedSources = 0;
-                    if (!TOSPatches.enabled)
+                    if (!TermsOfService.enabled)
                     {
                         References.Tagger.tapHapticStrength = 0.5f;
                         GorillaSnapTurn.LoadSettingsFromCache();
-                        TOSPatches.enabled = true;
+                        TermsOfService.enabled = true;
                     }
 
                     acceptedTOS = true;
@@ -860,7 +861,7 @@ exit";
                     gravityFxManager.Destroy();
                 }
 
-                AprilFoolsGravityFXEnablePatch.enabled = true;
+                GravityFXToggle.enabled = true;
             }
             catch { }
         }
@@ -869,7 +870,7 @@ exit";
         {
             try
             {
-                AprilFoolsGravityFXEnablePatch.enabled = false;
+                GravityFXToggle.enabled = false;
                 new GameObject().AddComponent<AprilFoolsGravityFX>().Start();
             }
             catch { }

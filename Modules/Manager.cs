@@ -19,6 +19,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Patches.Building;
+using Qubit.Patches.Economics;
+using Qubit.Patches.Events;
+using Qubit.Patches.Gadgets;
+using Qubit.Patches.Interface;
+using Qubit.Patches.Locomotion;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Safety.AntiBan;
+using Qubit.Patches.Safety.AntiCheat;
+using Qubit.Patches.Safety.AntiCrash;
+using Qubit.Patches.Safety.Telemetry;
+using Qubit.Patches.Weapons;
+using Qubit.Patches.Rigs;
+using Qubit.Patches.Tagging;
+using Qubit.Patches.Terms;
+using Qubit.Patches.Voice;
 using Qubit.Utilities;
 using GorillaLocomotion;
 using GorillaNetworking;
@@ -42,7 +58,6 @@ using Qubit.Libraries.Language;
 using Qubit.Libraries.Networking;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
-using Qubit.Patches.Menu;
 using Qubit.Patches.Safety;
 using System;
 using System.Collections.Generic;
@@ -159,13 +174,13 @@ namespace Qubit.Modules
                 new Module { buttonText = "Crystallize Menu", enableMethod =() => { crystallizeMenu = true; CustomBoards.BoardMaterial = CrystalMaterial; }, disableMethod =() => { crystallizeMenu = false ; CustomBoards.BoardMaterial = null; }, toolTip = "Turns the menu into crystals.", legal = true},
                 new Module { buttonText = "Explode Menu", enableMethod =() => explodeMenu = true, disableMethod =() => explodeMenu = false, toolTip = "Makes the menu explode when closing it.", legal = true},
                 new Module { buttonText = "Thick Menu", enableMethod =() => thinMenu = false, disableMethod =() => thinMenu = true, toolTip = "Makes the menu thin.", legal = true},
-                new Module { buttonText = "Long Menu", enableMethod =() => longmenu = true, disableMethod =() => longmenu = false, toolTip = "Makes the menu long.", legal = true},
+                new Module { buttonText = "Long Menu", enableMethod =() => longMenu = true, disableMethod =() => longMenu = false, toolTip = "Makes the menu long.", legal = true},
                 new Module { buttonText = "Flip Menu", enableMethod =() => flipMenu = true, disableMethod =() => flipMenu = false, toolTip = "Flips the menu to the back of your hand.", legal = true},
 
                 new Module { buttonText = "Legacy Menu", enableMethod =() => Legacy.Enabled = true, disableMethod =() => Legacy.Enabled = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
 
-                new Module { buttonText = "Round Menu", enableMethod =() => shouldRound = true, disableMethod =() => shouldRound = false, toolTip = "Makes the menu objects round.", legal = true},
-                new Module { buttonText = "Outline Menu", enableMethod =() => shouldOutline = true, disableMethod =() => shouldOutline = false, toolTip = "Gives the menu objects an outline.", legal = true},
+                new Module { buttonText = "Round Menu", enableMethod =() => roundMenu = true, disableMethod =() => roundMenu = false, toolTip = "Makes the menu objects round.", legal = true},
+                new Module { buttonText = "Outline Menu", enableMethod =() => outlineMenu = true, disableMethod =() => outlineMenu = false, toolTip = "Gives the menu objects an outline.", legal = true},
                 new Module { buttonText = "Outline Text", enableMethod =() => outlineText = true, disableMethod =() => outlineText = false, toolTip = "Gives the text objects an outline.", legal = true},
                 new Module { buttonText = "Strikethrough Text", enableMethod =() => strikethroughText = true, disableMethod =() => strikethroughText = false, toolTip = "Strikes out all text on the menu.", legal = true},
                 new Module { buttonText = "Underline Text", enableMethod =() => underlineText = true, disableMethod =() => underlineText = false, toolTip = "Underlines all text on the menu.", legal = true},
@@ -220,7 +235,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Annoying Mode", enableMethod =() => annoyingMode = true, disableMethod = Modules.Categories.Settings.AnnoyingModeOff, toolTip = "Turns on the April Fools 2024 settings.", legal = true},
                 new Module { buttonText = "Lowercase Mode", enableMethod =() => lowercaseMode = true, disableMethod =() => lowercaseMode = false, toolTip = "Makes the entire menu's text lowercase.", legal = true},
                 new Module { buttonText = "Uppercase Mode", enableMethod =() => uppercaseMode = true, disableMethod =() => uppercaseMode = false, toolTip = "Makes the entire menu's text uppercase.", legal = true},
-                new Module { buttonText = "Overflow Mode", enableMethod =() => NoAutoSizeText = true, disableMethod =() => NoAutoSizeText = false, toolTip = "Makes the entire menu's text overflow.", legal = true},
+                new Module { buttonText = "Overflow Mode", enableMethod =() => noAutoSizeText = true, disableMethod =() => noAutoSizeText = false, toolTip = "Makes the entire menu's text overflow.", legal = true},
 
                 ButtonHelper.Create("Change Menu Language", () => Modules.Categories.Settings.LanguageNames, 0, Modules.Categories.Settings.ApplyMenuLanguage, "Changes the language of the menu.", legal: true),
                 ButtonHelper.Create("Change Menu Button", () => Modules.Categories.Settings.MenuButtonNames, menuButtonIndex, Modules.Categories.Settings.ApplyMenuButton, "Changes the button used to open menu.", legal: true),
@@ -246,7 +261,7 @@ namespace Qubit.Modules
                 ButtonHelper.CreateNumeric("Change Font Style Type", 0, 3, Modules.Categories.Settings.fontStyleType, Fonts.ApplyFontStyleType, toolTip: "Changes the style of the font.", legal: true),
                 ButtonHelper.Create("Change Input Text Color", () => Modules.Categories.Settings.InputColorNames, Modules.Categories.Settings.inputTextColorInt, Modules.Categories.Settings.ApplyInputTextColor, "Changes the color of the input indicator next to the buttons.", legal: true),
                 new Module { buttonText = "Vibrant Text Colors", enableMethod =() => vibrantColors = true, disableMethod =() => vibrantColors = false, toolTip = "Makes certain green and purple colors more vibrant.", legal = true},
-                ButtonHelper.CreateNumeric("Change PC Menu Background", 0, 5, pcbg, Modules.Categories.Settings.ApplyPCUI, toolTip: "Changes the background of the PC ui.", legal: true),
+                ButtonHelper.CreateNumeric("Change PC Menu Background", 0, 5, pcBackgroundIndex, Modules.Categories.Settings.ApplyPCUI, toolTip: "Changes the background of the PC ui.", legal: true),
                 ButtonHelper.CreateNumeric("Change Joystick Menu Position", 0, joystickMenuPositions.Length - 1, joystickMenuPosition, Modules.Categories.Settings.ApplyJoystickMenuPosition, toolTip: "Changes the position of the joystick menu.", legal: true),
                 ButtonHelper.CreateNumeric("Change Notification Time", 0, 5, notificationDecayTime / 1000, Modules.Categories.Settings.ApplyNotificationTime, v => v.ToString(), "Changes the time before a notification is removed.", legal: true),
                 ButtonHelper.Create("Change Notification Sound", () => Sounds.SoundList["Notifications"].Keys.ToArray(), 0, v => Modules.Categories.Settings.ApplyNotificationSound(Sounds.SoundList["Notifications"].Keys.ToArray()[v]), toolTip: "Changes the sound that plays when receiving a notification.", legal: true, onCycle: _ => { var src = audioManager?.GetComponent<AudioSource>(); src?.Stop(); Sounds.Play(Sounds.DefaultSounds["Notification"]); }),
@@ -307,7 +322,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Conduct Notifications", enableMethod =() => { GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>().text = "Qubit Menu"; GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().richText = true; }, method =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().text = Notifications.notificationText.text, toolTip = "Shows notifications on the code of conduct instead.", legal = true},
                 new Module { buttonText = "Disable Notification Rich Text", enableMethod =() => Notifications.noRichText = true, disableMethod =() => Notifications.noRichText = false, toolTip = "Removes rich text from notifications.", legal = true},
 
-                new Module { buttonText = "Disable RPC Protection", enableMethod =() => Qubit.Patches.Safety.RPCProtection.OpRaiseEventPatch.enabled = false, disableMethod =() => Qubit.Patches.Safety.RPCProtection.OpRaiseEventPatch.enabled = true, toolTip = "Disables the client-side protection limiting you to sending 500 RPCs a second.", legal = true},
+                new Module { buttonText = "Disable RPC Protection", enableMethod =() => Qubit.Patches.Safety.RPC.OpRaiseEventPatch.enabled = false, disableMethod =() => Qubit.Patches.Safety.RPC.OpRaiseEventPatch.enabled = true, toolTip = "Disables the client-side protection limiting you to sending 500 RPCs a second.", legal = true},
                 new Module { buttonText = "Disable Notifications", enableMethod =() => disableNotifications = true, disableMethod =() => disableNotifications = false, toolTip = "Disables all notifications.", legal = true},
                 new Module { buttonText = "Disable Master Client Notifications", enableMethod =() => disableMasterClientNotifications = true, disableMethod =() => disableMasterClientNotifications = false, toolTip = "Disables all notifications regarding master client.", legal = true},
                 new Module { buttonText = "Disable Room Notifications", enableMethod =() => disableRoomNotifications = true, disableMethod =() => disableRoomNotifications = false, toolTip = "Disables all notifications regarding the room.", legal = true},
@@ -315,7 +330,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Disable Enabled GUI", overlapText = "Disable Arraylist GUI", enableMethod =() => showEnabledModsVR = false, disableMethod =() => showEnabledModsVR = true, toolTip = "Disables the GUI that shows the enabled mods.", legal = true},
                 new Module { buttonText = "Disable Incremental Buttons", enableMethod =() => incrementalButtons = false, disableMethod =() => incrementalButtons = true, toolTip = "Disables the buttons with the increment and decrement buttons next to it.", legal = true},
                 new Module { buttonText = "Disable Disconnect Button", enableMethod =() => disableDisconnectButton = true, disableMethod =() => disableDisconnectButton = false, toolTip = "Disables the disconnect button at the top of the menu.", legal = true},
-                new Module { buttonText = "Disable Menu Title", enableMethod =() => { buttonOffset = pageButtonType == 2 ? 1 : -1; hidetitle = true; }, method =() => { buttonOffset = pageButtonType == 2 ? 1 : -1; hidetitle = true; }, disableMethod =() => { buttonOffset = pageButtonType == 2 ? 2 : 0; hidetitle = false; }, toolTip = "Hides the menu title, allowing for more buttons per page.", legal = true},
+                new Module { buttonText = "Disable Menu Title", enableMethod =() => { buttonOffset = pageButtonType == 2 ? 1 : -1; hideTitle = true; }, method =() => { buttonOffset = pageButtonType == 2 ? 1 : -1; hideTitle = true; }, disableMethod =() => { buttonOffset = pageButtonType == 2 ? 2 : 0; hideTitle = false; }, toolTip = "Hides the menu title, allowing for more buttons per page.", legal = true},
                 new Module { buttonText = "Disable Search Button", enableMethod =() => disableSearchButton = true, disableMethod =() => disableSearchButton = false, toolTip = "Disables the search button at the bottom of the menu.", legal = true},
                 new Module { buttonText = "Disable Return Button", enableMethod =() => disableReturnButton = true, disableMethod =() => disableReturnButton = false, toolTip = "Disables the return button at the bottom of the menu.", legal = true},
                 new Module { buttonText = "Disable Page Buttons", enableMethod = Modules.Categories.Settings.DisablePageButtons, disableMethod =() => disablePageButtons = false, toolTip = "Disables the page buttons. Recommended with Joystick Menu.", legal = true},
@@ -454,7 +469,7 @@ namespace Qubit.Modules
                 ButtonHelper.CreateNumeric("Friend Projectile Scale", 1, 5, Projectiles.friendProjectileScale, Projectiles.ApplyFriendProjectileScale, v => v.ToString(), "Changes the scale of projectiles sent by the Friend system."),
                 new Module { buttonText = "Client Sided Projectiles", enableMethod =() => Projectiles.clientSided = true, disableMethod =() => Projectiles.clientSided = false, toolTip = "Makes projectiles only appear for you." },
 
-                new Module { buttonText = "Override Projectile Index", method =() => IndexPatch.enabled = true, disableMethod =() => IndexPatch.enabled = false, toolTip = "Forces a specific projectile index on random projectiles." },
+                new Module { buttonText = "Override Projectile Index", method =() => SnowballModels.enabled = true, disableMethod =() => SnowballModels.enabled = false, toolTip = "Forces a specific projectile index on random projectiles." },
                 ButtonHelper.CreateNumeric("Change Projectile Index", 0, 15, Projectiles.targetProjectileIndex, Projectiles.ApplyProjectileIndex, v => (v + 1).ToString(), "Changes the targetted projectile index on the \"Override Projectile Index\" mod."),
 
                 ButtonHelper.CreateNumeric("Change Projectile Delay", -1, 20, Projectiles.projDebounceIndex, Projectiles.ApplyProjectileDelay, Projectiles.DisplayProjectileDelay, "Gives the projectiles a delay before spawning another.", onCycle: Projectiles.ProjectileDelayWarning),
@@ -483,10 +498,10 @@ namespace Qubit.Modules
                 new Module { buttonText = "Create Public", method =() => Room.CreateRoom(Room.RandomRoomName(), true), isTogglable = false, toolTip = "Creates a public room."},
                 new Module { buttonText = "Create Private", method =() => Room.CreateRoom(Room.RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
 
-                new Module { buttonText = "Fast Disconnect", method =() => SinglePlayerPatch.enabled = true, disableMethod =() =>  SinglePlayerPatch.enabled = false, toolTip = "Uses the fastest method of disconnecting possible.", legal = true},
+                new Module { buttonText = "Fast Disconnect", method =() => SinglePlayer.enabled = true, disableMethod =() =>  SinglePlayer.enabled = false, toolTip = "Uses the fastest method of disconnecting possible.", legal = true},
                 new Module { buttonText = "Join Menu Room", method =() => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom($"<$Qubit_{PluginInfo.Version}>", JoinType.Solo), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Qubit Menu</b> users.", legal = true},
 
-                new Module { buttonText = "Bypass Join Room Type", enableMethod =() => JoinedRoomPatch.enabled = true, disableMethod =() => JoinedRoomPatch.enabled = false, toolTip = "Bypasses the immediate disconnection when trying to join a room that is in another map."},
+                new Module { buttonText = "Bypass Join Room Type", enableMethod =() => JoinedRoom.enabled = true, disableMethod =() => JoinedRoom.enabled = false, toolTip = "Bypasses the immediate disconnection when trying to join a room that is in another map."},
 
                 new Module { buttonText = "Auto Join Room", method =() => PromptText("What room would you like to join?", () => Room.QueueRoom(keyboardInput), null, "Done", "Cancel"), isTogglable = false, toolTip = "Automatically attempts to connect to whatever room you desire every couple of seconds until connected.", legal = true},
 
@@ -537,29 +552,29 @@ namespace Qubit.Modules
                 new Module { buttonText = "Discord RPC", aliases = new[] { "Self Tracker" }, method = Important.DiscordRPC, disableMethod = Important.DisableDiscordRPC, toolTip = "Gives you a indicator on Discord that you are using Qubit Menu.", legal = true},
                 new Module { buttonText = "Media Integration", aliases = new[] { "Spotify" }, enableMethod = Important.EnsureIntegrationProgram, method = Important.MediaIntegration, disableMethod = Important.DisableMediaIntegration, toolTip = "Shows you what media you are watching/listening to in the top left. To switch media, open the menu and use your left joystick.", legal = true},
 
-                new Module { buttonText = "Anti Hand Tap", enableMethod =() => HandTapPatch.enabled = true, disableMethod =() => HandTapPatch.enabled = false, toolTip = "Stops all hand tap sounds from being played."},
+                new Module { buttonText = "Anti Hand Tap", enableMethod =() => HandTaps.enabled = true, disableMethod =() => HandTaps.enabled = false, toolTip = "Stops all hand tap sounds from being played."},
                 new Module { buttonText = "First Person Camera", enableMethod = Important.EnableFPC, postMethod = Important.MoveFPC, disableMethod = Important.DisableFPC, toolTip = "Makes your camera output what you see in VR.", legal = true},
                 new Module { buttonText = "Force Enable Hands", enableMethod =() => Important.ForceEnableHands(), disableMethod =() => Important.ForceEnableHands(false), toolTip = "Prevents your hands from disconnecting.", legal = true},
 
                 new Module { buttonText = $"Oculus Report Menu {Bracket("green", "X")}", method = Important.OculusReportMenu, toolTip = "Opens the Oculus report menu when holding <color=green>X</color>."},
 
-                new Module { buttonText = "Accept TOS", enableMethod =() => TOSPatches.enabled = true, method = Important.AcceptTOS, disableMethod =() => TOSPatches.enabled = false, toolTip = "Accepts the Terms of Service for you."},
-                new Module { buttonText = "Bypass K-ID Restrictions", overlapText = "Bypass k-ID Restrictions", method =() => PermissionPatch.enabled = true, disableMethod =() => PermissionPatch.enabled = false, toolTip = "Bypasses the permission restrictions held by k-ID for underage users."},
+                new Module { buttonText = "Accept TOS", enableMethod =() => TermsOfService.enabled = true, method = Important.AcceptTOS, disableMethod =() => TermsOfService.enabled = false, toolTip = "Accepts the Terms of Service for you."},
+                new Module { buttonText = "Bypass K-ID Restrictions", overlapText = "Bypass k-ID Restrictions", method =() => Permissions.enabled = true, disableMethod =() => Permissions.enabled = false, toolTip = "Bypasses the permission restrictions held by k-ID for underage users."},
 
                 new Module { buttonText = "Copy Player Position", method = Important.CopyPlayerPosition, isTogglable = false, toolTip = "Copies the current player position to the clipboard.", legal = true },
 
                 new Module { buttonText = "Clear Notifications", method = Notifications.Clear, isTogglable = false, toolTip = "Clears your notifications.", legal = true},
 
                 new Module { buttonText = "Anti AFK", enableMethod =() => ManagerRegistry.PhotonNetworkController.disableAFKKick = true, disableMethod =() => ManagerRegistry.PhotonNetworkController.disableAFKKick = false, toolTip = "Doesn't let you get kicked for being AFK."},
-                new Module { buttonText = "Disable Network Triggers", enableMethod =() => NetworkTriggerPatch.enabled = true, disableMethod =() => NetworkTriggerPatch.enabled = false, toolTip = "Disables the network triggers, so you can change maps without disconnecting."},
+                new Module { buttonText = "Disable Network Triggers", enableMethod =() => JoinTriggers.enabled = true, disableMethod =() => JoinTriggers.enabled = false, toolTip = "Disables the network triggers, so you can change maps without disconnecting."},
                 new Module { buttonText = "Disable Map Triggers", enableMethod =() => GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab").SetActive(false), disableMethod =() => GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab").SetActive(true), toolTip = "Disables the map triggers, so you can change maps without loading them."},
-                new Module { buttonText = "Disable Quit Box", enableMethod =() => QuitBoxPatch.enabled = false, disableMethod =() => QuitBoxPatch.enabled = true, toolTip = "Disables the box under the map that closes your game."},
+                new Module { buttonText = "Disable Quit Box", enableMethod =() => QuitBoxes.enabled = false, disableMethod =() => QuitBoxes.enabled = true, toolTip = "Disables the box under the map that closes your game."},
                 new Module { buttonText = "Physical Quit Box", enableMethod = Important.PhysicalQuitbox, disableMethod = Important.DisablePhysicalQuitbox, toolTip = "Makes the quitbox physical, letting you see and walk on it."},
-                new Module { buttonText = "Stump Quit Box", enableMethod =() => QuitBoxPatch.teleportToStump = true, disableMethod =() => QuitBoxPatch.teleportToStump = false, toolTip = "Disables the box under the map that closes your game."},
+                new Module { buttonText = "Stump Quit Box", enableMethod =() => QuitBoxes.teleportToStump = true, disableMethod =() => QuitBoxes.teleportToStump = false, toolTip = "Disables the box under the map that closes your game."},
                 new Module { buttonText = "Block on Mute", method = Important.BlockOnMute, toolTip = "Disables any muted players' rig unless you need to see them."},
 
                 new Module { buttonText = "Steam Refund Timer", method =() => { if (playTime > 6000f) { Notifications.information["REFUND"] = "Refund soon"; } else { Notifications.information.Remove("REFUND"); } }, enableMethod = Important.CheckNewAcc, disableMethod =() => Notifications.information.Remove("REFUND"), toolTip = "Alerts you when you are nearby the steam refund time."},
-                new Module { buttonText = "Advanced Ban Message", enableMethod =() => ErrorPatches.enabled = true, disableMethod =() => ErrorPatches.enabled = false, toolTip = "Shows more information, such as remaining time and unban date, when banned.", legal = true},
+                new Module { buttonText = "Advanced Ban Message", enableMethod =() => ErrorMessages.enabled = true, disableMethod =() => ErrorMessages.enabled = false, toolTip = "Shows more information, such as remaining time and unban date, when banned.", legal = true},
 
                 new Module { buttonText = "120 FPS", method =() => Important.CapFPS(120), toolTip = "Caps your FPS at 120 frames per second."},
                 new Module { buttonText = "90 FPS", method =() => Important.CapFPS(90), toolTip = "Caps your FPS at 90 frames per second."},
@@ -609,17 +624,17 @@ namespace Qubit.Modules
                 new Module { buttonText = $"Fake Report Menu {Bracket("green", "Y")}", method = Safety.FakeReportMenu, toolTip = "Imitates opening the report menu when holding <color=green>Y</color>."},
                 new Module { buttonText = $"Fake Broken Controller {Bracket("green", "X")}", enableMethod =() => GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/LeftHandTriggerCollider").GetComponent<Collider>().enabled = false, method = Safety.FakeBrokenController, disableMethod =() => GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/LeftHandTriggerCollider").GetComponent<Collider>().enabled = true, toolTip = "Makes you look like your left controller is broken, hold <color=green>X</color> to move your right hand with your left hand."},
                 new Module { buttonText = $"Fake Power Off {Bracket("green", "J")}", method = Safety.FakePowerOff, toolTip = "Imitates turning off your headset when holding down your <color=green>joystick</color>."},
-                new Module { buttonText = $"Fake Valve Tracking {Bracket("green", "J")}", enableMethod =() => TorsoPatch.VRRigLateUpdate += Safety.FakeValveTracking, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Safety.FakeValveTracking, toolTip = "Imitates what happens when your headset disconnects on a Valve Index when holding your <color=green>right joystick</color>."},
+                new Module { buttonText = $"Fake Valve Tracking {Bracket("green", "J")}", enableMethod =() => Torso.VRRigLateUpdate += Safety.FakeValveTracking, disableMethod =() => Torso.VRRigLateUpdate -= Safety.FakeValveTracking, toolTip = "Imitates what happens when your headset disconnects on a Valve Index when holding your <color=green>right joystick</color>."},
 
                 new Module { buttonText = "Disable Gamemode Buttons", enableMethod =() => Safety.SetGamemodeButtonActive(false), disableMethod =() => Safety.SetGamemodeButtonActive(), toolTip = "Disables the gamemode buttons."},
                 new Module { buttonText = "Support Page Spoof", method = Safety.SpoofSupportPage, toolTip = "Makes the support page appear as if you are on Oculus."},
 
                 new Module { buttonText = "Flush RPCs", method = Security.RPCProtection, isTogglable = false, toolTip = "Flushes all RPC calls, good after you stop spamming." },
                 new Module { buttonText = "Anti Crash", overlapText = "Exploit Guard", aliases = new[] { "Anti Crash" }, enableMethod =() => AntiCrashPatches.enabled = true, disableMethod =() => AntiCrashPatches.enabled = false, toolTip = "Prevents crashers from completely annihilating your computer.", legal = true},
-                new Module { buttonText = "Anti Ban Crash", enableMethod =() => BanPatches.AntiBanCrash1.enabled = true, disableMethod =() => BanPatches.AntiBanCrash1.enabled = false, toolTip = "Prevents your game from crashing when you are banned."},
-                new Module { buttonText = "Anti Kick", enableMethod = Safety.OnlySerializeNecessary, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Only networks the necessities to prevent getting kicked."},
+                new Module { buttonText = "Anti Ban Crash", enableMethod =() => AntiBanCrash1.enabled = true, disableMethod =() => AntiBanCrash1.enabled = false, toolTip = "Prevents your game from crashing when you are banned."},
+                new Module { buttonText = "Anti Kick", enableMethod = Safety.OnlySerializeNecessary, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Only networks the necessities to prevent getting kicked."},
                 new Module { buttonText = "Anti Name Ban", enableMethod =() => BanPatches.enabled = true, method = Safety.AntiNameBan, disableMethod =() => BanPatches.enabled = false, toolTip = "Prevents you from getting banned for setting your name to bad things."},
-                new Module { buttonText = "Anti Stump Kick", enableMethod =() => GroupPatch.enabled = true, disableMethod =() => GroupPatch.enabled = false, toolTip = "Stops people from group kicking you.", legal = true},
+                new Module { buttonText = "Anti Stump Kick", enableMethod =() => GroupSearch.enabled = true, disableMethod =() => GroupSearch.enabled = false, toolTip = "Stops people from group kicking you.", legal = true},
                 new Module { buttonText = "Auto Clear Cache", method = Safety.AutoClearCache, toolTip = "Automatically clears your game's cache (garbage collector) every minute to prevent memory leaks.", legal = true},
                 new Module { buttonText = "Anti Moderator", method = Safety.AntiModerator, toolTip = "When someone with the stick joins, you get disconnected and their player ID and room code gets saved to a file."},
                 new Module { buttonText = "Anti Content Creator", method = Safety.AntiContentCreator, toolTip = "When a content creator joins, you get disconnected and their player ID and room code gets saved to a file."},
@@ -628,22 +643,22 @@ namespace Qubit.Modules
                 new Module { buttonText = "Steam Detector", method = Safety.SteamDetector, toolTip = "Detects when a player in your room is on Steam.", legal = true},
 
                 new Module { buttonText = "Bypass Automod", method = Safety.BypassAutomod, toolTip = "Attempts to bypass automod muting yourself and others."},
-                new Module { buttonText = "Bypass Mod Checkers", enableMethod =() => PropertiesPatches.enabled = true, method = Safety.BypassModCheckers, disableMethod =() => PropertiesPatches.enabled = false, toolTip = "Tells players using mod checkers that you have no mods."},
-                new Module { buttonText = "Bypass Cosmetic Check", method =() => RequestPatch.bypassCosmeticCheck = true, disableMethod =() => RequestPatch.bypassCosmeticCheck = false, toolTip = "Turns off the networking for any cosmetic mods, stopping people from seeing if you're using one."},
+                new Module { buttonText = "Bypass Mod Checkers", enableMethod =() => PropertyOverrides.enabled = true, method = Safety.BypassModCheckers, disableMethod =() => PropertyOverrides.enabled = false, toolTip = "Tells players using mod checkers that you have no mods."},
+                new Module { buttonText = "Bypass Cosmetic Check", method =() => CosmeticRequests.bypassCosmeticCheck = true, disableMethod =() => CosmeticRequests.bypassCosmeticCheck = false, toolTip = "Turns off the networking for any cosmetic mods, stopping people from seeing if you're using one."},
 
-                new Module { buttonText = "Anti Predictions", enableMethod = Safety.AntiPredictions, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Prevents people from checking if your predictions are too high."},
+                new Module { buttonText = "Anti Predictions", enableMethod = Safety.AntiPredictions, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Prevents people from checking if your predictions are too high."},
 
                 new Module { buttonText = $"Anti Report {Bracket("green", "Disconnect")}", method = Safety.AntiReportDisconnect, toolTip = "Disconnects you from the room when anyone comes near your report button."},
                 new Module { buttonText = $"Anti Report {Bracket("green", "Reconnect")}", method = Safety.AntiReportReconnect, toolTip = "Disconnects and reconnects you from the room when anyone comes near your report button."},
                 new Module { buttonText = $"Anti Report {Bracket("green", "Join Random")}", method = Safety.AntiReportJoinRandom, toolTip = "Connects you to a random the room when anyone comes near your report button."},
 
                 new Module { buttonText = $"Anti Report {Bracket("green", "Oculus")}", enableMethod = Safety.EnableAntiOculusReport, disableMethod = Safety.DisableAntiOculusReport, toolTip = "Disconnects you from the room when you get reported with the Oculus report menu."},
-                new Module { buttonText = $"Anti Report {Bracket("green", "Anti Cheat")}", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiACReport = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiACReport = false, toolTip = "Disconnects you from the room when you get reported by the anti cheat."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Anti Cheat")}", enableMethod =() => SendReport.AntiACReport = true, disableMethod =() => SendReport.AntiACReport = false, toolTip = "Disconnects you from the room when you get reported by the anti cheat."},
                 new Module { buttonText = $"Anti Report {Bracket("green", "Notify")}", method = Safety.AntiReportNotify, toolTip = "Tells you when people come near your report button, but doesn't do anything."},
                 new Module { buttonText = $"Anti Report {Bracket("green", "Overlay")}", method = Safety.AntiReportOverlay, toolTip = "Shows you an overlay when people come near your report button, but doesn't do anything."},
 
-                new Module { buttonText = $"Show Anti Cheat Reports {Bracket("green", "Self")}", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatSelf = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatSelf = false, toolTip = "Gives you a notification every time you have been reported by the anti cheat."},
-                new Module { buttonText = $"Show Anti Cheat Reports {Bracket("green", "All")}", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatAll = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatAll = false, toolTip = "Gives you a notification every time anyone has been reported by the anti cheat."},
+                new Module { buttonText = $"Show Anti Cheat Reports {Bracket("green", "Self")}", enableMethod =() => SendReport.AntiCheatSelf = true, disableMethod =() => SendReport.AntiCheatSelf = false, toolTip = "Gives you a notification every time you have been reported by the anti cheat."},
+                new Module { buttonText = $"Show Anti Cheat Reports {Bracket("green", "All")}", enableMethod =() => SendReport.AntiCheatAll = true, disableMethod =() => SendReport.AntiCheatAll = false, toolTip = "Gives you a notification every time anyone has been reported by the anti cheat."},
 
                 new Module { buttonText = "Change Identity", method = Safety.ChangeIdentity, isTogglable = false, toolTip = "Changes your name and color to something a new player would have."},
                 new Module { buttonText = $"Change Identity {Bracket("green", "Normal")}", method = Safety.ChangeIdentityRegular, isTogglable = false, toolTip = "Changes your name and color to something a regular player would have."},
@@ -653,9 +668,9 @@ namespace Qubit.Modules
                 new Module { buttonText = $"Change Identity on Disconnect {Bracket("green", "Normal")}", method =() => Safety.ChangeIdentityOnDisconnect(Safety.ChangeIdentityRegular), toolTip = "When you leave, your name and color will be set to something a regular player would have."},
                 new Module { buttonText = $"Change Identity on Disconnect {Bracket("green", "Child")}", method =() => Safety.ChangeIdentityOnDisconnect(Safety.ChangeIdentityCustom), toolTip = "When you leave, your name and color will be set to whatever you desire."},
 
-                new Module { buttonText = "FPS Spoof", enableMethod =() => GTPlayerStatsPatch.SpoofFPS = true, disableMethod =() => GTPlayerStatsPatch.SpoofFPS = false, toolTip = "Makes your FPS appear different for other players."},
-                new Module { buttonText = "Target FPS Spoof", enableMethod =() => GTPlayerStatsPatch.SpoofTargetFPS = true, disableMethod =() => GTPlayerStatsPatch.SpoofTargetFPS = false, toolTip = "Makes your FPS appear different for other players."},
-                new Module { buttonText = "Ping Spoof", enableMethod =() => GTPlayerStatsPatch.SpoofPing = true, disableMethod =() => GTPlayerStatsPatch.SpoofPing = false, toolTip = "Makes your ping appear different for other players."},
+                new Module { buttonText = "FPS Spoof", enableMethod =() => PlayerStats.SpoofFPS = true, disableMethod =() => PlayerStats.SpoofFPS = false, toolTip = "Makes your FPS appear different for other players."},
+                new Module { buttonText = "Target FPS Spoof", enableMethod =() => PlayerStats.SpoofTargetFPS = true, disableMethod =() => PlayerStats.SpoofTargetFPS = false, toolTip = "Makes your FPS appear different for other players."},
+                new Module { buttonText = "Ping Spoof", enableMethod =() => PlayerStats.SpoofPing = true, disableMethod =() => PlayerStats.SpoofPing = false, toolTip = "Makes your ping appear different for other players."},
 
                 new Module { buttonText = "Name Spoof", method = Safety.NameSpoof, toolTip = "Changes your name on the leaderboard to something random, but not on your rig."},
                 new Module { buttonText = "Color Spoof", method = Safety.ColorSpoof, toolTip = "Makes your color appear different to every player."},
@@ -743,7 +758,7 @@ namespace Qubit.Modules
                 new Module { buttonText = $"Long Jump {Bracket("green", "A")}", overlapText = $"Playspace Abuse {Bracket("green", "A")}", aliases = new[] { "Long Jump" }, method = Movement.PlayspaceAbuse, toolTip = "Makes you look like you're legitimately long jumping when holding <color=green>A</color>."},
                 new Module { buttonText = "Velocity Long Arms", overlapText = "Predictions", aliases = new[] { "Velocity Long Arms" }, enableMethod = Movement.CreateVelocityTrackers, method = Movement.VelocityLongArms, disableMethod = Movement.DestroyVelocityTrackers, toolTip = "Moves your arms farther depending on how fast you move them."},
 
-                new Module { buttonText = "Timer", enableMethod =() => TimerPatch.enabled = true, method = Movement.Timer, disableMethod =() => { TimerPatch.enabled = false; Time.timeScale = 1f; References.Player.debugMovement = false;  }, toolTip = "Speeds up or slows down the time of your game."},
+                new Module { buttonText = "Timer", enableMethod =() => TaggerTimer.enabled = true, method = Movement.Timer, disableMethod =() => { TaggerTimer.enabled = false; Time.timeScale = 1f; References.Player.debugMovement = false;  }, toolTip = "Speeds up or slows down the time of your game."},
 
                 new Module { buttonText = "Speed Boost", method = Movement.SpeedBoost, toolTip = "Changes your speed to whatever you set it to."},
                 new Module { buttonText = "Grip Speed Boost", method =() => { if (rightGrab) { Movement.SpeedBoost(); } }, toolTip = "Changes your speed to whatever you set it to, if you're holding right grip."},
@@ -755,9 +770,9 @@ namespace Qubit.Modules
                 new Module { buttonText = "Funny Movement", overlapText = "Exponential Movement", aliases = new[] { "Funny Movement" }, method = Movement.FunMove, toolTip = "Multiplies your velocity every frame, making you exponential."},
 
                 new Module { buttonText = "Slip Slap", enableMethod = Movement.SlipSlap, disableMethod = Movement.DisableSlipSlap, toolTip = "Allows you to slip slap again."},
-                new Module { buttonText = "Slippery Hands", overlapText = "Slippery Surfaces", aliases = new[] { "Slippery Hands" }, enableMethod =() => SlidePatch.everythingSlippery = true, disableMethod =() => SlidePatch.everythingSlippery = false, toolTip = "Makes everything ice, as in extremely slippery."},
-                new Module { buttonText = "Grippy Hands", overlapText = "No Slippery Surfaces", aliases = new[] { "Grippy Hands" }, enableMethod =() => SlidePatch.everythingGrippy = true, disableMethod =() => SlidePatch.everythingGrippy = false, toolTip = "Disables any slipperiness of any surfaces."},
-                new Module { buttonText = "Slippery Surface Helper", aliases = new[] { "Slippery Wall Helper" }, enableMethod =() => SlidePatch.minimalSlip = true, disableMethod =() => SlidePatch.minimalSlip = false, toolTip = "Helps you stick to slippery walls more, but doesn't remove the slipperiness."},
+                new Module { buttonText = "Slippery Hands", overlapText = "Slippery Surfaces", aliases = new[] { "Slippery Hands" }, enableMethod =() => SlidePercentage.everythingSlippery = true, disableMethod =() => SlidePercentage.everythingSlippery = false, toolTip = "Makes everything ice, as in extremely slippery."},
+                new Module { buttonText = "Grippy Hands", overlapText = "No Slippery Surfaces", aliases = new[] { "Grippy Hands" }, enableMethod =() => SlidePercentage.everythingGrippy = true, disableMethod =() => SlidePercentage.everythingGrippy = false, toolTip = "Disables any slipperiness of any surfaces."},
+                new Module { buttonText = "Slippery Surface Helper", aliases = new[] { "Slippery Wall Helper" }, enableMethod =() => SlidePercentage.minimalSlip = true, disableMethod =() => SlidePercentage.minimalSlip = false, toolTip = "Helps you stick to slippery walls more, but doesn't remove the slipperiness."},
                 new Module { buttonText = "Remove Forest Colliders", enableMethod = Movement.RemoveForestColliders, disableMethod = Movement.RestoreForestColliders, toolTip = "Removes the colliders on the roof and the entrance to tutorial inside Forest."},
                 new Module { buttonText = "Sticky Hands", method = Movement.StickyHands, disableMethod = Movement.DisableStickyHands, toolTip = "Makes your hands really sticky."},
                 new Module { buttonText = "Climby Hands", method = Movement.ClimbyHands, disableMethod = Movement.DisableClimbyHands, toolTip = "Lets you climb everything like a rope."},
@@ -795,7 +810,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Air Swim", aliases = new[] { "Fish" }, method = Movement.AirSwim, disableMethod = Movement.DisableAirSwim, toolTip = "Puts you in a block of water, letting you swim in the air." },
                 new Module { buttonText = "Fast Swim", method =() => Movement.SetSwimSpeed(10f), disableMethod =() => Movement.SetSwimSpeed(), toolTip = "Lets you swim faster in water." },
                 new Module { buttonText = "Liquid Run Helper", enableMethod =() => Movement.LiquidRunHelper(true), disableMethod =() => Movement.LiquidRunHelper(false), toolTip = "Adds back the nostalgic water running to the game." },
-                new Module { buttonText = "Disable Air", overlapText = "Disable Wind Barriers", aliases = new[] { "Disable Air" }, enableMethod =() => { ForcePatches.enabled = true; GetObject("Environment Objects/LocalObjects_Prefab/Forest/Environment/Forest_ForceVolumes/").SetActive(false); GetObject("Environment Objects/LocalObjects_Prefab/ForestToHoverboard/TurnOnInForestAndHoverboard/ForestDome_CollisionOnly").SetActive(false); }, disableMethod =() => { ForcePatches.enabled = false; GetObject("Environment Objects/LocalObjects_Prefab/Forest/Environment/Forest_ForceVolumes/").SetActive(true); GetObject("Environment Objects/LocalObjects_Prefab/ForestToHoverboard/TurnOnInForestAndHoverboard/ForestDome_CollisionOnly").SetActive(true); }, toolTip = "Disables the wind barriers in every map." },
+                new Module { buttonText = "Disable Air", overlapText = "Disable Wind Barriers", aliases = new[] { "Disable Air" }, enableMethod =() => { ForceVolumes.enabled = true; GetObject("Environment Objects/LocalObjects_Prefab/Forest/Environment/Forest_ForceVolumes/").SetActive(false); GetObject("Environment Objects/LocalObjects_Prefab/ForestToHoverboard/TurnOnInForestAndHoverboard/ForestDome_CollisionOnly").SetActive(false); }, disableMethod =() => { ForceVolumes.enabled = false; GetObject("Environment Objects/LocalObjects_Prefab/Forest/Environment/Forest_ForceVolumes/").SetActive(true); GetObject("Environment Objects/LocalObjects_Prefab/ForestToHoverboard/TurnOnInForestAndHoverboard/ForestDome_CollisionOnly").SetActive(true); }, toolTip = "Disables the wind barriers in every map." },
 
                 new Module { buttonText = $"Ghost {Bracket("green", "A")}", method = Movement.Ghost, disableMethod = Movement.EnableRig, toolTip = "Keeps your rig still when holding <color=green>A</color>."},
                 new Module { buttonText = $"Invisible {Bracket("green", "B")}", method = Movement.Invisible, disableMethod = Movement.EnableRig, toolTip = "Makes you go invisible when holding <color=green>B</color>."},
@@ -808,7 +823,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Spin Head Z", method =() => Movement.SpinHead("z"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the Z axis."},
 
                 new Module { buttonText = $"Spaz Rig {Bracket("green", "A")}", enableMethod = Movement.EnableSpazRig, method = Movement.SpazRig, disableMethod = Movement.DisableSpazRig, toolTip = "Makes every part of your rig spaz out a little bit when holding <color=green>A</color>."},
-                new Module { buttonText = "Spaz Full Body", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.VRRigLateUpdate_SpazBody, method =() => ghostException = true, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.VRRigLateUpdate_SpazBody; ghostException = false; }, toolTip = "Makes your body spaz in a bunch of different directions."},
+                new Module { buttonText = "Spaz Full Body", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_SpazBody, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_SpazBody; ghostException = false; }, toolTip = "Makes your body spaz in a bunch of different directions."},
                 new Module { buttonText = $"Spaz Rig Hands {Bracket("green", "A")}", method = Movement.SpazHands, toolTip = "Makes your rig's hands spaz out everywhere when holding <color=green>A</color>."},
                 new Module { buttonText = $"Spaz Hands {Bracket("green", "A")}", method = Movement.SpazRealHands, toolTip = "Makes your hands spaz out everywhere when holding <color=green>A</color>."},
                 new Module { buttonText = "Random Spaz Head Position", enableMethod = Movement.EnableSpazHead, method = Movement.RandomSpazHeadPosition, disableMethod = Movement.FixHeadPosition, toolTip = "Makes your head position spaz out for 0 to 1 seconds every 1 to 4 seconds."},
@@ -830,13 +845,13 @@ namespace Qubit.Modules
                 new Module { buttonText = "Paralyze Rig", method = Movement.ParalyzeRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Removes your arms from your rig."},
                 new Module { buttonText = "Chicken Rig", method = Movement.ChickenRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your rig look like a chicken."},
                 new Module { buttonText = "Amputate Rig", method = Movement.AmputateRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Removes all of your limbs from your rig."},
-                new Module { buttonText = "Decapitate Rig", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.DecapitateRigUpdate, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Movement.DecapitateRigUpdate, toolTip = "Removes the head from your rig."},
+                new Module { buttonText = "Decapitate Rig", enableMethod =() => Torso.VRRigLateUpdate += Movement.DecapitateRigUpdate, disableMethod =() => Torso.VRRigLateUpdate -= Movement.DecapitateRigUpdate, toolTip = "Removes the head from your rig."},
 
-                new Module { buttonText = "Fake Full Body Tracking", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.VRRigLateUpdate_FakeFBT, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Movement.VRRigLateUpdate_FakeFBT, toolTip = "Fakes full body tracking by making your rig follow your camera orientation."},
-                new Module { buttonText = "Control Rig Rotation", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.VRRigLateUpdate_Control, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Movement.VRRigLateUpdate_Control, toolTip = "Control your rig rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
+                new Module { buttonText = "Fake Full Body Tracking", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_FakeFBT, disableMethod =() => Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_FakeFBT, toolTip = "Fakes full body tracking by making your rig follow your camera orientation."},
+                new Module { buttonText = "Control Rig Rotation", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_Control, disableMethod =() => Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_Control, toolTip = "Control your rig rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
 
                 new Module { buttonText = "Control Body Rotation", postMethod = Movement.ControlBodyRotation, toolTip = "Control your body rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
-                new Module { buttonText = $"Flip {Bracket("green", "A")} {Bracket("green", "B")}", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.Flip, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
+                new Module { buttonText = $"Flip {Bracket("green", "A")} {Bracket("green", "B")}", enableMethod =() => Torso.VRRigLateUpdate += Movement.Flip, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
                 new Module { buttonText = "Spider Crawl", postMethod = Movement.SpiderCrawl, toolTip = "Makes you look like a spider."},
                 new Module { buttonText = "Upwards Body", postMethod = Movement.UpwardsBody, toolTip = "Makes your body point upwards."},
 
@@ -844,7 +859,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Spaz Rig Body", method =() => Movement.SetBodyPatch(true, 1), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Gives your body a seizure, randomizing its rotation."},
                 new Module { buttonText = "Reverse Rig Body", method =() => Movement.SetBodyPatch(true, 2), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Flips your body around backwards, but not your head."},
                 new Module { buttonText = "Rec Room Body", method = Movement.RecRoomBody, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Makes your rig like how the Rec Room bodies are."},
-                new Module { buttonText = "Dinnerbone", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.VRRigLateUpdate_Dinnerbone, method =() => ghostException = true, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.VRRigLateUpdate_Dinnerbone; ghostException = false;  }, toolTip = "Flips you upside down, inspired by the easter egg in Minecraft."},
+                new Module { buttonText = "Dinnerbone", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_Dinnerbone, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_Dinnerbone; ghostException = false;  }, toolTip = "Flips you upside down, inspired by the easter egg in Minecraft."},
                 new Module { buttonText = $"Freeze Body Rotation {Bracket("green", "G")}", method = Movement.FreezeBodyRotation, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Freezes your body rotation in place, but not your head, when holding <color=green>grip</color>."},
 
                 new Module { buttonText = $"Auto Dance {Bracket("green", "A")}", aliases = new[] { "Emote" }, method = Movement.AutoDance, toolTip = "Makes you dance when holding <color=green>A</color>."},
@@ -853,43 +868,43 @@ namespace Qubit.Modules
                 new Module { buttonText = $"Helicopter {Bracket("green", "A")}", method = Movement.Helicopter, toolTip = "Turns you into a helicopter when holding <color=green>A</color>."},
                 new Module { buttonText = $"Beyblade {Bracket("green", "A")}", method = Movement.Beyblade, toolTip = "Turns you into a beyblade when holding <color=green>A</color>."},
                 new Module { buttonText = $"Still Beyblade {Bracket("green", "A")}", method = Movement.StillBeyblade, disableMethod =() => Movement.stillBeybladeStartPos = Vector3.zero, toolTip = "Turns you into a beyblade when holding <color=green>A</color>. Doesn't move you."},
-                new Module { buttonText = "Spin Bot", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.TorsoPatch_VRRigLateUpdate, method =() => ghostException = true, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.TorsoPatch_VRRigLateUpdate; ghostException = false; }, toolTip = "Makes your body spin around, but not your head."},
+                new Module { buttonText = "Spin Bot", enableMethod =() => Torso.VRRigLateUpdate += Movement.TorsoPatch_VRRigLateUpdate, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.TorsoPatch_VRRigLateUpdate; ghostException = false; }, toolTip = "Makes your body spin around, but not your head."},
                 new Module { buttonText = $"Fan {Bracket("green", "A")}", method = Movement.Fan, toolTip = "Turns you into a fan when holding <color=green>A</color>."},
                 new Module { buttonText = "Ghost Animations", method = Movement.GhostAnimations, disableMethod = Movement.DisableGhostAnimations, toolTip = "Makes you look like a ghost, making your movement snappy and slow."},
                 new Module { buttonText = "Minecraft Animations", method = Movement.MinecraftAnimations, disableMethod = Movement.EnableRig, toolTip = "Puts your hands down, and makes you walk when holding <color=green>A</color>. You can also point with <color=green>B</color>."},
 
-                new Module { buttonText = "Stare at Nearby", overlapText = "Stare At Player Nearby", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.StareAtNearby, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Movement.StareAtNearby, toolTip = "Makes you stare at the nearest player."},
-                new Module { buttonText = "Stare at Player Gun", method = Movement.StareAtGun, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Movement.StareAtTarget, toolTip = "Makes you stare at whoever your hand desires."},
-                new Module { buttonText = "Stare at All Players", aliases = new[] { "Owl" }, enableMethod = Movement.StareAtAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes you stare at everyone in the room."},
-                new Module { buttonText = "Eye Contact", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.EyeContact, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Movement.EyeContact, toolTip = "Makes you stare at anyone who is looking at you."},
+                new Module { buttonText = "Stare at Nearby", overlapText = "Stare At Player Nearby", enableMethod =() => Torso.VRRigLateUpdate += Movement.StareAtNearby, disableMethod =() => Torso.VRRigLateUpdate -= Movement.StareAtNearby, toolTip = "Makes you stare at the nearest player."},
+                new Module { buttonText = "Stare at Player Gun", method = Movement.StareAtGun, disableMethod =() => Torso.VRRigLateUpdate -= Movement.StareAtTarget, toolTip = "Makes you stare at whoever your hand desires."},
+                new Module { buttonText = "Stare at All Players", aliases = new[] { "Owl" }, enableMethod = Movement.StareAtAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you stare at everyone in the room."},
+                new Module { buttonText = "Eye Contact", enableMethod =() => Torso.VRRigLateUpdate += Movement.EyeContact, disableMethod =() => Torso.VRRigLateUpdate -= Movement.EyeContact, toolTip = "Makes you stare at anyone who is looking at you."},
                 new Module { buttonText = "Floating Rig", enableMethod = Movement.EnableFloatingRig, method = Movement.FloatingRig, disableMethod = Movement.DisableFloatingRig, toolTip = "Makes your rig float."},
 
 
                 new Module { buttonText = "Bees", method = Movement.Bees, disableMethod = Movement.EnableRig, toolTip = "Makes your rig teleport to random players, imitating the bees ghost."},
 
                 new Module { buttonText = "Piggyback Gun", aliases = new[] { "Ride Gun" }, method = Movement.PiggybackGun, toolTip = "Teleports you on top of whoever your hand desires repeatedly."},
-                new Module { buttonText = "Piggyback All", aliases = new[] { "Ride All" }, enableMethod = Movement.PiggybackAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes you appear on top of everyone in the room"},
+                new Module { buttonText = "Piggyback All", aliases = new[] { "Ride All" }, enableMethod = Movement.PiggybackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you appear on top of everyone in the room"},
 
                 new Module { buttonText = "Copy Movement Gun", method = Movement.CopyMovementGun, toolTip = "Makes your rig copy the movement of whoever your hand desires."},
-                new Module { buttonText = "Copy Movement All", enableMethod = Movement.CopyMovementAll, disableMethod =() => { SerializePatch.OverrideSerialization = null; Movement.followPositions.Clear(); }, toolTip = "Makes your rig copy the movement of every player in the room."},
+                new Module { buttonText = "Copy Movement All", enableMethod = Movement.CopyMovementAll, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Movement.followPositions.Clear(); }, toolTip = "Makes your rig copy the movement of every player in the room."},
 
                 new Module { buttonText = "Follow Player Gun", method = Movement.FollowPlayerGun, toolTip = "Flies your rig towards whoever your hand desires."},
-                new Module { buttonText = "Follow All Players", enableMethod = Movement.FollowAllPlayers, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flies your rig towards everyone in the room."},
+                new Module { buttonText = "Follow All Players", enableMethod = Movement.FollowAllPlayers, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Flies your rig towards everyone in the room."},
 
                 new Module { buttonText = "Orbit Player Gun", method = Movement.OrbitPlayerGun, toolTip = "Orbits your rig around whoever your hand desires."},
-                new Module { buttonText = "Orbit All Players", enableMethod = Movement.OrbitAllPlayers, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Orbits your rig around everyone in the room."},
+                new Module { buttonText = "Orbit All Players", enableMethod = Movement.OrbitAllPlayers, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Orbits your rig around everyone in the room."},
 
                 new Module { buttonText = "Jumpscare Gun", method = Movement.JumpscareGun, toolTip = "Makes you jumpscare whoever your hand desires."},
-                new Module { buttonText = "Jumpscare All", enableMethod = Movement.JumpscareAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes you jumpscare everyone in the room."},
+                new Module { buttonText = "Jumpscare All", enableMethod = Movement.JumpscareAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you jumpscare everyone in the room."},
 
                 new Module { buttonText = "Annoy Player Gun", method = Movement.AnnoyPlayerGun, toolTip = "Spazzes your body around whoever your hand desires, with sounds."},
-                new Module { buttonText = "Annoy All Players", enableMethod = Movement.AnnoyAllPlayers, method =() => Sound.SoundSpam(337, true), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Spazzes your body around everyone in the room, with sounds."},
+                new Module { buttonText = "Annoy All Players", enableMethod = Movement.AnnoyAllPlayers, method =() => Sound.SoundSpam(337, true), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Spazzes your body around everyone in the room, with sounds."},
 
                 new Module { buttonText = "Intercourse Gun", aliases = new[] { "Sex Gun" }, method = Movement.IntercourseGun, toolTip = "Makes you thrust whoever your hand desires, with sounds."},
-                new Module { buttonText = "Intercourse All", aliases = new[] { "Sex All" }, enableMethod = Movement.IntercourseAll, method = Movement.IntercourseNoises, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes you thrust everyone in the room, with sounds."},
+                new Module { buttonText = "Intercourse All", aliases = new[] { "Sex All" }, enableMethod = Movement.IntercourseAll, method = Movement.IntercourseNoises, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you thrust everyone in the room, with sounds."},
 
                 new Module { buttonText = "Head Gun", aliases = new[] { "Blowjob Gun" }, method = Movement.HeadGun, toolTip = "Makes you thrust whoever your hand desires, but lower, with sounds."},
-                new Module { buttonText = "Head All", aliases = new[] { "Blowjob All" }, enableMethod = Movement.HeadAll, method = Movement.IntercourseNoises, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes you thrust everyone in the room, but lower, with sounds."}
+                new Module { buttonText = "Head All", aliases = new[] { "Blowjob All" }, enableMethod = Movement.HeadAll, method = Movement.IntercourseNoises, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you thrust everyone in the room, but lower, with sounds."}
             },
 
             ["Advantage Mods"] = new[]
@@ -916,16 +931,16 @@ namespace Qubit.Modules
                 new Module { buttonText = "Untag Self", method = Advantages.UntagSelf, isTogglable = false, toolTip = "Removes you from the list of tagged players."},
 
                 new Module { buttonText = "Anti Tag", method = Advantages.AntiTag, disableMethod = Advantages.DisableAntiTag, toolTip = "Removes you from the list of tagged players when tagged."},
-                new Module { buttonText = "Report Anti Tag", enableMethod = Advantages.ReportAntiTag, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Prevents you from getting tagged, and whoever tries to tag you will just get reported."},
+                new Module { buttonText = "Report Anti Tag", enableMethod = Advantages.ReportAntiTag, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Prevents you from getting tagged, and whoever tries to tag you will just get reported."},
 
                 new Module { buttonText = "No Tag Limit", aliases = new[] { "Tagmax" }, method =() => References.Tagger.maxTagDistance = float.MaxValue, disableMethod =() => References.Tagger.maxTagDistance = 1.2f, toolTip = "Removes the distance check when tagging players."},
                 new Module { buttonText = "Tag Lag Detector", method = Advantages.TagLagDetector, toolTip = "Detects when the master client is not currently allowing tag requests."},
 
-                new Module { buttonText = "Fake Lag", method = Advantages.FakeLag, disableMethod =() => { SerializePatch.OverrideSerialization = null; PlayerSerializePatch.delay = null; }, toolTip = "Forces your ping to be high."},
+                new Module { buttonText = "Fake Lag", method = Advantages.FakeLag, disableMethod =() => { ViewSerialization.OverrideSerialization = null; RigSerialization.delay = null; }, toolTip = "Forces your ping to be high."},
                 new Module { buttonText = "Lag Range", method = Advantages.LagRange, toolTip = "Dynamically changes how much your rig updates depending on how close you are to others."},
                 new Module { buttonText = "Blink", method = Advantages.Blink, disableMethod = Advantages.DisableBlink, toolTip = "Stops your client from sending and receiving player update packets."},
 
-                new Module { buttonText = "Paintbrawl Aimbot", overlapText = "Slingshot Aimbot", enableMethod =() => GetLaunchPatch.enabled = true, method = Advantages.DebugSlingshotAimbot, disableMethod =() => GetLaunchPatch.enabled = false, toolTip = "Redirects your slingshot to the closest nearby players."},
+                new Module { buttonText = "Paintbrawl Aimbot", overlapText = "Slingshot Aimbot", enableMethod =() => SlingshotLaunch.enabled = true, method = Advantages.DebugSlingshotAimbot, disableMethod =() => SlingshotLaunch.enabled = false, toolTip = "Redirects your slingshot to the closest nearby players."},
                 new Module { buttonText = "Slingshot Helper", method = Advantages.SlingshotHelper, toolTip = "Helps you grab the small paintball on your slingshot."},
                 new Module { buttonText = "Slingshot Trigger Bot", method = Advantages.SlingshotTriggerBot, toolTip = "Releases the small paintball on your slingshot when hovering over another player."},
 
@@ -962,7 +977,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Custom Skybox Color", aliases = new[] { "Custom Sky Color" }, enableMethod = Visuals.DoCustomSkyboxColor, method = Visuals.CustomSkyboxColor, disableMethod = Visuals.UnCustomSkyboxColor, toolTip = "Changes the skybox color to match the menu.", legal = true},
                 new Module { buttonText = "Draw Gun", method = Visuals.DrawGun, disableMethod = Visuals.DisableDrawGun, toolTip = "Lets you draw on whatever your hand desires.", legal = true},
-                new Module { buttonText = "Gamesense Ring", aliases = new[] { "Fortnite Ring" }, enableMethod =() => HandTapPatch.OnHandTap += Visuals.OnHandTapGamesenseRing, method = Visuals.GamesenseRing, disableMethod = Visuals.DisableGamesenseRing, toolTip = "Shows the direction of where people walk around you." },
+                new Module { buttonText = "Gamesense Ring", aliases = new[] { "Fortnite Ring" }, enableMethod =() => HandTaps.OnHandTap += Visuals.OnHandTapGamesenseRing, method = Visuals.GamesenseRing, disableMethod = Visuals.DisableGamesenseRing, toolTip = "Shows the direction of where people walk around you." },
 
                 new Module { buttonText = "Velocity Label", method = Visuals.VelocityLabel, toolTip = "Puts text on your right hand, showing your velocity.", legal = true},
                 new Module { buttonText = "Nearby Label", method = Visuals.NearbyTaggerLabel, toolTip = "Puts text on your left hand, showing you the distance of the nearest tagger."},
@@ -984,7 +999,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Debug HUD", aliases = new[] { "Developer HUD", "Debug UI", "Developer UI" }, enableMethod = Visuals.EnableDebugHUD, disableMethod = Visuals.DisableDebugHUD, toolTip = "Displays the developer debug HUD."},
 
                 new Module { buttonText = "Info Watch", enableMethod = Visuals.WatchOn, method = Visuals.WatchStep, disableMethod = Visuals.WatchOff, toolTip = "Puts a watch on your hand that tells you the time and your FPS."},
-                new Module { buttonText = "Leaderboard Info", enableMethod =() => UpdatePatch.enabled = true, method = Visuals.LeaderboardInfo, disableMethod =() => UpdatePatch.enabled = false, toolTip = "Shows info next to players' names on the leaderboard."},
+                new Module { buttonText = "Leaderboard Info", enableMethod =() => ScoreboardLines.enabled = true, method = Visuals.LeaderboardInfo, disableMethod =() => ScoreboardLines.enabled = false, toolTip = "Shows info next to players' names on the leaderboard."},
 
                 new Module { buttonText = "FPS Boost", aliases = new[] { "Low Quality" }, enableMethod =() => QualitySettings.globalTextureMipmapLimit = int.MaxValue, disableMethod =() => QualitySettings.globalTextureMipmapLimit = 1, toolTip = "Makes everything low quality in an attempt to boost your FPS.", },
                 new Module { buttonText = "Freeze In Background", enableMethod =() => Application.runInBackground = false, disableMethod =() => Application.runInBackground = true, toolTip = "Freezes the game when the application is not focused.", legal = true},
@@ -1025,7 +1040,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Fix Rig Colors", method = Visuals.FixRigColors, toolTip = "Fixes a Steam bug where other players' color would be wrong between servers.", legal = true},
                 new Module { buttonText = "Disable Rig Lerping", overlapText = "Disable Rig Smoothing", method = Visuals.NoSmoothRigs, disableMethod = Visuals.ReSmoothRigs, toolTip = "Disable the smoothing on the other player's rigs."},
-                new Module { buttonText = "Better Rig Lerping", overlapText = "Better Rig Smoothing", enableMethod =() => PlayerSerializePatch.OnPlayerSerialize += Visuals.BetterRigLerping, disableMethod =() => PlayerSerializePatch.OnPlayerSerialize -= Visuals.BetterRigLerping, toolTip = "Estimates the inbetween positions using a real velocity emulator on the other player's rigs."},
+                new Module { buttonText = "Better Rig Lerping", overlapText = "Better Rig Smoothing", enableMethod =() => RigSerialization.OnPlayerSerialize += Visuals.BetterRigLerping, disableMethod =() => RigSerialization.OnPlayerSerialize -= Visuals.BetterRigLerping, toolTip = "Estimates the inbetween positions using a real velocity emulator on the other player's rigs."},
                 new Module { buttonText = "Remove Leaves", enableMethod = Visuals.EnableRemoveLeaves, disableMethod = Visuals.DisableRemoveLeaves, toolTip = "Removes leaves on trees, good for branching."},
                 new Module { buttonText = "Streamer Remove Leaves", enableMethod = Visuals.EnableStreamerRemoveLeaves, disableMethod = Visuals.DisableStreamerRemoveLeaves, toolTip = "Removes leaves on trees in VR, but not on the camera. Good for streaming."},
                 new Module { buttonText = "Remove Cosmetics", enableMethod = Visuals.DisableCosmetics, disableMethod = Visuals.EnableCosmetics, toolTip = "Locally toggles off your cosmetics, so you can wear sight-blocking cosmetics such as the eyepatch."},
@@ -1134,7 +1149,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Water Splash On Touch", method = Fun.WaterSplashOnTouch, toolTip = "Splashes water whoever your hand touches."},
 
                 new Module { buttonText = "Confuse Player Gun", method = Fun.ConfusePlayerGun, toolTip = "Makes whoever your hand desires look like they're going crazy by splashing water on their screen."},
-                new Module { buttonText = "Confuse All Players", enableMethod = Fun.ConfuseAllPlayers, method = Fun.ConfuseAllPlayersSplash, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Splashes water on everyone's screens, making them look like they're going crazy."},
+                new Module { buttonText = "Confuse All Players", enableMethod = Fun.ConfuseAllPlayers, method = Fun.ConfuseAllPlayersSplash, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Splashes water on everyone's screens, making them look like they're going crazy."},
 
                 new Module { buttonText = "Tinnitus Gun", aliases = new[] { "Ear Rape All", "Earrape All" }, method = Fun.TinnitusGun, disableMethod = Fun.DisableTinnitus, toolTip = "Plays high pitched noises for whoever your hand desires."},
                 new Module { buttonText = "Tinnitus All", aliases = new[] { "Ear Rape All", "Earrape All" }, enableMethod = Fun.TinnitusAll, disableMethod = Fun.DisableTinnitus, toolTip = "Plays high pitched noises for everyone in the room."},
@@ -1148,7 +1163,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Lucy Attack Self", method =() => Fun.LucyAttack(Networking.LocalPlayer), isTogglable = false, toolTip = "Makes lucy attack you." },
                 new Module { buttonText = "Lucy Attack Gun", method = Fun.LucyAttackGun, toolTip = "Makes lucy attack whoever your hand desires." },
-                new Module { buttonText = "Lucy Attack All", method = Fun.LucyAttackAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes lucy attack everyone in the room." },
+                new Module { buttonText = "Lucy Attack All", method = Fun.LucyAttackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes lucy attack everyone in the room." },
 
                 new Module { buttonText = "Lucy Harass Gun", method = Fun.LucyHarassGun, toolTip = "Makes lucy attack harass your hand desires." },
                 new Module { buttonText = "Move Lucy Gun", method = Fun.MoveLucyGun, toolTip = "Moves lucy to wherever your hand desires." },
@@ -1162,8 +1177,8 @@ namespace Qubit.Modules
                 new Module { buttonText = "Fast Lucy", method = Fun.FastLucy, toolTip = "Makes lucy become really fast." },
                 new Module { buttonText = "Slow Lucy", method = Fun.SlowLucy, toolTip = "Makes lucy become really slow." },
 
-                new Module { buttonText = "Overstimulate Gun", method = Fun.OverstimulateGun, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Overstimulates whoever your hand desires."},
-                new Module { buttonText = "Overstimulate All", method = Fun.OverstimulateAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Overstimulates everyone in the room."},
+                new Module { buttonText = "Overstimulate Gun", method = Fun.OverstimulateGun, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Overstimulates whoever your hand desires."},
+                new Module { buttonText = "Overstimulate All", method = Fun.OverstimulateAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Overstimulates everyone in the room."},
 
                 new Module { buttonText = "Shutdown Headset Gun", method = Fun.ShutdownHeadsetGun, disableMethod = Fun.DisableTinnitus, toolTip = "Pretends to shut down the headset of whoever your hand desires."},
                 new Module { buttonText = "Shutdown Headset All", enableMethod =() => Qubit.Utilities.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/shutdown.ogg", "Audio/Mods/Fun/shutdown.ogg", clip => Fun.PlayAudio(clip)), method = Fun.ShutdownHeadsetAll, disableMethod = Fun.DisableTinnitus, toolTip = "Pretends to shut down the headset of everyone in the room."},
@@ -1179,7 +1194,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Keyboard Tracker", enableMethod = Fun.EnableKeyboardTracker, method = Fun.KeyboardTracker, disableMethod = Fun.DisableKeyboardTracker, toolTip = "Tracks everyone's keyboard inputs in the lobby."},
 
-                new Module { buttonText = "Tag Sounds", enableMethod = Fun.PreloadTagSounds, method =() => TagPatch.enabled = true, disableMethod =() => TagPatch.enabled = false, toolTip = "Plays a selection of dramatic sound effects when tagging players. Credits to Wyndigo for the idea."},
+                new Module { buttonText = "Tag Sounds", enableMethod = Fun.PreloadTagSounds, method =() => GameModeTagging.enabled = true, disableMethod =() => GameModeTagging.enabled = false, toolTip = "Plays a selection of dramatic sound effects when tagging players. Credits to Wyndigo for the idea."},
 
                 new Module { buttonText = $"Free Camera {Bracket("green", "J")}", postMethod = Fun.Freecam, disableMethod = Fun.DisableFreecam, toolTip = "Exit your own body and fly around to your free will.", legal = true},
                 new Module { buttonText = "Third Person Camera", postMethod = Fun.ThirdPersonCamera, disableMethod = Fun.DisableFreecam, toolTip = "Moves your camera to behind your head."},
@@ -1207,20 +1222,20 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Trigger Anti Report Gun", method = Fun.TriggerAntiReportGun, toolTip = "Triggers whoever your hand desires' anti report if enabled."},
                 new Module { buttonText = "Trigger Anti Report All", method = Fun.TriggerAntiReportAll, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Triggers everyone in the room's anti report if enabled."},
-                new Module { buttonText = "Bypass Anti Report", method = Fun.BypassAntiReport, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Bypasses anti report mods when reporting players."},
+                new Module { buttonText = "Bypass Anti Report", method = Fun.BypassAntiReport, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Bypasses anti report mods when reporting players."},
 
                 new Module { buttonText = "Break Mod Checkers", enableMethod = Fun.BreakModCheckers, disableMethod = Safety.BypassModCheckers, toolTip = "Tells players using mod checkers that you have every mod possible."},
                 new Module { buttonText = "Custom Mod Spoofer", method = Fun.CustomModSpoofer, isTogglable = false, toolTip = "Make mod checkers see only what you allow."},
 
                 new Module { buttonText = "Mute DJ Sets", method = Fun.MuteDJSets, disableMethod = Fun.UnmuteDJSets, toolTip = "Mutes every DJ set so you don't have to hear the worst music known to man."},
-                new Module { buttonText = "Infinite Dreidel", method =() => DreidelPatch.enabled = true, disableMethod =() => DreidelPatch.enabled = false, toolTip = "Makes the dreidel cosmetic spin forever."},
+                new Module { buttonText = "Infinite Dreidel", method =() => Dreidels.enabled = true, disableMethod =() => Dreidels.enabled = false, toolTip = "Makes the dreidel cosmetic spin forever."},
 
                 new Module { buttonText = "Barrel Gun", method = Fun.BarrelGun, toolTip = "Spawns a barrel at wherever your hand desires." },
 
-                new Module { buttonText = "Legacy Microphone", enableMethod =() => { RecorderPatch.enabled = false; Fun.ReloadMicrophone();  }, disableMethod =() => { RecorderPatch.enabled = true; Fun.ReloadMicrophone(); }, toolTip = "Reverts the microphone system into using the legacy input switcher. This is generally not recommended unless you know what you are doing.", legal = true },
+                new Module { buttonText = "Legacy Microphone", enableMethod =() => { VoiceRecorder.enabled = false; Fun.ReloadMicrophone();  }, disableMethod =() => { VoiceRecorder.enabled = true; Fun.ReloadMicrophone(); }, toolTip = "Reverts the microphone system into using the legacy input switcher. This is generally not recommended unless you know what you are doing.", legal = true },
                 new Module { buttonText = "Low Quality Microphone", enableMethod =() => Fun.SetMicrophoneQuality(6000, 4000), disableMethod =() => Fun.SetMicrophoneQuality(20000, 16000), toolTip = "Makes your microphone have really bad quality."},
                 new Module { buttonText = "High Quality Microphone", enableMethod =() => Fun.SetMicrophoneQuality(30000, 24000), disableMethod =() => Fun.SetMicrophoneQuality(20000, 16000), toolTip = "Makes your microphone have really high quality."},
-                new Module { buttonText = "Loud Microphone", method =() => Fun.SetMicrophoneAmplification(RecorderPatch.enabled ? 5f : 16f), disableMethod =() => Fun.SetMicrophoneAmplification(1), toolTip = "Makes your microphone really loud."},
+                new Module { buttonText = "Loud Microphone", method =() => Fun.SetMicrophoneAmplification(VoiceRecorder.enabled ? 5f : 16f), disableMethod =() => Fun.SetMicrophoneAmplification(1), toolTip = "Makes your microphone really loud."},
 
                 new Module { buttonText = "Mute Microphone", method =() => Fun.MuteMicrophone(true), disableMethod =() => Fun.MuteMicrophone(false), toolTip = "Disables your microphone.", legal = true},
                 new Module { buttonText = "Reload Microphone", aliases = new[] { "Restart Microphone" }, method = Fun.ReloadMicrophone, isTogglable = false,  toolTip = "Restarts / fixes your microphone.", legal = true},
@@ -1255,8 +1270,8 @@ namespace Qubit.Modules
                 new Module { buttonText = "Matchmaking Tier Spoof", method =() => Fun.SpoofRank(true, Fun.targetRank), disableMethod =() => Fun.SpoofRank(false), toolTip = "Spoofs your rank for competitive lobbies, letting you join higher or lower lobbies."},
                 new Module { buttonText = "Matchmaking Platform Spoof", method =() => Fun.SpoofPlatform(true, "Quest"), disableMethod =() => Fun.SpoofPlatform(false), toolTip = "Spoofs your platform for competitive lobbies, letting you join quest lobbies."},
 
-                new Module { buttonText = "Badge Tier Spoof", method = Fun.SpoofBadge, disableMethod =() => SetRankedPatch.enabled = false, toolTip = "Spoofs your competitive badge, showing that you have a higher rank than you really do."},
-                new Module { buttonText = "Ignore Friend Privacy", method =() => PopulatePatch.enabled = true, disableMethod =() => PopulatePatch.enabled = false, toolTip = "Allows you to join friends that have their privacy setting set to private."},
+                new Module { buttonText = "Badge Tier Spoof", method = Fun.SpoofBadge, disableMethod =() => RankedProgression.enabled = false, toolTip = "Spoofs your competitive badge, showing that you have a higher rank than you really do."},
+                new Module { buttonText = "Ignore Friend Privacy", method =() => FriendCards.enabled = true, disableMethod =() => FriendCards.enabled = false, toolTip = "Allows you to join friends that have their privacy setting set to private."},
 
                 new Module { buttonText = "Arcade Teleporter Effect Spam", method = Fun.ArcadeTeleporterEffectSpam, toolTip = "Spams the effects on the virtual stump teleporters in the arcade when holding <color=green>trigger</color>."},
                 new Module { buttonText = "Stump Teleporter Effect Spam", method = Fun.StumpTeleporterEffectSpam, toolTip = "Spams the effects on the virtual stump teleporter in forest when holding <color=green>trigger</color>."},
@@ -1296,33 +1311,33 @@ namespace Qubit.Modules
                 new Module { buttonText = "Glider Blind Gun", method = Gliders.GliderBlindGun, toolTip = "Moves all of the gliders to whoever your hand desires' faces." },
                 new Module { buttonText = "Glider Blind All", method = Gliders.GliderBlindAll, toolTip = "Moves all of the gliders to everyone's faces." },
 
-                new Module { buttonText = "Fast Ropes", enableMethod =() => RopePatch.enabled = true, disableMethod =() => RopePatch.enabled = false, toolTip = "Makes ropes go five times faster when jumping on them."},
-                new Module { buttonText = "Rope Grab Reach", method = Fun.RopeGrabReach, disableMethod =() => ClimbablePatch.enabled = false, toolTip = "Allows you to grab ropes from farther away."},
+                new Module { buttonText = "Fast Ropes", enableMethod =() => RopeAttach.enabled = true, disableMethod =() => RopeAttach.enabled = false, toolTip = "Makes ropes go five times faster when jumping on them."},
+                new Module { buttonText = "Rope Grab Reach", method = Fun.RopeGrabReach, disableMethod =() => Climbing.enabled = false, toolTip = "Allows you to grab ropes from farther away."},
 
-                new Module { buttonText = "No Respawn Gliders", enableMethod =() => GliderPatch.enabled = true, disableMethod =() => GliderPatch.enabled = false, toolTip = "Doesn't respawn gliders that go too far outside the bounds of clouds."},
+                new Module { buttonText = "No Respawn Gliders", enableMethod =() => GliderRespawn.enabled = true, disableMethod =() => GliderRespawn.enabled = false, toolTip = "Doesn't respawn gliders that go too far outside the bounds of clouds."},
 
-                new Module { buttonText = "Anti Grab", enableMethod =() => GrabPatch.enabled = true, disableMethod =() => GrabPatch.enabled = false, toolTip = "Prevents players from picking you up in guardian."},
-                new Module { buttonText = "Anti Knockback", enableMethod =() => KnockbackPatch.enabled = true, disableMethod =() => KnockbackPatch.enabled = false, toolTip = "Prevents any force from knocking you back."},
-                new Module { buttonText = "Multiply Knockback", enableMethod =() => MultiplyKnockback.enabled = true, disableMethod =() => MultiplyKnockback.enabled = false, toolTip = "Multiplies your knockback by an amount set in settings."},
-                new Module { buttonText = "Multiply Self Knockback", enableMethod =() => MultiplySelfKnockbackPatch.enabled = true, disableMethod =() => MultiplySelfKnockbackPatch.enabled = false, toolTip = "Multiplies your projectile knockback by an amount set in settings."},
+                new Module { buttonText = "Anti Grab", enableMethod =() => GuardianGrabs.enabled = true, disableMethod =() => GuardianGrabs.enabled = false, toolTip = "Prevents players from picking you up in guardian."},
+                new Module { buttonText = "Anti Knockback", enableMethod =() => KnockbackOverride.enabled = true, disableMethod =() => KnockbackOverride.enabled = false, toolTip = "Prevents any force from knocking you back."},
+                new Module { buttonText = "Multiply Knockback", enableMethod =() => KnockbackMultiplier.enabled = true, disableMethod =() => KnockbackMultiplier.enabled = false, toolTip = "Multiplies your knockback by an amount set in settings."},
+                new Module { buttonText = "Multiply Self Knockback", enableMethod =() => SelfKnockback.enabled = true, disableMethod =() => SelfKnockback.enabled = false, toolTip = "Multiplies your projectile knockback by an amount set in settings."},
 
-                new Module { buttonText = "Fast Throw", method =() => { VelocityPatches.enabled = true; VelocityPatches.multipleFactor = 10f; }, disableMethod =() => VelocityPatches.enabled = false, toolTip = "Multiplies your throw factor by 10."},
-                new Module { buttonText = "Slow Throw", method =() => { VelocityPatches.enabled = true; VelocityPatches.multipleFactor = 0.1f; }, disableMethod =() => VelocityPatches.enabled = false, toolTip = "Multiplies your throw factor by 0.1."},
+                new Module { buttonText = "Fast Throw", method =() => { VelocityTracking.enabled = true; VelocityTracking.multipleFactor = 10f; }, disableMethod =() => VelocityTracking.enabled = false, toolTip = "Multiplies your throw factor by 10."},
+                new Module { buttonText = "Slow Throw", method =() => { VelocityTracking.enabled = true; VelocityTracking.multipleFactor = 0.1f; }, disableMethod =() => VelocityTracking.enabled = false, toolTip = "Multiplies your throw factor by 0.1."},
 
                 new Module { buttonText = "Slingshot Self", enableMethod =() => Fun.SlingshotSelf(), disableMethod =() => Fun.SlingshotSelf(false), toolTip = "Gives you a client sided slingshot."},
-                new Module { buttonText = "Angry Birds", enableMethod =() => LaunchProjectilePatch.enabled = true, method = Fun.AngryBirdsSounds, disableMethod =() => LaunchProjectilePatch.enabled = false, toolTip = "Flings you in whatever direction your slingshot's projectiles are heading."},
+                new Module { buttonText = "Angry Birds", enableMethod =() => ProjectileLaunch.enabled = true, method = Fun.AngryBirdsSounds, disableMethod =() => ProjectileLaunch.enabled = false, toolTip = "Flings you in whatever direction your slingshot's projectiles are heading."},
 
-                new Module { buttonText = "Large Snowballs", enableMethod =() => EnablePatch.enabled = true, disableMethod =() => EnablePatch.enabled = false, toolTip = "Makes snowballs by default the largest size."},
+                new Module { buttonText = "Large Snowballs", enableMethod =() => SnowballGrowth.enabled = true, disableMethod =() => SnowballGrowth.enabled = false, toolTip = "Makes snowballs by default the largest size."},
 
                 new Module { buttonText = "Fast Snowballs", overlapText = "Fast Projectiles", method = Projectiles.FastSnowballs, disableMethod = Projectiles.FixSnowballs, toolTip = "Makes projectiles go really fast when thrown."},
                 new Module { buttonText = "Slow Snowballs", overlapText = "Slow Projectiles", method = Projectiles.SlowSnowballs, disableMethod = Projectiles.FixSnowballs, toolTip = "Makes projectiles go really slow when thrown."},
 
                 new Module { buttonText = "Projectile Range", method = Fun.ProjectileRange, toolTip = "Increases the hitbox scale of your projectiles."},
 
-                new Module { buttonText = "Rainbow Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { buttonText = "Flash Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = Time.time % 0.2f > 0.1f ? Color.white : Color.black, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { buttonText = "Strobe Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = RandomColor(), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { buttonText = "Custom Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = new Color(Fun.red / 10f, Fun.green / 10f, Fun.blue / 10f), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be whatever your custom projectile color is set to in the projectile settings."},
+                new Module { buttonText = "Rainbow Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { buttonText = "Flash Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = Time.time % 0.2f > 0.1f ? Color.white : Color.black, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { buttonText = "Strobe Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = RandomColor(), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { buttonText = "Custom Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = new Color(Fun.red / 10f, Fun.green / 10f, Fun.blue / 10f), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be whatever your custom projectile color is set to in the projectile settings."},
 
                 new Module { buttonText = "Fast Hoverboard", method = Hoverboards.FastHoverboard, disableMethod = Hoverboards.FixHoverboard, toolTip = "Makes your hoverboard go really fast."},
                 new Module { buttonText = "Slow Hoverboard", method = Hoverboards.SlowHoverboard, disableMethod = Hoverboards.FixHoverboard, toolTip = "Makes your hoverboard go really slow."},
@@ -1332,19 +1347,19 @@ namespace Qubit.Modules
                 new Module { buttonText = "Random Hoverboard", overlapText = "Strobe Hoverboard", method = Hoverboards.RandomHoverboard, toolTip = "Changes your hoverboard's color to flash random colors."},
 
                 new Module { buttonText = "Black Screen Gun", method =() => Hoverboards.HoverboardScreenGun(Color.black), toolTip = "Uses the hoverboards to blind whoever your hand desires."},
-                new Module { buttonText = "Black Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.black), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
+                new Module { buttonText = "Black Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.black), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
 
                 new Module { buttonText = "White Screen Gun", method =() => Hoverboards.HoverboardScreenGun(Color.white), toolTip = "Uses the hoverboards to make whoever your hand desires' screen white."},
-                new Module { buttonText = "White Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.white), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to flash the screen of everyone in the room."},
+                new Module { buttonText = "White Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.white), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the hoverboards to flash the screen of everyone in the room."},
 
                 new Module { buttonText = "Flash Screen Gun", method =() => Hoverboards.HoverboardScreenGun(Time.time % 0.2f > 0.1f ? Color.white : Color.black), toolTip = "Uses the hoverboards to flash the screen of whoever your hand desires."},
-                new Module { buttonText = "Flash Screen All", method =() => Hoverboards.HoverboardScreenAll(Time.time % 0.2f > 0.1f ? Color.white : Color.black), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
+                new Module { buttonText = "Flash Screen All", method =() => Hoverboards.HoverboardScreenAll(Time.time % 0.2f > 0.1f ? Color.white : Color.black), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
 
                 new Module { buttonText = "Strobe Screen Gun", method =() => Hoverboards.HoverboardScreenGun(RandomColor()), toolTip = "Uses the hoverboards to flash the screen of whoever your hand desires."},
-                new Module { buttonText = "Strobe Screen All", method =() => Hoverboards.HoverboardScreenAll(RandomColor()), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
+                new Module { buttonText = "Strobe Screen All", method =() => Hoverboards.HoverboardScreenAll(RandomColor()), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
 
                 new Module { buttonText = "Rainbow Screen Gun", method =() => Hoverboards.HoverboardScreenGun(Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f)), toolTip = "Uses the hoverboards to make the screen of whoever your hand desires rainbow."},
-                new Module { buttonText = "Rainbow Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f)), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to make the screen of everyone in the room rainbow."},
+                new Module { buttonText = "Rainbow Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f)), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the hoverboards to make the screen of everyone in the room rainbow."},
 
                 new Module { buttonText = $"Hoverboard Spam {Bracket("green", "G")}", method = Hoverboards.HoverboardSpam, toolTip = "Spams hoverboards from your hand when holding <color=green>grip</color>."},
                 new Module { buttonText = "Spam Spawn Hoverboards", method = Hoverboards.SpawnHoverboard, toolTip = "Spam spawns hoverboards at your player position."},
@@ -1352,15 +1367,15 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Start All Races", method = Fun.StartAllRaces, isTogglable = false, toolTip = "Starts every race in the hoverboard map."},
 
-                new Module { buttonText = "Override Hand Link", method =() => GroundedPatch.enabled = true, disableMethod =() => GroundedPatch.enabled = false, toolTip = "Prioritizes you when you or others grab onto you."},
+                new Module { buttonText = "Override Hand Link", method =() => HandLinkGrounded.enabled = true, disableMethod =() => HandLinkGrounded.enabled = false, toolTip = "Prioritizes you when you or others grab onto you."},
                 new Module { buttonText = "Disable Hand Link", method =() => { References.LocalRig.leftHandLink.BreakLink(); References.LocalRig.rightHandLink.BreakLink(); }, toolTip = "Disables you from grabbing onto other players and them from grabbing onto you."},
-                new Module { buttonText = "Anti Hand Link", method =() => HandLinkPatch.enabled = true, disableMethod =() => HandLinkPatch.enabled = false, toolTip = "Disables you from moving when grabbing onto other players."},
+                new Module { buttonText = "Anti Hand Link", method =() => HandLink.enabled = true, disableMethod =() => HandLink.enabled = false, toolTip = "Disables you from moving when grabbing onto other players."},
 
-                new Module { buttonText = "Fast Throw Players", method =() => ReleasePatch.enabled = true, disableMethod =() => ReleasePatch.enabled = false, toolTip = "Makes players go really fast when you throw them."},
+                new Module { buttonText = "Fast Throw Players", method =() => HandLinkRelease.enabled = true, disableMethod =() => HandLinkRelease.enabled = false, toolTip = "Makes players go really fast when you throw them."},
 
                 new Module { buttonText = "Noclip Building", method = Blocks.NoclipBuilding, disableMethod = Blocks.DisableNoclipBuilding, toolTip = "Disables the colliders of every block in the block map."},
-                new Module { buttonText = "Overlap Building", enableMethod =() => OverlapPatch.enabled = true, disableMethod =() => OverlapPatch.enabled = false, toolTip = "Lets you place pieces inside of each other in the attic."},
-                new Module { buttonText = "Small Building", enableMethod =() => BuildPatch.enabled = true, disableMethod =() => BuildPatch.enabled = false, toolTip = "Lets you build in the block map while small."},
+                new Module { buttonText = "Overlap Building", enableMethod =() => PieceOverlap.enabled = true, disableMethod =() => PieceOverlap.enabled = false, toolTip = "Lets you place pieces inside of each other in the attic."},
+                new Module { buttonText = "Small Building", enableMethod =() => PieceInteraction.enabled = true, disableMethod =() => PieceInteraction.enabled = false, toolTip = "Lets you build in the block map while small."},
                 new Module { buttonText = "Multi Grab", method = Blocks.MultiGrab, toolTip = "Lets you grab multiple objects."},
 
                 new Module { buttonText = "Block Size Toggle", method = Fun.AtticSizeToggle, toolTip = "Toggles your scale when pressing <color=green>grip</color> or <color=green>trigger</color>."},
@@ -1425,10 +1440,10 @@ namespace Qubit.Modules
                 new Module { buttonText = "Critter Particle Effect Gun", method =() => Critters.EffectGun((CrittersManager.CritterEvent)Random.Range(0, 4)), toolTip = "Spams every particle at wherever your hand desires."},
 
                 new Module { buttonText = $"Grab ID Card {Bracket("green", "G")}", method = Fun.GrabIDCard, toolTip = "Puts the ID card in your hand." },
-                new Module { buttonText = "Entity Reach", method =() => EntityGrabPatch.enabled = true, disableMethod =() => EntityGrabPatch.enabled = false, toolTip = "Gives you the ability to grab entities from farther away in the horror map." },
+                new Module { buttonText = "Entity Reach", method =() => EntityGrabbing.enabled = true, disableMethod =() => EntityGrabbing.enabled = false, toolTip = "Gives you the ability to grab entities from farther away in the horror map." },
 
                 new Module { buttonText = "Infinite Prop Distance", method =() => Fun.SetPropDistanceLimit(float.MaxValue), disableMethod =() => Fun.SetPropDistanceLimit(0.35f), toolTip = "Removes the distance limit of props in the prop hunt map." },
-                new Module { buttonText = "Prop Noclip", method =() => PropPatch.enabled = true, disableMethod =() => PropPatch.enabled = false, toolTip = "Allows you to put props in walls in the prop hunt map." },
+                new Module { buttonText = "Prop Noclip", method =() => PropHuntFollower.enabled = true, disableMethod =() => PropHuntFollower.enabled = false, toolTip = "Allows you to put props in walls in the prop hunt map." },
 
                 new Module { buttonText = "Spaz Tool Stations", method = Fun.SpazToolStations, toolTip = "Spazzes out the tool purchase stations in the horror map." },
                 new Module { buttonText = "Purchase All Tool Stations", method = Fun.PurchaseAllToolStations, toolTip = "Makes every tool purchase station force purchase in the horror map." },
@@ -1472,37 +1487,37 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Destroy Entity Gun", method = Fun.DestroyEntityGun, toolTip = "Destroys any entity which your hand desires."},
 
-                new Module { buttonText = "Infinite Jet Fuel", method =() => FuelPatch.enabled = true, disableMethod =() => FuelPatch.enabled = false, toolTip = "Gives the jet gadgets in Super Infection infinite fuel."},
-                new Module { buttonText = "Infinite Platforms", method =() => PlatformPatch.enabled = true, disableMethod =() => PlatformPatch.enabled = false, toolTip = "Gives the platform spawner gadgets in Super Infection infinite platforms."},
+                new Module { buttonText = "Infinite Jet Fuel", method =() => WristJetFuel.enabled = true, disableMethod =() => WristJetFuel.enabled = false, toolTip = "Gives the jet gadgets in Super Infection infinite fuel."},
+                new Module { buttonText = "Infinite Platforms", method =() => PlatformDeployer.enabled = true, disableMethod =() => PlatformDeployer.enabled = false, toolTip = "Gives the platform spawner gadgets in Super Infection infinite platforms."},
                 new Module { buttonText = "Infinite Resources", method = Fun.InfiniteResources, toolTip = "Gives you infinite resources in the Super Infection gamemode."},
                 new Module { buttonText = "Complete All Quests", method = Fun.CompleteAllQuests, isTogglable = false, toolTip = "Completes every quest in the Super Infection gamemode."},
                 new Module { buttonText = "Claim All Terminals", method = Fun.ClaimAllTerminals, isTogglable = false, toolTip = "Claims every terminal in the Super Infection gamemode."},
                 new Module { buttonText = "Unlock All Gadgets", method = Fun.UnlockAllGadgets, toolTip = "Unlocks every gadget in the Super Infection gamemode."},
 
-                new Module { buttonText = "No Blaster Cooldown", method =() => CooldownPatch.enabled = true, disableMethod =() => CooldownPatch.enabled = false, toolTip = "Removes the cooldown on the blaster."},
-                new Module { buttonText = "Blaster Aimbot", enableMethod =() => FirePatch.enabled = true, method = Fun.DebugBlasterAimbot, disableMethod =() => FirePatch.enabled = false, toolTip = "Automatically aims the blaster towards players."},
+                new Module { buttonText = "No Blaster Cooldown", method =() => ChargeBlasterCooldown.enabled = true, disableMethod =() => ChargeBlasterCooldown.enabled = false, toolTip = "Removes the cooldown on the blaster."},
+                new Module { buttonText = "Blaster Aimbot", enableMethod =() => ChargeBlasterFire.enabled = true, method = Fun.DebugBlasterAimbot, disableMethod =() => ChargeBlasterFire.enabled = false, toolTip = "Automatically aims the blaster towards players."},
 
                 new Module { buttonText = $"Blaster Laser Spam {Bracket("green", "G")}", method = Fun.BlasterLaserSpam, toolTip = "Spams lasers out of your hand when holding <color=green>grip</color>."},
 
                 new Module { buttonText = "Blaster Float Gun", method =() => Fun.BlasterFlingGun(Vector3.up), toolTip = "Uses the blasters to fling whoever your hand desires vertically."},
-                new Module { buttonText = "Blaster Float All", method =() => Fun.BlasterFlingAll(Vector3.up), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room vertically."},
+                new Module { buttonText = "Blaster Float All", method =() => Fun.BlasterFlingAll(Vector3.up), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room vertically."},
 
                 new Module { buttonText = "Blaster Control Gun", method = Fun.BlasterControlGun, toolTip = "Uses the blasters to control whoever your hand desires."},
 
                 new Module { buttonText = "Blaster Fling Gun", method =() => Fun.BlasterFlingGun(RandomVector3()), toolTip = "Uses the blasters to fling whoever your hand desires."},
-                new Module { buttonText = "Blaster Fling All", method =() => Fun.BlasterFlingAll(RandomVector3()), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room."},
+                new Module { buttonText = "Blaster Fling All", method =() => Fun.BlasterFlingAll(RandomVector3()), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room."},
 
                 new Module { buttonText = "Blaster Fling Towards Gun", overlapText = "Blaster Bring Gun", aliases = new[] { "Blaster Fling Towards Gun" }, method = Fun.BlasterFlingTowardsGun, toolTip = "Uses the blasters to fling whoever your hand desires towards you."},
-                new Module { buttonText = "Blaster Fling Towards All", overlapText = "Blaster Bring All", aliases = new[] { "Blaster Fling Towards All" }, method = Fun.BlasterFlingTowardsAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room towards you."},
+                new Module { buttonText = "Blaster Fling Towards All", overlapText = "Blaster Bring All", aliases = new[] { "Blaster Fling Towards All" }, method = Fun.BlasterFlingTowardsAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room towards you."},
 
                 new Module { buttonText = "Blaster Fling Away Gun", overlapText = "Blaster Push Gun", aliases = new[] { "Blaster Fling Towards Gun" }, method = Fun.BlasterFlingAwayGun, toolTip = "Uses the blasters to fling whoever your hand desires away from you."},
-                new Module { buttonText = "Blaster Fling Away All", overlapText = "Blaster Push All", aliases = new[] { "Blaster Fling Towards All" }, method = Fun.BlasterFlingAwayAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room away from you."},
+                new Module { buttonText = "Blaster Fling Away All", overlapText = "Blaster Push All", aliases = new[] { "Blaster Fling Towards All" }, method = Fun.BlasterFlingAwayAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room away from you."},
 
                 new Module { buttonText = "Blaster Kick Gun", method = Fun.BlasterKickGun, toolTip = "Kicks whoever your hand desires using the blasters." },
-                new Module { buttonText = $"Blaster Kick All {Bracket("green", "T")}", method = Fun.BlasterKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room when holding <color=green>trigger</color> using the blasters." },
+                new Module { buttonText = $"Blaster Kick All {Bracket("green", "T")}", method = Fun.BlasterKickAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks everyone in the room when holding <color=green>trigger</color> using the blasters." },
 
                 new Module { buttonText = "Blaster Crash Gun", method = Fun.BlasterCrashGun, toolTip = "Crashes whoever your hand desires using the blasters." },
-                new Module { buttonText = $"Blaster Crash All {Bracket("green", "T")}", method = Fun.BlasterCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room when holding <color=green>trigger</color> using the blasters." },
+                new Module { buttonText = $"Blaster Crash All {Bracket("green", "T")}", method = Fun.BlasterCrashAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Crashes everyone in the room when holding <color=green>trigger</color> using the blasters." },
 
                 new Module { buttonText = $"Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
                 new Module { buttonText = $"Turkey Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
@@ -1574,9 +1589,9 @@ namespace Qubit.Modules
                 new Module { buttonText = "No Respawn Bat", enableMethod =() => Bugs.SetRespawnDistance("Cave Bat Holdable"), disableMethod =() => Bugs.SetRespawnDistance("Cave Bat Holdable", 50f), toolTip = "Doesn't respawn the bat if it goes too far outside the bounds of caves."},
                 new Module { buttonText = "No Respawn Firefly", enableMethod =() => Bugs.SetRespawnDistance("Firefly"), disableMethod =() => Bugs.SetRespawnDistance("Firefly", 50f), toolTip = "Doesn't respawn the firefly if it goes too far outside the bounds of forest."},
 
-                new Module { buttonText = "Permanent Bug", method =() => Bugs.PermanentOwnership("Floating Bug Holdable"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the bug."},
-                new Module { buttonText = "Permanent Bat", method =() => Bugs.PermanentOwnership("Cave Bat Holdable"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the bat."},
-                new Module { buttonText = "Permanent Firefly", method =() => Bugs.PermanentOwnership("Firefly"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the firefly."},
+                new Module { buttonText = "Permanent Bug", method =() => Bugs.PermanentOwnership("Floating Bug Holdable"), disableMethod =() => Ownership.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the bug."},
+                new Module { buttonText = "Permanent Bat", method =() => Bugs.PermanentOwnership("Cave Bat Holdable"), disableMethod =() => Ownership.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the bat."},
+                new Module { buttonText = "Permanent Firefly", method =() => Bugs.PermanentOwnership("Firefly"), disableMethod =() => Ownership.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the firefly."},
 
                 new Module { buttonText = $"Bug Spam {Bracket("green", "G")}", method = Bugs.BugSpam, disableMethod = Bugs.DisableBugSpam, toolTip = "Shoots the bug and firefly out of your hand repeatedly." },
                 new Module { buttonText = $"Camera Spam {Bracket("green", "G")}", method = LckCamera.CameraSpam, disableMethod = LckCamera.DisableCameraSpam, toolTip = "Shoots the camera out of your hand repeatedly." },
@@ -1586,7 +1601,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Bug Phallus Gun", method = Bugs.BugPhallusGun, toolTip = "Gives whoever your hand desires a phallus in the form of the bugs." },
 
                 new Module { buttonText = "Bug Vibrate Gun", method = Bugs.BugVibrateGun, toolTip = "Vibrates the controllers of whoever your hand desires using the bugs." },
-                new Module { buttonText = "Bug Vibrate All", enableMethod = Bugs.EnableBugVibrateAll, method = Bugs.BugVibrateAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Vibrates the controllers of everyone in the room using the bugs." },
+                new Module { buttonText = "Bug Vibrate All", enableMethod = Bugs.EnableBugVibrateAll, method = Bugs.BugVibrateAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Vibrates the controllers of everyone in the room using the bugs." },
 
                 new Module { buttonText = "Holster Bug", method =() => Bugs.HolsterObject("Floating Bug Holdable", TransferrableObject.PositionState.OnLeftArm), toolTip = "Holsters the bug on your left arm." },
                 new Module { buttonText = "Holster Bat", method =() => Bugs.HolsterObject("Cave Bat Holdable", TransferrableObject.PositionState.OnChest), toolTip = "Holsters the bat on your chest." },
@@ -1729,9 +1744,9 @@ namespace Qubit.Modules
                 new Module { buttonText = "Auto Purchase Current Cosmetics", method = Cosmetics.AutoPurchasePaidCosmetics, toolTip = "Automatically purchases all cosmetics on your outfit until you own everything. This does use shiny rocks." },
                 new Module { buttonText = "Disable Cosmetics on Tag", method = Cosmetics.DisableCosmeticsOnTag, toolTip = "Disables your cosmetics when you get tagged, good for ambush." },
 
-                new Module { buttonText = "Unlock Fan Club Subscription", aliases = new[] { "Unlock VIM", "Unlock Very Cool Monke", "Free VIM" }, enableMethod =() => SubscriptionPatches.enabled = true, disableMethod =() => SubscriptionPatches.enabled = false, toolTip = "Unlocks the Gorilla Tag fan club subscription." },
+                new Module { buttonText = "Unlock Fan Club Subscription", aliases = new[] { "Unlock VIM", "Unlock Very Cool Monke", "Free VIM" }, enableMethod =() => SubscriptionStatus.enabled = true, disableMethod =() => SubscriptionStatus.enabled = false, toolTip = "Unlocks the Gorilla Tag fan club subscription." },
                 new Module { buttonText = "Unlock All Cosmetics", method = Cosmetics.UnlockAllCosmetics, toolTip = "Unlocks every cosmetic in the game. This mod is client-sided." },
-                new Module { buttonText = "Unlimited Shiny Rocks", enableMethod =() => PurchasePatch.enabled = true, method =() => ManagerRegistry.CosmeticsController.currencyBalance = int.MaxValue, disableMethod =() => PurchasePatch.enabled = false, toolTip = "Gives you 2 billion shiny rocks. This mod is client sided." },
+                new Module { buttonText = "Unlimited Shiny Rocks", enableMethod =() => Purchasing.enabled = true, method =() => ManagerRegistry.CosmeticsController.currencyBalance = int.MaxValue, disableMethod =() => Purchasing.enabled = false, toolTip = "Gives you 2 billion shiny rocks. This mod is client sided." },
 
                 new Module { buttonText = "Sticky Holdables", method = Fun.StickyHoldables, toolTip = "Makes your holdables sticky.", legal = true},
                 new Module { buttonText = "Spaz Holdables", method = Fun.SpazHoldables, toolTip = "Spazzes out the positions of your holdables." },
@@ -1824,7 +1839,7 @@ namespace Qubit.Modules
                 ),
                 new Module { buttonText = "Custom Sound Spam", overlapText = $"Custom Sound Spam {Bracket("green", "0")}", method = Sound.CustomSoundSpam, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
 
-                new Module { buttonText = "Override Tap Sound", method =() => { EffectDataPatch.enabled = true; EffectDataPatch.material = Sound.soundId; }, disableMethod =() => {  EffectDataPatch.enabled = false;  EffectDataPatch.material = -1; }, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
+                new Module { buttonText = "Override Tap Sound", method =() => { HandEffects.enabled = true; HandEffects.material = Sound.soundId; }, disableMethod =() => {  HandEffects.enabled = false;  HandEffects.material = -1; }, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
             },
 
             ["Projectile Mods"] = new[]
@@ -1855,10 +1870,10 @@ namespace Qubit.Modules
                 new Module { buttonText = "Spit Gun", method = Projectiles.SpitGun, toolTip = "Makes whoever your hand desires spit." },
 
                 new Module { buttonText = "Projectile Blind Gun", method = Projectiles.ProjectileBlindGun, toolTip = "Blinds whoever your hand desires using the egg projectiles."},
-                new Module { buttonText = "Projectile Blind All", enableMethod = Projectiles.ProjectileBlindAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Blinds everybody in the room using the egg projectiles."},
+                new Module { buttonText = "Projectile Blind All", enableMethod = Projectiles.ProjectileBlindAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Blinds everybody in the room using the egg projectiles."},
 
                 new Module { buttonText = "Projectile Lag Gun", method = Projectiles.ProjectileLagGun, toolTip = "Lags whoever your hand desires using the firework projectiles."},
-                new Module { buttonText = "Projectile Lag All", enableMethod = Projectiles.ProjectileLagAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Lags everybody in the room using the firework projectiles."},
+                new Module { buttonText = "Projectile Lag All", enableMethod = Projectiles.ProjectileLagAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Lags everybody in the room using the firework projectiles."},
 
                 new Module { buttonText = "Projectile Nuke Gun", method = Projectiles.ProjectileNukeGun, toolTip = "Spawns a lot of projectiles airstriking from the sky at wherever your hand desires."},
 
@@ -1950,11 +1965,11 @@ namespace Qubit.Modules
                 new Module { buttonText = "Material Gun", method = Master.MaterialGun, toolTip = "Flashes the materials of whoever your hand desires."},
                 new Module { buttonText = "Material All", method = Master.MaterialAll, toolTip = "Flashes the materials of everyone in the room."},
 
-                new Module { buttonText = "Grey Screen Gun", method = ()=> Master.ActivateGreyZoneGun(true), disableMethod =() => SerializePatch.OverrideSerialization = null,  toolTip = "Makes whoever your hand desires' screen grey." },
+                new Module { buttonText = "Grey Screen Gun", method = ()=> Master.ActivateGreyZoneGun(true), disableMethod =() => ViewSerialization.OverrideSerialization = null,  toolTip = "Makes whoever your hand desires' screen grey." },
                 new Module { buttonText = "Fix Screen Gun", aliases = new[] { "Ungrey Screen Gun" }, method = ()=> Master.ActivateGreyZoneGun(false), toolTip = "Makes whoever your hand desires' screen normal again." },
                 new Module { buttonText = "Grey Screen All", enableMethod = ()=> Master.ActivateGreyZone(true), disableMethod =() => Master.ActivateGreyZone(false), toolTip = "Makes everyone's screen grey." },
 
-                new Module { buttonText = "Spaz Grey Screen Gun", method = Master.SpazGreyZoneGun, disableMethod = () => SerializePatch.OverrideSerialization = null, toolTip = "Makes whoever your hand desires' screen flash grey." },
+                new Module { buttonText = "Spaz Grey Screen Gun", method = Master.SpazGreyZoneGun, disableMethod = () => ViewSerialization.OverrideSerialization = null, toolTip = "Makes whoever your hand desires' screen flash grey." },
                 new Module { buttonText = "Spaz Grey Screen All", method = Master.SpazGreyZone, disableMethod =() => Master.ActivateGreyZone(false), toolTip = "Makes everyone's screen flash grey." },
 
                 new Module { buttonText = "Spaz Prop Hunt", method = Master.SpazPropHunt, toolTip = "Repeatedly starts and ends the prop hunt gamemode."},
@@ -2168,8 +2183,8 @@ namespace Qubit.Modules
                 //new ButtonInfo { buttonText = "Guardian Crash Gun", method = Overpowered.GuardianCrashGun, toolTip = "Crashes whoever your hand desires." },
                 //new ButtonInfo { buttonText = "Guardian Crash All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianCrashAll, toolTip = "Crashes everyone in the room." },
 
-                new Module { buttonText = "Delay Ban Gun", method = Overpowered.DelayBanGun, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Delay bans whoever your hand desires."},
-                new Module { buttonText = "Delay Ban All", enableMethod = Overpowered.DelayBanAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Delay bans everyone in the room."},
+                new Module { buttonText = "Delay Ban Gun", method = Overpowered.DelayBanGun, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Delay bans whoever your hand desires."},
+                new Module { buttonText = "Delay Ban All", enableMethod = Overpowered.DelayBanAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Delay bans everyone in the room."},
 
                 //new ButtonInfo { buttonText = "Kick Gun", method =() => Overpowered.KickGun(), disableMethod =() => Overpowered.DisableKick(), toolTip = "Kicks whoever your hand desires."},
                 //new ButtonInfo { buttonText = "Kick All", enableMethod =() => Overpowered.KickAll(), disableMethod =() => Overpowered.DisableKick(), toolTip = "Kicks everyone in the room."},
@@ -2180,8 +2195,8 @@ namespace Qubit.Modules
                 new Module { buttonText = "Give Fly on Grab", method = Overpowered.GiveFlyOnGrab, toolTip = "When someone is holding you, they can fly by pressing their trigger." },
 
                 //new ButtonInfo { buttonText = "Lag Server", method =() => Overpowered.FreezeServer(1f, 11), toolTip = "Lags the room." },
-                //new ButtonInfo { buttonText = "Freeze Server", enableMethod =() => SerializePatch.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Freezes the room." },
-                //new ButtonInfo { buttonText = "Crash Server", enableMethod =() => SerializePatch.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(0.5f, 40), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes the room." },
+                //new ButtonInfo { buttonText = "Freeze Server", enableMethod =() => ViewSerialization.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Freezes the room." },
+                //new ButtonInfo { buttonText = "Crash Server", enableMethod =() => ViewSerialization.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(0.5f, 40), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Crashes the room." },
                 //new ButtonInfo { buttonText = "Za Warudo <color=grey>[</color><color=green>T</color><color=grey>]</color>", enableMethod = Overpowered.ZaWarudo_enableMethod, method = Overpowered.ZaWarudo, toolTip = "Freeze all, but with special effects." },
 
                 new Module { buttonText = $"Anti Report {Bracket("green", "Fling")}", method = Overpowered.AntiReportFling, toolTip = "Flings whoever tries to report you."},
@@ -2211,16 +2226,16 @@ namespace Qubit.Modules
                 //new ButtonInfo { buttonText = "Barrel Punch Mod", method = Overpowered.BarrelPunchMod, toolTip = "Flings people when you punch them."},
 
                 //new ButtonInfo { buttonText = "Barrel Fling Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingGun, toolTip = "Flings whoever your hand desires using the barrels."},
-                //new ButtonInfo { buttonText = "Barrel Fling All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Fling All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels."},
 
                 //new ButtonInfo { buttonText = "Barrel Fling Towards Gun", overlapText = "Barrel Bring Gun", aliases = new[] { "Barrel Fling Towards Gun" }, enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsGun, toolTip = "Flings whoever your hand desires using the barrels towards you."},
-                //new ButtonInfo { buttonText = "Barrel Fling Towards All", overlapText = "Barrel Bring All", aliases = new[] { "Barrel Fling Towards All" }, enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels towards you."},
+                //new ButtonInfo { buttonText = "Barrel Fling Towards All", overlapText = "Barrel Bring All", aliases = new[] { "Barrel Fling Towards All" }, enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels towards you."},
 
                 //new ButtonInfo { buttonText = "Barrel Kick Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickGun, toolTip = "Kicks whoever your hand desires using the barrels."},
-                //new ButtonInfo { buttonText = "Barrel Kick All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Kick All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks everyone in the room using the barrels."},
 
                 //new ButtonInfo { buttonText = "Barrel Crash Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashGun, toolTip = "Crashes whoever your hand desires using the barrels."},
-                //new ButtonInfo { buttonText = "Barrel Crash All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Crash All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Crashes everyone in the room using the barrels."},
 
                 //new ButtonInfo { buttonText = "Barrel Obliterate Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateGun, toolTip = "Obliterates whoever your hand desires using the barrels."},
                 //new ButtonInfo { buttonText = "Barrel Obliterate All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateAll, toolTip = "Obliterates everyone in the room using the barrels."},
@@ -2230,7 +2245,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Lock Room", method =() => Overpowered.SetRoomStatus(false), isTogglable = false, toolTip = "Locks the room so no one else can join."},
                 new Module { buttonText = "Unlock Room", method =() => Overpowered.SetRoomStatus(true), isTogglable = false, toolTip = "Unlocks the room so anyone can join."},
-                new Module { buttonText = "Close Room", enableMethod =() => SerializePatch.OverrideSerialization = () => false, method = Overpowered.CloseRoom, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room." },
+                new Module { buttonText = "Close Room", enableMethod =() => ViewSerialization.OverrideSerialization = () => false, method = Overpowered.CloseRoom, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks everyone in the room." },
                 new Module { buttonText = "Spy Room", enableMethod =() => Overpowered.CreatePeerBase(), disableMethod =() => Overpowered.UnloadPeerBase(), toolTip = "Allows you to hear people whilst being disconnected from the room." },
 
                 new Module { buttonText = "Destroy Gun", method = Overpowered.DestroyGun, toolTip = "Block new players from seeing whoever your hand desires."},
@@ -2250,10 +2265,10 @@ namespace Qubit.Modules
                 new Module { buttonText = "Leave Party", method =() => ManagerRegistry.FriendshipGroupDetection.LeaveParty(), isTogglable = false, toolTip = "Leaves the party, incase you can't pull off the string." },
                 new Module { buttonText = "Party Break Network Triggers", method = Overpowered.PartyBreakNetworkTriggers, toolTip = "Breaks the network triggers for anyone in your party." },
 
-                new Module { buttonText = "Party Kick Gun", method = Overpowered.PartyKickGun, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks whoever your hand desires if they're in your party from the room."},
-                new Module { buttonText = "Party Kick All", method = Overpowered.PartyKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in your party from the room."},
-                new Module { buttonText = "Party Kick Aura", method = Overpowered.PartyKickAura, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks nearby party members from the room."},
-                new Module { buttonText = "Party Kick On Touch", method = Overpowered.PartyKickOnTouch, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks party members you touch from the room."},
+                new Module { buttonText = "Party Kick Gun", method = Overpowered.PartyKickGun, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks whoever your hand desires if they're in your party from the room."},
+                new Module { buttonText = "Party Kick All", method = Overpowered.PartyKickAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks everyone in your party from the room."},
+                new Module { buttonText = "Party Kick Aura", method = Overpowered.PartyKickAura, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks nearby party members from the room."},
+                new Module { buttonText = "Party Kick On Touch", method = Overpowered.PartyKickOnTouch, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks party members you touch from the room."},
 
                 new Module { buttonText = "Kick All in Party", overlapText = "Party Send All", method = Overpowered.KickAllInParty, isTogglable = false, toolTip = "Sends everyone in your party to a random room." },
                 new Module { buttonText = "Ban All in Party", overlapText = "Party Ban All", method = Overpowered.BanAllInParty, isTogglable = false, toolTip = "Sends everyone in your party to a bannable code." },
@@ -2622,12 +2637,12 @@ namespace Qubit.Modules
                 new Module { buttonText = "Exit Safety Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true},
 
                 ButtonHelper.Create("Change Anti Report Distance", () => Safety.AntiReportRangeNames, Safety.antiReportRangeIndex, Safety.ApplyAntiReportRange, "Changes the distance threshold for the anti report mods."),
-                ButtonHelper.CreateNumeric("Change FPS Spoof Value", 1, 120, 90, v => GTPlayerStatsPatch.FPS = (short)v, toolTip: "Changes the target FPS for the FPS Spoof mod."),
-                ButtonHelper.CreateNumeric("Change Target FPS Spoof Value", 1, 120, 90, v => GTPlayerStatsPatch.TargetFPS = (short)v, toolTip: "Changes the target FPS used by the FPS Spoof mod."),
-                ButtonHelper.CreateNumeric("Change Ping Spoof Value", short.MinValue, short.MaxValue, 60, v => GTPlayerStatsPatch.Ping = (short)v, toolTip: "Changes the target ping for the Ping Spoof mod."),
+                ButtonHelper.CreateNumeric("Change FPS Spoof Value", 1, 120, 90, v => PlayerStats.FPS = (short)v, toolTip: "Changes the target FPS for the FPS Spoof mod."),
+                ButtonHelper.CreateNumeric("Change Target FPS Spoof Value", 1, 120, 90, v => PlayerStats.TargetFPS = (short)v, toolTip: "Changes the target FPS used by the FPS Spoof mod."),
+                ButtonHelper.CreateNumeric("Change Ping Spoof Value", short.MinValue, short.MaxValue, 60, v => PlayerStats.Ping = (short)v, toolTip: "Changes the target ping for the Ping Spoof mod."),
 
 
-                new Module { buttonText = "Hide Anti Cheat Report Reasons", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatReasonHide = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatReasonHide = false, toolTip = "Hides the reason for Show Anti Cheat Reports."},
+                new Module { buttonText = "Hide Anti Cheat Report Reasons", enableMethod =() => SendReport.AntiCheatReasonHide = true, disableMethod =() => SendReport.AntiCheatReasonHide = false, toolTip = "Hides the reason for Show Anti Cheat Reports."},
 
                 new Module { buttonText = "Visualize Anti Report", method = Safety.VisualizeAntiReport, toolTip = "Visualizes the distance threshold for the anti report mods."},
                 new Module { buttonText = "Smart Anti Report", enableMethod = Safety.EnableSmartAntiReport, disableMethod = Safety.DisableSmartAntiReport, toolTip = "Makes the anti report mods only activate in non-modded public lobbies."},
@@ -2669,7 +2684,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Kick to Specific Room", enableMethod = Overpowered.KickToSpecificRoom, disableMethod =() => Overpowered.specificRoom = null, toolTip = "Makes the kick mods send the user to the specific room of your choice." },
                 new Module { buttonText = "Rejoin on Kick", enableMethod =() => Overpowered.rejoinOnKick = true, disableMethod =() => Overpowered.rejoinOnKick = false, toolTip = "Makes room based kick mods join the room you kicked the target in once they have been kicked." },
                 new Module { buttonText = "Fast Kick", enableMethod =() => Overpowered.instantCreate = true, disableMethod =() => Overpowered.instantCreate = false, toolTip = "Instantly creates a room instead of checking if one already exists." },
-                new Module { buttonText = "Kick Fix", enableMethod =() => JoinPatch.enabled = true, disableMethod =() => JoinPatch.enabled = false, toolTip = "Stops the super infection, virtual stump, and other kick mods from breaking." },
+                new Module { buttonText = "Kick Fix", enableMethod =() => EntityJoining.enabled = true, disableMethod =() => EntityJoining.enabled = false, toolTip = "Stops the super infection, virtual stump, and other kick mods from breaking." },
 
                 //new ButtonInfo { buttonText = "Mute All on Freeze", enableMethod =() => Overpowered.muteOnFreeze = true, disableMethod =() => Overpowered.muteOnFreeze = false, toolTip = "Whenever you freeze the server, everyone will be muted along with it" },
             },
@@ -3741,6 +3756,7 @@ namespace Qubit.Modules
         public static bool OverwriteKeybinds;
         public static bool disableFavoritingKeybind;
 
+        [RunOnLaunch(8)]
         public static void TagNewModules()
         {
             try
@@ -3806,7 +3822,7 @@ public class UpdateButtonText : MonoBehaviour
         RectTransform textTransform = tmp.rectTransform;
         textTransform.localPosition = Vector3.zero;
         textTransform.sizeDelta = new Vector2(button != null && button.incremental && incrementalButtons ? .18f : .2f, .03f * (ButtonDistance / 0.1f));
-        if (NoAutoSizeText) textTransform.sizeDelta = new Vector2(9f, 0.015f);
+        if (noAutoSizeText) textTransform.sizeDelta = new Vector2(9f, 0.015f);
         if (hideTextOnCamera) textTransform.gameObject.layer = 19;
         textTransform.localPosition = new Vector3(.064f, 0, .111f - offset / 2.6f);
         textTransform.localRotation = Quaternion.Euler(180f, 90f, 90f);
@@ -3925,15 +3941,15 @@ Every mod listed below has been removed from the menu, for one reason or another
 new ButtonInfo { buttonText = "Lag Master Client", method = Overpowered.LagMasterClient, toolTip = "Lags the master client." },
 new ButtonInfo { buttonText = "Lag Master Client Gun", method = Overpowered.LagMasterClientGun, toolTip = "Lags whoever your hand desires, if they are master client. Credits to EyeCantSee for this stupid idea." },
 
-new ButtonInfo { buttonText = "Kick Master Client", enableMethod = () => Overpowered.kickCoroutine = Coroutines.instance.StartCoroutine(Overpowered.KickMasterClient()), method =() => { if (Overpowered.kickCoroutine == null) Toggle("Kick Master Client"); }, disableMethod =() => { SerializePatch.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kicks the master client from the room." },
-new ButtonInfo { buttonText = "Kick Gun", method = Overpowered.KickGun, disableMethod =() => { SerializePatch.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kick whoever your hand desires, if they are master client. Credits to Rexon for making such a stupid mod." },
-new ButtonInfo { buttonText = "Kick All", enableMethod = () => Overpowered.kickCoroutine = Coroutines.instance.StartCoroutine(Overpowered.KickAll()), method =() => { if (Overpowered.kickCoroutine == null) Toggle("Kick All"); }, disableMethod =() => { SerializePatch.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kicks everyone above you from the room." },
+new ButtonInfo { buttonText = "Kick Master Client", enableMethod = () => Overpowered.kickCoroutine = Coroutines.instance.StartCoroutine(Overpowered.KickMasterClient()), method =() => { if (Overpowered.kickCoroutine == null) Toggle("Kick Master Client"); }, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kicks the master client from the room." },
+new ButtonInfo { buttonText = "Kick Gun", method = Overpowered.KickGun, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kick whoever your hand desires, if they are master client. Credits to Rexon for making such a stupid mod." },
+new ButtonInfo { buttonText = "Kick All", enableMethod = () => Overpowered.kickCoroutine = Coroutines.instance.StartCoroutine(Overpowered.KickAll()), method =() => { if (Overpowered.kickCoroutine == null) Toggle("Kick All"); }, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kicks everyone above you from the room." },
 
 
 new ButtonInfo { buttonText = "Lightning Time Overlay", method = Visuals.StrikeTimeOverlay, disableMethod =() => Notifications.information.Remove("Lightning"), toolTip = "Displays the time until lightning strikes again."},
 new ButtonInfo { buttonText = "Spawn Lightning", method = Visuals.SpawnLightning, isTogglable = false, toolTip = "Spawns a manual lightning strike client sided." },
 
-new ButtonInfo { buttonText = "Pumpkin Watcher", enableMethod =() => WatcherEyesPatch.enabled = true, disableMethod =() => WatcherEyesPatch.enabled = false, toolTip = "Make the pumpkin in stump always look at you."},
+new ButtonInfo { buttonText = "Pumpkin Watcher", enableMethod =() => WatcherEyes.enabled = true, disableMethod =() => WatcherEyes.enabled = false, toolTip = "Make the pumpkin in stump always look at you."},
 new ButtonInfo { buttonText = "Pumpkin Gazer", enableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/2025_Halloween2_TreeRoom/SetDressing (1)/HalloweenWatchingEyes").GetComponent<HalloweenWatcherEyes>().durationToBeNormalWhenPlayerLooks = 0.01f, disableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/2025_Halloween2_TreeRoom/SetDressing (1)/HalloweenWatchingEyes").GetComponent<HalloweenWatcherEyes>().durationToBeNormalWhenPlayerLooks = 0.01f, toolTip = "Make the pumpkin in stump instantly look at you when you look away."},
 
 new ButtonInfo { buttonText = "Spawn Red Lucy", method = Fun.SpawnRedLucy, isTogglable = false, toolTip = "Summons the red lucy in forest." },
@@ -3945,7 +3961,7 @@ new ButtonInfo { buttonText = "Lucy Chase Gun", method = Fun.LucyChaseGun, toolT
 
 new ButtonInfo { buttonText = "Lucy Attack Self", method =() => Fun.LucyAttack(ManagerRegistry.NetworkSystem.LocalPlayer), isTogglable = false, toolTip = "Makes lucy attack you." },
 new ButtonInfo { buttonText = "Lucy Attack Gun", method = Fun.LucyAttackGun, toolTip = "Makes lucy attack whoever your hand desires." },
-new ButtonInfo { buttonText = "Lucy Attack All", method = Fun.LucyAttackAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes lucy attack everyone in the room." },
+new ButtonInfo { buttonText = "Lucy Attack All", method = Fun.LucyAttackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes lucy attack everyone in the room." },
 
 new ButtonInfo { buttonText = "Lucy Harass Gun", method = Fun.LucyHarassGun, toolTip = "Makes lucy attack harass your hand desires." },
 new ButtonInfo { buttonText = "Move Lucy Gun", method = Fun.MoveLucyGun, toolTip = "Moves lucy to wherever your hand desires." },
@@ -3961,7 +3977,7 @@ new ButtonInfo { buttonText = "Slow Lucy", method = Fun.SlowLucy, toolTip = "Mak
 
 new ButtonInfo { buttonText = "Lurker Attack Self", method =() => Overpowered.LurkerAttack(ManagerRegistry.NetworkSystem.LocalPlayer), isTogglable = false, toolTip = "Makes the lurker ghost attack you." },
 new ButtonInfo { buttonText = "Lurker Attack Gun", method = Overpowered.LurkerAttackGun, toolTip = "Makes the lurker ghost attack whoever your hand desires." },
-new ButtonInfo { buttonText = "Lurker Attack All", method = Overpowered.LurkerAttackAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes the lurker ghost attack everyone in the room." },
+new ButtonInfo { buttonText = "Lurker Attack All", method = Overpowered.LurkerAttackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes the lurker ghost attack everyone in the room." },
 
 new ButtonInfo { buttonText = "Move Lurker Gun", method = Overpowered.MoveLurkerGun, toolTip = "Moves the lurker ghost to wherever your hand desires." },
 new ButtonInfo { buttonText = "Despawn Lurker", method = Overpowered.DespawnLurker, isTogglable = false, toolTip = "Despawns the lurker ghost." },
@@ -3970,7 +3986,7 @@ new ButtonInfo { buttonText = "Spaz Lurker", method = Overpowered.SpazLurker, to
 new ButtonInfo { buttonText = "Break Lurker", method = Overpowered.BreakLurker, toolTip = "Breaks the lurker ghost." },
 new ButtonInfo { buttonText = "Annoying Lurker", method = Overpowered.AnnoyingLurker, toolTip = "Makes the lurker ghost really annoying, by attacking everyone and making laugh sounds." },
 
-new ButtonInfo { buttonText = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Movement.EnableRig(); SerializePatch.OverrideSerialization = null; }, toolTip = "Turns you into the firefly." },
+new ButtonInfo { buttonText = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Movement.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the firefly." },
 
 new ButtonInfo { buttonText = "Lag Gun", method = Overpowered.LagGun, toolTip = "Lags whoever your hand desires."},
 new ButtonInfo { buttonText = "Lag All", method = Overpowered.LagAll, toolTip = "Lags everyone in the room."},
@@ -4206,9 +4222,9 @@ new ButtonInfo { buttonText = "Annoying Lucy", method =() => Fun.AnnoyingLucy(),
 
 new ButtonInfo { buttonText = "Fast Lucy", method =() => Fun.FastLucy(), toolTip = "Makes lucy become really fast." },
 new ButtonInfo { buttonText = "Slow Lucy", method =() => Fun.SlowLucy(), toolTip = "Makes lucy become really slow." },
-new ButtonInfo { buttonText = "Anti Lucy", enableMethod =() => RisePatch.enabled = true, disableMethod =() => RisePatch.enabled = false, toolTip = "Prevents lucy from moving you."},
-new ButtonInfo { buttonText = "Disable Lucy",  enableMethod =() => LucyPatch.enabled = true, disableMethod =() => LucyPatch.enabled = false, toolTip = "Prevents lucy from spawning."},
-new ButtonInfo { buttonText = "Anti Lurker", enableMethod =() => LurkerPatch.enabled = true, method = Safety.AntiLurker, disableMethod =() => LurkerPatch.enabled = false, toolTip = "Prevents the lurker ghost from possessing you."},
+new ButtonInfo { buttonText = "Anti Lucy", enableMethod =() => LucyRise.enabled = true, disableMethod =() => LucyRise.enabled = false, toolTip = "Prevents lucy from moving you."},
+new ButtonInfo { buttonText = "Disable Lucy",  enableMethod =() => LucyChaser.enabled = true, disableMethod =() => LucyChaser.enabled = false, toolTip = "Prevents lucy from spawning."},
+new ButtonInfo { buttonText = "Anti Lurker", enableMethod =() => LurkerStates.enabled = true, method = Safety.AntiLurker, disableMethod =() => LurkerStates.enabled = false, toolTip = "Prevents the lurker ghost from possessing you."},
 new ButtonInfo { buttonText = "Kick on Grab", postMethod =() => Overpowered.TowardsPositionOnGrab(new Vector3(-71.33718f, 101.4977f, -93.09029f)), disableMethod =() => VRRig.LocalRig.enabled = true, toolTip = "Kicks the player when they grab you." },
 new ButtonInfo { buttonText = "Crash on Grab", postMethod =() => Overpowered.DirectionOnGrab(new Vector3(10000, 10000, 10000)), disableMethod =() => VRRig.LocalRig.enabled = true, toolTip = "Crashes the player when they grab you." },
 new ButtonInfo { buttonText = "Destroy on Grab", postMethod =() => Overpowered.DirectionOnGrab(new Vector3(1f, -1f, 1f)), disableMethod =() => VRRig.LocalRig.enabled = true, toolTip = "Destroys the player when they grab you." },

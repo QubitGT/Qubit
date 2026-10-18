@@ -38,7 +38,11 @@ using Qubit.Libraries.Audio;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Locomotion;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Safety.AntiCrash;
+using Qubit.Patches.Safety.RPC;
+using Qubit.Patches.Safety;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -190,10 +194,10 @@ namespace Qubit.Modules.Categories
 
         public static bool GrabStatus
         {
-            get => HandLinkPatch.enabled;
+            get => HandLink.enabled;
             set
             {
-                HandLinkPatch.enabled = value;
+                HandLink.enabled = value;
 
                 if (!value && !References.LocalRig.enabled)
                     References.LocalRig.enabled = true;
@@ -244,14 +248,14 @@ namespace Qubit.Modules.Categories
                     if (_optimizeEvents)
                     {
                         if (legacyKickFreeze)
-                            SerializePatch.OverrideSerialization = () => false;
+                            ViewSerialization.OverrideSerialization = () => false;
                         else
                         {
                             PhotonNetwork.SerializationRate = 2;
                             RPCFilter.FilteredRPCs["OnHandTapRPC"] = () => false;
                             RPCFilter.FilteredRPCs["RPC_UpdateCosmeticsWithTryonPacked"] = () => false;
 
-                            SerializePatch.OverrideSerialization = () =>
+                            ViewSerialization.OverrideSerialization = () =>
                             {
                                 References.LocalRig.GetPhotonView().Serialize();
                                 return true;
@@ -260,8 +264,8 @@ namespace Qubit.Modules.Categories
                     }
                     else
                     {
-                        if (SerializePatch.OverrideSerialization != null)
-                            SerializePatch.OverrideSerialization = null;
+                        if (ViewSerialization.OverrideSerialization != null)
+                            ViewSerialization.OverrideSerialization = null;
 
                         PhotonNetwork.SerializationRate = 10;
                         RPCFilter.FilteredRPCs.Remove("OnHandTapRPC");
@@ -575,7 +579,7 @@ namespace Qubit.Modules.Categories
                     GorillaPlayerScoreboardLine.ReportPlayer(lockTarget.GetPlayer().UserId, GorillaPlayerLineButton.ButtonType.Cheating, lockTarget.GetPlayer().NickName);
                 }
 
-                SerializePatch.OverrideSerialization = () =>
+                ViewSerialization.OverrideSerialization = () =>
                 {
                     lockTarget.GetPlayer();
                     MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
@@ -599,14 +603,14 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        SerializePatch.OverrideSerialization = null;
+                        ViewSerialization.OverrideSerialization = null;
                     }
                 } });
         }
 
         public static void DelayBanAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 if (References.LocalRig.IsTagged())
                 {
@@ -1701,7 +1705,7 @@ namespace Qubit.Modules.Categories
                 if (Manager.GetIndex("No Freeze Za Warudo").enabled)
                 {
                     if (!Manager.GetIndex("No Freeze Za Warudo").enabled)
-                        SerializePatch.OverrideSerialization = () => false;
+                        ViewSerialization.OverrideSerialization = () => false;
 
                     if (!zaWarudoTrigger)
                     {
@@ -1747,7 +1751,7 @@ namespace Qubit.Modules.Categories
                     ZaWarudo_EndCoroutineVariable = Coroutines.instance.StartCoroutine(ZaWarudo_StopCoroutine());
                 }
 
-                SerializePatch.OverrideSerialization = null;
+                ViewSerialization.OverrideSerialization = null;
                 zaWarudoTrigger = false;
             }
         }
@@ -2414,7 +2418,7 @@ namespace Qubit.Modules.Categories
             ManagerRegistry.PhotonNetworkController.FriendIDList.Clear();
             yield return new WaitForSeconds(extraDelay);
 
-            bool joinedRoomPatchEnabled = JoinedRoomPatch.enabled;
+            bool joinedRoomPatchEnabled = JoinedRoom.enabled;
 
             string queueArchive = References.Computer.currentQueue;
             if (changeQueue)
@@ -2430,7 +2434,7 @@ namespace Qubit.Modules.Categories
 
             yield return new WaitForSeconds(30f);
 
-            JoinedRoomPatch.enabled = joinedRoomPatchEnabled;
+            JoinedRoom.enabled = joinedRoomPatchEnabled;
         }
         public static void CreateKickRoom()
         {
@@ -2621,7 +2625,7 @@ namespace Qubit.Modules.Categories
         public static IEnumerator ClearOverride()
         {
             yield return new WaitUntil(() => !Networking.InRoom);
-            SerializePatch.OverrideSerialization = null;
+            ViewSerialization.OverrideSerialization = null;
 
             wipeOverride = null;
         }
@@ -2732,7 +2736,7 @@ namespace Qubit.Modules.Categories
 
         public static void PartyKickAll()
         {
-            SerializePatch.OverrideSerialization = () => false;
+            ViewSerialization.OverrideSerialization = () => false;
 
             if (Time.time > kickDelay)
             {
@@ -2773,7 +2777,7 @@ namespace Qubit.Modules.Categories
 
             if (nearbyPlayers.Count > 0)
             {
-                SerializePatch.OverrideSerialization = () => false;
+                ViewSerialization.OverrideSerialization = () => false;
                 foreach (VRRig nearbyPlayer in nearbyPlayers)
                 {
                     for (int i = 0; i < 3950; i++)
@@ -2806,7 +2810,7 @@ namespace Qubit.Modules.Categories
 
             if (touchedPlayers.Count > 0)
             {
-                SerializePatch.OverrideSerialization = () => false;
+                ViewSerialization.OverrideSerialization = () => false;
                 foreach (VRRig rig in touchedPlayers)
                 {
                     for (int i = 0; i < 3950; i++)

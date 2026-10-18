@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Patches.Voice;
 using Qubit.Utilities;
 using Qubit.Core;
 using ExitGames.Client.Photon;
@@ -31,7 +32,6 @@ using Qubit.Frontend.Classes;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
-using Qubit.Patches.Menu;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -151,7 +151,7 @@ namespace Qubit.Modules.Categories
                     toolTip = "Opens the " + relativePath + " folder."
                 });
 
-            if (!RecorderPatch.enabled)
+            if (!VoiceRecorder.enabled)
                 Notifications.SendFormat("red", "WARNING", $"You are using the legacy microphone system. Modern soundboard features will not be implemented.");
 
             foreach (string file in files)
@@ -163,7 +163,7 @@ namespace Qubit.Modules.Categories
                 string soundKey = "SoundboardSound" + soundName.Hash();
 
 
-                if (!RecorderPatch.enabled || Soundboard.LegacySoundboard)
+                if (!VoiceRecorder.enabled || Soundboard.LegacySoundboard)
                 {
                     if (BindMode > 0)
                     {
@@ -202,7 +202,7 @@ namespace Qubit.Modules.Categories
                         }
                     }
                 }
-                else if (RecorderPatch.enabled)
+                else if (VoiceRecorder.enabled)
                 {
                     Module buttonInfo = null;
                     buttonInfo = new Module
@@ -549,7 +549,7 @@ namespace Qubit.Modules.Categories
 
                 if (!activeSounds.ContainsKey(hash))
                 {
-                    if (RecorderPatch.enabled && Networking.InRoom)
+                    if (VoiceRecorder.enabled && Networking.InRoom)
                     {
                         var id = Voices.Get().AudioClip(clip, false);
                         activeSounds[hash] = new SoundData { Clip = id, AudioClip = clip };
@@ -571,7 +571,7 @@ namespace Qubit.Modules.Categories
             {
                 if (activeSounds.ContainsKey(hash))
                 {
-                    if (RecorderPatch.enabled)
+                    if (VoiceRecorder.enabled)
                         Voices.Get().StopAudioClip(activeSounds[hash].Clip);
                     activeSounds.Remove(hash);
                 }
@@ -598,7 +598,7 @@ namespace Qubit.Modules.Categories
 
             if (Networking.InRoom)
             {
-                if (RecorderPatch.enabled)
+                if (VoiceRecorder.enabled)
                 {
                     if (activeSounds != null)
                     {
@@ -636,7 +636,7 @@ namespace Qubit.Modules.Categories
         {
             if (!Networking.InRoom)
                 return;
-            if (RecorderPatch.enabled)
+            if (VoiceRecorder.enabled)
             {
                 if (activeSounds != null)
                 {
@@ -768,6 +768,7 @@ namespace Qubit.Modules.Categories
 
         public static void CustomSoundSpam() => SoundSpam(soundId);
 
+        [RunOnLaunch(10)]
         public static void Initialize()
         {
             try

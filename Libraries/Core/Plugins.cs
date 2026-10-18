@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using Qubit.Utilities;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
@@ -336,6 +337,7 @@ namespace Qubit.Libraries.Core
             Manager.modules["Temporary Category"] = buttonInfos.ToArray();
             Manager.CurrentCategoryName = "Temporary Category";
         }
+        [RunOnLaunch(9)]
         #endregion
     
 

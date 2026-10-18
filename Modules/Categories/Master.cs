@@ -29,7 +29,8 @@ using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Tagging;
 using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
@@ -143,12 +144,12 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.IsMasterClient)
                 {
                     if (lockTarget != null)
-                        ReportTagPatch.blacklistedPlayers.Remove(lockTarget.GetPlayer());
+                        TagReports.blacklistedPlayers.Remove(lockTarget.GetPlayer());
 
                     gunLocked = true;
                     lockTarget = gunTarget;
 
-                    ReportTagPatch.blacklistedPlayers.Add(GetPlayerFromVRRig(gunTarget));
+                    TagReports.blacklistedPlayers.Add(GetPlayerFromVRRig(gunTarget));
 
                 }
                 else
@@ -158,7 +159,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        ReportTagPatch.blacklistedPlayers.Remove(lockTarget.GetPlayer());
+                        TagReports.blacklistedPlayers.Remove(lockTarget.GetPlayer());
                     }
                 } });
         }
@@ -1332,10 +1333,10 @@ namespace Qubit.Modules.Categories
                 return;
             }
 
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { ManagerRegistry.GreyZoneManager.photonView });
-                SerializePatch.OverrideSerialization = null;
+                ViewSerialization.OverrideSerialization = null;
                 return false;
             };
 

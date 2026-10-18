@@ -46,7 +46,9 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Rigs;
+using Qubit.Patches.Voice;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -450,31 +452,31 @@ namespace Qubit.Modules.Categories
 
         public static void FixHandTaps()
         {
-            EffectDataPatch.enabled = false;
-            EffectDataPatch.tapsEnabled = true;
-            EffectDataPatch.doOverride = false;
-            EffectDataPatch.overrideVolume = 0.1f;
-            EffectDataPatch.tapMultiplier = 1;
+            HandEffects.enabled = false;
+            HandEffects.tapsEnabled = true;
+            HandEffects.doOverride = false;
+            HandEffects.overrideVolume = 0.1f;
+            HandEffects.tapMultiplier = 1;
             References.Tagger.handTapVolume = 0.1f;
         }
 
         public static void LoudHandTaps()
         {
-            EffectDataPatch.enabled = true;
-            EffectDataPatch.tapsEnabled = true;
-            EffectDataPatch.doOverride = true;
-            EffectDataPatch.overrideVolume = 99999f;
-            EffectDataPatch.tapMultiplier = 10;
+            HandEffects.enabled = true;
+            HandEffects.tapsEnabled = true;
+            HandEffects.doOverride = true;
+            HandEffects.overrideVolume = 99999f;
+            HandEffects.tapMultiplier = 10;
             References.Tagger.handTapVolume = 99999f;
         }
 
         public static void SilentHandTaps()
         {
-            EffectDataPatch.enabled = true;
-            EffectDataPatch.tapsEnabled = false;
-            EffectDataPatch.doOverride = false;
-            EffectDataPatch.overrideVolume = 0f;
-            EffectDataPatch.tapMultiplier = 0;
+            HandEffects.enabled = true;
+            HandEffects.tapsEnabled = false;
+            HandEffects.doOverride = false;
+            HandEffects.overrideVolume = 0f;
+            HandEffects.tapMultiplier = 0;
             References.Tagger.handTapVolume = 0;
         }
 
@@ -1169,7 +1171,7 @@ namespace Qubit.Modules.Categories
 
         public static void BypassAntiReport()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
 
                 bool isNearReportButton = false;
@@ -1436,7 +1438,7 @@ namespace Qubit.Modules.Categories
         }
         public static void RainbowBracelet()
         {
-            BraceletPatch.enabled = true;
+            BraceletUpdates.enabled = true;
             if (!References.LocalRig.nonCosmeticRightHandItem.IsEnabled)
             {
                 SetBraceletState(true, false);
@@ -1462,7 +1464,7 @@ namespace Qubit.Modules.Categories
 
         public static void RemoveRainbowBracelet()
         {
-            BraceletPatch.enabled = false;
+            BraceletUpdates.enabled = false;
             if (!References.LocalRig.nonCosmeticRightHandItem.IsEnabled)
             {
                 SetBraceletState(false, false);
@@ -1728,7 +1730,7 @@ namespace Qubit.Modules.Categories
             mic.SamplingRate = (SamplingRate)samplingRate;
             mic.Bitrate = bitrate;
 
-            if (RecorderPatch.enabled)
+            if (VoiceRecorder.enabled)
                 Voices.Get().SamplingRate = samplingRate;
 
 
@@ -1740,7 +1742,7 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-            if (RecorderPatch.enabled)
+            if (VoiceRecorder.enabled)
                 Voices.Get().Gain = gain;
             else
             {
@@ -1908,7 +1910,7 @@ namespace Qubit.Modules.Categories
 
         public static void MuteMicrophone(bool mute)
         {
-            if (RecorderPatch.enabled)
+            if (VoiceRecorder.enabled)
                 Voices.Get().MuteMicrophone = mute;
             else
             {
@@ -1926,7 +1928,7 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-            if (RecorderPatch.enabled)
+            if (VoiceRecorder.enabled)
                 Voices.Get().Pitch = pitch;
             else
             {
@@ -1977,10 +1979,10 @@ namespace Qubit.Modules.Categories
                     VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
                     if (gunTarget && !gunTarget.IsLocal())
                     {
-                        if (RecorderPatch.enabled)
+                        if (VoiceRecorder.enabled)
                         {
-                            SpeakerPatch.enabled = true;
-                            SpeakerPatch.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
+                            VoiceSpeaker.enabled = true;
+                            VoiceSpeaker.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
                             if (!Voices.Get().PostProcessors.ContainsKey("CopyVoice"))  // this is so shit but i need to account for channels > 1
                             {
                                 float readPos = 0f;
@@ -1990,15 +1992,15 @@ namespace Qubit.Modules.Categories
                                     var vm = Voices.Get();
                                     int channels = vm.Channels;
 
-                                    float sourceRate = (SpeakerPatch.targetSpeaker != null && SpeakerPatch.targetSpeaker.RemoteVoiceLink.Info.SamplingRate > 0)
-                                                       ? SpeakerPatch.targetSpeaker.RemoteVoiceLink.Info.SamplingRate
+                                    float sourceRate = (VoiceSpeaker.targetSpeaker != null && VoiceSpeaker.targetSpeaker.RemoteVoiceLink.Info.SamplingRate > 0)
+                                                       ? VoiceSpeaker.targetSpeaker.RemoteVoiceLink.Info.SamplingRate
                                                        : 24000;
 
                                     float ratio = sourceRate / vm.OutputRate;
 
-                                    lock (SpeakerPatch.locked)
+                                    lock (VoiceSpeaker.locked)
                                     {
-                                        if (SpeakerPatch.SampleQueue.Count < (sourceRate * 0.04f))
+                                        if (VoiceSpeaker.SampleQueue.Count < (sourceRate * 0.04f))
                                         {
                                             Array.Clear(buffer, 0, buffer.Length);
                                             return;
@@ -2009,10 +2011,10 @@ namespace Qubit.Modules.Categories
                                             int idxA = (int)readPos;
                                             int idxB = idxA + 1;
 
-                                            if (idxB < SpeakerPatch.SampleQueue.Count)
+                                            if (idxB < VoiceSpeaker.SampleQueue.Count)
                                             {
                                                 float t = readPos - idxA;
-                                                float sample = Mathf.Lerp(SpeakerPatch.SampleQueue[idxA], SpeakerPatch.SampleQueue[idxB], t);
+                                                float sample = Mathf.Lerp(VoiceSpeaker.SampleQueue[idxA], VoiceSpeaker.SampleQueue[idxB], t);
 
                                                 for (int c = 0; c < channels; c++)
                                                 {
@@ -2037,7 +2039,7 @@ namespace Qubit.Modules.Categories
                                         int consumed = (int)readPos;
                                         if (consumed > 0)
                                         {
-                                            SpeakerPatch.SampleQueue.RemoveRange(0, Math.Min(consumed, SpeakerPatch.SampleQueue.Count));
+                                            VoiceSpeaker.SampleQueue.RemoveRange(0, Math.Min(consumed, VoiceSpeaker.SampleQueue.Count));
                                             readPos -= consumed;
                                         }
                                     }
@@ -2053,11 +2055,11 @@ namespace Qubit.Modules.Categories
                                 gunLocked = true;
                                 lockTarget = gunTarget;
 
-                                SpeakerPatch.enabled = true;
+                                VoiceSpeaker.enabled = true;
 
-                                SpeakerPatch.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
+                                VoiceSpeaker.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
 
-                                RecorderPatch.enabled = !Manager.GetIndex("Legacy Microphone").enabled;
+                                VoiceRecorder.enabled = !Manager.GetIndex("Legacy Microphone").enabled;
 
                                 Voices.Get().PostProcessors["CopyVoice"] = null;
 
@@ -2101,11 +2103,11 @@ namespace Qubit.Modules.Categories
 
             Voices.Get().PostProcessors.Remove("CopyVoice");
 
-            SpeakerPatch.enabled = false;
+            VoiceSpeaker.enabled = false;
 
             Sound.FixMicrophone();
 
-            RecorderPatch.enabled = !Manager.GetIndex("Legacy Microphone").enabled;
+            VoiceRecorder.enabled = !Manager.GetIndex("Legacy Microphone").enabled;
 
             ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
         }
@@ -2183,10 +2185,10 @@ namespace Qubit.Modules.Categories
         public static void ReloadMicrophone()
         {
             Recorder recorder = ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder;
-            if (!RecorderPatch.enabled && recorder.SourceType != Recorder.InputSourceType.Microphone)
+            if (!VoiceRecorder.enabled && recorder.SourceType != Recorder.InputSourceType.Microphone)
                 recorder.SourceType = Recorder.InputSourceType.Microphone;
             recorder.RestartRecording(true);
-            if (RecorderPatch.enabled)
+            if (VoiceRecorder.enabled)
                 Voices.Get().RestartMicrophone();
         }
 
@@ -3011,15 +3013,15 @@ namespace Qubit.Modules.Categories
 
         public static void AutoLoadCosmetics()
         {
-            RequestPatch.enabled = true;
-            RequestPatch.currentCoroutine ??= Coroutines.instance.StartCoroutine(RequestPatch.LoadCosmetics());
+            CosmeticRequests.enabled = true;
+            CosmeticRequests.currentCoroutine ??= Coroutines.instance.StartCoroutine(CosmeticRequests.LoadCosmetics());
             TryOnRoom.GetComponent<CosmeticBoundaryTrigger>().enabled = false;
         }
 
         public static void NoAutoLoadCosmetics()
         {
             TryOnRoom.GetComponent<CosmeticBoundaryTrigger>().enabled = true;
-            RequestPatch.enabled = false;
+            CosmeticRequests.enabled = false;
         }
         public static void CopyIDGun()
         {
@@ -3434,13 +3436,13 @@ namespace Qubit.Modules.Categories
         public static void DisableMouthMovement()
         {
             References.LocalRig.shouldSendSpeakingLoudness = false;
-            LoudnessPatch.enabled = true;
+            Loudness.enabled = true;
         }
 
         public static void EnableMouthMovement()
         {
             References.LocalRig.shouldSendSpeakingLoudness = true;
-            LoudnessPatch.enabled = false;
+            Loudness.enabled = false;
         }
 
         public static void ConfusePlayerGun()
@@ -3482,7 +3484,7 @@ namespace Qubit.Modules.Categories
 
         public static void ConfuseAllPlayers()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -3530,7 +3532,7 @@ namespace Qubit.Modules.Categories
                 }
                 ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = tinnitusSelf;
 
-                SerializePatch.OverrideSerialization = () =>
+                ViewSerialization.OverrideSerialization = () =>
                 {
                     NetPlayer target = lockTarget.GetPlayer();
                     MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
@@ -3553,7 +3555,7 @@ namespace Qubit.Modules.Categories
                     {
                         gunLocked = false;
                         Sound.FixMicrophone();
-                        SerializePatch.OverrideSerialization = null;
+                        ViewSerialization.OverrideSerialization = null;
                     }
                 } });
         }
@@ -3570,7 +3572,7 @@ namespace Qubit.Modules.Categories
             }
             ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = tinnitusSelf;
 
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -3594,7 +3596,7 @@ namespace Qubit.Modules.Categories
 
         public static void DisableTinnitus()
         {
-            SerializePatch.OverrideSerialization = null;
+            ViewSerialization.OverrideSerialization = null;
             foreach (Voices.Clip clip in Movement.tinnitus.Values)
                 Voices.Get().StopAudioClip(clip);
             Movement.tinnitus.Clear();
@@ -3662,7 +3664,7 @@ namespace Qubit.Modules.Categories
                         gunLocked = true;
                         lockTarget = gunTarget;
 
-                        SerializePatch.OverrideSerialization = () =>
+                        ViewSerialization.OverrideSerialization = () =>
                         {
                             NetPlayer target = lockTarget.GetPlayer();
                             MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
@@ -3684,14 +3686,14 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        SerializePatch.OverrideSerialization = null;
+                        ViewSerialization.OverrideSerialization = null;
                     }
                 } });
         }
 
         public static void OverstimulateAll()
         {
-            SerializePatch.OverrideSerialization ??= () =>
+            ViewSerialization.OverrideSerialization ??= () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
                 Vector3 archivePos = References.LocalRig.transform.position;
@@ -3793,7 +3795,7 @@ namespace Qubit.Modules.Categories
                 gunLocked = true;
                 lockTarget = gunTarget;
 
-                SerializePatch.OverrideSerialization = () =>
+                ViewSerialization.OverrideSerialization = () =>
                 {
                     NetPlayer target = lockTarget.GetPlayer();
                     MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
@@ -3814,7 +3816,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        SerializePatch.OverrideSerialization = null;
+                        ViewSerialization.OverrideSerialization = null;
                     }
                 } });
         }
@@ -3826,7 +3828,7 @@ namespace Qubit.Modules.Categories
                 gunLocked = true;
                 lockTarget = gunTarget;
 
-                SerializePatch.OverrideSerialization = () =>
+                ViewSerialization.OverrideSerialization = () =>
                 {
                     NetPlayer target = lockTarget.GetPlayer();
                     MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
@@ -3847,7 +3849,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        SerializePatch.OverrideSerialization = null;
+                        ViewSerialization.OverrideSerialization = null;
                     }
                 } });
         }
@@ -4061,8 +4063,8 @@ namespace Qubit.Modules.Categories
         public static void BlasterFlingAll(Vector3 direction)
         {
             if (Overpowered.GetBlaster() == null)
-                SerializePatch.OverrideSerialization = null;
-            else SerializePatch.OverrideSerialization ??= () =>
+                ViewSerialization.OverrideSerialization = null;
+            else ViewSerialization.OverrideSerialization ??= () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4101,8 +4103,8 @@ namespace Qubit.Modules.Categories
         public static void BlasterFlingTowardsAll()
         {
             if (Overpowered.GetBlaster() == null)
-                SerializePatch.OverrideSerialization = null;
-            else SerializePatch.OverrideSerialization ??= () =>
+                ViewSerialization.OverrideSerialization = null;
+            else ViewSerialization.OverrideSerialization ??= () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4141,8 +4143,8 @@ namespace Qubit.Modules.Categories
         public static void BlasterFlingAwayAll()
         {
             if (Overpowered.GetBlaster() == null)
-                SerializePatch.OverrideSerialization = null;
-            else SerializePatch.OverrideSerialization ??= () =>
+                ViewSerialization.OverrideSerialization = null;
+            else ViewSerialization.OverrideSerialization ??= () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4181,8 +4183,8 @@ namespace Qubit.Modules.Categories
         public static void BlasterKickAll()
         {
             if (Overpowered.GetBlaster() == null)
-                SerializePatch.OverrideSerialization = null;
-            else SerializePatch.OverrideSerialization ??= () =>
+                ViewSerialization.OverrideSerialization = null;
+            else ViewSerialization.OverrideSerialization ??= () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4221,8 +4223,8 @@ namespace Qubit.Modules.Categories
         public static void BlasterCrashAll()
         {
             if (Overpowered.GetBlaster() == null)
-                SerializePatch.OverrideSerialization = null;
-            else SerializePatch.OverrideSerialization ??= () =>
+                ViewSerialization.OverrideSerialization = null;
+            else ViewSerialization.OverrideSerialization ??= () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -4483,9 +4485,9 @@ namespace Qubit.Modules.Categories
         public static void LucyAttackAll()
         {
             HalloweenGhostChaser hgc = Overpowered.Lucy;
-            if (SerializePatch.OverrideSerialization != null)
+            if (ViewSerialization.OverrideSerialization != null)
             {
-                SerializePatch.OverrideSerialization = () =>
+                ViewSerialization.OverrideSerialization = () =>
                 {
                     MassSerialize(true, new[] { hgc.GetView });
                     return false;
@@ -4599,8 +4601,8 @@ namespace Qubit.Modules.Categories
 
         public static void SpoofRank(bool enabled, string tier = null)
         {
-            RankedPatch.enabled = enabled;
-            RankedPatch.targetTier = tier;
+            RankedRooms.enabled = enabled;
+            RankedRooms.targetTier = tier;
         }
 
         /// <summary>
@@ -4610,12 +4612,12 @@ namespace Qubit.Modules.Categories
         /// <param name="target">Target Platform</param>
         public static void SpoofPlatform(bool enabled, string target = null)
         {
-            RankedPatch.enabled = enabled;
-            RankedPatch.targetPlatform = target;
+            RankedRooms.enabled = enabled;
+            RankedRooms.targetPlatform = target;
         }
         public static void SpoofBadge()
         {
-            SetRankedPatch.enabled = true;
+            RankedProgression.enabled = true;
             if (!Mathf.Approximately(References.LocalRig.currentRankedELO, Safety.targetElo) || References.LocalRig.currentRankedSubTierQuest != Safety.targetBadge || References.LocalRig.currentRankedSubTierPC != Safety.targetBadge)
                 References.LocalRig.SetRankedInfo(Safety.targetElo, Safety.targetBadge, Safety.targetBadge);
         }
@@ -4647,13 +4649,13 @@ namespace Qubit.Modules.Categories
                 return;
             }
 
-            if (!RecorderPatch.enabled)
+            if (!VoiceRecorder.enabled)
             {
                 ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.AudioClip;
                 ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.AudioClip = sound;
                 ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
             }
-            else if (RecorderPatch.enabled)
+            else if (VoiceRecorder.enabled)
             {
                 if (Soundboard.LegacySoundboard && Voices.Get().AudioClips.Count == 1)
                     Voices.Get().StopAudioClips();

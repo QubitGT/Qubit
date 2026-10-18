@@ -41,6 +41,8 @@ using PlayFab.ClientModels;
 using POpusCodec.Enums;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Controls;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Rigs;
 using Qubit.Utilities;
 using System.Diagnostics;
 using System.IO;
@@ -71,7 +73,6 @@ using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -1267,7 +1268,7 @@ namespace Qubit.Modules.Categories
 
         public static void ProjectileBlindAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 if (Networking.InRoom)
                 {
@@ -1316,7 +1317,7 @@ namespace Qubit.Modules.Categories
 
         public static void ProjectileLagAll()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 if (Networking.InRoom)
                 {
@@ -1932,7 +1933,7 @@ namespace Qubit.Modules.Categories
         }
         public static void HookProjectileColors()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 if (Networking.InRoom)
                 {
@@ -1978,7 +1979,7 @@ namespace Qubit.Modules.Categories
         {
             yield return new WaitForSeconds(0.3f);
 
-            DistancePatch.enabled = false;
+            RigDistance.enabled = false;
             References.LocalRig.enabled = true;
 
             GameObject proj = References.LocalRig.myBodyDockPositions.allObjects[index].gameObject;
@@ -1998,7 +1999,7 @@ namespace Qubit.Modules.Categories
         }
         public static void SendThrowableProjectile(int index, Vector3 pos, Vector3 vel, Quaternion rot)
         {
-            DistancePatch.enabled = true;
+            RigDistance.enabled = true;
 
             if (DisableThrowableCoroutine != null)
                 Coroutines.instance.StopCoroutine(DisableThrowableCoroutine);

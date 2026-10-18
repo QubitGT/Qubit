@@ -25,7 +25,7 @@ using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Netcode;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -172,10 +172,11 @@ namespace Qubit.Libraries.Networking
             action?.Invoke();
         }
 
+        [RunOnLaunch(5)]
         public static void Initialize()
         {
-            SerializePatch.OnSerialize += OnSerialize;
-            PlayerSerializePatch.OnPlayerSerialize += OnPlayerSerialize;
+            ViewSerialization.OnSerialize += OnSerialize;
+            RigSerialization.OnPlayerSerialize += OnPlayerSerialize;
         }
     }
 }

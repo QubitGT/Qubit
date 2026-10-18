@@ -29,7 +29,9 @@ using Photon.Voice.Unity;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Safety.AntiBan;
+using Qubit.Patches.Safety.AntiCheat;
 using Qubit.Patches.Safety;
 using System;
 using System.Collections.Generic;
@@ -128,14 +130,14 @@ namespace Qubit.Modules.Categories
         public static void GeneralSafety()
         {
             if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Disconnect</color><color=grey>]</color>").enabled) AntiReportDisconnect();
-            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) AntiCheatPatches.SendReportPatch.AntiACReport = true;
+            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) SendReport.AntiACReport = true;
             if (!Manager.GetIndex("Anti Moderator").enabled) AntiModerator();
             if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>").enabled && !antiOculusReportHooked) { antiOculusReportHooked = true; EnableAntiOculusReport(); }
         }
 
         public static void DisableGeneral()
         {
-            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) AntiCheatPatches.SendReportPatch.AntiACReport = false;
+            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) SendReport.AntiACReport = false;
             if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>").enabled) DisableAntiOculusReport();
         }
 
@@ -233,7 +235,7 @@ namespace Qubit.Modules.Categories
         {
             if (previousNickName != PhotonNetwork.LocalPlayer.NickName)
             {
-                if (!BanPatches.CheckAutoBanListForName.CheckBanList(PhotonNetwork.LocalPlayer.NickName))
+                if (!CheckAutoBanListForName.CheckBanList(PhotonNetwork.LocalPlayer.NickName))
                 {
                     Notifications.SendFormat("red", "WARNING", $"Your name, {PhotonNetwork.LocalPlayer.NickName}, is not allowed. It has been reset for your safety.");
                     ChangeName(Qubit.Extensions.Random.RandomString(8));
@@ -642,7 +644,7 @@ namespace Qubit.Modules.Categories
         }
         public static void AntiPredictions()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -796,7 +798,7 @@ namespace Qubit.Modules.Categories
 
         public static void OnlySerializeNecessary()
         {
-            SerializePatch.OverrideSerialization = () =>
+            ViewSerialization.OverrideSerialization = () =>
             {
                 SendSerialize(References.LocalRig.GetPhotonView());
                 //SendSerialize(References.Tagger.myVRRig.reliableView);

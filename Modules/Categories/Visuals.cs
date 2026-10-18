@@ -35,7 +35,7 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Rigs;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -67,6 +67,132 @@ namespace Qubit.Modules.Categories
 {
     public class Visuals
     {
+
+        private static Module followThemeModule, transparentThemeModule; // cached: ThemedColor runs per rig, per frame
+
+        private static Color ThemedColor(Color color)
+        {
+            if ((followThemeModule ??= Manager.GetIndex("Follow Menu Theme")).enabled)
+                color = backgroundColor.GetCurrentColor();
+
+            if ((transparentThemeModule ??= Manager.GetIndex("Transparent Theme")).enabled)
+                color.a = 0.5f;
+
+            return color;
+        }
+
+        private static LineRenderer CreateTracerLine()
+        {
+            LineRenderer line = new GameObject("LineObject").AddComponent<LineRenderer>();
+            if (smoothLines)
+            {
+                line.numCapVertices = 10;
+                line.numCornerVertices = 5;
+            }
+
+            line.material.shader = Shader.Find("GUI/Text Shader");
+            line.startWidth = 0.025f;
+            line.endWidth = 0.025f;
+            line.positionCount = 25;
+            line.useWorldSpace = true;
+            return line;
+        }
+
+        private static void StyleTracer(LineRenderer line, Color color, bool thin)
+        {
+            float width = thin ? 0.0075f : 0.025f;
+            line.startWidth = width;
+            line.endWidth = width;
+
+            line.startColor = color;
+            line.endColor = color;
+        }
+
+        private static GameObject CreateNameTag(string name)
+        {
+            GameObject nameTag = new GameObject(name);
+            nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
+
+            TextMeshPro text = nameTag.AddComponent<TextMeshPro>();
+            text.fontSize = 4.8f;
+            text.alignment = TextAlignmentOptions.Center;
+
+            return nameTag;
+        }
+
+        private static void StyleNameTag(TextMeshPro tmp, VRRig vrrig)
+        {
+            tmp.color = vrrig.GetColor();
+            tmp.SafeSetFontStyle(activeFontStyle);
+            tmp.SafeSetFont(activeFont);
+        }
+
+        private static void PlaceNameTag(GameObject nameTag, TextMeshPro tmp, VRRig vrrig)
+        {
+            if (nameTagChams)
+                tmp.Chams();
+
+            nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
+
+            nameTag.transform.position = GetNameTagPosition(vrrig);
+            nameTag.transform.LookAt(Camera.main.transform.position);
+            nameTag.transform.Rotate(0f, 180f, 0f);
+        }
+
+        private static void PruneRigObjects(Dictionary<VRRig, GameObject> pool)
+        {
+            List<VRRig> stale = pool.Keys.Where(rig => !Players.ActiveRigs.Contains(rig)).ToList();
+            foreach (VRRig rig in stale)
+            {
+                Object.Destroy(pool[rig]);
+                pool.Remove(rig);
+            }
+        }
+
+        private static GameObject CreateBox()
+        {
+            GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            Object.Destroy(box.GetComponent<BoxCollider>());
+
+            box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
+            box.GetComponent<Renderer>().material.shader = Shader.Find("GUI/Text Shader");
+            return box;
+        }
+
+        private static GameObject CreateHollowBox(VRRig vrrig, bool thin)
+        {
+            GameObject box = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            box.transform.position = vrrig.transform.position;
+            Object.Destroy(box.GetComponent<BoxCollider>());
+            box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
+            box.transform.LookAt(References.HeadCollider.transform.position);
+
+            Renderer boxRenderer = box.GetComponent<Renderer>();
+            boxRenderer.enabled = false;
+            boxRenderer.material.shader = Shader.Find("GUI/Text Shader");
+
+            float thickness = thin ? 0.025f : 0.1f;
+            float length = thin ? 1.025f : 1.1f;
+
+            AddBoxEdge(box, boxRenderer, new Vector3(0f, 0.5f, 0f), new Vector3(1f, thickness, 1f));
+            AddBoxEdge(box, boxRenderer, new Vector3(0f, -0.5f, 0f), new Vector3(length, thickness, 1f));
+            AddBoxEdge(box, boxRenderer, new Vector3(0.5f, 0f, 0f), new Vector3(thickness, length, 1f));
+            AddBoxEdge(box, boxRenderer, new Vector3(-0.5f, 0f, 0f), new Vector3(thickness, length, 1f));
+
+            return box;
+        }
+
+        private static void AddBoxEdge(GameObject box, Renderer boxRenderer, Vector3 position, Vector3 scale)
+        {
+            GameObject edge = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            edge.transform.SetParent(box.transform);
+            edge.transform.localPosition = position;
+            Object.Destroy(edge.GetComponent<BoxCollider>());
+            edge.transform.localScale = scale;
+            edge.transform.localRotation = Quaternion.identity;
+            edge.AddComponent<ClampColor>().targetRenderer = boxRenderer;
+        }
+
         #region Types
         public class SkinnedWireframeRenderer : MonoBehaviour
         {
@@ -756,12 +882,8 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : new Color(0.41f, 0.05f, 0.70f);
-            if (tt)
-                coreESPColor.a = 0.5f;
+            Color coreESPColor = ThemedColor(new Color(0.41f, 0.05f, 0.70f));
 
             List<GameEntity> cores = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.typeId == Fun.ObjectByName["GhostReactorCollectibleCore"]).ToList();
             if (cores.Count <= 0)
@@ -779,12 +901,8 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            Color critterESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
-            if (tt)
-                critterESPColor.a = 0.5f;
+            Color critterESPColor = ThemedColor(Color.green);
 
             List<CrittersPawn> actors = ManagerRegistry.CrittersManager.crittersPawns;
             if (actors.Count <= 0)
@@ -802,12 +920,8 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            Color critterESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
-            if (tt)
-                critterESPColor.a = 0.5f;
+            Color critterESPColor = ThemedColor(Color.green);
 
             ThrowableBug[] bugs = GetAllType<ThrowableBug>();
             if (bugs.Length <= 0)
@@ -825,12 +939,8 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : new Color(0.41f, 0.05f, 0.70f);
-            if (tt)
-                coreESPColor.a = 0.5f;
+            Color coreESPColor = ThemedColor(new Color(0.41f, 0.05f, 0.70f));
 
             List<GameEntity> enemies = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.gameObject.name.ToLower().Contains("enemy")).ToList();
             if (enemies.Count <= 0)
@@ -848,12 +958,8 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
-            if (tt)
-                coreESPColor.a = 0.5f;
+            Color coreESPColor = ThemedColor(Color.green);
 
             List<GameEntity> resources = ManagerRegistry.SuperInfection.GameEntityManager.entities.Where(entity => entity != null && entity.gameObject.name.Contains("Resource")).ToList();
             if (resources.Count <= 0)
@@ -1135,7 +1241,7 @@ namespace Qubit.Modules.Categories
 
             handTaps.Clear();
 
-            HandTapPatch.OnHandTap -= OnHandTapGamesenseRing;
+            HandTaps.OnHandTap -= OnHandTapGamesenseRing;
         }
         public static void ApplyPerformanceModeVisualStep(int index)
         {
@@ -1565,27 +1671,14 @@ namespace Qubit.Modules.Categories
             foreach (VRRig rig in toRemove)
                 predictions.Remove(rig);
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
                 if (!predictions.TryGetValue(rig, out LineRenderer Line))
                 {
-                    GameObject LineObject = new GameObject("LineObject");
-                    Line = LineObject.AddComponent<LineRenderer>();
-                    if (smoothLines)
-                    {
-                        Line.numCapVertices = 10;
-                        Line.numCornerVertices = 5;
-                    }
-                    Line.material.shader = Shader.Find("GUI/Text Shader");
-                    Line.startWidth = 0.025f;
-                    Line.endWidth = 0.025f;
-                    Line.positionCount = 25;
-                    Line.useWorldSpace = true;
+                    Line = CreateTracerLine();
                     predictions.Add(rig, Line);
                 }
 
@@ -1594,17 +1687,9 @@ namespace Qubit.Modules.Categories
 
                 Color color = rig.GetColor();
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color = new Color(color.r, color.g, color.b, 0.5f);
+                color = ThemedColor(color);
 
-                float width = thinTracers ? 0.0075f : 0.025f;
-                Line.startWidth = width;
-                Line.endWidth = width;
-
-                Line.startColor = color;
-                Line.endColor = color;
+                StyleTracer(Line, color, thinTracers);
 
                 Vector3 position = rig.syncPos;
                 Vector3 velocity = rig.LatestVelocity();
@@ -1625,20 +1710,9 @@ namespace Qubit.Modules.Categories
         }
         public static void HitboxPredictions()
         {
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            List<VRRig> toRemove = new List<VRRig>();
-
-            foreach (var box in hitboxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
-            {
-                toRemove.Add(box.Key);
-                Object.Destroy(box.Value);
-            }
-
-            foreach (VRRig rig in toRemove)
-                hitboxESP.Remove(rig);
+            PruneRigObjects(hitboxESP);
 
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
@@ -1654,10 +1728,7 @@ namespace Qubit.Modules.Categories
                 }
 
                 Color color = vrrig.playerColor;
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     box.layer = 19;
 
@@ -1680,9 +1751,7 @@ namespace Qubit.Modules.Categories
 
         public static void PaintbrawlTrajectories()
         {
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             List<SlingshotProjectile> toRemoveTrajectories = new List<SlingshotProjectile>();
@@ -1712,18 +1781,7 @@ namespace Qubit.Modules.Categories
 
                     if (!trajectoryPool.TryGetValue(projectileInstance, out LineRenderer Line))
                     {
-                        GameObject LineObject = new GameObject("LineObject");
-                        Line = LineObject.AddComponent<LineRenderer>();
-                        if (smoothLines)
-                        {
-                            Line.numCapVertices = 10;
-                            Line.numCornerVertices = 5;
-                        }
-                        Line.material.shader = Shader.Find("GUI/Text Shader");
-                        Line.startWidth = 0.025f;
-                        Line.endWidth = 0.025f;
-                        Line.positionCount = 25;
-                        Line.useWorldSpace = true;
+                        Line = CreateTracerLine();
                         trajectoryPool.Add(projectileInstance, Line);
                     }
 
@@ -1734,17 +1792,9 @@ namespace Qubit.Modules.Categories
 
                     Color color = projectileInstance.teamColor;
 
-                    if (fmt)
-                        color = backgroundColor.GetCurrentColor();
-                    if (tt)
-                        color = new Color(color.r, color.g, color.b, 0.5f);
+                    color = ThemedColor(color);
 
-                    float width = thinTracers ? 0.0075f : 0.025f;
-                    Line.startWidth = width;
-                    Line.endWidth = width;
-
-                    Line.startColor = color;
-                    Line.endColor = color;
+                    StyleTracer(Line, color, thinTracers);
 
                     Vector3 position = projectileInstance.transform.position;
                     Vector3 velocity = projectileInstance.projectileRigidbody.linearVelocity;
@@ -1774,18 +1824,7 @@ namespace Qubit.Modules.Categories
 
                         if (!trajectoryPool.TryGetValue(projectileInstance, out LineRenderer Line))
                         {
-                            GameObject LineObject = new GameObject("LineObject");
-                            Line = LineObject.AddComponent<LineRenderer>();
-                            if (smoothLines)
-                            {
-                                Line.numCapVertices = 10;
-                                Line.numCornerVertices = 5;
-                            }
-                            Line.material.shader = Shader.Find("GUI/Text Shader");
-                            Line.startWidth = 0.025f;
-                            Line.endWidth = 0.025f;
-                            Line.positionCount = 25;
-                            Line.useWorldSpace = true;
+                            Line = CreateTracerLine();
                             trajectoryPool.Add(projectileInstance, Line);
                         }
 
@@ -1796,17 +1835,9 @@ namespace Qubit.Modules.Categories
 
                         Color color = rig.GetColor();
 
-                        if (fmt)
-                            color = backgroundColor.GetCurrentColor();
-                        if (tt)
-                            color = new Color(color.r, color.g, color.b, 0.5f);
+                        color = ThemedColor(color);
 
-                        float width = thinTracers ? 0.0075f : 0.025f;
-                        Line.startWidth = width;
-                        Line.endWidth = width;
-
-                        Line.startColor = color;
-                        Line.endColor = color;
+                        StyleTracer(Line, color, thinTracers);
 
                         Vector3 position = playerSlingshot.GetTrueLaunchPosition();
                         Vector3 velocity = playerSlingshot.GetNetworkedLaunchVelocity();
@@ -1856,10 +1887,7 @@ namespace Qubit.Modules.Categories
 
             Color localColor = References.LocalRig.GetColor();
 
-            if (fmt)
-                localColor = backgroundColor.GetCurrentColor();
-            if (tt)
-                localColor = new Color(localColor.r, localColor.g, localColor.b, 0.5f);
+            localColor = ThemedColor(localColor);
 
             float localWidth = thinTracers ? 0.0075f : 0.025f;
             localTrajectoryLine.startWidth = localWidth;
@@ -2034,13 +2062,7 @@ namespace Qubit.Modules.Categories
             {
                 if (!nametags.ContainsKey(vrrig))
                 {
-                    GameObject go = new GameObject("Qubit_Nametag");
-                    go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                    TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                    TextMeshPro.fontSize = 4.8f;
-                    TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                    nametags.Add(vrrig, go);
+                    nametags.Add(vrrig, CreateNameTag("Qubit_Nametag"));
                 }
 
                 GameObject nameTag = nametags[vrrig];
@@ -2049,18 +2071,10 @@ namespace Qubit.Modules.Categories
                 if (NameTagOptimize())
                 {
                     tmp.SafeSetText(CleanPlayerName(GetPlayerFromVRRig(vrrig).NickName));
-                    tmp.color = vrrig.GetColor();
-                    tmp.SafeSetFontStyle(activeFontStyle);
-                    tmp.SafeSetFont(activeFont);
+                    StyleNameTag(tmp, vrrig);
                 }
 
-                if (nameTagChams)
-                    tmp.Chams();
-                nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                nameTag.transform.position = GetNameTagPosition(vrrig);
-                nameTag.transform.LookAt(Camera.main.transform.position);
-                nameTag.transform.Rotate(0f, 180f, 0f);
+                PlaceNameTag(nameTag, tmp, vrrig);
             }
         }
 
@@ -2088,13 +2102,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!velnametags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_Veltag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            velnametags.Add(vrrig, go);
+                            velnametags.Add(vrrig, CreateNameTag("Qubit_Veltag"));
                         }
 
                         GameObject nameTag = velnametags[vrrig];
@@ -2103,17 +2111,9 @@ namespace Qubit.Modules.Categories
                         if (NameTagOptimize())
                         {
                             tmp.SafeSetText($"{vrrig.LatestVelocity().magnitude:F1}m/s");
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2144,13 +2144,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!fpsNametags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_FPStag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            fpsNametags.Add(vrrig, go);
+                            fpsNametags.Add(vrrig, CreateNameTag("Qubit_FPStag"));
                         }
 
                         GameObject nameTag = fpsNametags[vrrig];
@@ -2159,17 +2153,9 @@ namespace Qubit.Modules.Categories
                         if (NameTagOptimize())
                         {
                             tmp.SafeSetText($"{vrrig.GetFPS()} FPS");
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2199,13 +2185,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!targetFPSNameTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_FPStag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            targetFPSNameTags.Add(vrrig, go);
+                            targetFPSNameTags.Add(vrrig, CreateNameTag("Qubit_FPStag"));
                         }
 
                         GameObject nameTag = targetFPSNameTags[vrrig];
@@ -2214,17 +2194,9 @@ namespace Qubit.Modules.Categories
                         if (NameTagOptimize())
                         {
                             tmp.SafeSetText($"Target FPS: {vrrig.GetTargetFPS()}");
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2255,13 +2227,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!idNameTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_IDtag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            idNameTags.Add(vrrig, go);
+                            idNameTags.Add(vrrig, CreateNameTag("Qubit_IDtag"));
                         }
 
                         GameObject nameTag = idNameTags[vrrig];
@@ -2270,17 +2236,9 @@ namespace Qubit.Modules.Categories
                         if (NameTagOptimize())
                         {
                             tmp.SafeSetText(GetPlayerFromVRRig(vrrig).UserId);
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2311,13 +2269,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!platformTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_PlatformTag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            platformTags.Add(vrrig, go);
+                            platformTags.Add(vrrig, CreateNameTag("Qubit_PlatformTag"));
                         }
 
                         GameObject nameTag = platformTags[vrrig];
@@ -2326,17 +2278,9 @@ namespace Qubit.Modules.Categories
                         if (NameTagOptimize())
                         {
                             tmp.SafeSetText($"{vrrig.GetPlatform()}");
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2398,13 +2342,7 @@ namespace Qubit.Modules.Categories
                         if (kidNameTags.TryGetValue(vrrig, out GameObject nameTag))
                         {
                             TextMeshPro tmp = nameTag.GetOrAddComponent<TextMeshPro>();
-                            if (nameTagChams)
-                                tmp.Chams();
-                            nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                            nameTag.transform.position = GetNameTagPosition(vrrig);
-                            nameTag.transform.LookAt(Camera.main.transform.position);
-                            nameTag.transform.Rotate(0f, 180f, 0f);
+                            PlaceNameTag(nameTag, tmp, vrrig);
                         }
                     }
                 }
@@ -2468,13 +2406,7 @@ namespace Qubit.Modules.Categories
                         if (subNameTags.TryGetValue(vrrig, out GameObject nameTag))
                         {
                             TextMeshPro tmp = nameTag.GetOrAddComponent<TextMeshPro>();
-                            if (nameTagChams)
-                                tmp.Chams();
-                            nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                            nameTag.transform.position = GetNameTagPosition(vrrig);
-                            nameTag.transform.LookAt(Camera.main.transform.position);
-                            nameTag.transform.Rotate(0f, 180f, 0f);
+                            PlaceNameTag(nameTag, tmp, vrrig);
                         }
                     }
                 }
@@ -2506,13 +2438,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!creationDateTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_CreationTag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            creationDateTags.Add(vrrig, go);
+                            creationDateTags.Add(vrrig, CreateNameTag("Qubit_CreationTag"));
                         }
 
                         GameObject nameTag = creationDateTags[vrrig];
@@ -2521,17 +2447,9 @@ namespace Qubit.Modules.Categories
                         if (NameTagOptimize())
                         {
                             tmp.SafeSetText(GetCreationDate(GetPlayerFromVRRig(vrrig).UserId));
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2562,13 +2480,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!pingNameTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_Pingtag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            pingNameTags.Add(vrrig, go);
+                            pingNameTags.Add(vrrig, CreateNameTag("Qubit_Pingtag"));
                         }
 
                         GameObject nameTag = pingNameTags[vrrig];
@@ -2577,17 +2489,9 @@ namespace Qubit.Modules.Categories
                         if (NameTagOptimize())
                         {
                             tmp.SafeSetText($"{vrrig.GetPing()}ms");
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2618,13 +2522,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!turnNameTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_Turntag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            turnNameTags.Add(vrrig, go);
+                            turnNameTags.Add(vrrig, CreateNameTag("Qubit_Turntag"));
                         }
 
                         string turnType = vrrig.turnType;
@@ -2636,17 +2534,9 @@ namespace Qubit.Modules.Categories
                         if (NameTagOptimize())
                         {
                             tmp.SafeSetText(turnType == "NONE" ? "None" : Strings.ToTitleCase(turnType) + " " + turnFactor);
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2677,13 +2567,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!taggedNameTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_Taggedtag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            taggedNameTags.Add(vrrig, go);
+                            taggedNameTags.Add(vrrig, CreateNameTag("Qubit_Taggedtag"));
                         }
 
 
@@ -2703,17 +2587,9 @@ namespace Qubit.Modules.Categories
                             else
                                 tmp.SafeSetText("");
 
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2744,13 +2620,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!modNameTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_Modtag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            modNameTags.Add(vrrig, go);
+                            modNameTags.Add(vrrig, CreateNameTag("Qubit_Modtag"));
                         }
 
                         GameObject nameTag = modNameTags[vrrig];
@@ -2792,9 +2662,7 @@ namespace Qubit.Modules.Categories
 
                             tmp.SafeSetText(specialMods);
 
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                             if (nameTagChams)
                                 tmp.Chams();
                         }
@@ -2837,13 +2705,7 @@ namespace Qubit.Modules.Categories
                     {
                         if (!cosmeticNameTags.ContainsKey(vrrig))
                         {
-                            GameObject go = new GameObject("Qubit_Modtag");
-                            go.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
-                            TextMeshPro TextMeshPro = go.AddComponent<TextMeshPro>();
-                            TextMeshPro.fontSize = 4.8f;
-                            TextMeshPro.alignment = TextAlignmentOptions.Center;
-
-                            cosmeticNameTags.Add(vrrig, go);
+                            cosmeticNameTags.Add(vrrig, CreateNameTag("Qubit_Modtag"));
                         }
 
                         GameObject nameTag = cosmeticNameTags[vrrig];
@@ -2866,17 +2728,9 @@ namespace Qubit.Modules.Categories
 
                             tmp.SafeSetText(cosmetics);
 
-                            tmp.color = vrrig.GetColor();
-                            tmp.SafeSetFontStyle(activeFontStyle);
-                            tmp.SafeSetFont(activeFont);
+                            StyleNameTag(tmp, vrrig);
                         }
-                        if (nameTagChams)
-                            tmp.Chams();
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -2941,13 +2795,7 @@ namespace Qubit.Modules.Categories
                                 tmp.SafeSetFontStyle(activeFontStyle);
                                 tmp.SafeSetFont(activeFont);
                             }
-                            if (nameTagChams)
-                                tmp.Chams();
-                            nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                            nameTag.transform.position = GetNameTagPosition(vrrig);
-                            nameTag.transform.LookAt(Camera.main.transform.position);
-                            nameTag.transform.Rotate(0f, 180f, 0f);
+                            PlaceNameTag(nameTag, tmp, vrrig);
                         }
                     }
                 }
@@ -3031,13 +2879,7 @@ namespace Qubit.Modules.Categories
 
                             TextMeshPro tmp = nameTag.GetOrAddComponent<TextMeshPro>();
                             tmp.color = crashedColor;
-                            if (nameTagChams)
-                                tmp.Chams();
-                            nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-
-                            nameTag.transform.position = GetNameTagPosition(vrrig);
-                            nameTag.transform.LookAt(Camera.main.transform.position);
-                            nameTag.transform.Rotate(0f, 180f, 0f);
+                            PlaceNameTag(nameTag, tmp, vrrig);
                         }
                     }
                 }
@@ -3399,13 +3241,7 @@ namespace Qubit.Modules.Categories
                             tmp.SafeSetFont(activeFont);
                         }
 
-                        if (nameTagChams)
-                            tmp.Chams();
-
-                        nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * vrrig.scaleFactor;
-                        nameTag.transform.position = GetNameTagPosition(vrrig);
-                        nameTag.transform.LookAt(Camera.main.transform.position);
-                        nameTag.transform.Rotate(0f, 180f, 0f);
+                        PlaceNameTag(nameTag, tmp, vrrig);
                     }
                 }
                 catch { }
@@ -4006,9 +3842,7 @@ namespace Qubit.Modules.Categories
 
         public static void CasualBoneESP()
         {
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
@@ -4057,10 +3891,7 @@ namespace Qubit.Modules.Categories
                 LineRenderer liner = Lines[0];
 
                 Color color = vrrig.playerColor;
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     liner.gameObject.layer = 19;
 
@@ -4096,9 +3927,7 @@ namespace Qubit.Modules.Categories
 
         public static void InfectionBoneESP()
         {
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
             bool selfTagged = References.LocalRig.IsTagged();
 
@@ -4150,10 +3979,7 @@ namespace Qubit.Modules.Categories
                 bool playerTagged = vrrig.IsTagged();
                 Color color = selfTagged ? vrrig.playerColor : vrrig.GetColor();
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     liner.gameObject.layer = 19;
 
@@ -4196,9 +4022,7 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
@@ -4252,10 +4076,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
                 Color color = owner == target ? vrrig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     liner.gameObject.layer = 19;
 
@@ -4432,9 +4253,7 @@ namespace Qubit.Modules.Categories
             foreach (VRRig rig in toRemove)
                 wireframes.Remove(rig);
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
@@ -4449,10 +4268,7 @@ namespace Qubit.Modules.Categories
 
                 Color color = rig.GetColor();
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color = new Color(color.r, color.g, color.b, 0.5f);
+                color = ThemedColor(color);
 
                 wireframe.meshRenderer.material.color = color;
 
@@ -4494,9 +4310,7 @@ namespace Qubit.Modules.Categories
             foreach (VRRig rig in toRemove)
                 wireframes.Remove(rig);
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool selfTagged = References.LocalRig.IsTagged();
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
@@ -4510,10 +4324,7 @@ namespace Qubit.Modules.Categories
                 bool playerTagged = rig.IsTagged();
                 Color color = selfTagged ? rig.playerColor : rig.GetColor();
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     wireframe.wireframeObj.layer = 19;
 
@@ -4562,9 +4373,7 @@ namespace Qubit.Modules.Categories
             foreach (VRRig rig in toRemove)
                 wireframes.Remove(rig);
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = hunt.GetTargetOf(Networking.LocalPlayer);
@@ -4582,10 +4391,7 @@ namespace Qubit.Modules.Categories
 
                 Color color = owner == target ? rig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     wireframe.wireframeObj.layer = 19;
 
@@ -4883,39 +4689,21 @@ namespace Qubit.Modules.Categories
         }
         public static void CasualBoxESP()
         {
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            List<VRRig> toRemove = new List<VRRig>();
-
-            foreach (var box in boxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
-            {
-                toRemove.Add(box.Key);
-                Object.Destroy(box.Value);
-            }
-
-            foreach (VRRig rig in toRemove)
-                boxESP.Remove(rig);
+            PruneRigObjects(boxESP);
 
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boxESP.TryGetValue(vrrig, out GameObject box))
                 {
-                    box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    Object.Destroy(box.GetComponent<BoxCollider>());
-
-                    box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.GetComponent<Renderer>().material.shader = Shader.Find("GUI/Text Shader");
+                    box = CreateBox();
 
                     boxESP.Add(vrrig, box);
                 }
 
                 Color color = vrrig.playerColor;
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     box.layer = 19;
 
@@ -4928,40 +4716,22 @@ namespace Qubit.Modules.Categories
 
         public static void InfectionBoxESP()
         {
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool selfTagged = References.LocalRig.IsTagged();
 
-            List<VRRig> toRemove = new List<VRRig>();
-
-            foreach (var box in boxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
-            {
-                toRemove.Add(box.Key);
-                Object.Destroy(box.Value);
-            }
-
-            foreach (VRRig rig in toRemove)
-                boxESP.Remove(rig);
+            PruneRigObjects(boxESP);
 
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boxESP.TryGetValue(vrrig, out GameObject box))
                 {
-                    box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    Object.Destroy(box.GetComponent<BoxCollider>());
-
-                    box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.GetComponent<Renderer>().material.shader = Shader.Find("GUI/Text Shader");
+                    box = CreateBox();
 
                     boxESP.Add(vrrig, box);
                 }
 
                 Color color = selfTagged ? vrrig.playerColor : vrrig.GetColor();
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     box.layer = 19;
 
@@ -4980,32 +4750,18 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            List<VRRig> toRemove = new List<VRRig>();
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = hunt.GetTargetOf(Networking.LocalPlayer);
 
-            foreach (var box in boxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
-            {
-                toRemove.Add(box.Key);
-                Object.Destroy(box.Value);
-            }
-
-            foreach (VRRig rig in toRemove)
-                boxESP.Remove(rig);
+            PruneRigObjects(boxESP);
 
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boxESP.TryGetValue(vrrig, out GameObject box))
                 {
-                    box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    Object.Destroy(box.GetComponent<BoxCollider>());
-
-                    box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.GetComponent<Renderer>().material.shader = Shader.Find("GUI/Text Shader");
+                    box = CreateBox();
 
                     boxESP.Add(vrrig, box);
                 }
@@ -5014,10 +4770,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
                 Color color = owner == target ? vrrig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     box.layer = 19;
 
@@ -5039,75 +4792,22 @@ namespace Qubit.Modules.Categories
         }
         public static void CasualHollowBoxESP()
         {
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
-            List<VRRig> toRemove = new List<VRRig>();
-
-            foreach (var box in hollowBoxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
-            {
-                toRemove.Add(box.Key);
-                Object.Destroy(box.Value);
-            }
-
-            foreach (VRRig rig in toRemove)
-                hollowBoxESP.Remove(rig);
+            PruneRigObjects(hollowBoxESP);
 
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!hollowBoxESP.TryGetValue(vrrig, out GameObject box))
                 {
-                    box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    box.transform.position = vrrig.transform.position;
-                    Object.Destroy(box.GetComponent<BoxCollider>());
-                    box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.transform.LookAt(References.HeadCollider.transform.position);
-                    Renderer boxRenderer = box.GetComponent<Renderer>();
-                    boxRenderer.enabled = false;
-                    boxRenderer.material.shader = Shader.Find("GUI/Text Shader");
-
-                    GameObject outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0f, 0.5f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(1f, thinTracers ? 0.025f : 0.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0f, -0.5f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 1.025f : 1.1f, thinTracers ? 0.025f : 0.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0.5f, 0f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 0.025f : 0.1f, thinTracers ? 1.025f : 1.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(-0.5f, 0f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 0.025f : 0.1f, thinTracers ? 1.025f : 1.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
+                    box = CreateHollowBox(vrrig, thinTracers);
 
                     hollowBoxESP.Add(vrrig, box);
                 }
 
                 Color color = vrrig.playerColor;
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     box.layer = 19;
 
@@ -5120,76 +4820,23 @@ namespace Qubit.Modules.Categories
 
         public static void HollowInfectionBoxESP()
         {
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
             bool selfTagged = References.LocalRig.IsTagged();
 
-            List<VRRig> toRemove = new List<VRRig>();
-
-            foreach (var box in hollowBoxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
-            {
-                toRemove.Add(box.Key);
-                Object.Destroy(box.Value);
-            }
-
-            foreach (VRRig rig in toRemove)
-                hollowBoxESP.Remove(rig);
+            PruneRigObjects(hollowBoxESP);
 
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!hollowBoxESP.TryGetValue(vrrig, out GameObject box))
                 {
-                    box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    box.transform.position = vrrig.transform.position;
-                    Object.Destroy(box.GetComponent<BoxCollider>());
-                    box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.transform.LookAt(References.HeadCollider.transform.position);
-                    Renderer boxRenderer = box.GetComponent<Renderer>();
-                    boxRenderer.enabled = false;
-                    boxRenderer.material.shader = Shader.Find("GUI/Text Shader");
-
-                    GameObject outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0f, 0.5f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(1f, thinTracers ? 0.025f : 0.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0f, -0.5f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 1.025f : 1.1f, thinTracers ? 0.025f : 0.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0.5f, 0f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 0.025f : 0.1f, thinTracers ? 1.025f : 1.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(-0.5f, 0f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 0.025f : 0.1f, thinTracers ? 1.025f : 1.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
+                    box = CreateHollowBox(vrrig, thinTracers);
 
                     hollowBoxESP.Add(vrrig, box);
                 }
 
                 Color color = selfTagged ? vrrig.playerColor : vrrig.GetColor();
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     box.layer = 19;
 
@@ -5208,68 +4855,19 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
-            List<VRRig> toRemove = new List<VRRig>();
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = hunt.GetTargetOf(Networking.LocalPlayer);
 
-            foreach (var box in hollowBoxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
-            {
-                toRemove.Add(box.Key);
-                Object.Destroy(box.Value);
-            }
-
-            foreach (VRRig rig in toRemove)
-                hollowBoxESP.Remove(rig);
+            PruneRigObjects(hollowBoxESP);
 
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!hollowBoxESP.TryGetValue(vrrig, out GameObject box))
                 {
-                    box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    box.transform.position = vrrig.transform.position;
-                    Object.Destroy(box.GetComponent<BoxCollider>());
-                    box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.transform.LookAt(References.HeadCollider.transform.position);
-                    Renderer boxRenderer = box.GetComponent<Renderer>();
-                    boxRenderer.enabled = false;
-                    boxRenderer.material.shader = Shader.Find("GUI/Text Shader");
-
-                    GameObject outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0f, 0.5f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(1f, thinTracers ? 0.025f : 0.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0f, -0.5f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 1.025f : 1.1f, thinTracers ? 0.025f : 0.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(0.5f, 0f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 0.025f : 0.1f, thinTracers ? 1.025f : 1.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
-
-                    outl = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    outl.transform.SetParent(box.transform);
-                    outl.transform.localPosition = new Vector3(-0.5f, 0f, 0f);
-                    Object.Destroy(outl.GetComponent<BoxCollider>());
-                    outl.transform.localScale = new Vector3(thinTracers ? 0.025f : 0.1f, thinTracers ? 1.025f : 1.1f, 1f);
-                    outl.transform.localRotation = Quaternion.identity;
-                    outl.AddComponent<ClampColor>().targetRenderer = boxRenderer;
+                    box = CreateHollowBox(vrrig, thinTracers);
 
                     hollowBoxESP.Add(vrrig, box);
                 }
@@ -5278,10 +4876,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
                 Color color = owner == target ? vrrig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     box.layer = 19;
 
@@ -5313,9 +4908,7 @@ namespace Qubit.Modules.Categories
             foreach (VRRig rig in toRemove)
                 breadcrumbs.Remove(rig);
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
             bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
 
@@ -5347,10 +4940,7 @@ namespace Qubit.Modules.Categories
 
                 Color color = rig.GetColor();
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color = new Color(color.r, color.g, color.b, 0.5f);
+                color = ThemedColor(color);
 
                 trail.startColor = color;
                 trail.endColor = color;
@@ -5370,9 +4960,7 @@ namespace Qubit.Modules.Categories
             foreach (VRRig rig in toRemove)
                 breadcrumbs.Remove(rig);
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
             bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
             bool selfTagged = References.LocalRig.IsTagged();
@@ -5403,10 +4991,7 @@ namespace Qubit.Modules.Categories
                 bool playerTagged = rig.IsTagged();
                 Color color = selfTagged ? rig.playerColor : rig.GetColor();
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     trail.gameObject.layer = 19;
 
@@ -5433,9 +5018,7 @@ namespace Qubit.Modules.Categories
             foreach (VRRig rig in toRemove)
                 breadcrumbs.Remove(rig);
 
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
             bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
 
@@ -5470,10 +5053,7 @@ namespace Qubit.Modules.Categories
 
                 Color color = owner == target ? rig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
 
-                if (fmt)
-                    color = backgroundColor.GetCurrentColor();
-                if (tt)
-                    color.a = 0.5f;
+                color = ThemedColor(color);
                 if (hoc)
                     trail.gameObject.layer = 19;
 
@@ -5585,11 +5165,8 @@ namespace Qubit.Modules.Categories
             if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
-            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? References.Player.scale : 1f);
 
-            Color menuColor = backgroundColor.GetCurrentColor();
 
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
@@ -5600,11 +5177,7 @@ namespace Qubit.Modules.Categories
 
                 LineRenderer line = GetLineRender();
 
-                if (followMenuTheme)
-                    lineColor = menuColor;
-
-                if (transparentTheme)
-                    lineColor.a = 0.5f;
+                lineColor = ThemedColor(lineColor);
 
                 line.startColor = lineColor;
                 line.endColor = lineColor;
@@ -5623,11 +5196,8 @@ namespace Qubit.Modules.Categories
             if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
-            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? References.Player.scale : 1f);
 
-            Color menuColor = backgroundColor.GetCurrentColor();
 
             float distance = float.MaxValue;
             VRRig playerRig = References.LocalRig;
@@ -5643,11 +5213,7 @@ namespace Qubit.Modules.Categories
 
                 LineRenderer line = GetLineRender();
 
-                if (followMenuTheme)
-                    lineColor = menuColor;
-
-                if (transparentTheme)
-                    lineColor.a = 0.5f;
+                lineColor = ThemedColor(lineColor);
 
                 line.startColor = lineColor;
                 line.endColor = lineColor;
@@ -5776,12 +5342,9 @@ namespace Qubit.Modules.Categories
             if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
-            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             _ = Manager.GetIndex("Hidden on Camera").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
-            Color menuColor = backgroundColor.GetCurrentColor();
 
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
@@ -5792,11 +5355,7 @@ namespace Qubit.Modules.Categories
 
                 LineRenderer line = GetLineRender();
 
-                if (followMenuTheme)
-                    lineColor = menuColor;
-
-                if (transparentTheme)
-                    lineColor.a = 0.5f;
+                lineColor = ThemedColor(lineColor);
 
                 line.startColor = lineColor;
                 line.endColor = lineColor;
@@ -5816,15 +5375,12 @@ namespace Qubit.Modules.Categories
             if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
-            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             _ = Manager.GetIndex("Hidden on Camera").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             bool LocalTagged = References.LocalRig.IsTagged();
             bool NoInfected = InfectedList().Count == 0;
 
-            Color menuColor = backgroundColor.GetCurrentColor();
 
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
@@ -5851,11 +5407,7 @@ namespace Qubit.Modules.Categories
 
                 LineRenderer line = GetLineRender();
 
-                if (followMenuTheme)
-                    lineColor = menuColor;
-
-                if (transparentTheme)
-                    lineColor.a = 0.5f;
+                lineColor = ThemedColor(lineColor);
 
                 line.startColor = lineColor;
                 line.endColor = lineColor;
@@ -5883,11 +5435,8 @@ namespace Qubit.Modules.Categories
             if (sillyComputer == null)
                 return;
 
-            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
-            Color menuColor = backgroundColor.GetCurrentColor();
 
             NetPlayer currentTarget = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
 
@@ -5898,11 +5447,7 @@ namespace Qubit.Modules.Categories
                     Color lineColor = playerRig.playerColor;
                     LineRenderer line = GetLineRender();
 
-                    if (followMenuTheme)
-                        lineColor = menuColor;
-
-                    if (transparentTheme)
-                        lineColor.a = 0.5f;
+                    lineColor = ThemedColor(lineColor);
 
                     line.startColor = lineColor;
                     line.endColor = lineColor;
@@ -5918,11 +5463,7 @@ namespace Qubit.Modules.Categories
 
                     LineRenderer line = GetLineRender();
 
-                    if (followMenuTheme)
-                        lineColor = menuColor;
-
-                    if (transparentTheme)
-                        lineColor.a = 0.5f;
+                    lineColor = ThemedColor(lineColor);
 
                     line.startColor = lineColor;
                     line.endColor = lineColor;
@@ -6357,6 +5898,7 @@ namespace Qubit.Modules.Categories
             Manager.CurrentCategoryName = "Temporary Category";
         }
 
+        [RunOnLaunch(6)]
         public static void Initialize()
         {
             for (int i = 0; i < 2; i++)

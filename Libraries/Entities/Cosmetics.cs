@@ -28,6 +28,8 @@ using Module = Qubit.Modules.Module;
 using static Qubit.Modules.Categories.Admin;
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using Qubit.Backend;
+using Qubit.Patches.Economics;
+using Qubit.Patches.Rigs;
 using TMPro;
 using static Qubit.Core.Security;
 using static Qubit.Frontend.Resources.Fonts;
@@ -61,7 +63,6 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -367,8 +368,8 @@ namespace Qubit.Libraries.Entities
         }
         public static void UnlockAllCosmetics()
         {
-            CosmeticPatch.enabled = true;
-            if (!PostGetData.CosmeticsInitialized || hasGivenCosmetics) return;
+            ItemAllowance.enabled = true;
+            if (!Bundles.CosmeticsInitialized || hasGivenCosmetics) return;
             hasGivenCosmetics = true;
             MethodInfo unlockItem = typeof(CosmeticsController).GetMethod("UnlockItem", BindingFlags.Instance | BindingFlags.NonPublic);
             foreach (var item in ManagerRegistry.CosmeticsController.allCosmetics.Where(item => !ManagerRegistry.CosmeticsController.concatStringCosmeticsAllowed.Contains(item.itemName)))

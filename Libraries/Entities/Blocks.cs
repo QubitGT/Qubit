@@ -55,7 +55,7 @@ using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
+using Qubit.Patches.Building;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -310,7 +310,7 @@ namespace Qubit.Libraries.Entities
                     BuilderPiece gunTarget = Ray.collider.GetComponentInParent<BuilderPiece>();
                     if (gunTarget)
                     {
-                        PlacePiece(PlacePatch._piece, gunTarget, PlacePatch._bumpOffsetX, PlacePatch._bumpOffsetZ, PlacePatch._twist, PlacePatch._parentPiece, PlacePatch._attachIndex, PlacePatch._parentAttachIndex);
+                        PlacePiece(PiecePlacement._piece, gunTarget, PiecePlacement._bumpOffsetX, PiecePlacement._bumpOffsetZ, PiecePlacement._twist, PiecePlacement._parentPiece, PiecePlacement._attachIndex, PiecePlacement._parentAttachIndex);
                         Security.RPCProtection();
                     }
                 }
@@ -596,8 +596,8 @@ namespace Qubit.Libraries.Entities
         }
         public static IEnumerator CreateGetPiece(int pieceType, Action<BuilderPiece> onComplete)
         {
-            CreatePatch.enabled = true;
-            CreatePatch.pieceTypeSearch = pieceType;
+            PieceCreation.enabled = true;
+            PieceCreation.pieceTypeSearch = pieceType;
 
             yield return null;
 
@@ -610,8 +610,8 @@ namespace Qubit.Libraries.Entities
             yield return null;
 
             pieceId = -1;
-            CreatePatch.enabled = false;
-            CreatePatch.pieceTypeSearch = 0;
+            PieceCreation.enabled = false;
+            PieceCreation.pieceTypeSearch = 0;
 
             onComplete?.Invoke(ManagerRegistry.BuilderTable.GetPiece(pieceId)); // so bad
         }
@@ -954,13 +954,13 @@ namespace Qubit.Libraries.Entities
         public static void UnlimitedBuilding()
         {
             ManagerRegistry.BuilderPieceInteractor.maxHoldablePieceStackCount = int.MaxValue;
-            UnlimitPatches.enabled = true;
+            UnlimitedPieces.enabled = true;
         }
 
         public static void DisableUnlimitedBuilding()
         {
             ManagerRegistry.BuilderPieceInteractor.maxHoldablePieceStackCount = 50;
-            UnlimitPatches.enabled = false;
+            UnlimitedPieces.enabled = false;
         }
 
         public static void BlockCrashGun()

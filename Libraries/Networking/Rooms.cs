@@ -79,6 +79,7 @@ namespace Qubit.Libraries.Networking
                 Visuals.CleanVisualsOnLeave(rig);
         }
 
+        [RunOnLaunch(4)]
         public static void Initialize()
         {
             ManagerRegistry.NetworkSystem.OnJoinedRoomEvent += OnJoinRoom;
