@@ -97,7 +97,7 @@ namespace Qubit.Modules.Categories
         private static DateTime? endTime;
         private static float updateTime;
 
-        private static bool quickSongExists;
+        private static bool kuikkusonguExists;
 
         public static string Title { get; private set; } = "Unknown";
         public static string Artist { get; private set; } = "Unknown";
@@ -392,25 +392,25 @@ exit";
         }
         public static void EnsureIntegrationProgram()
         {
-            quickSongExists = File.Exists($"{PluginInfo.BaseDirectory}/QuickSong.exe");
-            if (!quickSongExists)
+            kuikkusonguExists = File.Exists($"{PluginInfo.BaseDirectory}/Kuikkusongu.exe");
+            if (!kuikkusonguExists)
             {
-                Prompt("This mod requires the \"QuickSong\" library. Would you like to automatically download it? (16.3mb)", () =>
+                Prompt("This mod requires the \"Kuikkusongu\" library. Would you like to automatically download it? (16.3mb)", () =>
                 {
-                    using UnityWebRequest request = UnityWebRequest.Get("https://github.com/Qubit/QuickSong/releases/latest/download/QuickSong.exe");
+                    using UnityWebRequest request = UnityWebRequest.Get(PluginInfo.GitMaster.Substring(0, PluginInfo.GitMaster.LastIndexOf('/')) + "/Kuikkusongu/releases/latest/download/Kuikkusongu.exe");
                     UnityWebRequestAsyncOperation operation = request.SendWebRequest();
 
                     while (!operation.isDone) { }
 
                     if (request.result == UnityWebRequest.Result.Success)
                     {
-                        File.WriteAllBytes($"{PluginInfo.BaseDirectory}/QuickSong.exe", request.downloadHandler.data);
-                        Notifications.SendFormat("green", "SUCCESS", $"Successfully downloaded QuickSong to {PluginInfo.BaseDirectory}/QuickSong.exe.");
+                        File.WriteAllBytes($"{PluginInfo.BaseDirectory}/Kuikkusongu.exe", request.downloadHandler.data);
+                        Notifications.SendFormat("green", "SUCCESS", $"Successfully downloaded Kuikkusongu to {PluginInfo.BaseDirectory}/Kuikkusongu.exe.");
                     }
                     else
-                        Notifications.SendFormat("red", "ERROR", $"Could not download QuickSong: {(request.error.IsNullOrEmpty() ? "Unknown error" : request.error)}");
+                        Notifications.SendFormat("red", "ERROR", $"Could not download Kuikkusongu: {(request.error.IsNullOrEmpty() ? "Unknown error" : request.error)}");
 
-                    quickSongExists = File.Exists($"{PluginInfo.BaseDirectory}/QuickSong.exe");
+                    kuikkusonguExists = File.Exists($"{PluginInfo.BaseDirectory}/Kuikkusongu.exe");
                 }, () => Toggle("Media Integration"));
             }
         }
@@ -419,8 +419,8 @@ exit";
         {
             ProcessStartInfo psi = new ProcessStartInfo
             {
-                FileName = $"{Files.GetGamePath()}/{PluginInfo.BaseDirectory}/QuickSong.exe",
-                Arguments = "-all",
+                FileName = $"{Files.GetGamePath()}/{PluginInfo.BaseDirectory}/Kuikkusongu.exe",
+                Arguments = "-subete",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
                 CreateNoWindow = true
@@ -443,15 +443,15 @@ exit";
             try
             {
                 Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(output);
-                Title = (string)data["Title"];
-                Artist = (string)data["Artist"];
+                Title = (string)data["taitoru"];
+                Artist = (string)data["aatisuto"];
 
-                StartTime = Convert.ToSingle(data["StartTime"]);
-                EndTime = Convert.ToSingle(data["EndTime"]);
-                ElapsedTime = Convert.ToSingle(data["ElapsedTime"]);
+                StartTime = Convert.ToSingle(data["kaishiJikan"]);
+                EndTime = Convert.ToSingle(data["shuuryouJikan"]);
+                ElapsedTime = Convert.ToSingle(data["keikaJikan"]);
 
-                Paused = (string)data["Status"] != "Playing";
-                Icon.LoadImage(Convert.FromBase64String((string)data["ThumbnailBase64"]));
+                Paused = (string)data["joutai"] != "Playing";
+                Icon.LoadImage(Convert.FromBase64String((string)data["samuneiruBase64"]));
 
                 ValidData = true;
             }
@@ -492,7 +492,7 @@ exit";
 
         public static void MediaIntegration()
         {
-            if (quickSongExists)
+            if (kuikkusonguExists)
             {
                 if (mediaIcon == null)
                 {
@@ -582,7 +582,7 @@ exit";
 
         public static void DisableMediaIntegration()
         {
-            quickSongExists = false;
+            kuikkusonguExists = false;
 
             if (mediaIcon != null)
                 Object.Destroy(mediaIcon);
