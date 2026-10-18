@@ -2621,6 +2621,21 @@ namespace Qubit.Modules.Categories
         {
             Notifications.Clear();
             Toggle(Manager.modules[Manager.CurrentCategoryName][0].buttonText, true);
+            if (isSearching)
+            {
+                isSearching = false;
+                DestroyKeyboard();
+                pageNumber = 0;
+            }
+
+            if (Manager.CurrentCategoryName != "Main")
+            {
+                Toggle(Manager.modules[Manager.CurrentCategoryName][0].buttonText, true);
+            }
+            else
+            {
+                pageNumber = 0;
+            }
             Sounds.Play("Return");
 
             if (prompts.Count > 0)
