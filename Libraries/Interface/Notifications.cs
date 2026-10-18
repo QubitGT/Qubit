@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using Qubit.Extensions;
 using Qubit.Libraries.Audio;
@@ -161,7 +162,7 @@ namespace Qubit.Libraries.Interface
 
                 canvas.transform.position = mainCamera.transform.TransformPoint(0f, 0f, 1.6f);
                 canvas.transform.rotation = mainCamera.transform.rotation * Quaternion.Euler(0, 90, 0);
-                canvas.transform.localScale = Vector3.one * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+                canvas.transform.localScale = Vector3.one * (scaleWithPlayer ? References.Player.scale : 1f);
 
                 UpdateNotificationExpiry();
 
@@ -492,19 +493,19 @@ namespace Qubit.Libraries.Interface
 
         public static void MasterClientSwitched()
         {
-            if (NetworkSystem.Instance.IsMasterClient)
+            if (References.IsMasterClient)
                 SendNotification("<color=grey>[</color><color=purple>MASTER</color><color=grey>]</color> You are now master client.");
         }
 
         public static void PlayerJoined(NetPlayer player)
         {
-            if (player != NetworkSystem.Instance.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
+            if (player != References.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
                 SendNotification($"<color=grey>[</color><color=green>JOIN</color><color=grey>]</color> Name: {Extensions.Players.CleanPlayerName(player.NickName)}");
         }
 
         public static void PlayerLeft(NetPlayer player)
         {
-            if (player != NetworkSystem.Instance.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
+            if (player != References.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
                 SendNotification($"<color=grey>[</color><color=red>LEAVE</color><color=grey>]</color> Name: {Extensions.Players.CleanPlayerName(player.NickName)}");
         }
     }

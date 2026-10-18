@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using GorillaNetworking;
 using Photon.Pun;
@@ -36,31 +37,31 @@ namespace Qubit.Libraries.Networking
 
         public static void TeleportPlayer(Vector3 pos, bool keepVelocity = false) // Prevents your hands from getting stuck on trees
         {
-            GTPlayer.Instance.TeleportTo(World2Player(pos), GTPlayer.Instance.transform.rotation, keepVelocity);
-            VRRig.LocalRig.transform.position = pos;
+            References.Player.TeleportTo(World2Player(pos), References.Player.transform.rotation, keepVelocity);
+            References.LocalRig.transform.position = pos;
 
             closePosition = Vector3.zero;
             Movement.lastPosition = Vector3.zero;
             if (VRKeyboard == null) return;
-            VRKeyboard.transform.position = GorillaTagger.Instance.bodyCollider.transform.position;
-            VRKeyboard.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation;
+            VRKeyboard.transform.position = References.BodyCollider.transform.position;
+            VRKeyboard.transform.rotation = References.BodyCollider.transform.rotation;
         }
 
         public static void TeleportPlayer(Transform transform, bool matchDestinationRotation = true, bool maintainVelocity = true)
         {
-            GTPlayer.Instance.TeleportTo(transform, matchDestinationRotation, maintainVelocity);
+            References.Player.TeleportTo(transform, matchDestinationRotation, maintainVelocity);
             closePosition = Vector3.zero;
             Movement.lastPosition = Vector3.zero;
             if (VRKeyboard == null) return;
-            VRKeyboard.transform.position = GorillaTagger.Instance.bodyCollider.transform.position;
-            VRKeyboard.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation;
+            VRKeyboard.transform.position = References.BodyCollider.transform.position;
+            VRKeyboard.transform.rotation = References.BodyCollider.transform.rotation;
         }
 
         public static void SetRotation(Quaternion rotation) =>
             SetRotation(rotation.y);
 
         public static void SetRotation(float rotation) =>
-           GTPlayer.Instance.Turn(rotation - GTPlayer.Instance.mainCamera.transform.eulerAngles.y);
+           References.Player.Turn(rotation - References.Player.mainCamera.transform.eulerAngles.y);
 
         public static void ChangeName(string PlayerName, bool noColor = false)
         {
@@ -68,18 +69,18 @@ namespace Qubit.Libraries.Networking
             {
                 try
                 {
-                    if (!GorillaComputer.instance.friendJoinCollider.playerIDsCurrentlyTouching.Contains(PhotonNetwork
+                    if (!References.Computer.friendJoinCollider.playerIDsCurrentlyTouching.Contains(PhotonNetwork
                             .LocalPlayer.UserId) &&
                         !CosmeticWardrobeProximityDetector.IsUserNearWardrobe(PhotonNetwork.LocalPlayer.ActorNumber)) return;
-                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_InitializeNoobMaterial", RpcTarget.All, VRRig.LocalRig.playerColor.r, VRRig.LocalRig.playerColor.g, VRRig.LocalRig.playerColor.b);
+                    References.MyRigView.SendRPC("RPC_InitializeNoobMaterial", RpcTarget.All, References.LocalRig.playerColor.r, References.LocalRig.playerColor.g, References.LocalRig.playerColor.b);
                 }
                 catch { }
             }
-            GorillaComputer.instance.currentName = PlayerName;
+            References.Computer.currentName = PlayerName;
 
-            GorillaComputer.instance.SetLocalNameTagText(GorillaComputer.instance.currentName);
-            GorillaComputer.instance.savedName = GorillaComputer.instance.currentName;
-            PlayerPrefs.SetString("playerName", GorillaComputer.instance.currentName);
+            References.Computer.SetLocalNameTagText(References.Computer.currentName);
+            References.Computer.savedName = References.Computer.currentName;
+            PlayerPrefs.SetString("playerName", References.Computer.currentName);
             PlayerPrefs.Save();
 
             PhotonNetwork.LocalPlayer.NickName = PlayerName;
@@ -94,7 +95,7 @@ namespace Qubit.Libraries.Networking
             PlayerPrefs.SetFloat("greenValue", Mathf.Clamp(color.g, 0f, 1f));
             PlayerPrefs.SetFloat("blueValue", Mathf.Clamp(color.b, 0f, 1f));
 
-            GorillaTagger.Instance.UpdateColor(color.r, color.g, color.b);
+            References.Tagger.UpdateColor(color.r, color.g, color.b);
             PlayerPrefs.Save();
 
             try
@@ -102,13 +103,13 @@ namespace Qubit.Libraries.Networking
                 switch (target)
                 {
                     case null:
-                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_InitializeNoobMaterial", RpcTarget.All, color.r, color.g, color.b);
+                        References.MyRigView.SendRPC("RPC_InitializeNoobMaterial", RpcTarget.All, color.r, color.g, color.b);
                         break;
                     case NetPlayer player:
-                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_InitializeNoobMaterial", player, color.r, color.g, color.b);
+                        References.MyRigView.SendRPC("RPC_InitializeNoobMaterial", player, color.r, color.g, color.b);
                         break;
                     case RpcTarget targets:
-                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_InitializeNoobMaterial", targets, color.r, color.g, color.b);
+                        References.MyRigView.SendRPC("RPC_InitializeNoobMaterial", targets, color.r, color.g, color.b);
                         break;
                 }
 

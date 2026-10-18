@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using Photon.Pun;
 using Qubit.Extensions;
 using Qubit.Libraries.Interface;
@@ -41,7 +42,7 @@ namespace Qubit.Libraries.Networking
             lastRoom = PhotonNetwork.CurrentRoom.Name;
 
             Notifications.RoomJoined(lastRoom);
-            OnMasterClientSwitch(NetworkSystem.Instance.MasterClient);
+            OnMasterClientSwitch(References.Network.MasterClient);
             Security.RPCProtection();
         }
 
@@ -80,21 +81,21 @@ namespace Qubit.Libraries.Networking
 
         public static void Initialize()
         {
-            NetworkSystem.Instance.OnJoinedRoomEvent += OnJoinRoom;
-            NetworkSystem.Instance.OnReturnedToSinglePlayer += OnLeaveRoom;
-            NetworkSystem.Instance.OnMasterClientSwitchedEvent += OnMasterClientSwitch;
+            References.Network.OnJoinedRoomEvent += OnJoinRoom;
+            References.Network.OnReturnedToSinglePlayer += OnLeaveRoom;
+            References.Network.OnMasterClientSwitchedEvent += OnMasterClientSwitch;
 
-            NetworkSystem.Instance.OnPlayerJoined += OnPlayerJoin;
-            NetworkSystem.Instance.OnPlayerLeft += OnPlayerLeave;
+            References.Network.OnPlayerJoined += OnPlayerJoin;
+            References.Network.OnPlayerLeft += OnPlayerLeave;
         }
 
         public static void Shutdown()
         {
-            NetworkSystem.Instance.OnJoinedRoomEvent -= OnJoinRoom;
-            NetworkSystem.Instance.OnReturnedToSinglePlayer -= OnLeaveRoom;
+            References.Network.OnJoinedRoomEvent -= OnJoinRoom;
+            References.Network.OnReturnedToSinglePlayer -= OnLeaveRoom;
 
-            NetworkSystem.Instance.OnPlayerJoined -= OnPlayerJoin;
-            NetworkSystem.Instance.OnPlayerLeft -= OnPlayerLeave;
+            References.Network.OnPlayerJoined -= OnPlayerJoin;
+            References.Network.OnPlayerLeft -= OnPlayerLeave;
         }
     }
 }

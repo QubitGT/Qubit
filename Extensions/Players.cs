@@ -50,7 +50,7 @@ namespace Qubit.Extensions
             Players.GetVRRigFromPlayer(self);
 
         public static bool InRoom(this NetPlayer self) =>
-            NetworkSystem.Instance.AllNetPlayers.Contains(self);
+            References.Network.AllNetPlayers.Contains(self);
 
         public static Hashtable GetCustomProperties(this NetPlayer self) =>
             self.GetPlayer().CustomProperties;
@@ -67,14 +67,14 @@ namespace Qubit.Extensions
 
         #region GorillaTagger
         public static bool IsGrounded(this GorillaTagger tagger, float maxDistance = 0.15f) =>
-                Physics.Raycast(tagger.bodyCollider.transform.position - new Vector3(0f, 0.2f, 0f), Vector3.down, maxDistance, GTPlayer.Instance.locomotionEnabledLayers);
+                Physics.Raycast(tagger.bodyCollider.transform.position - new Vector3(0f, 0.2f, 0f), Vector3.down, maxDistance, References.Player.locomotionEnabledLayers);
         #endregion
 
         public static VRRig GetVRRigFromPlayer(NetPlayer p) =>
             GorillaGameManager.StaticFindRigForPlayer(p);
 
         public static NetPlayer GetPlayerFromVRRig(VRRig p) =>
-            p.Creator ?? NetworkSystem.Instance.GetPlayer(NetworkSystem.Instance.GetOwningPlayerID(p.rigSerializer.gameObject));
+            p.Creator ?? References.Network.GetPlayer(References.Network.GetOwningPlayerID(p.rigSerializer.gameObject));
 
         public static NetPlayer GetPlayerFromID(string id) =>
             PhotonNetwork.PlayerList.FirstOrDefault(player => player.UserId == id);
@@ -108,7 +108,7 @@ namespace Qubit.Extensions
             GetNetworkViewFromVRRig(p).GetView;
 
         public static VRRig GetClosestVRRig() =>
-            global::VRRig.LocalRig.GetClosest();
+            References.LocalRig.GetClosest();
 
         public static readonly Dictionary<string, float> waitingForCreationDate = new Dictionary<string, float>();
         public static readonly Dictionary<string, string> creationDateCache = new Dictionary<string, string>();
@@ -183,14 +183,14 @@ namespace Qubit.Extensions
         public static bool IsBeingTouched(this VRRig rig, VRRig otherRig = null, float distance = 0.35f)
         {
             if (rig == null) return false;
-            VRRig targetRig = otherRig ?? global::VRRig.LocalRig;
+            VRRig targetRig = otherRig ?? References.LocalRig;
             return rig.Distance(targetRig.leftHand.rigTarget.position) <= distance || rig.Distance(targetRig.rightHand.rigTarget.position) <= distance;
         }
 
         public static bool IsNear(this VRRig rig, VRRig otherRig = null, float distance = 3f)
         {
             if (rig == null) return false;
-            VRRig targetRig = otherRig ?? global::VRRig.LocalRig;
+            VRRig targetRig = otherRig ?? References.LocalRig;
             return rig.Distance(targetRig.transform.position) <= distance;
         }
 
@@ -198,7 +198,7 @@ namespace Qubit.Extensions
         {
             return rig == null
                 ? false
-                : rig.Distance(global::VRRig.LocalRig.leftHand.rigTarget.position) <= distance || rig.Distance(global::VRRig.LocalRig.rightHand.rigTarget.position) <= distance;
+                : rig.Distance(References.LocalRig.leftHand.rigTarget.position) <= distance || rig.Distance(References.LocalRig.rightHand.rigTarget.position) <= distance;
         }
 
         public static bool IsTagged(this VRRig rig)
@@ -228,7 +228,7 @@ namespace Qubit.Extensions
         public static PlatformType GetPlatform(this VRRig rig)
         {
             if (rig == null) return PlatformType.Unknown;
-            string platform = NetworkSystem.Instance.GetPlayerPlatform(rig.GetPlayer().ActorNumber);
+            string platform = References.Network.GetPlayerPlatform(rig.GetPlayer().ActorNumber);
 
             int suspiciouslySteam = 0;
             int suspiciouslyPC = 0;
@@ -295,7 +295,7 @@ namespace Qubit.Extensions
             rig.Distance(otherRig.transform.position);
 
         public static float Distance(this VRRig rig) =>
-            rig.Distance(GorillaTagger.Instance.bodyCollider.transform.position);
+            rig.Distance(References.BodyCollider.transform.position);
 
         public static VRRig GetClosest(this VRRig rig) =>
             ActiveRigs.Where(targetRig => targetRig != null && targetRig != rig)

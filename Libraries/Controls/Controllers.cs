@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using System;
 using System.Collections.Generic;
@@ -50,12 +51,12 @@ namespace Qubit.Libraries.Controls
 
         public static void Poll()
         {
-            rightPrimary = ControllerInputPoller.instance.rightControllerPrimaryButton || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightPrimaryButton]);
-            rightSecondary = ControllerInputPoller.instance.rightControllerSecondaryButton || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightSecondaryButton]);
-            leftPrimary = ControllerInputPoller.instance.leftControllerPrimaryButton || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftPrimaryButton]);
-            leftSecondary = ControllerInputPoller.instance.leftControllerSecondaryButton || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftSecondaryButton]);
-            leftGrab = ControllerInputPoller.instance.leftGrab || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftGrip]);
-            rightGrab = ControllerInputPoller.instance.rightGrab || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightGrip]);
+            rightPrimary = References.InputPoller.rightControllerPrimaryButton || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightPrimaryButton]);
+            rightSecondary = References.InputPoller.rightControllerSecondaryButton || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightSecondaryButton]);
+            leftPrimary = References.InputPoller.leftControllerPrimaryButton || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftPrimaryButton]);
+            leftSecondary = References.InputPoller.leftControllerSecondaryButton || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftSecondaryButton]);
+            leftGrab = References.InputPoller.leftGrab || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftGrip]);
+            rightGrab = References.InputPoller.rightGrab || UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightGrip]);
             leftTrigger = ControllerInputPoller.TriggerFloat(XRNode.LeftHand);
             rightTrigger = ControllerInputPoller.TriggerFloat(XRNode.RightHand);
             leftTriggerPressed = leftTrigger >= 0.5f;
@@ -77,11 +78,11 @@ namespace Qubit.Libraries.Controls
             }
             else
             {
-                ControllerInputPoller.instance.leftControllerDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out leftJoystick);
-                ControllerInputPoller.instance.rightControllerDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out rightJoystick);
+                References.InputPoller.leftControllerDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out leftJoystick);
+                References.InputPoller.rightControllerDevice.TryGetFeatureValue(CommonUsages.primary2DAxis, out rightJoystick);
 
-                ControllerInputPoller.instance.leftControllerDevice.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out leftJoystickClick);
-                ControllerInputPoller.instance.rightControllerDevice.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out rightJoystickClick);
+                References.InputPoller.leftControllerDevice.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out leftJoystickClick);
+                References.InputPoller.rightControllerDevice.TryGetFeatureValue(CommonUsages.primary2DAxisClick, out rightJoystickClick);
             }
 
             bool arrowKeysPressed = UnityInput.GetKey(Key.UpArrow) || UnityInput.GetKey(Key.DownArrow) || UnityInput.GetKey(Key.LeftArrow) || UnityInput.GetKey(Key.RightArrow);
@@ -155,8 +156,8 @@ namespace Qubit.Libraries.Controls
                     return ControllerType.Unknown;
 
                 var controller = left
-                    ? ControllerInputPoller.instance.leftControllerDevice
-                    : ControllerInputPoller.instance.rightControllerDevice;
+                    ? References.InputPoller.leftControllerDevice
+                    : References.InputPoller.rightControllerDevice;
 
                 if (controllerInfo.TryGetValue(left, out var info) && !(Time.time > info.dataCacheTime + 1f))
                     return info.type;
@@ -222,11 +223,11 @@ namespace Qubit.Libraries.Controls
         /// </returns>
         public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right) GetTrueHandPosition(bool left)
         {
-            Transform controllerTransform = left ? GorillaTagger.Instance.leftHandTransform : GorillaTagger.Instance.rightHandTransform;
-            GTPlayer.HandState handState = left ? GTPlayer.Instance.LeftHand : GTPlayer.Instance.RightHand;
+            Transform controllerTransform = left ? References.LeftHand : References.RightHand;
+            GTPlayer.HandState handState = left ? References.Player.LeftHand : References.Player.RightHand;
 
             Quaternion rot = controllerTransform.rotation * handState.handRotOffset;
-            return (controllerTransform.position + controllerTransform.rotation * (handState.handOffset * GTPlayer.Instance.scale), rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
+            return (controllerTransform.position + controllerTransform.rotation * (handState.handOffset * References.Player.scale), rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
         }
 
         /// <summary>

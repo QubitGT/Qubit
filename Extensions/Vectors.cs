@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using System;
 using UnityEngine;
 using static Qubit.Extensions.Random;
@@ -64,7 +65,7 @@ namespace Qubit.Extensions
         /// <param name="world">The position in world coordinates to convert.</param>
         /// <returns>A <see cref="Vector3"/> representing the input position relative to the player's local coordinate system.</returns>
         public static Vector3 World2Player(Vector3 world) =>
-            world - GorillaTagger.Instance.bodyCollider.transform.position + GorillaTagger.Instance.transform.position;
+            world - References.BodyCollider.transform.position + References.Tagger.transform.position;
 
         /// <summary>
         /// Sets the world-scale of a GameObject to a specified value,

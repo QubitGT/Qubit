@@ -18,6 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+using Qubit.Core;
 using Photon.Pun;
 using Qubit.Libraries.Core;
 using Qubit.Modules;
@@ -94,7 +95,7 @@ namespace Qubit.Libraries.Audio
                 temp.maxDistance = 15f;
                 temp.spatialize = true;
             }
-            handAudioManager.transform.SetParent(left ? VRRig.LocalRig.leftHandPlayer.gameObject.transform : VRRig.LocalRig.rightHandPlayer.gameObject.transform, false);
+            handAudioManager.transform.SetParent(left ? References.LocalRig.leftHandPlayer.gameObject.transform : References.LocalRig.rightHandPlayer.gameObject.transform, false);
 
             AudioSource ausrc = handAudioManager.GetComponent<AudioSource>();
             ausrc.volume = volume;
@@ -285,7 +286,7 @@ namespace Qubit.Libraries.Audio
                 if (overlapHand) rightHand = leftOverlap;
 
                 if (doButtonsVibrate)
-                    GorillaTagger.Instance.StartVibration(rightHand, GorillaTagger.Instance.tagHapticStrength / 2f, GorillaTagger.Instance.tagHapticDuration / 2f);
+                    References.Tagger.StartVibration(rightHand, References.Tagger.tagHapticStrength / 2f, References.Tagger.tagHapticDuration / 2f);
 
                 object path = ResolveSoundPath(sound);
                 if (path == null)
@@ -297,9 +298,9 @@ namespace Qubit.Libraries.Audio
                 switch (path)
                 {
                     case int rpcId:
-                        VRRig.LocalRig.PlayHandTapLocal(rpcId, rightHand, buttonClickVolume / 10f);
-                        if (NetworkSystem.Instance.InRoom && serversidedButtonSounds)
-                            GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.Others, rpcId, rightHand, buttonClickVolume / 10f);
+                        References.LocalRig.PlayHandTapLocal(rpcId, rightHand, buttonClickVolume / 10f);
+                        if (References.InRoom && serversidedButtonSounds)
+                            References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.Others, rpcId, rightHand, buttonClickVolume / 10f);
                         RPCProtection();
                         break;
 
@@ -309,7 +310,7 @@ namespace Qubit.Libraries.Audio
                             rightHand = archiveRightHand;
                             return;
                         }
-                        AudioSource audioSource = rightHand ? VRRig.LocalRig.leftHandPlayer : VRRig.LocalRig.rightHandPlayer;
+                        AudioSource audioSource = rightHand ? References.LocalRig.leftHandPlayer : References.LocalRig.rightHandPlayer;
                         audioSource.volume = buttonClickVolume / 10f;
                         LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/{s}", outputPath ?? s,
                             action ?? (clip =>

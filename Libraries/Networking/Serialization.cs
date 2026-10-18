@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -46,9 +47,9 @@ namespace Qubit.Libraries.Networking
 
         public static void OnSerialize()
         {
-            ServerSyncPos = VRRig.LocalRig?.transform.position ?? ServerSyncPos;
-            ServerSyncLeftHandPos = VRRig.LocalRig?.leftHand?.rigTarget?.transform.position ?? ServerSyncLeftHandPos;
-            ServerSyncRightHandPos = VRRig.LocalRig?.rightHand?.rigTarget?.transform.position ?? ServerSyncRightHandPos;
+            ServerSyncPos = References.LocalRig?.transform.position ?? ServerSyncPos;
+            ServerSyncLeftHandPos = References.LocalRig?.leftHand?.rigTarget?.transform.position ?? ServerSyncLeftHandPos;
+            ServerSyncRightHandPos = References.LocalRig?.rightHand?.rigTarget?.transform.position ?? ServerSyncRightHandPos;
         }
 
         public static readonly Dictionary<VRRig, int> playerPing = new Dictionary<VRRig, int>();
@@ -65,7 +66,7 @@ namespace Qubit.Libraries.Networking
         /// <param name="delay">A delay in seconds before serialization is sent.</param>
         public static void MassSerialize(bool exclude = false, PhotonView[] viewFilter = null, int timeOffset = 0, float delay = 0f)
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
             viewFilter ??= Array.Empty<PhotonView>();
@@ -106,7 +107,7 @@ namespace Qubit.Libraries.Networking
         /// <param name="delay">Optional delay in seconds before sending the event.</param>
         public static void SendSerialize(PhotonView pv, RaiseEventOptions options = null, int timeOffset = 0, float delay = 0f)
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
             if (pv == null)

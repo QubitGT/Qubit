@@ -39,7 +39,7 @@ namespace Qubit.Utilities
         {
             List<NetPlayer> infected = new List<NetPlayer>();
 
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance == null)
+            if (!References.InRoom || GorillaGameManager.instance == null)
                 return infected;
 
             switch (GorillaGameManager.instance.GameType())
@@ -90,8 +90,8 @@ namespace Qubit.Utilities
                                 .Select(dummy => (NetPlayer)dummy)
                         );
 
-                        if (NetworkSystem.Instance?.LocalPlayer != null && !infected.Contains(NetworkSystem.Instance.LocalPlayer))
-                            infected.Add(NetworkSystem.Instance.LocalPlayer);
+                        if (References.Network?.LocalPlayer != null && !infected.Contains(References.LocalPlayer))
+                            infected.Add(References.LocalPlayer);
                     }
                     break;
             }
@@ -101,7 +101,7 @@ namespace Qubit.Utilities
 
         public static void AddInfected(NetPlayer plr)
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!References.InRoom || GorillaGameManager.instance == null || plr == null)
                 return;
 
             switch (GorillaGameManager.instance.GameType())
@@ -141,7 +141,7 @@ namespace Qubit.Utilities
 
         public static void RemoveInfected(NetPlayer plr)
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!References.InRoom || GorillaGameManager.instance == null || plr == null)
                 return;
 
             switch (GorillaGameManager.instance.GameType())
@@ -191,7 +191,7 @@ namespace Qubit.Utilities
 
         public static void AddRock(NetPlayer plr)
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!References.InRoom || GorillaGameManager.instance == null || plr == null)
                 return;
 
             switch (GorillaGameManager.instance.GameType())
@@ -223,7 +223,7 @@ namespace Qubit.Utilities
 
         public static void RemoveRock(NetPlayer plr)
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!References.InRoom || GorillaGameManager.instance == null || plr == null)
                 return;
 
             switch (GorillaGameManager.instance.GameType())
@@ -262,7 +262,7 @@ namespace Qubit.Utilities
 
         public static void SetPaintbrawlHealth(NetPlayer target, int health)
         {
-            if (NetworkSystem.Instance.IsMasterClient)
+            if (References.IsMasterClient)
             {
                 SetPaintbrawlHealth(target.ActorNumber, health);
                 return;
@@ -291,7 +291,7 @@ namespace Qubit.Utilities
 
         public static void KillPaintbrawlPlayer(NetPlayer target)
         {
-            if (!NetworkSystem.Instance.IsMasterClient)
+            if (!References.IsMasterClient)
                 ReportPaintbrawlHit(target);
             else
                 SetPaintbrawlHealth(target.ActorNumber, 0);
@@ -318,7 +318,7 @@ namespace Qubit.Utilities
 
         public static void SetGuardian(NetPlayer target)
         {
-            if (!NetworkSystem.Instance.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!References.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
             if (IsGuardian(target))
                 return;
 
@@ -339,15 +339,15 @@ namespace Qubit.Utilities
         private static float guardianTapDelay;
         public static void BecomeGuardian()
         {
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
                 if (GorillaGameManager.instance.GameType() != GameModeType.Guardian)
                     return;
 
-                if (NetworkSystem.Instance.IsMasterClient)
+                if (References.IsMasterClient)
                 {
-                    if (!VRRig.LocalRig.enabled)
-                        VRRig.LocalRig.enabled = true;
+                    if (!References.LocalRig.enabled)
+                        References.LocalRig.enabled = true;
                     if (!IsGuardian(PhotonNetwork.LocalPlayer))
                         SetGuardian(PhotonNetwork.LocalPlayer);
                 }
@@ -358,12 +358,12 @@ namespace Qubit.Utilities
                         if (tgi.manager && tgi.manager.photonView && !tgi.isChangingPositions)
                         {
                             GorillaGuardianZoneManager zoneManager = tgi.zoneManager;
-                            if (!IsGuardian(NetworkSystem.Instance.LocalPlayer) && zoneManager.IsZoneValid() && tgi.manager)
+                            if (!IsGuardian(References.LocalPlayer) && zoneManager.IsZoneValid() && tgi.manager)
                             {
-                                VRRig.LocalRig.enabled = false;
-                                VRRig.LocalRig.transform.position = tgi.transform.position;
-                                VRRig.LocalRig.leftHand.rigTarget.transform.position = tgi.transform.position;
-                                VRRig.LocalRig.rightHand.rigTarget.transform.position = tgi.transform.position;
+                                References.LocalRig.enabled = false;
+                                References.LocalRig.transform.position = tgi.transform.position;
+                                References.LocalRig.leftHand.rigTarget.transform.position = tgi.transform.position;
+                                References.LocalRig.rightHand.rigTarget.transform.position = tgi.transform.position;
 
                                 if (Time.time > guardianTapDelay)
                                 {
@@ -374,7 +374,7 @@ namespace Qubit.Utilities
                             }
                         }
                         else
-                            VRRig.LocalRig.enabled = true;
+                            References.LocalRig.enabled = true;
                     }
                 }
             }
@@ -384,19 +384,19 @@ namespace Qubit.Utilities
         #region Prop Hunt
         public static void SetPropHuntHandDistance(float distance)
         {
-            if (NetworkSystem.Instance.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (References.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager.m_ph_hand_follow_distance = distance;
         }
 
         public static void SetPropHuntRoundStart(int millis)
         {
-            if (NetworkSystem.Instance.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (References.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager._ph_timeRoundStartedMillis = millis;
         }
 
         public static void RandomizePropHuntSeed()
         {
-            if (NetworkSystem.Instance.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (References.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager._ph_randomSeed = UnityEngine.Random.Range(1, int.MaxValue);
         }
         #endregion
@@ -404,7 +404,7 @@ namespace Qubit.Utilities
         #region Monke Ball
         public static void SetMonkeBallTeams(Dictionary<int, int> colors) // ActorNumber : Team // 0 = Blue, 1 = Red, -1 = None
         {
-            var filteredPlayers = NetworkSystem.Instance.AllNetPlayers
+            var filteredPlayers = References.Network.AllNetPlayers
                 .Where(p => colors.ContainsKey(p.ActorNumber));
             MonkeBallGame.Instance.photonView.RPC(
                 "RequestSetGameStateRPC",

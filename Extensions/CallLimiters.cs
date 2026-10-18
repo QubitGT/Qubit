@@ -18,6 +18,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+using Qubit.Core;
 using Photon.Pun;
 using Qubit.Libraries.Core;
 using System.Runtime.CompilerServices;
@@ -52,8 +53,8 @@ namespace Qubit.Extensions
             if (next == float.MinValue)
                 return 0f;
 
-            float currentTime = usesNetworkTime && NetworkSystem.Instance.IsOnline
-                ? NetworkSystem.Instance.ServerTimestamp / 1000.0f
+            float currentTime = usesNetworkTime && References.Network.IsOnline
+                ? References.Network.ServerTimestamp / 1000.0f
                 : Time.time;
 
             return Mathf.Max(0f, next - currentTime);
@@ -69,7 +70,7 @@ namespace Qubit.Extensions
 
             CallLimiter shadow = shadows.GetValue(limiter, rl => rl.Clone());
 
-            return usesNetworkTime && NetworkSystem.Instance.IsOnline
+            return usesNetworkTime && References.Network.IsOnline
                 ? shadow.CheckCallServerTime(time ?? (PhotonNetwork.CurrentTime))
                 : shadow.CheckCallTime((float)(time ?? Time.time));
         }

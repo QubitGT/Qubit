@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using System;
 using System.Collections.Generic;
@@ -161,11 +162,11 @@ namespace Qubit.Utilities
             for (int i = 0; i < localPositions.Length; i++)
             {
                 GameObject side = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                float size = 0.025f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+                float size = 0.025f * (scaleWithPlayer ? References.Player.scale : 1f);
                 side.transform.SetParent(platform.transform);
                 side.transform.position = localPositions[i] * (size / 2);
                 side.transform.rotation = localRotations[i];
-                WorldScale(side, new Vector3(size, size, 0.01f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f)));
+                WorldScale(side, new Vector3(size, size, 0.01f * (scaleWithPlayer ? References.Player.scale : 1f)));
                 side.GetComponent<Renderer>().enabled = false;
             }
         }
@@ -182,7 +183,7 @@ namespace Qubit.Utilities
                 1 << LayerMask.NameToLayer("GorillaCosmetics") |
                 1 << LayerMask.NameToLayer("GorillaParticle"));
 
-            return noInvisLayerMask ?? GTPlayer.Instance.locomotionEnabledLayers;
+            return noInvisLayerMask ?? References.Player.locomotionEnabledLayers;
         }
     }
 }

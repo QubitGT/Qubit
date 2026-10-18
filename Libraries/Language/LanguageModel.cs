@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Core;
@@ -164,7 +165,7 @@ namespace Qubit.Libraries.Language
 
             if (narrate)
             {
-                if (globalNarrate && NetworkSystem.Instance.InRoom)
+                if (globalNarrate && References.InRoom)
                     Transcription.SpeakText(formatResponse);
                 else
                     Transcription.NarrateText(formatResponse);

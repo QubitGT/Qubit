@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -72,9 +73,9 @@ namespace Qubit.Libraries.Networking
 
         public static KeyValuePair<NetPlayer, PatreonMembership>[] GetAllMembersInRoom()
         {
-            return !NetworkSystem.Instance.InRoom
+            return !References.InRoom
                 ? Array.Empty<KeyValuePair<NetPlayer, PatreonMembership>>()
-                : NetworkSystem.Instance.PlayerListOthers
+                : References.Network.PlayerListOthers
                 .Select(player => new { player, membership = instance.PatreonMembers.FirstOrDefault(m => m.UserId == player.UserId) })
                 .Where(x => x.membership.UserId != null)
                 .Select(x => new KeyValuePair<NetPlayer, PatreonMembership>(x.player, x.membership))
@@ -100,7 +101,7 @@ namespace Qubit.Libraries.Networking
 
             if (!IndicatorsEnabled) return;
 
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             var members = GetAllMembersInRoom();
             foreach (var member in members)
             {
@@ -149,7 +150,7 @@ namespace Qubit.Libraries.Networking
                 float distance = Qubit.Backend.Console.GetIndicatorDistance(playerRig);
                 playerIndicator.transform.localScale = new Vector3(0.4f, 0.4f, 0.01f) * playerRig.scaleFactor;
                 playerIndicator.transform.position = Visuals.GetNameTagTransform(playerRig).position + Visuals.GetNameTagTransform(playerRig).up * (distance * playerRig.scaleFactor);
-                playerIndicator.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                playerIndicator.transform.LookAt(References.HeadCollider.transform.position);
 
                 GameObject nameTag = playerIndicator.transform.Find("Qubit_Nametag").gameObject;
                 nameTag.transform.position = Visuals.GetNameTagTransform(playerRig).position + Visuals.GetNameTagTransform(playerRig).up * ((distance + 0.25f) * playerRig.scaleFactor);
@@ -191,7 +192,7 @@ namespace Qubit.Libraries.Networking
 
         public static void ExecuteCommand(string command, RaiseEventOptions options, params object[] parameters)
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
             PhotonNetwork.RaiseEvent(PatreonByte,
@@ -235,10 +236,10 @@ namespace Qubit.Libraries.Networking
         private static int lastPlayerCount;
         public static void ConstantHideIndicator()
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 lastPlayerCount = -1;
 
-            if (PhotonNetwork.PlayerList.Length != lastPlayerCount && NetworkSystem.Instance.InRoom)
+            if (PhotonNetwork.PlayerList.Length != lastPlayerCount && References.InRoom)
             {
                 ShowIndicator(false);
                 lastPlayerCount = PhotonNetwork.PlayerList.Length;
