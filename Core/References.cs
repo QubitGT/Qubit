@@ -85,20 +85,5 @@ namespace Qubit.Core
         {
             get => GorillaTagger.Instance.myVRRig;
         }
-
-        public static NetPlayer LocalPlayer
-        {
-            get => NetworkSystem.Instance.LocalPlayer;
-        }
-
-        public static bool InRoom
-        {
-            get => NetworkSystem.Instance.InRoom;
-        }
-
-        public static bool IsMasterClient
-        {
-            get => NetworkSystem.Instance.IsMasterClient;
-        }
     }
 }

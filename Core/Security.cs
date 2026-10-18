@@ -35,7 +35,7 @@ namespace Qubit.Core
         /// </summary>
         public static void RPCProtection()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             try
