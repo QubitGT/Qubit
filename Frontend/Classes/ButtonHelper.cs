@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Classes/Menu/CycleSetting.cs
+ * Qubit Menu  Frontend/Classes/ButtonHelper.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,10 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Backend;
+using Qubit.Modules;
 using System;
 using UnityEngine;
 
-namespace Qubit.Classes.Menu
+namespace Qubit.Frontend.Classes
 {
     public static class ButtonHelper // Hell
     {
@@ -34,13 +36,13 @@ namespace Qubit.Classes.Menu
             return v;
         }
 
-        public static ButtonInfo Create(
+        public static Module Create(
             string buttonText, Func<string[]> getNames, string defaultName, Action<int> apply,
             string toolTip = null, bool legal = false, string overlapText = null, Action<bool> onCycle = null)
         {
             string label = overlapText ?? buttonText;
 
-            var button = new ButtonInfo
+            var button = new Module
             {
                 buttonText = buttonText,
                 isTogglable = false,
@@ -63,10 +65,7 @@ namespace Qubit.Classes.Menu
                     int idx = Array.IndexOf(names, s);
                     return idx >= 0 ? idx : 0;
                 }
-                if (button.value is int i && i >= 0 && i < names.Length)
-                    return i;
-
-                return 0;
+                return button.value is int i && i >= 0 && i < names.Length ? i : 0;
             }
 
             void RefreshLabel()
@@ -117,7 +116,7 @@ namespace Qubit.Classes.Menu
             return button;
         }
 
-        public static ButtonInfo Create(
+        public static Module Create(
             string buttonText, Func<string[]> getNames, int defaultIndex, Action<int> apply,
             string toolTip = null, bool legal = false, string overlapText = null, Action<bool> onCycle = null)
         {
@@ -129,7 +128,7 @@ namespace Qubit.Classes.Menu
             return Create(buttonText, getNames, defaultName, apply, toolTip, legal, overlapText, onCycle);
         }
 
-        public static ButtonInfo CreateNumeric(
+        public static Module CreateNumeric(
             string buttonText, int min, int max, int defaultValue, Action<int> apply,
             Func<int, string> display = null, string toolTip = null, bool legal = false,
             string overlapText = null, Action<bool> onCycle = null, Func<int> getStep = null, bool persist = true)
@@ -137,7 +136,7 @@ namespace Qubit.Classes.Menu
             string label = overlapText ?? buttonText;
             getStep ??= () => 1;
 
-            var button = new ButtonInfo
+            var button = new Module
             {
                 buttonText = buttonText,
                 isTogglable = false,

@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Classes/Menu/UIDragWindow.cs
+ * Qubit Menu  Frontend/Colors/UIColors.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,22 +20,36 @@
  */
 
 using UnityEngine;
-using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
-public class UIDragWindow : MonoBehaviour, IDragHandler, IPointerDownHandler
+namespace Qubit.Frontend.Colors
 {
-    private RectTransform rectTransform;
-    private Canvas canvas;
-
-    void Awake()
+    public class UIColors : MonoBehaviour
     {
-        rectTransform = transform as RectTransform;
-        canvas = GetComponentInParent<Canvas>();
+        public void Start()
+        {
+            if (colors == null)
+            {
+                Destroy(this);
+                return;
+            }
+
+            targetGraphic = gameObject.GetComponent<MaskableGraphic>();
+
+            if (colors.IsFlat())
+            {
+                Update();
+                Destroy(this);
+                return;
+            }
+
+            Update();
+        }
+
+        public void Update() =>
+            targetGraphic.color = colors.GetCurrentColor();
+
+        public MaskableGraphic targetGraphic;
+        public ExtGradient colors;
     }
-
-    public void OnPointerDown(PointerEventData eventData) =>
-        rectTransform.SetAsLastSibling();
-
-    public void OnDrag(PointerEventData eventData) =>
-        rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
 }

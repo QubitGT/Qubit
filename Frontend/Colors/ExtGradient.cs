@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Classes/Menu/ExtGradient.cs
+ * Qubit Menu  Frontend/Colors/ExtGradient.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,13 +20,12 @@
  */
 
 using Qubit.Extensions;
-using Qubit.Menu;
 using System;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Utilities.RandomUtilities;
+using static Qubit.Extensions.Random;
 
-namespace Qubit.Classes.Menu
+namespace Qubit.Frontend.Colors
 {
     public class ExtGradient
     {
@@ -129,7 +128,7 @@ namespace Qubit.Classes.Menu
         }
 
         public Color GetCurrentColor(float offset = 0f) =>
-            GetColorTime((offset + Time.time / (Main.slowFadeColors ? 10f : 2f)) % 1f);
+            GetColorTime((offset + Time.time / (Frontend.Settings.slowFadeColors ? 10f : 2f)) % 1f);
 
         public bool IsFlat()
         {

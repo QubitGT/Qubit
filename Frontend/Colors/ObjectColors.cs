@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Classes/Menu/ColorChanger.cs
+ * Qubit Menu  Frontend/Colors/ObjectColors.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,12 +20,12 @@
  */
 
 using GorillaExtensions;
-using Qubit.Menu;
+using Qubit.Frontend.Classes;
 using UnityEngine;
 
-namespace Qubit.Classes.Menu
+namespace Qubit.Frontend.Colors
 {
-    public class ColorChanger : MonoBehaviour
+    public class ObjectColors : MonoBehaviour
     {
         public void Start()
         {
@@ -54,7 +54,7 @@ namespace Qubit.Classes.Menu
             if (colors.transparent)
                 return;
 
-            if (!Main.dynamicGradients)
+            if (!Frontend.Settings.dynamicGradients)
                 targetRenderer.sharedMaterial.color = colors.GetCurrentColor();
             else
             {
@@ -66,16 +66,16 @@ namespace Qubit.Classes.Menu
                     {
                         targetRenderer.material = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
                         {
-                            mainTexture = Main.GetGradientTexture(colors.GetColor(0), colors.GetColor(1))
+                            mainTexture = Extensions.Colors.GetGradientTexture(colors.GetColor(0), colors.GetColor(1))
                         };
 
-                        if (Main.scrollingGradients)
+                        if (Frontend.Settings.scrollingGradients)
                             gameObject.GetOrAddComponent<ScrollMaterial>();
                     }
                 }
             }
 
-            if (!Main.transparentMenu) return;
+            if (!Frontend.Settings.transparentMenu) return;
             Color color = targetRenderer.sharedMaterial.color;
             color.a = 0.5f;
             targetRenderer.material.color = color;

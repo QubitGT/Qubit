@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Classes/Mods/ClampPosition.cs
+ * Qubit Menu  Frontend/Classes/UIDragWindow.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,23 +20,25 @@
  */
 
 using UnityEngine;
+using UnityEngine.EventSystems;
 
-namespace Qubit.Classes.Mods
+namespace Qubit.Frontend.Classes
 {
-    public class ClampPosition : MonoBehaviour
+    public class UIDragWindow : MonoBehaviour, IDragHandler, IPointerDownHandler
     {
-        public void Start() =>
-            Update();
+        private RectTransform rectTransform;
+        private Canvas canvas;
 
-        public void Update()
+        void Awake()
         {
-            if (targetTransform == null || targetTransform.gameObject == null)
-                Destroy(this);
-
-            transform.position = targetTransform.position;
-            transform.rotation = targetTransform.rotation;
+            rectTransform = transform as RectTransform;
+            canvas = GetComponentInParent<Canvas>();
         }
 
-        public Transform targetTransform;
+        public void OnPointerDown(PointerEventData eventData) =>
+            rectTransform.SetAsLastSibling();
+
+        public void OnDrag(PointerEventData eventData) =>
+            rectTransform.anchoredPosition += eventData.delta / canvas.scaleFactor;
     }
 }

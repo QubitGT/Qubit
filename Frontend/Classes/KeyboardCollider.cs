@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Classes/Menu/KeyboardCollider.cs
+ * Qubit Menu  Frontend/Classes/KeyboardCollider.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -21,16 +21,17 @@
 
 using System.Collections.Generic;
 using UnityEngine;
-using static Qubit.Menu.Main;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Settings;
 
-namespace Qubit.Classes.Menu
+namespace Qubit.Frontend.Classes
 {
     public class KeyboardKey : MonoBehaviour
     {
         public static readonly Dictionary<string, KeyboardKey> keyLookupDictionary = new Dictionary<string, KeyboardKey>();
         public string key;
         public static float delay;
-        public QubitKeyboardView qubitKeyboard;
+        public Keyboard.View qubitKeyboard;
 
         public void Start() =>
             keyLookupDictionary[gameObject.name] = this;
@@ -39,7 +40,7 @@ namespace Qubit.Classes.Menu
         {
             if ((collider != lKeyCollider && collider != rKeyCollider) || menu == null || !(Time.time > delay)) return;
             if (qubitKeyboard != null && !qubitKeyboard.CanTouch(collider)) return;
-            if (!Qubit.Menu.Buttons.GetIndex("Disable Keyboard Delay").enabled)
+            if (!Qubit.Modules.Manager.GetIndex("Disable Keyboard Delay").enabled)
                 delay = Time.time + 0.1f;
 
             if (doButtonsVibrate)

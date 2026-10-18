@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Menu/UI.cs
+ * Qubit Menu  Frontend/UI.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -21,9 +21,15 @@
 
 using GorillaNetworking;
 using Photon.Pun;
-using Qubit.Classes.Menu;
+using Photon.Realtime;
+using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
-using Qubit.Managers;
+using Qubit.Frontend.Classes;
+using Qubit.Libraries.Controls;
+using Qubit.Libraries.Core;
+using Qubit.Modules;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -32,10 +38,21 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
+using UnityEngine.XR;
+using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.Strings;
+using static Qubit.Frontend.Core;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Resources.Fonts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Networking.LocalPlayer;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameObj;
+using ButtonCollider = Qubit.Frontend.Classes.ButtonCollider;
+using JoinType = GorillaNetworking.JoinType;
 
-namespace Qubit.Menu
+namespace Qubit.Frontend
 {
     public class UI : MonoBehaviour
     {
@@ -76,7 +93,7 @@ namespace Qubit.Menu
 
             Button queueButton = canvas.Find("ControlUI/QueueButton")?.GetComponent<Button>();
             if (queueButton != null)
-                queueButton.onClick.AddListener(() => Mods.Important.QueueRoom(textInput?.text ?? ""));
+                queueButton.onClick.AddListener(() => Modules.Categories.Room.QueueRoom(textInput?.text ?? ""));
 
             Button joinButton = canvas.Find("ControlUI/JoinButton")?.GetComponent<Button>();
             if (joinButton != null)
@@ -205,14 +222,14 @@ namespace Qubit.Menu
             if (uiPrefab == null)
                 return;
 
-            if (Keyboard.current?.backslashKey.wasPressedThisFrame == true)
+            if (UnityEngine.InputSystem.Keyboard.current?.backslashKey.wasPressedThisFrame == true)
                 ToggleGUI();
 
             if (isOpen)
             {
                 uiPrefab.SetActive(true);
 
-                if (Keyboard.current?.backquoteKey.wasPressedThisFrame == true)
+                if (UnityEngine.InputSystem.Keyboard.current?.backquoteKey.wasPressedThisFrame == true)
                     ToggleDebug();
 
                 if (desktopOverlay != null)
@@ -221,7 +238,7 @@ namespace Qubit.Menu
                     return;
                 }
 
-                Color guiColor = Buttons.GetIndex("Swap GUI Colors").enabled
+                Color guiColor = Manager.GetIndex("Swap GUI Colors").enabled
                     ? textColors[1].GetCurrentColor()
                     : backgroundColor.GetCurrentColor();
 
@@ -387,22 +404,21 @@ namespace Qubit.Menu
                 uiUpdateDelay = Time.time + (advancedArraylist ? 0.1f : 0.5f);
 
                 List<string> enabledMods = new List<string>();
-                int categoryIndex = 0;
-
-                foreach (ButtonInfo[] buttonList in Buttons.buttons)
+                foreach (KeyValuePair<string, Module[]> categoryEntry in Manager.modules)
                 {
-                    foreach (ButtonInfo button in buttonList)
+                    Module[] buttonList = categoryEntry.Value;
+                    foreach (Module button in buttonList)
                     {
                         try
                         {
-                            if (button == null || !button.enabled || (hideSettings && Buttons.categoryNames[categoryIndex].Contains("Settings")))
+                            if (button == null || !button.enabled || (hideSettings && categoryEntry.Key.Contains("Settings")))
                                 continue;
 
-                            if (Buttons.buttons[Buttons.GetCategory("Temporary Category")].Contains(button) || button.hideFromArraylist)
+                            if (Manager.modules["Temporary Category"].Contains(button) || button.hideFromArraylist)
                                 continue;
 
                             if (!button.enabled || (hideSettings && (!hideSettings ||
-                                                                     Buttons.categoryNames[categoryIndex]
+                                                                     categoryEntry.Key
                                                                          .Contains("Settings")))) continue;
                             string buttonText = button.overlapText ?? button.buttonText;
 
@@ -417,7 +433,6 @@ namespace Qubit.Menu
                         catch { }
                     }
 
-                    categoryIndex++;
                 }
 
                 string[] sortedMods = enabledMods
@@ -576,7 +591,117 @@ namespace Qubit.Menu
         private void OnGUI() // Legacy plugin OnGUI compatibility
         {
             if (isOpen)
-                PluginManager.ExecuteOnGUI();
+                Plugins.ExecuteOnGUI();
         }
+        public static void PositionMenuOnPC(bool isKeyboardCondition)
+        {
+            if (isKeyboardCondition)
+            {
+                GetObject("Shoulder Camera")?.transform.Find("CM vcam1").gameObject.SetActive(false);
+                if (TPC != null)
+                {
+                    isOnPC = true;
+
+                    if (!XRSettings.isDeviceActive)
+                        PrivateUIRoom.instance.ToggleLevelVisibility(true);
+
+                    if (joystickMenu)
+                        Manager.Toggle("Joystick Menu");
+
+                    if (watchMenu)
+                        Manager.Toggle("Watch Menu");
+
+                    if (physicalMenu)
+                        Manager.Toggle("Physical Menu");
+
+                    Vector3[] pcPositions = {
+                        TPC?.transform.position ?? GorillaTagger.Instance.headCollider.transform.position,
+                        new Vector3(10f, 10f, 10f),
+                        new Vector3(10f, 10f, 10f),
+                        new Vector3(-67.9299f, 11.9144f, -84.2019f),
+                        new Vector3(-63f, 3.634f, -65f),
+                        VRRig.LocalRig.transform.position + VRRig.LocalRig.transform.forward * 1.2f
+                    };
+
+                    TPC.transform.position = pcPositions[pcbg];
+                    if (pcbg != 4 && pcbg != 0)
+                        TPC.transform.rotation = Quaternion.identity;
+
+                    if (pcbg == 5)
+                    {
+                        if (pcBackground == null)
+                        {
+                            pcBackground = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                            pcBackground.transform.localScale = new Vector3(10f, 10f, 0.01f);
+                            pcBackground.transform.transform.position = TPC.transform.position + TPC.transform.forward;
+
+                            OnMenuClosed += () => Destroy(pcBackground);
+                        }
+
+                        Color realcolor = menuBackgroundColor.GetCurrentColor();
+                        pcBackground.GetComponent<Renderer>().material.color = new Color32((byte)(realcolor.r * 50), (byte)(realcolor.g * 50), (byte)(realcolor.b * 50), 255);
+                    }
+
+                    menu.transform.parent = TPC.transform;
+                    menu.transform.position = TPC.transform.position + TPC.transform.forward * 0.5f;
+                    menu.transform.rotation = clickGUI && !XRSettings.isDeviceActive ? Quaternion.identity : TPC.transform.rotation * Quaternion.Euler(-90f, 90f, 0f);
+
+                    if (reference != null)
+                    {
+                        if (Mouse.current.leftButton.isPressed && !isMouseDown)
+                        {
+                            Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
+                            bool worked = Physics.Raycast(ray, out RaycastHit hit, 512f, NoInvisLayerMask());
+                            if (worked)
+                            {
+                                ButtonCollider collide = hit.transform.gameObject.GetComponent<ButtonCollider>();
+                                if (collide != null)
+                                {
+                                    collide.OnTriggerEnter(buttonCollider);
+                                    buttonCooldown = -1f;
+                                }
+                            }
+                        }
+                        else
+                            reference.transform.position = new Vector3(999f, -999f, -999f);
+
+                        isMouseDown = Mouse.current.leftButton.isPressed;
+                    }
+                }
+            }
+            else
+                isOnPC = false;
+        }
+
+        public static bool IsKeyboardCondition() =>
+            (!QubitDesktopOverlay.IsInputFocused && UnityInput.GetKey(Key.Q)) || (inTextInput && isKeyboardPc);
+
+        public static bool IsKeyboardActive() =>
+            UnityInput.GetKey(Key.Q) || isKeyboardPc;
+
+        public static bool IsKeyboardHeld() =>
+            UnityInput.GetKey(Key.Q) || (inTextInput && isKeyboardPc);
+
+        public static void AimGunAtMouse(out RaycastHit hit, ref Vector3 direction)
+        {
+            Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
+            Physics.Raycast(ray, out hit, 512f, NoInvisLayerMask());
+            direction = ray.direction;
+        }
+
+        public static bool IsMouseShooting() =>
+            Mouse.current.leftButton.isPressed;
+
+        public static bool IsMouseGripping() =>
+            Mouse.current.rightButton.isPressed;
+
+        public static Ray GetMouseRay() =>
+            TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
+
+        public static bool IsMousePressed() =>
+            Mouse.current != null && Mouse.current.leftButton.isPressed;
+        public static bool isMouseDown;
+        public static GameObject pcBackground;
+
     }
 }

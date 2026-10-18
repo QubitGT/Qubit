@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Classes/Menu/RopePhysics.cs
+ * Qubit Menu  Frontend/Classes/RopePhysics.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -22,7 +22,7 @@
 using GorillaLocomotion;
 using UnityEngine;
 
-namespace Qubit.Classes.Menu
+namespace Qubit.Frontend.Classes
 {
     public class RopePhysics : MonoBehaviour
     {

@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Classes/Menu/ButtonCollider.cs
+ * Qubit Menu  Frontend/Classes/ButtonCollider.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,11 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Managers;
+using Qubit.Libraries.Audio;
+using Qubit.Libraries.Interface;
 using UnityEngine;
-using static Qubit.Menu.Main;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Settings;
+using static Qubit.Modules.Manager;
 
-namespace Qubit.Classes.Menu
+namespace Qubit.Frontend.Classes
 {
     public class ButtonCollider : MonoBehaviour
     {
@@ -58,13 +61,13 @@ namespace Qubit.Classes.Menu
             if (qubitAction != null) { qubitAction(); return; }
             if (qubitFront != null) QubitDetails.Inspect(relatedText);
             if (relatedText != "Global Return") // HARDCODED GLOBAL RETURN CHECK (im gonna forget)
-                SoundManager.Play(SoundManager.DefaultSounds["Button"], buttonText: relatedText);
+                Sounds.Play(Sounds.DefaultSounds["Button"], buttonText: relatedText);
 
             if (annoyingMode)
             {
                 if (Random.Range(1, 5) == 2)
                 {
-                    NotificationManager.SendNotification("Error");
+                    Notifications.SendNotification("Error");
                     return;
                 }
             }

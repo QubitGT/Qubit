@@ -1,18 +1,40 @@
+/*
+ * Qubit Menu  Frontend/QubitDesktopOverlay.cs
+ * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ *
+ * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+ * https://github.com/QubitGT/Qubit
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+using GorillaNetworking;
+using Photon.Pun;
+using Qubit.Extensions;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Networking;
+using Qubit.Modules;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using GorillaNetworking;
-using Photon.Pun;
-using Qubit.Managers;
-using Qubit.Menu;
-using Qubit.Mods;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.UI;
 
-namespace Qubit.Classes.Menu
+namespace Qubit.Frontend
 {
     public sealed class QubitDesktopOverlay : MonoBehaviour
     {
@@ -43,7 +65,7 @@ namespace Qubit.Classes.Menu
             {
                 if (bundle == null)
                 {
-                    using (var stream = typeof(QubitDesktopOverlay).Assembly.GetManifestResourceStream("Qubit.Resources.qubitdesktop"))
+                    using (var stream = typeof(QubitDesktopOverlay).Assembly.GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.qubitdesktop"))
                     using (var memory = new MemoryStream())
                     {
                         if (stream == null) throw new InvalidOperationException("Desktop overlay resource is missing.");
@@ -60,7 +82,7 @@ namespace Qubit.Classes.Menu
             catch (Exception exception)
             {
                 if (instance != null) Destroy(instance);
-                LogManager.LogError("Qubit desktop overlay failed to load: " + exception);
+                Logs.LogError("Qubit desktop overlay failed to load: " + exception);
                 return null;
             }
         }
@@ -99,13 +121,13 @@ namespace Qubit.Classes.Menu
             Button setName = Find<Button>("RoomPanel/SetName");
             setName.onClick.AddListener(() => {
                 if (string.IsNullOrWhiteSpace(playerName.text)) { feedback.text = "Enter a player name first."; return; }
-                Main.ChangeName(playerName.text.Trim());
+                LocalPlayer.ChangeName(playerName.text.Trim());
                 feedback.text = "Player name updated.";
             });
             Find<Button>("RoomPanel/SetColor").onClick.AddListener(() => {
                 if (!byte.TryParse(red.text, out byte r) || !byte.TryParse(green.text, out byte g) || !byte.TryParse(blue.text, out byte b))
                 { feedback.text = "Enter R, G and B values from 0 to 255."; return; }
-                Main.ChangeColor(new Color32(r, g, b, 255));
+                LocalPlayer.ChangeColor(new Color32(r, g, b, 255));
                 feedback.text = "Player color updated.";
             });
             ApplyLayout(setName);
@@ -134,9 +156,11 @@ namespace Qubit.Classes.Menu
         {
             if (roundedSprite != null) return roundedSprite;
             const int size = 32, radius = 9;
-            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
-            texture.filterMode = FilterMode.Bilinear;
-            texture.wrapMode = TextureWrapMode.Clamp;
+            var texture = new Texture2D(size, size, TextureFormat.RGBA32, false)
+            {
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp
+            };
             for (int y = 0; y < size; y++)
             for (int x = 0; x < size; x++)
             {
@@ -171,7 +195,7 @@ namespace Qubit.Classes.Menu
             empty.SetActive(false);
             var scrollbar = scroll.verticalScrollbar;
             if (scrollbar != null) scrollbar.gameObject.SetActive(false);
-            flipped = Main.flipArraylist;
+            flipped = Frontend.Settings.flipArraylist;
             PlacePanel(roomPanel, !flipped);
             PlacePanel(modsPanel, flipped);
 
@@ -305,30 +329,30 @@ namespace Qubit.Classes.Menu
         public void Refresh()
         {
             if (Time.unscaledTime < nextRefresh) return;
-            nextRefresh = Time.unscaledTime + (Main.advancedArraylist ? .1f : .5f);
+            nextRefresh = Time.unscaledTime + (Frontend.Settings.advancedArraylist ? .1f : .5f);
             bool inRoom = NetworkSystem.Instance != null && NetworkSystem.Instance.InRoom;
             roomStatus.text = inRoom ? "Connected  /  " + (PhotonNetwork.CurrentRoom?.Name ?? "Room") : "Not connected to a room";
             disconnect.interactable = inRoom;
             join.interactable = PhotonNetworkController.Instance != null;
-            brand.SetActive(!Main.disableWatermark);
+            brand.SetActive(!Frontend.Settings.disableWatermark);
 
-            if (flipped != Main.flipArraylist)
+            if (flipped != Frontend.Settings.flipArraylist)
             {
-                flipped = Main.flipArraylist;
+                flipped = Frontend.Settings.flipArraylist;
                 PlacePanel(roomPanel, !flipped);
                 PlacePanel(modsPanel, flipped);
             }
 
             var enabled = new List<string>();
-            for (int category = 0; category < Buttons.buttons.Length; category++)
+            foreach (KeyValuePair<string, Module[]> category in Manager.modules)
             {
-                string name = Buttons.categoryNames[category];
-                if (name == "Temporary Category" || (Main.hideSettings && name.Contains("Settings"))
-                    || (Main.hideMacros && name.Contains("Macro"))) continue;
-                foreach (var button in Buttons.buttons[category])
+                string name = category.Key;
+                if (name == "Temporary Category" || (Frontend.Settings.hideSettings && name.Contains("Settings"))
+                    || (Frontend.Settings.hideMacros && name.Contains("Macro"))) continue;
+                foreach (var button in category.Value)
                 {
                     if (button == null || !button.enabled || button.hideFromArraylist || button.label) continue;
-                    enabled.Add(Main.NoRichtextTags(button.overlapText ?? button.buttonText));
+                    enabled.Add(Strings.NoRichtextTags(button.overlapText ?? button.buttonText));
                 }
             }
             enabled.Sort(StringComparer.OrdinalIgnoreCase);

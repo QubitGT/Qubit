@@ -1,5 +1,5 @@
-﻿/*
- * Qubit Menu  Classes/Mods/PortalTrigger.cs
+/*
+ * Qubit Menu  Frontend/Classes/ScrollMaterial.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,29 +19,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using GorillaLocomotion;
-using Qubit.Managers;
-using Qubit.Mods;
-using System;
-using System.Linq;
 using UnityEngine;
 
-namespace Qubit.Classes.Mods
+namespace Qubit.Frontend.Classes
 {
-    public class PortalTrigger : MonoBehaviour
+    public class ScrollMaterial : MonoBehaviour
     {
-        private static readonly Type[] allowedTypes = { typeof(ThrowableBug), typeof(SlingshotProjectile) };
+        private Renderer renderer;
+        private Material mat;
 
-        static bool HasAllowedComponent(Collider col) =>
-            allowedTypes.Any(t => col.GetComponent(t) != null);
-
-        public GameObject destination;
-        public void OnTriggerEnter(Collider other)
+        void Awake()
         {
-            if (other == GTPlayer.Instance.bodyCollider || other == GTPlayer.Instance.headCollider)
-                CoroutineManager.instance.StartCoroutine(Movement.TeleportPortal(destination));
-            else if (HasAllowedComponent(other))
-                CoroutineManager.instance.StartCoroutine(Movement.TeleportObject(other.gameObject, destination));
+            renderer = GetComponent<Renderer>();
+            mat = renderer.material;
+
+            Update();
+        }
+
+        void Update()
+        {
+            float offset = Frontend.Settings.slowFadeColors ? Time.time / 10f : Time.time;
+            Vector4 st = new Vector4(1, 1, offset, offset);
+            mat.SetVector("_BaseMap_ST", st);
         }
     }
 }

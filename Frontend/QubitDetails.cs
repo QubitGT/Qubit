@@ -1,16 +1,39 @@
+/*
+ * Qubit Menu  Frontend/QubitDetails.cs
+ * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ *
+ * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+ * https://github.com/QubitGT/Qubit
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+using Qubit.Backend;
+using Qubit.Frontend.Classes;
+using Qubit.Frontend.Resources;
+using Qubit.Libraries.Controls;
+using Qubit.Modules;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Qubit.Menu;
-using Qubit.Mods;
-using Qubit.Utilities;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
-namespace Qubit.Classes.Menu
+namespace Qubit.Frontend
 {
     
     public sealed class QubitDetails : MonoBehaviour
@@ -19,7 +42,7 @@ namespace Qubit.Classes.Menu
         private static QubitDetails current;
         private static string selectedMod;
         private static int mode, candidate, descriptionPage;
-        private static ButtonInfo dotVisible, lineVisible, dotSize, dotOpacity, lineWidth, lineOpacity, pointerColor, themeEnabled, purpleButtonText;
+        private static Module dotVisible, lineVisible, dotSize, dotOpacity, lineWidth, lineOpacity, pointerColor, themeEnabled, purpleButtonText;
         private static readonly Color Purple = new Color32(178, 112, 251, 255);
         public static readonly Color EnabledButtonColor = new Color32(81, 24, 128, 255);
         private static readonly Color SelectedButtonColor = new Color32(112, 36, 174, 255);
@@ -52,22 +75,22 @@ namespace Qubit.Classes.Menu
             lineOpacity = Number("Qubit Line Opacity", new[] { 1f, 2f, 4.5f, 8f, 15f, 30f }, 4.5f, "%");
             pointerColor = Number("Qubit Pointer Color", new[] { 0f, 1f, 2f, 3f }, 0f, "(0 purple, 1 white, 2 cyan, 3 pink)");
             themeEnabled = Setting("Qubit Apply Theme Colors", "Applies the chosen menu theme to Qubit. Disable to restore the picture's purple and black colors.", false);
-            themeEnabled.enableMethod = themeEnabled.disableMethod = () => { if (Main.menu != null) ApplyTheme(Main.menu); };
+            themeEnabled.enableMethod = themeEnabled.disableMethod = () => { if (Frontend.Settings.menu != null) ApplyTheme(Frontend.Settings.menu); };
             purpleButtonText = Setting("Qubit Purple Button Text", "Uses the original purple mod button text instead of white.", false);
             purpleButtonText.enableMethod = purpleButtonText.disableMethod = () => {
-                if (Main.menu != null) ApplyTheme(Main.menu);
+                if (Frontend.Settings.menu != null) ApplyTheme(Frontend.Settings.menu);
                 if (current != null) current.PreviewColors();
             };
         }
-        private static ButtonInfo Setting(string name, string tip, bool enabled)
+        private static Module Setting(string name, string tip, bool enabled)
         {
-            var b = new ButtonInfo { buttonText = name, toolTip = tip, isSetting = true, legal = true, enabled = enabled };
-            Buttons.AddButton(Buttons.GetCategory("Menu Settings"), b);
+            var b = new Module { buttonText = name, toolTip = tip, isSetting = true, legal = true, enabled = enabled };
+            Manager.AddModule("Menu Settings", b);
             return b;
         }
-        private static ButtonInfo Number(string name, float[] values, float initial, string unit)
+        private static Module Number(string name, float[] values, float initial, string unit)
         {
-            var b = new ButtonInfo { buttonText = name, toolTip = "Adjusts " + name.ToLowerInvariant() + ".", isSetting = true, legal = true, isTogglable = false, incremental = true, value = initial };
+            var b = new Module { buttonText = name, toolTip = "Adjusts " + name.ToLowerInvariant() + ".", isSetting = true, legal = true, isTogglable = false, incremental = true, value = initial };
             b.onValueChanged = () => {
                 if (!values.Contains(b.GetValue<float>())) b.value = initial;
                 b.overlapText = name + ": " + b.GetValue<float>().ToString("0.##") + " " + unit;
@@ -78,7 +101,7 @@ namespace Qubit.Classes.Menu
                 b.onValueChanged(); Preferences.SaveButton(b);
             };
             b.method = () => b.cycleValue(true);
-            b.onValueChanged(); Buttons.AddButton(Buttons.GetCategory("Menu Settings"), b);
+            b.onValueChanged(); Manager.AddModule("Menu Settings", b);
             return b;
         }
         public static void Attach(Transform art, Transform front)
@@ -87,7 +110,7 @@ namespace Qubit.Classes.Menu
             {
                 if (bundle == null)
                 {
-                    using (var stream = typeof(QubitDetails).Assembly.GetManifestResourceStream("Qubit.Resources.qubitdetails"))
+                    using (var stream = typeof(QubitDetails).Assembly.GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.qubitdetails"))
                     using (var memory = new MemoryStream())
                     { stream.CopyTo(memory); bundle = AssetBundle.LoadFromMemory(memory.ToArray()); }
                 }
@@ -101,7 +124,7 @@ namespace Qubit.Classes.Menu
                 current.canvas = panel.GetComponent<Canvas>();
                 current.canvas.renderMode = RenderMode.WorldSpace;
                 foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) g.material = null;
-                QubitFonts.Apply(panel);
+                Fonts.Apply(panel);
                 current.Bind("Info", () => { mode = 0; current.Refresh(); });
                 current.Bind("Fonts", () => current.Open(1));
                 current.Bind("Themes", () => current.Open(2));
@@ -112,19 +135,23 @@ namespace Qubit.Classes.Menu
                 current.pointer = Instantiate(bundle.LoadAsset<GameObject>("QubitPointer"), panel.transform, false);
                 current.dot = current.pointer.transform.Find("Dot");
                 current.line = current.pointer.GetComponent<LineRenderer>();
-                current.lineMaterial = new Material(current.line.sharedMaterial);
-                current.lineMaterial.shader = Shader.Find("GorillaTag/UberShader");
+                current.lineMaterial = new Material(current.line.sharedMaterial)
+                {
+                    shader = Shader.Find("GorillaTag/UberShader")
+                };
                 current.line.sharedMaterial = current.lineMaterial;
-                current.dotMaterial = new Material(current.dot.GetComponent<Renderer>().sharedMaterial);
-                current.dotMaterial.shader = Shader.Find("GorillaTag/UberShader");
+                current.dotMaterial = new Material(current.dot.GetComponent<Renderer>().sharedMaterial)
+                {
+                    shader = Shader.Find("GorillaTag/UberShader")
+                };
                 current.dot.GetComponent<Renderer>().sharedMaterial = current.dotMaterial;
-                current.targets = Main.menu.GetComponentsInChildren<ButtonCollider>();
+                current.targets = Frontend.Settings.menu.GetComponentsInChildren<ButtonCollider>();
                 foreach (var graphic in front.GetComponentsInChildren<Graphic>(true)) current.originalColors[graphic] = graphic.color;
                 foreach (var image in front.GetComponentsInChildren<Image>(true)) { current.originalSprites[image] = image.sprite; current.originalTypes[image] = image.type; }
-                ApplyTheme(Main.menu);
+                ApplyTheme(Frontend.Settings.menu);
                 current.Refresh();
             }
-            catch (Exception ex) { Qubit.Managers.LogManager.LogError("Qubit details failed to load: " + ex); }
+            catch (Exception ex) { Qubit.Libraries.Core.Logs.LogError("Qubit details failed to load: " + ex); }
         }
         private void Bind(string name, Action action)
         {
@@ -133,18 +160,18 @@ namespace Qubit.Classes.Menu
             box.isTrigger = true; box.center = new Vector3(rect.rect.width / 2, -20, -5);
             box.size = new Vector3(rect.rect.width, 40, 8);
             var handler = rect.gameObject.AddComponent<ButtonCollider>();
-            handler.qubitFront = face; handler.qubitRoot = Main.menu;
+            handler.qubitFront = face; handler.qubitRoot = Frontend.Settings.menu;
             handler.relatedText = "Qubit " + name; handler.qubitAction = action;
         }
         public static void Inspect(string name)
         {
-            if (current == null || Buttons.GetIndex(name) == null || name == selectedMod) return;
+            if (current == null || Manager.GetIndex(name) == null || name == selectedMod) return;
             selectedMod = name; descriptionPage = 0;
             if (mode == 0) current.Refresh();
         }
         public static bool Preview(string name, bool forward)
         {
-            if (current == null || Main.menu == null || !current.transform.IsChildOf(Main.menu.transform) || !current.gameObject.activeInHierarchy || Main.CurrentPrompt != null || Main.clickGUI) return false;
+            if (current == null || Frontend.Settings.menu == null || !current.transform.IsChildOf(Frontend.Settings.menu.transform) || !current.gameObject.activeInHierarchy || Prompts.CurrentPrompt != null || Frontend.Settings.clickGUI) return false;
             int requested = name == "Qubit Font" || name == "Change Font Type" ? 1 : name == "Change Menu Theme" ? 2 : 0;
             if (requested == 0) return false;
             if (mode != requested) current.Open(requested);
@@ -153,26 +180,26 @@ namespace Qubit.Classes.Menu
         }
         private void Open(int tab)
         {
-            mode = tab; candidate = tab == 1 ? Math.Max(0, QubitFonts.Options.ToList().IndexOf(QubitFonts.Selected)) : Mathf.Clamp(Main.themeType, 0, Settings.Themes.Count - 1);
+            mode = tab; candidate = tab == 1 ? Math.Max(0, Fonts.Options.ToList().IndexOf(Fonts.Selected)) : Mathf.Clamp(Frontend.Settings.themeType, 0, Modules.Categories.Settings.Themes.Count - 1);
             Refresh();
         }
         private void Browse(int delta)
         {
             if (mode == 0) descriptionPage = Math.Max(0, descriptionPage + delta);
-            else { int count = mode == 1 ? QubitFonts.Options.Count : Settings.Themes.Count; candidate = (candidate + delta + count) % count; }
+            else { int count = mode == 1 ? Fonts.Options.Count : Modules.Categories.Settings.Themes.Count; candidate = (candidate + delta + count) % count; }
             Refresh();
         }
         private void Apply()
         {
-            if (mode == 1) QubitFonts.Select(QubitFonts.Options[candidate]);
+            if (mode == 1) Fonts.Select(Fonts.Options[candidate]);
             if (mode == 2)
             {
-                var custom = Buttons.GetIndex("Custom Menu Theme");
+                var custom = Manager.GetIndex("Custom Menu Theme");
                 if (custom != null) custom.SetEnabled(false);
-                var setting = Buttons.GetIndex("Change Menu Theme");
-                setting.value = Settings.Themes[candidate].Name; setting.onValueChanged?.Invoke(); Preferences.SaveButton(setting);
+                var setting = Manager.GetIndex("Change Menu Theme");
+                setting.value = Modules.Categories.Settings.Themes[candidate].Name; setting.onValueChanged?.Invoke(); Preferences.SaveButton(setting);
                 themeEnabled.SetEnabled(true);
-                ApplyTheme(Main.menu);
+                ApplyTheme(Frontend.Settings.menu);
             }
             Refresh();
         }
@@ -180,7 +207,7 @@ namespace Qubit.Classes.Menu
         private void Refresh()
         {
             if (canvas == null) return;
-            var info = selectedMod == null ? null : Buttons.GetIndex(selectedMod);
+            var info = selectedMod == null ? null : Manager.GetIndex(selectedMod);
             Label("Title").text = mode == 1 ? "Font preview" : mode == 2 ? "Theme preview" : info?.overlapText ?? info?.buttonText ?? "Select a mod";
             Label("Title").resizeTextForBestFit = true; Label("Title").resizeTextMinSize = 13; Label("Title").resizeTextMaxSize = 25;
             Label("Status").text = mode != 0 ? "Preview only / Apply to save" : info == null ? "Point at a row to inspect it" : info.isTogglable ? (info.enabled ? "ENABLED" : "DISABLED") : "ACTION / SETTING";
@@ -193,12 +220,12 @@ namespace Qubit.Classes.Menu
                 pages.Add(description.Substring(0, end)); description = description.Substring(end).TrimStart();
             }
             pages.Add(description); descriptionPage = Mathf.Clamp(descriptionPage, 0, pages.Count - 1);
-            Label("Description").text = mode == 1 ? QubitFonts.Options[candidate] + "\n\nThe quick brown fox jumps over the lazy dog." : mode == 2 ? Settings.Themes[candidate].Name + "\n\nPreview of the menu background, button and text colors." : pages[descriptionPage];
+            Label("Description").text = mode == 1 ? Fonts.Options[candidate] + "\n\nThe quick brown fox jumps over the lazy dog." : mode == 2 ? Modules.Categories.Settings.Themes[candidate].Name + "\n\nPreview of the menu background, button and text colors." : pages[descriptionPage];
             Label("Description").resizeTextForBestFit = true; Label("Description").resizeTextMinSize = 12; Label("Description").resizeTextMaxSize = 19;
             Label("Hint").text = mode == 0 ? "Description " + (descriptionPage + 1) + "/" + pages.Count + " / < > to browse" : "Preview only - choose Apply to save";
             transform.Find("Apply").gameObject.SetActive(mode != 0);
             transform.Find("Cancel").gameObject.SetActive(mode != 0);
-            var font = QubitFonts.Resolve(mode == 1 ? QubitFonts.Options[candidate] : QubitFonts.Selected);
+            var font = Fonts.Resolve(mode == 1 ? Fonts.Options[candidate] : Fonts.Selected);
             Label("PreviewText").font = Label("PreviewSample").font = font;
             Label("PreviewText").text = "Favorite Mods";
             Label("PreviewText").resizeTextForBestFit = Label("PreviewSample").resizeTextForBestFit = true;
@@ -208,7 +235,7 @@ namespace Qubit.Classes.Menu
         }
         private void PreviewColors()
         {
-            var theme = mode == 2 ? Settings.Themes[candidate] : null;
+            var theme = mode == 2 ? Modules.Categories.Settings.Themes[candidate] : null;
             transform.Find("Preview").GetComponent<Image>().color = theme == null ? Purple : theme.Background().GetCurrentColor();
             transform.Find("PreviewRow").GetComponent<Image>().color = theme == null ? Color.black : theme.ButtonColors()[0].GetCurrentColor();
             Label("PreviewText").color = ButtonTextColor;
@@ -231,20 +258,20 @@ namespace Qubit.Classes.Menu
             {
                 bool row = image.name.StartsWith("Row", StringComparison.Ordinal);
                 var action = image.GetComponentInChildren<ButtonCollider>();
-                bool enabled = action != null && Buttons.GetIndex(action.relatedText)?.enabled == true;
-                if (row) image.color = Main.buttonColors[enabled ? 1 : 0].GetCurrentColor();
+                bool enabled = action != null && Manager.GetIndex(action.relatedText)?.enabled == true;
+                if (row) image.color = Frontend.Settings.buttonColors[enabled ? 1 : 0].GetCurrentColor();
                 else if (image.name == "Body")
                 {
                     image.sprite = current.transform.Find("Frame").GetComponent<Image>().sprite;
                     image.type = Image.Type.Sliced;
-                    image.color = Main.backgroundColor.GetCurrentColor();
+                    image.color = Frontend.Settings.backgroundColor.GetCurrentColor();
                 }
             }
             foreach (var text in front.GetComponentsInChildren<Text>(true))
             {
                 var action = text.transform.parent.GetComponentInChildren<ButtonCollider>();
-                bool enabled = action != null && Buttons.GetIndex(action.relatedText)?.enabled == true;
-                text.color = Main.textColors[enabled ? 2 : 1].GetCurrentColor();
+                bool enabled = action != null && Manager.GetIndex(action.relatedText)?.enabled == true;
+                text.color = Frontend.Settings.textColors[enabled ? 2 : 1].GetCurrentColor();
             }
             ApplyButtonColors(front);
         }
@@ -255,12 +282,12 @@ namespace Qubit.Classes.Menu
             {
                 if (!row.name.StartsWith("Row", StringComparison.Ordinal)) continue;
                 var action = row.GetComponentInChildren<ButtonCollider>(true);
-                bool enabled = action != null && Buttons.GetIndex(action.relatedText)?.enabled == true;
-                bool selected = Main.joystickMenu && action != null && action.relatedText == Main.joystickSelectedButton;
+                bool enabled = action != null && Manager.GetIndex(action.relatedText)?.enabled == true;
+                bool selected = Frontend.Settings.joystickMenu && action != null && action.relatedText == Frontend.Settings.joystickSelectedButton;
                 var image = row.GetComponent<Image>();
                 if (image != null)
                     image.color = selected ? SelectedButtonColor : themed
-                        ? Main.buttonColors[enabled ? 1 : 0].GetCurrentColor()
+                        ? Frontend.Settings.buttonColors[enabled ? 1 : 0].GetCurrentColor()
                         : enabled ? EnabledButtonColor : Color.black;
                 var label = row.Find("Label")?.GetComponent<Text>();
                 if (label != null) label.color = ButtonTextColor;
@@ -268,7 +295,7 @@ namespace Qubit.Classes.Menu
         }
         private void UpdatePanelSide()
         {
-            bool rightHand = Main.rightHand || (Main.bothHands && ControllerInputPoller.instance.rightControllerSecondaryButton);
+            bool rightHand = VR.UsesRightHand();
             float side = rightHand ? -1f : 1f;
             var position = transform.localPosition;
             position.x = Mathf.Abs(position.x) * side;
@@ -299,9 +326,9 @@ namespace Qubit.Classes.Menu
         }
         private void LateUpdate()
         {
-            if (Main.menu == null || !transform.IsChildOf(Main.menu.transform)) { SetHover(null); pointer.SetActive(false); return; }
+            if (Frontend.Settings.menu == null || !transform.IsChildOf(Frontend.Settings.menu.transform)) { SetHover(null); pointer.SetActive(false); return; }
             UpdatePanelSide();
-            var touch = Main.reference == null ? null : Main.reference.GetComponent<Renderer>();
+            var touch = Frontend.Settings.reference == null ? null : Frontend.Settings.reference.GetComponent<Renderer>();
             if (touch != touchRenderer)
             {
                 RestoreTouchPointer();
@@ -309,27 +336,27 @@ namespace Qubit.Classes.Menu
                 if (touchRenderer != null) touchWasVisible = touchRenderer.enabled;
             }
             if (touchRenderer != null) touchRenderer.enabled = false;
-            bool pc = Main.isOnPC && Main.TPC != null;
-            var viewer = pc ? Main.TPC.transform.position : GorillaTagger.Instance.headCollider.transform.position;
+            bool pc = Frontend.Settings.isOnPC && Frontend.Settings.TPC != null;
+            var viewer = pc ? Frontend.Settings.TPC.transform.position : GorillaTagger.Instance.headCollider.transform.position;
             canvas.enabled = Vector3.Dot(viewer - face.position, -face.forward) >= 0;
             pointer.SetActive(canvas.enabled);
             if (!canvas.enabled) { SetHover(null); return; }
-            if (Time.unscaledTime >= refreshAt) { PreviewColors(); if (themeEnabled.enabled) ApplyTheme(Main.menu); refreshAt = Time.unscaledTime + .1f; }
-            if (Main.joystickMenu)
+            if (Time.unscaledTime >= refreshAt) { PreviewColors(); if (themeEnabled.enabled) ApplyTheme(Frontend.Settings.menu); refreshAt = Time.unscaledTime + .1f; }
+            if (Frontend.Settings.joystickMenu)
             {
                 SetHover(null);
-                Inspect(Main.joystickSelectedButton);
+                Inspect(Frontend.Settings.joystickSelectedButton);
                 pointer.SetActive(false);
                 return;
             }
-            bool left = Main.reference != null && Main.reference.transform.parent == GorillaTagger.Instance.leftHandTransform;
-            var hand = ControllerUtilities.GetTrueHandPosition(left);
-            Ray ray = pc && Mouse.current != null ? Main.TPC.ScreenPointToRay(Mouse.current.position.ReadValue()) : new Ray(hand.position, hand.forward);
-            bool pressed = pc ? Mouse.current != null && Mouse.current.leftButton.isPressed : (left ? Main.leftTrigger : Main.rightTrigger) > .5f;
+            bool left = Frontend.Settings.reference != null && Frontend.Settings.reference.transform.parent == GorillaTagger.Instance.leftHandTransform;
+            var hand = Controllers.GetTrueHandPosition(left);
+            Ray ray = pc && Mouse.current != null ? UI.GetMouseRay() : VR.GetHandRay(hand.position, hand.forward);
+            bool pressed = pc ? UI.IsMousePressed() : VR.IsTriggerPressed(left);
             ButtonCollider target = null; RaycastHit closest = default; float distance = 3f;
             foreach (var item in targets)
             {
-                if (item == null || !item.gameObject.activeInHierarchy || item.qubitRoot != Main.menu) continue;
+                if (item == null || !item.gameObject.activeInHierarchy || item.qubitRoot != Frontend.Settings.menu) continue;
                 var collider = item.GetComponent<Collider>();
                 if (collider != null && collider.Raycast(ray, out var hit, distance)) { distance = hit.distance; closest = hit; target = item; }
             }
@@ -349,7 +376,7 @@ namespace Qubit.Classes.Menu
                 line.startWidth = line.endWidth = lineWidth.GetValue<float>() * .001f;
                 line.SetPosition(0, ray.origin); line.SetPosition(1, closest.point);
                 Inspect(target.relatedText);
-                if (!pc && pressed && !wasPressed && !Main.joystickMenu) target.Press(true);
+                if (!pc && pressed && !wasPressed && !Frontend.Settings.joystickMenu) target.Press(true);
             }
             wasPressed = pressed;
         }
