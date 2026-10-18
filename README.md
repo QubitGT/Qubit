@@ -1,7 +1,7 @@
 <p align="center">
   <br><br>
   <a href="#"><img src="Resources/GitHub/title.png" width="700"></a>
-  <br><br>
+  <br><sub>Forked from ii's Stupid Menu</sub><br>
 </p>
 
 ---
@@ -13,9 +13,6 @@
 </p>
 
 ---
-
-# Qubit  
-<sub>Forked from ii's Stupid Menu</sub>
 
 Qubit is a **feature-packed** mod menu for Gorilla Tag, built by the community, for the community. Whether you just want mods, are a developer, or anything inbetween, this menu has you covered. Designed to be **as useful as possible**, it includes a variety of features and options that let you customize your modding experience to your heart’s content.  
 
