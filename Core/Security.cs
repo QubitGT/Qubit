@@ -40,10 +40,10 @@ namespace Qubit.Core
 
             try
             {
-                MonkeAgent.instance.rpcErrorMax = int.MaxValue;
-                MonkeAgent.instance.rpcCallLimit = int.MaxValue;
-                MonkeAgent.instance.logErrorMax = int.MaxValue;
-                MonkeAgent.instance.userRPCCalls.Clear();
+                ManagerRegistry.MonkeAgent.rpcErrorMax = int.MaxValue;
+                ManagerRegistry.MonkeAgent.rpcCallLimit = int.MaxValue;
+                ManagerRegistry.MonkeAgent.logErrorMax = int.MaxValue;
+                ManagerRegistry.MonkeAgent.userRPCCalls.Clear();
 
                 PhotonNetwork.MaxResendsBeforeDisconnect = int.MaxValue;
                 PhotonNetwork.QuickResends = int.MaxValue;

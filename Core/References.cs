@@ -41,11 +41,6 @@ namespace Qubit.Core
             get => GTPlayer.Instance;
         }
 
-        public static NetworkSystem Network
-        {
-            get => NetworkSystem.Instance;
-        }
-
         public static ControllerInputPoller InputPoller
         {
             get => ControllerInputPoller.instance;

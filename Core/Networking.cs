@@ -28,22 +28,22 @@ namespace Qubit.Core
     {
         public static bool InRoom
         {
-            get => NetworkSystem.Instance.InRoom;
+            get => ManagerRegistry.NetworkSystem.InRoom;
         }
 
         public static bool IsMasterClient
         {
-            get => NetworkSystem.Instance.IsMasterClient;
+            get => ManagerRegistry.NetworkSystem.IsMasterClient;
         }
 
         public static NetPlayer LocalPlayer
         {
-            get => NetworkSystem.Instance.LocalPlayer;
+            get => ManagerRegistry.NetworkSystem.LocalPlayer;
         }
 
         public static NetPlayer MasterClient
         {
-            get => NetworkSystem.Instance.MasterClient;
+            get => ManagerRegistry.NetworkSystem.MasterClient;
         }
 
         public static Player PhotonLocalPlayer
@@ -53,12 +53,12 @@ namespace Qubit.Core
 
         public static NetPlayer[] NetPlayers
         {
-            get => NetworkSystem.Instance.AllNetPlayers;
+            get => ManagerRegistry.NetworkSystem.AllNetPlayers;
         }
 
         public static NetPlayer[] OtherNetPlayers
         {
-            get => NetworkSystem.Instance.PlayerListOthers;
+            get => ManagerRegistry.NetworkSystem.PlayerListOthers;
         }
 
         public static Player[] PlayerList
@@ -93,7 +93,7 @@ namespace Qubit.Core
 
         public static string GameMode
         {
-            get => NetworkSystem.Instance.GameModeString;
+            get => ManagerRegistry.NetworkSystem.GameModeString;
         }
 
         public static string Region

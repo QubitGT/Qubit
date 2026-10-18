@@ -19,6 +19,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using GorillaTagScripts.Builder;
+using GorillaNetworking;
+using Photon.Voice.PUN;
+using GorillaTag.Rendering;
+using GorillaLocomotion.Gameplay;
+using GorillaLocomotion;
 using GorillaTagScripts;
 using Qubit.Utilities;
 
@@ -28,6 +34,11 @@ namespace Qubit.Core
     {
         public class GhostReactor
         {
+            public static global::GhostReactor Instance
+            {
+                get => global::GhostReactor.instance;
+            }
+
             public static GhostReactorManager GhostReactorManager
             {
                 get => global::GhostReactor.instance.grManager;
@@ -127,6 +138,171 @@ namespace Qubit.Core
         {
             BuilderTable.TryGetBuilderTableForZone(References.LocalRig.zoneEntity.currentZone, out BuilderTable table);
             return table;
+        }
+
+        public static NetworkSystem NetworkSystem
+        {
+            get => NetworkSystem.Instance;
+        }
+
+        public static MonkeAgent MonkeAgent
+        {
+            get => MonkeAgent.instance;
+        }
+
+        public static SharedBlocksManager SharedBlocksManager
+        {
+            get => SharedBlocksManager.instance;
+        }
+
+        public static CosmeticsController CosmeticsController
+        {
+            get => CosmeticsController.instance;
+        }
+
+        public static LckSocialCameraManager LckSocialCameraManager
+        {
+            get => LckSocialCameraManager.Instance;
+        }
+
+        public static CrittersManager CrittersManager
+        {
+            get => CrittersManager.instance;
+        }
+
+        public static FreeHoverboardManager FreeHoverboardManager
+        {
+            get => FreeHoverboardManager.instance;
+        }
+
+        public static SubscriptionManager SubscriptionManager
+        {
+            get => SubscriptionManager.Instance;
+        }
+
+        public static PhotonNetworkController PhotonNetworkController
+        {
+            get => PhotonNetworkController.Instance;
+        }
+
+        public static FriendshipGroupDetection FriendshipGroupDetection
+        {
+            get => FriendshipGroupDetection.Instance;
+        }
+
+        public static GRElevatorManager GRElevatorManager
+        {
+            get => GRElevatorManager._instance;
+        }
+
+        public static CustomMapsTerminal CustomMapsTerminal
+        {
+            get => CustomMapsTerminal.instance;
+        }
+
+        public static GreyZoneManager GreyZoneManager
+        {
+            get => GreyZoneManager.Instance;
+        }
+
+        public static BetterDayNightManager BetterDayNightManager
+        {
+            get => BetterDayNightManager.instance;
+        }
+
+        public static ZoneShaderSettings ZoneShaderSettings
+        {
+            get => ZoneShaderSettings.activeInstance;
+        }
+
+        public static BuilderPieceInteractor BuilderPieceInteractor
+        {
+            get => BuilderPieceInteractor.instance;
+        }
+
+        public static MonkeBallGame MonkeBallGame
+        {
+            get => MonkeBallGame.Instance;
+        }
+
+        public static EquipmentInteractor EquipmentInteractor
+        {
+            get => EquipmentInteractor.instance;
+        }
+
+        public static ConnectedControllerHandler ConnectedControllerHandler
+        {
+            get => ConnectedControllerHandler.Instance;
+        }
+
+        public static SIProgression SIProgression
+        {
+            get => SIProgression.Instance;
+        }
+
+        public static RopeSwingManager RopeSwingManager
+        {
+            get => RopeSwingManager.instance;
+        }
+
+        public static GameLightingManager GameLightingManager
+        {
+            get => GameLightingManager.instance;
+        }
+
+        public static PlayFabAuthenticator PlayFabAuthenticator
+        {
+            get => PlayFabAuthenticator.instance;
+        }
+
+        public static LuauHud LuauHud
+        {
+            get => LuauHud.Instance;
+        }
+
+        public static GorillaServer GorillaServer
+        {
+            get => GorillaServer.Instance;
+        }
+
+        public static ObjectPools ObjectPools
+        {
+            get => ObjectPools.instance;
+        }
+
+        public static GorillaScoreboardTotalUpdater GorillaScoreboardTotalUpdater
+        {
+            get => GorillaScoreboardTotalUpdater.instance;
+        }
+
+        public static RankedProgressionManager RankedProgressionManager
+        {
+            get => RankedProgressionManager.Instance;
+        }
+
+        public static ProgressionManager ProgressionManager
+        {
+            get => ProgressionManager.Instance;
+        }
+
+        public static RacingManager RacingManager
+        {
+            get => RacingManager.instance;
+        }
+
+        public static PhotonVoiceNetwork PhotonVoiceNetwork
+        {
+            get => PhotonVoiceNetwork.Instance;
+        }
+
+        public static MothershipAuthenticator MothershipAuthenticator
+        {
+            get => MothershipAuthenticator.Instance;
+        }
+
+        public static PrivateUIRoom PrivateUIRoom
+        {
+            get => PrivateUIRoom.instance;
         }
     }
 }
