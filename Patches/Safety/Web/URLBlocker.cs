@@ -1,0 +1,297 @@
+﻿/*
+ * Qubit Menu  Patches/Safety/Web/URLBlocker.cs
+ * A community driven mod menu for Gorilla Tag with over 1000+ mods
+ *
+ * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
+ * https://github.com/QubitGT/Qubit
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+using HarmonyLib;
+using Qubit.Libraries.Core;
+using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Globalization;
+using System.Net;
+using System.Net.Http;
+using System.Threading;
+using System.Threading.Tasks;
+using UnityEngine.Networking;
+using Valve.Newtonsoft.Json;
+
+namespace Qubit.Patches.Safety.Web
+{
+    public static class URLBlocker
+    {
+        internal static Dictionary<string, string> banned = new Dictionary<string, string>();
+        internal static readonly object locker = new object();
+
+        internal static readonly HashSet<string> notifiedAssemblies = new HashSet<string>();
+        internal static readonly object notifyLocker = new object();
+
+        static URLBlocker()
+        {
+            LoadBanList();
+        }
+
+        internal static async void LoadBanList()
+        {
+            while (true)
+            {
+                try
+                {
+                    using (HttpClient client = new HttpClient())
+                    {
+                        string json = await client.GetStringAsync("https://api.qubit.mom/banned_urls");
+                        var parsed = JsonConvert.DeserializeObject<BanResponse>(json);
+
+                        if (parsed?.banned != null)
+                        {
+                            lock (locker)
+                            {
+                                banned = parsed.banned;
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                await Task.Delay(30000);
+            }
+        }
+
+        [PatchHandler.SecurityPatch]
+        internal static void Notify(string url, string reason)
+        {
+            string assemblyName = "Unknown";
+            string fileName = "Unknown";
+
+            try
+            {
+                var stack = new StackTrace();
+
+                for (int i = 0; i < stack.FrameCount; i++)
+                {
+                    var method = stack.GetFrame(i)?.GetMethod();
+                    var asm = method?.DeclaringType?.Assembly;
+
+                    if (asm == null)
+                        continue;
+
+                    string name = asm.GetName().Name;
+
+                    // this is ugly
+                    if (name.StartsWith("Unity") ||
+                        name.StartsWith("System") ||
+                        name.StartsWith("Mono") ||
+                        name.StartsWith("mscorlib") ||
+                        name.StartsWith("Harmony"))
+                        continue;
+
+                    assemblyName = name;
+
+                    try
+                    {
+                        fileName = System.IO.Path.GetFileName(asm.Location);
+                    }
+                    catch { }
+
+                    break;
+                }
+            }
+            catch { }
+
+            bool shouldLog;
+            lock (notifyLocker)
+                shouldLog = notifiedAssemblies.Add(assemblyName);
+
+            if (shouldLog)
+                Logs.Log($"HEY!! Qubit Menu blocked a potentionally DANGEROUS REQUEST to: {url} | Reason: {reason} | Assumed Assembly: {assemblyName} | Assumed File: {fileName}");
+        }
+
+        internal static string NormalizeHost(string host)
+        {
+            if (string.IsNullOrEmpty(host))
+                return host;
+
+            string result = host;
+
+            try
+            {
+                var idn = new IdnMapping();
+                result = idn.GetAscii(result);
+            }
+            catch { }
+
+            return result.ToLowerInvariant();
+        }
+
+        internal static bool IsBanned(string url, out string reason)
+        {
+            reason = null;
+
+            if (string.IsNullOrEmpty(url))
+                return false;
+
+            try
+            {
+                Uri uri = new Uri(url);
+                string host = NormalizeHost(uri.Host);
+
+                Dictionary<string, string> snapshot;
+
+                lock (locker)
+                {
+                    snapshot = banned;
+                }
+
+                foreach (var entry in snapshot)
+                {
+                    string key = NormalizeHost(entry.Key);
+
+                    if (host == key || host.EndsWith("." + key))
+                    {
+                        reason = entry.Value;
+                        return true;
+                    }
+                }
+            }
+            catch { }
+
+            return false;
+        }
+
+        internal static List<string> ExtractUrls(string input)
+        {
+            var results = new List<string>();
+
+            if (string.IsNullOrEmpty(input))
+                return results;
+
+            string[] parts = input.Split(new[] { ' ', '\t', '\n', '\r', '"', '\'', '(', ')', '[', ']', '^' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var part in parts)
+            {
+                string cleaned = part.Trim('"', '\'');
+
+                if (cleaned.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+                    cleaned.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+                {
+                    results.Add(cleaned);
+                }
+            }
+
+            return results;
+        }
+
+        internal static bool IsBase64String(string s)
+        {
+            if (string.IsNullOrEmpty(s) || s.Length % 4 != 0)
+                return false;
+
+            foreach (char c in s)
+            {
+                if (!(char.IsLetterOrDigit(c) || c == '+' || c == '/' || c == '='))
+                    return false;
+            }
+
+            return true;
+        }
+
+        internal static List<string> ExtractAndDecodeBase64(string input)
+        {
+            var results = new List<string>();
+
+            if (string.IsNullOrEmpty(input))
+                return results;
+
+            string[] parts = input.Split(' ');
+
+            foreach (var part in parts)
+            {
+                string cleaned = part.Trim('"');
+
+                if (cleaned.Length > 20 && IsBase64String(cleaned))
+                {
+                    try
+                    {
+                        byte[] data = Convert.FromBase64String(cleaned);
+
+                        string unicode = System.Text.Encoding.Unicode.GetString(data);
+                        results.Add(unicode);
+
+                        string utf8 = System.Text.Encoding.UTF8.GetString(data);
+                        if (utf8 != unicode)
+                            results.Add(utf8);
+                    }
+                    catch { }
+                }
+            }
+
+            return results;
+        }
+
+        internal static bool IsBlockedProcess(string args, IEnumerable<string> argList = null)
+        {
+            bool Check(string text)
+            {
+                if (string.IsNullOrEmpty(text))
+                    return false;
+
+                var urls = ExtractUrls(text);
+                foreach (var url in urls)
+                {
+                    if (IsBanned(url, out var reason))
+                    {
+                        Notify(url, reason);
+                        return true;
+                    }
+                }
+
+                var decodedStrings = ExtractAndDecodeBase64(text);
+                foreach (var decoded in decodedStrings)
+                {
+                    var innerUrls = ExtractUrls(decoded);
+
+                    foreach (var url in innerUrls)
+                    {
+                        if (IsBanned(url, out var reason))
+                        {
+                            Notify(url, reason);
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            if (Check(args))
+                return true;
+
+            if (argList != null)
+            {
+                foreach (var arg in argList)
+                {
+                    if (Check(arg))
+                        return true;
+                }
+            }
+
+            return false;
+        }
+    }
+}
