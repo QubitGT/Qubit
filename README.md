@@ -9,7 +9,7 @@
 <p align="center">
 	<a href="https://github.com/QubitGT/Qubit/releases"><img src="https://img.shields.io/github/v/release/QubitGT/Qubit?label=version&style=for-the-badge"></a>
 	<a href="https://github.com/QubitGT/Qubit/releases/latest"><img src="https://img.shields.io/github/downloads/QubitGT/Qubit/latest/Qubit.dll?style=for-the-badge"></a>
-	<a href="https://discord.gg/qubit"><img src="https://img.shields.io/discord/1500168360787447909?label=discord&style=for-the-badge&color=blueviolet"></a>
+	<a href="https://discord.gg/qubit"><img src="https://img.shields.io/discord/1547365643609710733?label=discord&style=for-the-badge&color=blueviolet"></a>
 </p>
 
 ---
