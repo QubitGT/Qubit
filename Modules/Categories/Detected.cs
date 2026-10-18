@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaGameModes;
 using GorillaNetworking;
@@ -157,11 +158,11 @@ namespace Qubit.Modules.Categories
 
         public static void QuarantineAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -200,7 +201,7 @@ namespace Qubit.Modules.Categories
 
         public static void QuarantineOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
@@ -237,7 +238,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (var scoreboard in GorillaScoreboardTotalUpdater.allScoreboards.Where(scoreboard => scoreboard.buttonText.text.Contains("REPORT")))
                 scoreboard.buttonText.text = scoreboard.buttonText.text.Replace("REPORT", "QUARANTINE");
-            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer != NetworkSystem.Instance.LocalPlayer))
+            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer != References.LocalPlayer))
             {
                 PhotonView view = line.linePlayer.VRRig().GetPhotonView();
 
@@ -335,12 +336,12 @@ namespace Qubit.Modules.Categories
 
         public static void GhostAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -373,7 +374,7 @@ namespace Qubit.Modules.Categories
 
         public static void GhostOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
 
             foreach (VRRig rig in Players.ActiveRigs)
@@ -401,7 +402,7 @@ namespace Qubit.Modules.Categories
             foreach (var scoreboard in GorillaScoreboardTotalUpdater.allScoreboards.Where(scoreboard => scoreboard.buttonText.text.Contains("REPORT")))
                 scoreboard.buttonText.text = scoreboard.buttonText.text.Replace("REPORT", "GHOST");
 
-            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer != NetworkSystem.Instance.LocalPlayer))
+            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer != References.LocalPlayer))
             {
                 if (line.reportInProgress)
                 {
@@ -480,12 +481,12 @@ namespace Qubit.Modules.Categories
 
         public static void UnghostAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -503,7 +504,7 @@ namespace Qubit.Modules.Categories
 
         public static void UnghostOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -560,12 +561,12 @@ namespace Qubit.Modules.Categories
 
         public static void IsolateAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -593,7 +594,7 @@ namespace Qubit.Modules.Categories
 
         public static void IsolateOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -635,12 +636,12 @@ namespace Qubit.Modules.Categories
 
         public static void LagAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -655,7 +656,7 @@ namespace Qubit.Modules.Categories
 
         public static void LagOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -688,12 +689,12 @@ namespace Qubit.Modules.Categories
 
         public static void MuteAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -711,7 +712,7 @@ namespace Qubit.Modules.Categories
 
         public static void MuteOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
 
             foreach (VRRig rig in Players.ActiveRigs)
@@ -757,12 +758,12 @@ namespace Qubit.Modules.Categories
 
         public static void ChangeNameAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -783,7 +784,7 @@ namespace Qubit.Modules.Categories
 
         public static void ChangeNameOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -805,7 +806,7 @@ namespace Qubit.Modules.Categories
             {
                 Hashtable hashtable = new Hashtable
                 {
-                    [ActorProperties.PlayerName] = GorillaComputer.instance.anywhereTwoWeek[Random.Range(0, GorillaComputer.instance.anywhereTwoWeek.Length)]
+                    [ActorProperties.PlayerName] = References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)]
                 };
                 PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(lockTarget.GetPlayer().ActorNumber, hashtable);
                 MonkeAgent.instance.SendReport("evading the name ban", lockTarget.GetPlayer().UserId, lockTarget.GetPlayer().NickName);
@@ -818,7 +819,7 @@ namespace Qubit.Modules.Categories
             {
                 Hashtable hashtable = new Hashtable
                 {
-                    [ActorProperties.PlayerName] = GorillaComputer.instance.anywhereTwoWeek[Random.Range(0, GorillaComputer.instance.anywhereTwoWeek.Length)]
+                    [ActorProperties.PlayerName] = References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)]
                 };
                 PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(player.ActorNumber, hashtable);
                 MonkeAgent.instance.SendReport("evading the name ban", player.UserId, player.NickName);
@@ -868,12 +869,12 @@ namespace Qubit.Modules.Categories
 
         public static void BypassModCheckersAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -896,7 +897,7 @@ namespace Qubit.Modules.Categories
 
         public static void BypassModCheckersOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -946,12 +947,12 @@ namespace Qubit.Modules.Categories
 
         public static void BreakModCheckersAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -972,7 +973,7 @@ namespace Qubit.Modules.Categories
 
         public static void BreakModCheckersOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -1009,12 +1010,12 @@ namespace Qubit.Modules.Categories
 
         public static void GamemodeIncludeAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -1032,7 +1033,7 @@ namespace Qubit.Modules.Categories
 
         public static void GamemodeIncludeOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -1066,12 +1067,12 @@ namespace Qubit.Modules.Categories
 
         public static void GamemodeExcludeAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
+                if (vrrig.Distance(References.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -1089,7 +1090,7 @@ namespace Qubit.Modules.Categories
 
         public static void GamemodeExcludeOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -1111,17 +1112,17 @@ namespace Qubit.Modules.Categories
 
         public static void BreakNetworkTriggers()
         {
-            string queue = Manager.GetIndex("Switch to Modded Gamemode").enabled ? GorillaComputer.instance.currentQueue + "MODDED_" : GorillaComputer.instance.currentQueue;
+            string queue = Manager.GetIndex("Switch to Modded Gamemode").enabled ? References.Computer.currentQueue + "MODDED_" : References.Computer.currentQueue;
             Hashtable hash = new Hashtable
             {
-                {RoomConfig.Room_GameModePropKey, string.Join("", GorillaComputer.instance.allowedMapsToJoin) + queue + GorillaComputer.instance.currentGameMode.Value }
+                {RoomConfig.Room_GameModePropKey, string.Join("", References.Computer.allowedMapsToJoin) + queue + References.Computer.currentGameMode.Value }
             };
             PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
         }
 
         public static void KickNetworkTriggers()
         {
-            if (NetworkSystem.Instance.SessionIsPrivate)
+            if (References.Network.SessionIsPrivate)
                 Overpowered.SetRoomStatus(false);
 
             Hashtable hash = new Hashtable
@@ -1144,10 +1145,10 @@ namespace Qubit.Modules.Categories
         public static bool moddedGamemode;
         public static void ChangeGamemode(GameModeType gamemode)
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
-            NetworkSystem.Instance.NetDestroy(GameMode.activeNetworkHandler.NetView.gameObject);
+            References.Network.NetDestroy(GameMode.activeNetworkHandler.NetView.gameObject);
 
             Hashtable hash = new Hashtable
             {
@@ -1156,7 +1157,7 @@ namespace Qubit.Modules.Categories
                     new GameModeString
                     {
                         zone = PhotonNetworkController.Instance.currentJoinTrigger.networkZone,
-                        queue = moddedGamemode ? GorillaComputer.instance.currentQueue + "MODDED_" : GorillaComputer.instance.currentQueue,
+                        queue = moddedGamemode ? References.Computer.currentQueue + "MODDED_" : References.Computer.currentQueue,
                         gameType = gamemode.ToString()
                     }.ToString()
                 }
@@ -1170,7 +1171,7 @@ namespace Qubit.Modules.Categories
             {
                 GorillaServer.Instance.CheckForBadName(new CheckForBadNameRequest
                 {
-                    name = GorillaComputer.instance.anywhereTwoWeek[Random.Range(0, GorillaComputer.instance.anywhereTwoWeek.Length)],
+                    name = References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)],
                     forRoom = true,
                     forTroop = false
                 }, null, null);

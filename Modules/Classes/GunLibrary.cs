@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using Qubit.Extensions;
 using Qubit.Frontend;
@@ -133,7 +134,7 @@ namespace Qubit.Modules.Classes
         internal static (RaycastHit Ray, GameObject NewPointer) RenderGun(int? overrideLayerMask = null)
         {
             GunSpawned = true;
-            Transform GunTransform = SwapGunHand ? GorillaTagger.Instance.leftHandTransform : GorillaTagger.Instance.rightHandTransform;
+            Transform GunTransform = SwapGunHand ? References.LeftHand : References.RightHand;
 
             Vector3 StartPosition = GunTransform.position;
             Vector3 Direction = GunTransform.forward;
@@ -160,10 +161,10 @@ namespace Qubit.Modules.Classes
                     Direction = forward;
                     break;
                 case 4:
-                    Up = GorillaTagger.Instance.headCollider.transform.up;
-                    Right = GorillaTagger.Instance.headCollider.transform.right;
-                    Direction = GorillaTagger.Instance.headCollider.transform.forward;
-                    StartPosition = GorillaTagger.Instance.headCollider.transform.position + Up * 0.1f;
+                    Up = References.HeadCollider.transform.up;
+                    Right = References.HeadCollider.transform.right;
+                    Direction = References.HeadCollider.transform.forward;
+                    StartPosition = References.HeadCollider.transform.position + Up * 0.1f;
                     break;
             }
 
@@ -178,7 +179,7 @@ namespace Qubit.Modules.Classes
                 Right = GunTransform.right;
             }
 
-            Physics.Raycast(StartPosition + Direction / 4f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f), Direction, out var Ray, 512f, overrideLayerMask ?? NoInvisLayerMask());
+            Physics.Raycast(StartPosition + Direction / 4f * (scaleWithPlayer ? References.Player.scale : 1f), Direction, out var Ray, 512f, overrideLayerMask ?? NoInvisLayerMask());
 
             if (shouldBePC)
                 UI.AimGunAtMouse(out Ray, ref Direction);
@@ -197,7 +198,7 @@ namespace Qubit.Modules.Classes
                 GunPointer = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
             GunPointer.SetActive(true);
-            GunPointer.transform.localScale = (smallGunPointer ? new Vector3(0.1f, 0.1f, 0.1f) : new Vector3(0.2f, 0.2f, 0.2f)) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            GunPointer.transform.localScale = (smallGunPointer ? new Vector3(0.1f, 0.1f, 0.1f) : new Vector3(0.2f, 0.2f, 0.2f)) * (scaleWithPlayer ? References.Player.scale : 1f);
             GunPointer.transform.position = EndPosition;
 
             Renderer PointerRenderer = GunPointer.GetComponent<Renderer>();
@@ -214,7 +215,7 @@ namespace Qubit.Modules.Classes
             {
                 GameObject Particle = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                 Particle.transform.position = EndPosition;
-                Particle.transform.localScale = Vector3.one * (0.025f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f));
+                Particle.transform.localScale = Vector3.one * (0.025f * (scaleWithPlayer ? References.Player.scale : 1f));
                 Particle.GetComponent<Renderer>().material.shader = Shader.Find("GUI/Text Shader");
                 Particle.AddComponent<CustomParticle>();
                 UnityEngine.Object.Destroy(Particle.GetComponent<Collider>());
@@ -236,8 +237,8 @@ namespace Qubit.Modules.Classes
                 GunLine.material.shader = Shader.Find("GUI/Text Shader");
             GunLine.startColor = backgroundColor.GetCurrentColor();
             GunLine.endColor = backgroundColor.GetCurrentColor(0.5f);
-            GunLine.startWidth = 0.025f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
-            GunLine.endWidth = 0.025f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            GunLine.startWidth = 0.025f * (scaleWithPlayer ? References.Player.scale : 1f);
+            GunLine.endWidth = 0.025f * (scaleWithPlayer ? References.Player.scale : 1f);
             GunLine.useWorldSpace = true;
             if (smoothLines)
             {
@@ -361,7 +362,7 @@ namespace Qubit.Modules.Classes
                                 audioSize += targetRecorder.Loudness * 3f;
                         }
 
-                        GorillaSpeakerLoudness localRecorder = VRRig.LocalRig.GetComponent<GorillaSpeakerLoudness>();
+                        GorillaSpeakerLoudness localRecorder = References.LocalRig.GetComponent<GorillaSpeakerLoudness>();
                         if (localRecorder != null)
                             audioSize += localRecorder.Loudness * 3f;
 
@@ -480,7 +481,7 @@ namespace Qubit.Modules.Classes
                     ? Controllers.GetTrueRightHand().forward
                     : Controllers.GetTrueLeftHand().forward,
 
-                4 => GorillaTagger.Instance.headCollider.transform.forward,
+                4 => References.HeadCollider.transform.forward,
 
                 _ => transform.forward
             };

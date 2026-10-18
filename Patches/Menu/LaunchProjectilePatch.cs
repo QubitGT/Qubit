@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 using Qubit.Extensions;
 using static Qubit.Frontend.Settings;
@@ -35,7 +36,7 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                GorillaTagger.Instance.rigidbody.linearVelocity = __instance.GetLaunchVelocity();
+                References.Rigidbody.linearVelocity = __instance.GetLaunchVelocity();
 
                 if (dynamicSounds)
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/AngryBirds/launch.ogg", "Audio/Mods/Fun/AngryBirds/launch.ogg", clip => clip.Play(buttonClickVolume / 10f));

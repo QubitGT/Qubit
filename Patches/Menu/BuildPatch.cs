@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 
 namespace Qubit.Patches.Menu
@@ -34,10 +35,10 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                previous = VRRig.LocalRig.NativeScale;
-                previous2 = VRRig.LocalRig.ScaleMultiplier;
-                VRRig.LocalRig.NativeScale = 1f;
-                VRRig.LocalRig.ScaleMultiplier = 1f;
+                previous = References.LocalRig.NativeScale;
+                previous2 = References.LocalRig.ScaleMultiplier;
+                References.LocalRig.NativeScale = 1f;
+                References.LocalRig.ScaleMultiplier = 1f;
             }
         }
 
@@ -45,8 +46,8 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                VRRig.LocalRig.NativeScale = previous;
-                VRRig.LocalRig.ScaleMultiplier = previous2;
+                References.LocalRig.NativeScale = previous;
+                References.LocalRig.ScaleMultiplier = previous2;
             }
         }
     }

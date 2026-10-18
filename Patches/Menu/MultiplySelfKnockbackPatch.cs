@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 using Qubit.Modules.Categories;
 
@@ -31,7 +32,7 @@ namespace Qubit.Patches.Menu
 
         public static void Prefix(SlingshotProjectile __instance)
         {
-            if (enabled && __instance.projectileOwner == NetworkSystem.Instance.LocalPlayer)
+            if (enabled && __instance.projectileOwner == References.LocalPlayer)
             {
                 if (__instance.aoeKnockbackConfig != null)
                 {

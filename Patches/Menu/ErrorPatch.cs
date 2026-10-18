@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using HarmonyLib;
 using PlayFab;
@@ -54,7 +55,7 @@ Ban Reason: {keyValuePair.Key}
 Time Left: {(isIndefinite ? "Indefinite" : FormatTimeLeft(remaining))}
 Unban Date: {(isIndefinite ? "Never" : banEnd.ToString("MMMM dd, yyyy h:mm tt"))}";
 
-            GorillaComputer.instance.GeneralFailureMessage(banMessage);
+            References.Computer.GeneralFailureMessage(banMessage);
             return false;
         }
 

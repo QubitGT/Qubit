@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using HarmonyLib;
 using Photon.Pun;
@@ -46,7 +47,7 @@ namespace Qubit.Patches.Menu
                 {
                     if (CosmeticsController.instance.isHidingCosmeticsFromRemotePlayers)
                     {
-                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_HideAllCosmetics", info.Sender);
+                        References.MyRigView.SendRPC("RPC_HideAllCosmetics", info.Sender);
                         return false;
                     }
 
@@ -69,7 +70,7 @@ namespace Qubit.Patches.Menu
                             CosmeticsController.instance
                         );
 
-                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", NetworkSystem.Instance.GetPlayer(info.senderID), items.ToPackedIDArray(), CosmeticsController.instance.tryOnSet.ToPackedIDArray(), false);
+                        References.MyRigView.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", References.Network.GetPlayer(info.senderID), items.ToPackedIDArray(), CosmeticsController.instance.tryOnSet.ToPackedIDArray(), false);
                         return false;
                     }
                 }
@@ -80,12 +81,12 @@ namespace Qubit.Patches.Menu
         private static string[] archiveCosmetics;
         public static IEnumerator LoadCosmetics()
         {
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
                 Vector3 target = Frontend.Settings.TryOnRoom.transform.position;
 
-                VRRig.LocalRig.enabled = false;
-                VRRig.LocalRig.transform.position = target;
+                References.LocalRig.enabled = false;
+                References.LocalRig.transform.position = target;
 
                 string[] cosmeticArray = { "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU." };
 
@@ -97,15 +98,15 @@ namespace Qubit.Patches.Menu
 
                 yield return new WaitForSeconds(0.1f);
 
-                GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.Others, Fun.PackCosmetics(cosmeticArray), CosmeticsController.instance.currentWornSet.ToPackedIDArray(), false);
-                VRRig.LocalRig.enabled = true;
+                References.MyRigView.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.Others, Fun.PackCosmetics(cosmeticArray), CosmeticsController.instance.currentWornSet.ToPackedIDArray(), false);
+                References.LocalRig.enabled = true;
                 yield return new WaitForSeconds(0.5f);
 
                 CosmeticsController.instance.currentWornSet = new CosmeticsController.CosmeticSet(archiveCosmetics, CosmeticsController.instance);
-                VRRig.LocalRig.LocalUpdateCosmeticsWithTryon(CosmeticsController.instance.currentWornSet, CosmeticsController.instance.tryOnSet, false);
+                References.LocalRig.LocalUpdateCosmeticsWithTryon(CosmeticsController.instance.currentWornSet, CosmeticsController.instance.tryOnSet, false);
 
                 float delay = Time.time + 30f;
-                while (Time.time < delay || NetworkSystem.Instance.InRoom)
+                while (Time.time < delay || References.InRoom)
                     yield return null;
 
                 currentCoroutine = null;

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaTagScripts;
 using HarmonyLib;
 
@@ -32,7 +33,7 @@ namespace Qubit.Patches.Menu
         public static bool Prefix(LurkerGhost __instance, LurkerGhost.ghostState newState) =>
             !(enabled &&
                 newState == LurkerGhost.ghostState.possess &&
-                __instance.targetPlayer == NetworkSystem.Instance.LocalPlayer);
+                __instance.targetPlayer == References.LocalPlayer);
 
     }
 }

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using HarmonyLib;
 using Qubit.Extensions;
@@ -39,9 +40,9 @@ namespace Qubit.Patches.Menu
                 {
                     bool grounded = false;
 
-                    TakeMyHand_HandLink handLink = releasingHand == EquipmentInteractor.instance.leftHand ? VRRig.LocalRig.leftHandLink : VRRig.LocalRig.rightHandLink;
+                    TakeMyHand_HandLink handLink = releasingHand == EquipmentInteractor.instance.leftHand ? References.LocalRig.leftHandLink : References.LocalRig.rightHandLink;
 
-                    HandLinkAuthorityStatus selfHandLinkAuthority = GTPlayer.Instance.TakeMyHand_GetSelfHandLinkAuthority();
+                    HandLinkAuthorityStatus selfHandLinkAuthority = References.Player.TakeMyHand_GetSelfHandLinkAuthority();
                     HandLinkAuthorityStatus selfChainAuthority = handLink.GetChainAuthority(out _);
 
                     if (selfHandLinkAuthority.type >= HandLinkAuthorityType.ButtGrounded && selfChainAuthority.type < selfHandLinkAuthority.type)
@@ -55,7 +56,7 @@ namespace Qubit.Patches.Menu
 
                     if (grounded)
                     {
-                        Vector3 averageVelocity = (handLink.isLeftHand ? GTPlayer.Instance.LeftHand.velocityTracker : GTPlayer.Instance.RightHand.velocityTracker).GetAverageVelocity(true).normalized * 20f;
+                        Vector3 averageVelocity = (handLink.isLeftHand ? References.Player.LeftHand.velocityTracker : References.Player.RightHand.velocityTracker).GetAverageVelocity(true).normalized * 20f;
                         __instance.myRig.GetNetView().SendRPC("DroppedByPlayer", __instance.myRig.GetPlayer(), averageVelocity);
                         __instance.myRig.ApplyLocalTrajectoryOverride(averageVelocity);
                     }

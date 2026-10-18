@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using Qubit.Libraries.Core;
 using Qubit.Modules.Categories;
@@ -38,7 +39,7 @@ namespace Qubit.Modules.Classes
         public GameObject destination;
         public void OnTriggerEnter(Collider other)
         {
-            if (other == GTPlayer.Instance.bodyCollider || other == GTPlayer.Instance.headCollider)
+            if (other == References.Player.bodyCollider || other == References.Player.headCollider)
                 Coroutines.instance.StartCoroutine(Movement.TeleportPortal(destination));
             else if (HasAllowedComponent(other))
                 Coroutines.instance.StartCoroutine(Movement.TeleportObject(other.gameObject, destination));

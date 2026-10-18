@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaGameModes;
 using GorillaNetworking;
 using GorillaTagScripts;
@@ -158,9 +159,9 @@ namespace Qubit.Modules.Categories
 
         public static void Reconnect()
         {
-            string roomName = NetworkSystem.Instance.RoomName;
+            string roomName = References.Network.RoomName;
 
-            NetworkSystem.Instance.ReturnToSinglePlayer();
+            References.Network.ReturnToSinglePlayer();
             QueueRoom(roomName);
         }
 
@@ -169,7 +170,7 @@ namespace Qubit.Modules.Categories
             if (Important.queueCoroutine != null)
                 Coroutines.instance.StopCoroutine(Important.queueCoroutine);
 
-            NetworkSystem.Instance.netState = NetworkSystem.Instance.InRoom ? NetSystemState.InGame : NetSystemState.Idle;
+            References.Network.netState = References.InRoom ? NetSystemState.InGame : NetSystemState.Idle;
 
             partyLastCode = null;
             partyKickReconnecting = false;
@@ -177,34 +178,34 @@ namespace Qubit.Modules.Categories
 
         public static void JoinRandom()
         {
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
-                NetworkSystem.Instance.ReturnToSinglePlayer();
+                References.Network.ReturnToSinglePlayer();
                 Coroutines.instance.StartCoroutine(Important.JoinRandomDelay());
                 return;
             }
 
-            GorillaNetworkJoinTrigger trigger = PhotonNetworkController.Instance.currentJoinTrigger ?? GorillaComputer.instance.GetJoinTriggerForZone("forest");
+            GorillaNetworkJoinTrigger trigger = PhotonNetworkController.Instance.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
             PhotonNetworkController.Instance.AttemptToJoinPublicRoom(trigger);
         }
         public static void CreateRoom(string roomName, bool isPublic, byte roomSize = 0, JoinType roomJoinType = JoinType.Solo)
         {
             if (roomSize > 10 && !roomName.StartsWith("@"))
                 roomName = $"@{roomName}";
-            var netTrigger = PhotonNetworkController.Instance.currentJoinTrigger ?? GorillaComputer.instance.GetJoinTriggerForZone("forest");
+            var netTrigger = PhotonNetworkController.Instance.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
             RoomConfig roomConfig = new RoomConfig
             {
                 createIfMissing = true,
                 isJoinable = true,
                 isPublic = isPublic,
-                MaxPlayers = roomSize == 0 ? RoomSystem.GetRoomSizeForCreate(netTrigger.zone, Enum.Parse<GameModeType>(GorillaComputer.instance.currentGameMode.Value, true), !isPublic, SubscriptionManager.IsLocalSubscribed()) : roomSize,
+                MaxPlayers = roomSize == 0 ? RoomSystem.GetRoomSizeForCreate(netTrigger.zone, Enum.Parse<GameModeType>(References.Computer.currentGameMode.Value, true), !isPublic, SubscriptionManager.IsLocalSubscribed()) : roomSize,
                 CustomProps = new Hashtable
                 {
                     { "platform", PhotonNetworkController.Instance.platformTag },
                     { "gameMode", netTrigger.GetFullDesiredGameModeString() },
                     { "language", LocalisationManager.CurrentLanguage.ToString() },
                     { "fan_club", SubscriptionManager.IsLocalSubscribed() ? "true" : "false" },
-                    { "queueName", GorillaComputer.instance.currentQueue },
+                    { "queueName", References.Computer.currentQueue },
                 }
             };
 
@@ -227,11 +228,11 @@ namespace Qubit.Modules.Categories
 
             if (Overpowered.instantCreate)
             {
-                (NetworkSystem.Instance as NetworkSystemPUN).internalState = NetworkSystemPUN.InternalState.Searching_Creating;
+                (References.Network as NetworkSystemPUN).internalState = NetworkSystemPUN.InternalState.Searching_Creating;
                 _ = Important.ForceCreateRoom(roomName, roomConfig);
             }
             else
-                NetworkSystem.Instance.ConnectToRoom(roomName, roomConfig);
+                References.Network.ConnectToRoom(roomName, roomConfig);
         }
 
         public static string RandomRoomName()
@@ -239,7 +240,7 @@ namespace Qubit.Modules.Categories
             while (true)
             {
                 string text = RandomString();
-                if (GorillaComputer.instance.CheckAutoBanListForName(text))
+                if (References.Computer.CheckAutoBanListForName(text))
                     return text;
             }
         }

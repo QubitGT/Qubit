@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 using Qubit.Modules.Categories;
 using System;
@@ -50,7 +51,7 @@ namespace Qubit.Patches.Menu
                             rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
                             break;
                         case 2:
-                            rotation = Quaternion.Euler(0f, GorillaTagger.Instance.headCollider.transform.rotation.eulerAngles.y + 180f, 0f);
+                            rotation = Quaternion.Euler(0f, References.HeadCollider.transform.rotation.eulerAngles.y + 180f, 0f);
                             break;
                         case 3:
                             rotation = Quaternion.Euler(0f, Movement.recBodyRotary.transform.rotation.eulerAngles.y, 0f);

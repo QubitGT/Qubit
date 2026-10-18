@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
 using HarmonyLib;
@@ -83,7 +84,7 @@ namespace Qubit.Patches.Menu
         {
             public static void Prefix(DeployedChild __instance, DeployableObject parent, Vector3 launchPos, Quaternion launchRot, Vector3 releaseVel, bool isRemote = false)
             {
-                if (enabled && parent.m_VRRig != VRRig.LocalRig && releaseVel.magnitude > 10f)
+                if (enabled && parent.m_VRRig != References.LocalRig && releaseVel.magnitude > 10f)
                     return;
             }
         }

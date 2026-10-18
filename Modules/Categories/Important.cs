@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaExtensions;
 using GorillaNetworking;
 using HarmonyLib;
@@ -87,7 +88,7 @@ namespace Qubit.Modules.Categories
 
         public static IEnumerator QueueRoomCoroutine(string roomName)
         {
-            NetworkSystemPUN instance = (NetworkSystemPUN)NetworkSystem.Instance;
+            NetworkSystemPUN instance = (NetworkSystemPUN)References.Network;
 
             instance.ReturnToSinglePlayer();
             yield return new WaitUntil(() => instance.netState == NetSystemState.Idle);
@@ -110,15 +111,15 @@ namespace Qubit.Modules.Categories
 
         public static async Task ForceCreateRoom(string name, RoomConfig options)
         {
-            if (NetworkSystem.Instance.InRoom)
-                await NetworkSystem.Instance.ReturnToSinglePlayer();
+            if (References.InRoom)
+                await References.Network.ReturnToSinglePlayer();
 
-            await (NetworkSystem.Instance as NetworkSystemPUN).TryCreateRoom(name, options);
+            await (References.Network as NetworkSystemPUN).TryCreateRoom(name, options);
         }
 
         public static void BroadcastRoom(string roomName, bool create, string key, string shuffler)
         {
-            string text = NetworkSystem.ShuffleRoomName(roomName, shuffler.Substring(2, 8), true) + "|" + NetworkSystem.ShuffleRoomName("ABCDEFGHIJKLMNPQRSTUVWXYZ123456789".Substring(NetworkSystem.Instance.currentRegionIndex, 1), shuffler[..2], true);
+            string text = NetworkSystem.ShuffleRoomName(roomName, shuffler.Substring(2, 8), true) + "|" + NetworkSystem.ShuffleRoomName("ABCDEFGHIJKLMNPQRSTUVWXYZ123456789".Substring(References.Network.currentRegionIndex, 1), shuffler[..2], true);
 
             BroadcastMyRoomRequest broadcastMyRoomRequest = new BroadcastMyRoomRequest
             {
@@ -190,7 +191,7 @@ exit";
                 discord.Initialize();
             }
 
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
                 endTime = null;
 
@@ -208,8 +209,8 @@ exit";
             if (Time.time > updateTime)
             {
                 updateTime = Time.time + 1f;
-                bool inRoom = NetworkSystem.Instance.InRoom;
-                string roomName = inRoom ? NetworkSystem.Instance.RoomName : "-";
+                bool inRoom = References.InRoom;
+                string roomName = inRoom ? References.Network.RoomName : "-";
 
                 discord.SetPresence(new RichPresence
                 {
@@ -477,9 +478,9 @@ exit";
                     mediaIcon.GetComponent<Renderer>().material = mediaIconMaterial;
                 }
 
-                mediaIcon.transform.localScale = new Vector3(0.25f, 0.25f, 0.01f) * VRRig.LocalRig.scaleFactor;
-                mediaIcon.transform.position = GorillaTagger.Instance.headCollider.transform.TransformPoint(new Vector3(-0.5f, 0.2f, 1f));
-                mediaIcon.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                mediaIcon.transform.localScale = new Vector3(0.25f, 0.25f, 0.01f) * References.LocalRig.scaleFactor;
+                mediaIcon.transform.position = References.HeadCollider.transform.TransformPoint(new Vector3(-0.5f, 0.2f, 1f));
+                mediaIcon.transform.LookAt(References.HeadCollider.transform.position);
 
                 if (mediaText == null)
                 {
@@ -500,8 +501,8 @@ exit";
                     mediaText = text;
                 }
 
-                mediaText.transform.localScale = Vector3.one * VRRig.LocalRig.scaleFactor;
-                mediaText.transform.position = GorillaTagger.Instance.headCollider.transform.TransformPoint(new Vector3(-0.35f, 0.2f, 1f));
+                mediaText.transform.localScale = Vector3.one * References.LocalRig.scaleFactor;
+                mediaText.transform.position = References.HeadCollider.transform.TransformPoint(new Vector3(-0.35f, 0.2f, 1f));
                 mediaText.transform.LookAt(Camera.main.transform.position);
                 mediaText.transform.Rotate(0f, 180f, 0f);
                 mediaText.transform.position += mediaText.transform.right * mediaText.bounds.size.x;
@@ -597,8 +598,8 @@ exit";
                     TPC.fieldOfView = Mathf.Lerp(TPC.fieldOfView, FOV, 0.1f);
                 }
                 TPC.gameObject.transform.Find("CM vcam1").GetComponent<CinemachineVirtualCamera>().enabled = false;
-                TPC.gameObject.transform.position = UnityEngine.InputSystem.Keyboard.current.cKey.isPressed ? Vector3.Lerp(TPC.transform.position, GorillaTagger.Instance.headCollider.transform.position, 0.1f) : GorillaTagger.Instance.headCollider.transform.position;
-                TPC.gameObject.transform.rotation = Quaternion.Lerp(TPC.transform.rotation, GorillaTagger.Instance.headCollider.transform.rotation, 0.075f);
+                TPC.gameObject.transform.position = UnityEngine.InputSystem.Keyboard.current.cKey.isPressed ? Vector3.Lerp(TPC.transform.position, References.HeadCollider.transform.position, 0.1f) : References.HeadCollider.transform.position;
+                TPC.gameObject.transform.rotation = Quaternion.Lerp(TPC.transform.rotation, References.HeadCollider.transform.rotation, 0.075f);
             }
         }
 
@@ -656,7 +657,7 @@ exit";
                     PrivateUIRoom.overlayForcedSources = 0;
                     if (!TOSPatches.enabled)
                     {
-                        GorillaTagger.Instance.tapHapticStrength = 0.5f;
+                        References.Tagger.tapHapticStrength = 0.5f;
                         GorillaSnapTurn.LoadSettingsFromCache();
                         TOSPatches.enabled = true;
                     }
@@ -703,22 +704,22 @@ exit";
         public static void CopyPlayerPosition()
         {
             string text = "Body\n";
-            Transform p = GorillaTagger.Instance.bodyCollider.transform;
+            Transform p = References.BodyCollider.transform;
             text += $"new Vector3({p.position.x}f, {p.position.y}f, {p.position.z}f);";
             text += $"new Quaternion({p.rotation.x}f, {p.rotation.y}f, {p.rotation.z}f, {p.rotation.w}f);\n\n";
 
             text += "Head\n";
-            p = GorillaTagger.Instance.headCollider.transform;
+            p = References.HeadCollider.transform;
             text += $"new Vector3({p.position.x}f, {p.position.y}f, {p.position.z}f);";
             text += $"new Quaternion({p.rotation.x}f, {p.rotation.y}f, {p.rotation.z}f, {p.rotation.w}f);\n\n";
 
             text += "Left Hand\n";
-            p = VRRig.LocalRig.leftHand.rigTarget.transform;
+            p = References.LocalRig.leftHand.rigTarget.transform;
             text += $"new Vector3({p.position.x}f, {p.position.y}f, {p.position.z}f);";
             text += $"new Quaternion({p.rotation.x}f, {p.rotation.y}f, {p.rotation.z}f, {p.rotation.w}f);\n\n";
 
             text += "Right Hand\n";
-            p = VRRig.LocalRig.rightHand.rigTarget.transform;
+            p = References.LocalRig.rightHand.rigTarget.transform;
             text += $"new Vector3({p.position.x}f, {p.position.y}f, {p.position.z}f);";
             text += $"new Quaternion({p.rotation.x}f, {p.rotation.y}f, {p.rotation.z}f, {p.rotation.w}f);";
 
@@ -786,18 +787,18 @@ exit";
                 Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
                 Physics.Raycast(ray, out var Ray, 512f, NoInvisLayerMask());
 
-                oldLocalPosition ??= GorillaTagger.Instance.rightHandTriggerCollider.transform.localPosition;
-                GorillaTagger.Instance.rightHandTriggerCollider.GetComponent<TransformFollow>().enabled = false;
-                GorillaTagger.Instance.rightHandTriggerCollider.transform.position = Ray.point;
+                oldLocalPosition ??= References.Tagger.rightHandTriggerCollider.transform.localPosition;
+                References.Tagger.rightHandTriggerCollider.GetComponent<TransformFollow>().enabled = false;
+                References.Tagger.rightHandTriggerCollider.transform.position = Ray.point;
             }
             else
             {
                 if (oldLocalPosition != null)
                 {
-                    GorillaTagger.Instance.rightHandTriggerCollider.transform.localPosition = oldLocalPosition.Value;
+                    References.Tagger.rightHandTriggerCollider.transform.localPosition = oldLocalPosition.Value;
                     oldLocalPosition = null;
                 }
-                GorillaTagger.Instance.rightHandTriggerCollider.GetComponent<TransformFollow>().enabled = true;
+                References.Tagger.rightHandTriggerCollider.GetComponent<TransformFollow>().enabled = true;
             }
         }
 
@@ -805,33 +806,33 @@ exit";
         {
             if (oldLocalPosition != null)
             {
-                GorillaTagger.Instance.rightHandTriggerCollider.transform.localPosition = oldLocalPosition.Value;
+                References.Tagger.rightHandTriggerCollider.transform.localPosition = oldLocalPosition.Value;
                 oldLocalPosition = null;
             }
         }
 
         public static void PCControllerEmulation()
         {
-            ControllerInputPoller.instance.rightControllerPrimaryButton |= UnityInput.GetKey(Key.E);
-            ControllerInputPoller.instance.rightControllerSecondaryButton |= UnityInput.GetKey(Key.R);
+            References.InputPoller.rightControllerPrimaryButton |= UnityInput.GetKey(Key.E);
+            References.InputPoller.rightControllerSecondaryButton |= UnityInput.GetKey(Key.R);
 
-            ControllerInputPoller.instance.leftControllerPrimaryButton |= UnityInput.GetKey(Key.F);
-            ControllerInputPoller.instance.leftControllerSecondaryButton |= UnityInput.GetKey(Key.G);
+            References.InputPoller.leftControllerPrimaryButton |= UnityInput.GetKey(Key.F);
+            References.InputPoller.leftControllerSecondaryButton |= UnityInput.GetKey(Key.G);
 
-            ControllerInputPoller.instance.leftGrab |= UnityInput.GetKey(Key.LeftBracket);
-            ControllerInputPoller.instance.leftControllerGripFloat += UnityInput.GetKey(Key.LeftBracket) ? 1f : 0f;
+            References.InputPoller.leftGrab |= UnityInput.GetKey(Key.LeftBracket);
+            References.InputPoller.leftControllerGripFloat += UnityInput.GetKey(Key.LeftBracket) ? 1f : 0f;
 
-            ControllerInputPoller.instance.rightGrab |= UnityInput.GetKey(Key.RightBracket);
-            ControllerInputPoller.instance.rightControllerGripFloat += UnityInput.GetKey(Key.RightBracket) ? 1f : 0f;
+            References.InputPoller.rightGrab |= UnityInput.GetKey(Key.RightBracket);
+            References.InputPoller.rightControllerGripFloat += UnityInput.GetKey(Key.RightBracket) ? 1f : 0f;
 
-            ControllerInputPoller.instance.rightControllerTriggerButton |= UnityInput.GetKey(Key.Equals);
-            ControllerInputPoller.instance.rightControllerIndexFloat += UnityInput.GetKey(Key.Equals) ? 1f : 0f;
+            References.InputPoller.rightControllerTriggerButton |= UnityInput.GetKey(Key.Equals);
+            References.InputPoller.rightControllerIndexFloat += UnityInput.GetKey(Key.Equals) ? 1f : 0f;
 
-            ControllerInputPoller.instance.leftControllerTriggerButton |= UnityInput.GetKey(Key.Minus);
-            ControllerInputPoller.instance.leftControllerIndexFloat += UnityInput.GetKey(Key.Minus) ? 1f : 0f;
+            References.InputPoller.leftControllerTriggerButton |= UnityInput.GetKey(Key.Minus);
+            References.InputPoller.leftControllerIndexFloat += UnityInput.GetKey(Key.Minus) ? 1f : 0f;
 
-            ControllerInputPoller.instance.rightControllerTriggerButton |= UnityInput.GetKey(Key.Equals);
-            ControllerInputPoller.instance.rightControllerIndexFloat += UnityInput.GetKey(Key.Equals) ? 1f : 0f;
+            References.InputPoller.rightControllerTriggerButton |= UnityInput.GetKey(Key.Equals);
+            References.InputPoller.rightControllerIndexFloat += UnityInput.GetKey(Key.Equals) ? 1f : 0f;
         }
 
         // Credits to Zlothy29IQ on GitHub. I saw he made it first and just took it. Thanks. Thanks. Thanks. Thanks
@@ -871,13 +872,13 @@ exit";
             if (currentRegion != region)
                 PhotonNetwork.ConnectToRegion(region);
 
-            NetworkSystem.Instance.currentRegionIndex = Array.IndexOf(NetworkSystem.Instance.regionNames, region);
+            References.Network.currentRegionIndex = Array.IndexOf(References.Network.regionNames, region);
 
-            NetworkSystemPUN punNetwork = (NetworkSystemPUN)NetworkSystem.Instance;
+            NetworkSystemPUN punNetwork = (NetworkSystemPUN)References.Network;
             for (int i = 0; i < punNetwork.regionData.Length; i++)
             {
                 NetworkRegionInfo regionInfo = punNetwork.regionData[i];
-                regionInfo.pingToRegion = Array.IndexOf(NetworkSystem.Instance.regionNames, regionInfo) == i ? 0 : 9999;
+                regionInfo.pingToRegion = Array.IndexOf(References.Network.regionNames, regionInfo) == i ? 0 : 9999;
             }
         }
 

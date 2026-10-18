@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaExtensions;
 using GorillaLocomotion;
 using Photon.Pun;
@@ -109,7 +110,7 @@ namespace Qubit.Modules.Categories
             if (lKeyReference == null)
             {
                 lKeyReference = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                lKeyReference.transform.parent = GorillaTagger.Instance.leftHandTransform;
+                lKeyReference.transform.parent = References.LeftHand;
                 lKeyReference.GetComponent<Renderer>().material.color = backgroundColor.GetColor(0);
                 lKeyReference.transform.localPosition = pointerOffset;
                 lKeyReference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
@@ -122,7 +123,7 @@ namespace Qubit.Modules.Categories
             if (rKeyReference == null)
             {
                 rKeyReference = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                rKeyReference.transform.parent = GorillaTagger.Instance.rightHandTransform;
+                rKeyReference.transform.parent = References.RightHand;
                 rKeyReference.GetComponent<Renderer>().material.color = backgroundColor.GetColor(0);
                 rKeyReference.transform.localPosition = pointerOffset;
                 rKeyReference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
@@ -187,8 +188,8 @@ namespace Qubit.Modules.Categories
 
             TutorialObject = LoadObject<GameObject>("Tutorial");
 
-            TutorialObject.transform.position = GorillaTagger.Instance.bodyCollider.transform.position + GorillaTagger.Instance.bodyCollider.transform.forward * 1f + Vector3.up * 0.25f;
-            TutorialObject.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
+            TutorialObject.transform.position = References.BodyCollider.transform.position + References.BodyCollider.transform.forward * 1f + Vector3.up * 0.25f;
+            TutorialObject.transform.rotation = References.BodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
 
             string videoName = "q2";
             switch (Controllers.GetLeftControllerType())
@@ -220,10 +221,10 @@ namespace Qubit.Modules.Categories
         private static bool lastTrigger;
         public static void UpdateTutorial()
         {
-            if (Vector3.Distance(TutorialObject.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 2f)
+            if (Vector3.Distance(TutorialObject.transform.position, References.BodyCollider.transform.position) > 2f)
             {
-                TutorialObject.transform.position = GorillaTagger.Instance.bodyCollider.transform.position + GorillaTagger.Instance.bodyCollider.transform.forward * 1f + Vector3.up * 0.25f;
-                TutorialObject.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
+                TutorialObject.transform.position = References.BodyCollider.transform.position + References.BodyCollider.transform.forward * 1f + Vector3.up * 0.25f;
+                TutorialObject.transform.rotation = References.BodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
             }
 
             if (TutorialSelector == null)
@@ -243,15 +244,15 @@ namespace Qubit.Modules.Categories
             TutorialSelector.endColor = BrightenColor(new Color32(255, 102, 0, 128));
 
             Vector3 Direction = Controllers.GetTrueRightHand().forward;
-            Physics.Raycast(GorillaTagger.Instance.rightHandTransform.position + Direction / 4f, Direction, out var Ray, 512f, NoInvisLayerMask());
+            Physics.Raycast(References.RightHand.position + Direction / 4f, Direction, out var Ray, 512f, NoInvisLayerMask());
             if (!XRSettings.isDeviceActive)
             {
                 Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
                 Physics.Raycast(ray, out Ray, 512f, NoInvisLayerMask());
             }
 
-            TutorialSelector.SetPosition(0, GorillaTagger.Instance.rightHandTransform.position);
-            TutorialSelector.SetPosition(1, Ray.point == Vector3.zero ? GorillaTagger.Instance.rightHandTransform.position : Ray.point);
+            TutorialSelector.SetPosition(0, References.RightHand.position);
+            TutorialSelector.SetPosition(1, Ray.point == Vector3.zero ? References.RightHand.position : Ray.point);
 
             if ((rightTrigger > 0.5f || Mouse.current.leftButton.isPressed) && !lastTrigger)
             {
@@ -320,16 +321,16 @@ namespace Qubit.Modules.Categories
             string blue = ", <color=blue>" + MathF.Floor(PlayerPrefs.GetFloat("blueValue") * 255f) + "</color>";
             Manager.GetIndex("DebugColor").overlapText = "Color: " + red + green + blue;
 
-            string master = NetworkSystem.Instance.InRoom && PhotonNetwork.IsMasterClient ? "<color=red> [Master]</color>" : "";
+            string master = References.InRoom && PhotonNetwork.IsMasterClient ? "<color=red> [Master]</color>" : "";
             Manager.GetIndex("DebugName").overlapText = PhotonNetwork.LocalPlayer.NickName + master;
 
             Manager.GetIndex("DebugId").overlapText = "<color=green>ID: </color>" + (hideId ? "Hidden" : PhotonNetwork.LocalPlayer.UserId);
             Manager.GetIndex("DebugClip").overlapText = "<color=green>Clip: </color>" + (GUIUtility.systemCopyBuffer.Length > 25 ? GUIUtility.systemCopyBuffer[..25] : GUIUtility.systemCopyBuffer);
             Manager.GetIndex("DebugFps").overlapText = "<b>" + lastDeltaTime + "</b> FPS <b>" + PhotonNetwork.GetPing() + "</b> Ping";
-            Manager.GetIndex("DebugRoomA").overlapText = "<color=blue>" + NetworkSystem.Instance.regionNames[NetworkSystem.Instance.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " Players";
+            Manager.GetIndex("DebugRoomA").overlapText = "<color=blue>" + References.Network.regionNames[References.Network.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " Players";
 
-            string priv = NetworkSystem.Instance.InRoom ? NetworkSystem.Instance.SessionIsPrivate ? "Private" : "Public" : "";
-            Manager.GetIndex("DebugRoomB").overlapText = "<color=blue>" + priv + "</color> " + (NetworkSystem.Instance.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room");
+            string priv = References.InRoom ? References.Network.SessionIsPrivate ? "Private" : "Public" : "";
+            Manager.GetIndex("DebugRoomB").overlapText = "<color=blue>" + priv + "</color> " + (References.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room");
         }
         public static void HideDebug()
         {
@@ -358,13 +359,13 @@ namespace Qubit.Modules.Categories
                 }
             };
 
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 buttons.Add(new Module { buttonText = "Not in a Room", label = true, legal = true });
             else
             {
-                for (int i = 0; i < NetworkSystem.Instance.PlayerListOthers.Length; i++)
+                for (int i = 0; i < References.Network.PlayerListOthers.Length; i++)
                 {
-                    NetPlayer player = NetworkSystem.Instance.PlayerListOthers[i];
+                    NetPlayer player = References.Network.PlayerListOthers[i];
                     string playerColor = "#ffffff";
                     try
                     {
@@ -556,7 +557,7 @@ namespace Qubit.Modules.Categories
                         new Module {
                             buttonText = "Admin Bring Player",
                             overlapText = $"Admin Bring {targetName}",
-                            method =() => Console.ExecuteCommand("tp", player.ActorNumber, GorillaTagger.Instance.headCollider.transform.position),
+                            method =() => Console.ExecuteCommand("tp", player.ActorNumber, References.HeadCollider.transform.position),
                             isTogglable = false,
                             toolTip = $"Brings {targetName} to you if they're using the menu.",
                             legal = true
@@ -722,16 +723,16 @@ namespace Qubit.Modules.Categories
                     .Select(rig => rig.Creator.ActorNumber)
                     .ToArray();
 
-                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
-                Vector3 positionArchive = VRRig.LocalRig.transform.position;
-                SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = normalArs });
+                Vector3 positionArchive = References.LocalRig.transform.position;
+                SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = normalArs });
 
-                VRRig.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
-                SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = blockedArs });
+                References.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
+                SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = blockedArs });
 
                 RPCProtection();
-                VRRig.LocalRig.transform.position = positionArchive;
+                References.LocalRig.transform.position = positionArchive;
 
                 return false;
             };
@@ -3860,10 +3861,10 @@ exit 0";
             if (physicalMenu ? isMenuButtonHeld : menu != null)
             {
                 if (closePosition == Vector3.zero)
-                    closePosition = GorillaTagger.Instance.rigidbody.transform.position;
+                    closePosition = References.Rigidbody.transform.position;
                 else
-                    GorillaTagger.Instance.rigidbody.transform.position = closePosition;
-                GorillaTagger.Instance.rigidbody.linearVelocity = new Vector3(0f, 0f, 0f);
+                    References.Rigidbody.transform.position = closePosition;
+                References.Rigidbody.linearVelocity = new Vector3(0f, 0f, 0f);
             }
             else
                 closePosition = Vector3.zero;
@@ -3877,7 +3878,7 @@ exit 0";
                 if (!currentmentalstate)
                 {
                     currentmentalstate = true;
-                    VRRig.LocalRig.enabled = false;
+                    References.LocalRig.enabled = false;
                 }
             }
             else
@@ -3885,7 +3886,7 @@ exit 0";
                 if (currentmentalstate)
                 {
                     currentmentalstate = false;
-                    VRRig.LocalRig.enabled = true;
+                    References.LocalRig.enabled = true;
                 }
             }
         }
@@ -4736,7 +4737,7 @@ exit 0";
                         .GetOrAddComponent<LineRenderer>();
 
                     clickGuiLine.material = new Material(Shader.Find("GUI/Text Shader"));
-                    clickGuiLine.startWidth = 0.025f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+                    clickGuiLine.startWidth = 0.025f * (scaleWithPlayer ? References.Player.scale : 1f);
                     clickGuiLine.endWidth = clickGuiLine.startWidth;
                     clickGuiLine.useWorldSpace = true;
                     clickGuiLine.positionCount = 2;
@@ -4756,15 +4757,15 @@ exit 0";
 
                 pointerData ??= new PointerEventData(eventSystem);
 
-                bool useLeft = rightHand || (bothHands && ControllerInputPoller.instance.rightControllerSecondaryButton);
+                bool useLeft = rightHand || (bothHands && References.InputPoller.rightControllerSecondaryButton);
 
                 var (_, _, _, forward, _) = useLeft
                     ? Controllers.GetTrueLeftHand()
                     : Controllers.GetTrueRightHand();
 
                 Vector3 startPos = useLeft
-                    ? GorillaTagger.Instance.leftHandTransform.position
-                    : GorillaTagger.Instance.rightHandTransform.position;
+                    ? References.LeftHand.position
+                    : References.RightHand.position;
 
                 Vector3 direction = forward.normalized;
 
@@ -4873,10 +4874,10 @@ exit 0";
         {
             if (XRSettings.isDeviceActive)
             {
-                bool leftHand = rightHand || (bothHands && ControllerInputPoller.instance.rightControllerSecondaryButton);
+                bool leftHand = rightHand || (bothHands && References.InputPoller.rightControllerSecondaryButton);
 
                 var (_, _, _, forward, _) = leftHand ? Controllers.GetTrueLeftHand() : Controllers.GetTrueRightHand();
-                bool canSelect = NetworkSystem.Instance.InRoom && menu != null && reference != null && Vector3.Distance(menu.transform.position, reference.transform.position) > 0.5f;
+                bool canSelect = References.InRoom && menu != null && reference != null && Vector3.Distance(menu.transform.position, reference.transform.position) > 0.5f;
 
                 if (canSelect)
                 {
@@ -4891,8 +4892,8 @@ exit 0";
                     pingLine.material.shader = Shader.Find("GUI/Text Shader");
                     pingLine.startColor = lineColor;
                     pingLine.endColor = lineColor;
-                    pingLine.startWidth = 0.025f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
-                    pingLine.endWidth = 0.025f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+                    pingLine.startWidth = 0.025f * (scaleWithPlayer ? References.Player.scale : 1f);
+                    pingLine.endWidth = 0.025f * (scaleWithPlayer ? References.Player.scale : 1f);
                     pingLine.positionCount = 2;
                     pingLine.useWorldSpace = true;
                     if (smoothLines)
@@ -4901,10 +4902,10 @@ exit 0";
                         pingLine.numCornerVertices = 5;
                     }
 
-                    Vector3 StartPosition = leftHand ? GorillaTagger.Instance.leftHandTransform.position : GorillaTagger.Instance.rightHandTransform.position;
+                    Vector3 StartPosition = leftHand ? References.LeftHand.position : References.RightHand.position;
                     Vector3 Direction = forward;
 
-                    Physics.SphereCast(StartPosition + Direction / 4f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f), 0.15f, Direction, out var Ray, 512f, NoInvisLayerMask());
+                    Physics.SphereCast(StartPosition + Direction / 4f * (scaleWithPlayer ? References.Player.scale : 1f), 0.15f, Direction, out var Ray, 512f, NoInvisLayerMask());
                     Vector3 EndPosition = Ray.point == Vector3.zero ? StartPosition + (Direction * 512f) : Ray.point;
 
                     pingLine.SetPosition(0, StartPosition);
@@ -4929,7 +4930,7 @@ exit 0";
                             rigTarget.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
                             rigTarget.mainSkin.material.color = targetColor;
 
-                            GorillaTagger.Instance.StartVibration(leftHand, GorillaTagger.Instance.tagHapticStrength / 2f, 0.05f);
+                            References.Tagger.StartVibration(leftHand, References.Tagger.tagHapticStrength / 2f, 0.05f);
 
                             lastTarget = rigTarget;
                         }
@@ -4940,8 +4941,8 @@ exit 0";
 
                         if (trigger && !lastTriggerSelect)
                         {
-                            VRRig.LocalRig.PlayHandTapLocal(50, leftHand, 0.4f);
-                            GorillaTagger.Instance.StartVibration(leftHand, GorillaTagger.Instance.tagHapticStrength / 2f, GorillaTagger.Instance.tagHapticDuration / 2f);
+                            References.LocalRig.PlayHandTapLocal(50, leftHand, 0.4f);
+                            References.Tagger.StartVibration(leftHand, References.Tagger.tagHapticStrength / 2f, References.Tagger.tagHapticDuration / 2f);
 
                             NavigatePlayer(GetPlayerFromVRRig(rigTarget));
                             ReloadMenu();
@@ -4995,8 +4996,8 @@ exit 0";
 
             GameObject menuIntro = LoadObject<GameObject>("Intro");
 
-            menuIntro.transform.position = GorillaTagger.Instance.bodyCollider.transform.position;
-            menuIntro.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation;
+            menuIntro.transform.position = References.BodyCollider.transform.position;
+            menuIntro.transform.rotation = References.BodyCollider.transform.rotation;
 
             VideoPlayer videoPlayer = menuIntro.transform.Find("Video").GetComponent<VideoPlayer>();
             ParticleSystem particleSystem = menuIntro.transform.Find("Particles").GetComponent<ParticleSystem>();
@@ -5652,9 +5653,9 @@ exit 0";
             Manager.GetIndex("Change Button Sound").value = newSound;
 
             if (!fromMenu) return;
-            if (VRRig.LocalRig == null) return;
-            if (VRRig.LocalRig.leftHandPlayer != null) VRRig.LocalRig.leftHandPlayer.Stop();
-            if (VRRig.LocalRig.rightHandPlayer != null) VRRig.LocalRig.rightHandPlayer.Stop();
+            if (References.LocalRig == null) return;
+            if (References.LocalRig.leftHandPlayer != null) References.LocalRig.leftHandPlayer.Stop();
+            if (References.LocalRig.rightHandPlayer != null) References.LocalRig.rightHandPlayer.Stop();
 
             Sounds.Play(Sounds.DefaultSounds["Button"]);
         }
@@ -5662,9 +5663,9 @@ exit 0";
         public static void ApplyButtonVolume(int index) => buttonClickVolume = index;
         public static void PreviewButtonVolume(bool positive)
         {
-            if (VRRig.LocalRig == null) return;
-            VRRig.LocalRig.leftHandPlayer.Stop();
-            VRRig.LocalRig.rightHandPlayer.Stop();
+            if (References.LocalRig == null) return;
+            References.LocalRig.leftHandPlayer.Stop();
+            References.LocalRig.rightHandPlayer.Stop();
             Sounds.Play(Sounds.DefaultSounds["Button"]);
         }
         public static void ApplyMenuSoundpack(string packName) => Sounds.DefaultSoundpack = packName;
@@ -5687,14 +5688,14 @@ exit 0";
             string greenS = ", <color=green>" + MathF.Round(PlayerPrefs.GetFloat("greenValue") * 9f) + "</color>";
             string blueS = ", <color=blue>" + MathF.Round(PlayerPrefs.GetFloat("blueValue") * 9f) + "</color>";
             text += "<color=green>Color</color><color=grey>:</color> " + red + green + blue + " <color=grey>[</color>" + redS + greenS + blueS + "<color=grey>]</color>\\n";
-            string master = NetworkSystem.Instance.InRoom && PhotonNetwork.IsMasterClient ? "<color=grey> [</color><color=red>Master</color><color=grey>]</color>" : "";
+            string master = References.InRoom && PhotonNetwork.IsMasterClient ? "<color=grey> [</color><color=red>Master</color><color=grey>]</color>" : "";
             text += "<color=green>Name</color><color=grey>:</color> " + PhotonNetwork.LocalPlayer?.NickName + master + "\\n";
             text += "<color=green>ID</color><color=grey>:</color> " + (Settings.hideId ? "Hidden" : PhotonNetwork.LocalPlayer?.UserId) + "\\n";
             string clip = GUIUtility.systemCopyBuffer;
             text += "<color=green>Clip</color><color=grey>:</color> " + (clip?.Length > 35 ? clip[..35] : clip) + "\\n";
             text += lastDeltaTime + " <color=green>FPS</color> <color=grey>|</color> " + PhotonNetwork.GetPing() + " <color=green>Ping</color>\\n";
-            string room = NetworkSystem.Instance.InRoom ? NetworkSystem.Instance.SessionIsPrivate ? "Private" : "Public" : "Not in room";
-            text += "<color=green>" + NetworkSystem.Instance.regionNames[NetworkSystem.Instance.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " <color=green>Players</color> <color=grey>|</color> " + room + "\\n \\n";
+            string room = References.InRoom ? References.Network.SessionIsPrivate ? "Private" : "Public" : "Not in room";
+            text += "<color=green>" + References.Network.regionNames[References.Network.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " <color=green>Players</color> <color=grey>|</color> " + room + "\\n \\n";
             string admin = "";
             if (Time.time > 5f)
             {

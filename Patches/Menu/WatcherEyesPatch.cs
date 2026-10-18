@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using HarmonyLib;
 using UnityEngine;
@@ -34,7 +35,7 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                Quaternion normalized = Quaternion.LookRotation((GTPlayer.Instance.headCollider.transform.position - __instance.transform.position).normalized);
+                Quaternion normalized = Quaternion.LookRotation((References.Player.headCollider.transform.position - __instance.transform.position).normalized);
                 __instance.leftEye.transform.rotation = normalized;
                 __instance.rightEye.transform.rotation = normalized;
                 return false;

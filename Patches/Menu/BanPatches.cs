@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using HarmonyLib;
 using PlayFab;
@@ -69,19 +70,19 @@ namespace Qubit.Patches.Menu
                 nameToCheck = nameToCheck.ToLower();
                 nameToCheck = new string(Array.FindAll<char>(nameToCheck.ToCharArray(), (char c) => char.IsLetterOrDigit(c)));
 
-                foreach (string twoWeekNames in GorillaComputer.instance.anywhereTwoWeek)
+                foreach (string twoWeekNames in References.Computer.anywhereTwoWeek)
                 {
                     if (nameToCheck.IndexOf(twoWeekNames) >= 0)
                         return false;
                 }
 
-                foreach (string oneWeekNames in GorillaComputer.instance.anywhereOneWeek)
+                foreach (string oneWeekNames in References.Computer.anywhereOneWeek)
                 {
                     if (nameToCheck.IndexOf(oneWeekNames) >= 0 && !nameToCheck.Contains("fagol"))
                         return false;
                 }
 
-                string[] exactNames = GorillaComputer.instance.exactOneWeek;
+                string[] exactNames = References.Computer.exactOneWeek;
                 for (int i = 0; i < exactNames.Length; i++)
                 {
                     if (exactNames[i] == nameToCheck)
@@ -142,13 +143,13 @@ namespace Qubit.Patches.Menu
                     }
 
                     callRequestContainer.ErrorCallback = overrideError;
-                    if (!NetworkSystem.Instance.InRoom)
+                    if (!References.InRoom)
                         Task.Run(async () =>
                         {
-                            while (GorillaComputer.instance == null)
+                            while (References.Computer == null)
                                 await Task.Delay(16);
 
-                            GorillaComputer.instance.GeneralFailureMessage(fakeError.ErrorMessage);
+                            References.Computer.GeneralFailureMessage(fakeError.ErrorMessage);
                         });
                 }
 

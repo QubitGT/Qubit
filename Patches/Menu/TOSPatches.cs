@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 using System.Threading.Tasks;
 
@@ -35,7 +36,7 @@ namespace Qubit.Patches.Menu
             {
                 if (enabled)
                 {
-                    ControllerInputPoller.instance.leftControllerPrimary2DAxis.y = -1f;
+                    References.InputPoller.leftControllerPrimary2DAxis.y = -1f;
                     __instance.scrollSpeed = 10f;
                     __instance._maxScrollSpeed = 10f;
                     return false;
@@ -52,7 +53,7 @@ namespace Qubit.Patches.Menu
                 if (enabled)
                 {
                     __instance.TurnPage(999);
-                    ControllerInputPoller.instance.leftControllerPrimary2DAxis.y = -1f;
+                    References.InputPoller.leftControllerPrimary2DAxis.y = -1f;
                     __instance.holdTime = 0.1f;
                     return false;
                 }

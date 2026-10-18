@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 using System.Collections.Generic;
 using UnityEngine;
@@ -41,7 +42,7 @@ namespace Qubit.Patches.Menu
                 for (int i = 0; i < entities.Count; i++)
                 {
                     GameEntity entity = entities[i];
-                    if (entity != null && __instance.ValidateGrab(entity, NetworkSystem.Instance.LocalPlayer.ActorNumber, isLeftHand))
+                    if (entity != null && __instance.ValidateGrab(entity, References.LocalPlayer.ActorNumber, isLeftHand))
                     {
                         double reach = 16;
 

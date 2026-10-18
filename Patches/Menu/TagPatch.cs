@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaGameModes;
 using HarmonyLib;
 using Qubit.Extensions;
@@ -44,7 +45,7 @@ namespace Qubit.Patches.Menu
 
         public static void Postfix(NetPlayer player)
         {
-            if (enabled && NetworkSystem.Instance.InRoom)
+            if (enabled && References.InRoom)
             {
                 if (Time.time > tagDelay)
                 {

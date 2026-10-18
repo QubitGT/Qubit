@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -109,7 +110,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public static void KillAll()
         {
             if (!(Time.time > killDelay)) return;
-            foreach (NetPlayer player in NetworkSystem.Instance.PlayerListOthers)
+            foreach (NetPlayer player in References.Network.PlayerListOthers)
                 KillPlayer(player.ActorNumber);
 
             killDelay = Time.time + 0.1f;
@@ -238,12 +239,12 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
             if (Time.time < crashDelay)
                 return;
 
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
+                if (Vector3.Distance(vrrig.transform.position, References.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -260,7 +261,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         {
             if (Time.time < crashDelay)
                 return;
-            foreach (var netPlayer in from rig in Players.ActiveRigs where !rig.isLocal && (Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f) select rig.GetPlayer())
+            foreach (var netPlayer in from rig in Players.ActiveRigs where !rig.isLocal && (Vector3.Distance(References.LeftHand.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(References.RightHand.position, rig.headMesh.transform.position) < 0.25f) select rig.GetPlayer())
             {
                 CrashPlayer(netPlayer.ActorNumber);
                 crashDelay = Time.time + 0.2f;
@@ -270,7 +271,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         {
             if (Time.time < crashDelay)
                 return;
-            foreach (var player in from vrrig in Players.ActiveRigs where !vrrig.isMyPlayer && !vrrig.isOfflineVRRig && (Vector3.Distance(vrrig.rightHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.leftHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.transform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5) select GetPlayerFromVRRig(vrrig))
+            foreach (var player in from vrrig in Players.ActiveRigs where !vrrig.isMyPlayer && !vrrig.isOfflineVRRig && (Vector3.Distance(vrrig.rightHandTransform.position, References.Tagger.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.leftHandTransform.position, References.Tagger.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.transform.position, References.Tagger.offlineVRRig.transform.position) <= 0.5) select GetPlayerFromVRRig(vrrig))
             {
                 CrashPlayer(player.ActorNumber);
                 crashDelay = Time.time + 0.2f;
@@ -279,7 +280,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public static void CrashAll()
         {
             if (!(Time.time > crashDelay)) return;
-            foreach (NetPlayer player in NetworkSystem.Instance.PlayerListOthers)
+            foreach (NetPlayer player in References.Network.PlayerListOthers)
                 CrashPlayer(player.ActorNumber);
 
             crashDelay = Time.time + 0.1f;

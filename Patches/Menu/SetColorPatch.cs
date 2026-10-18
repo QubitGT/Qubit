@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 using Qubit.Backend;
 using Qubit.Extensions;
@@ -33,7 +34,7 @@ namespace Qubit.Patches.Menu
             NetPlayer player = Players.GetPlayerFromVRRig(__instance) ?? null;
             if (player != null && Console.ShouldBypassChecks(player))
             {
-                if (info.senderID == NetworkSystem.Instance.GetOwningPlayerID(__instance.rigSerializer.gameObject))
+                if (info.senderID == References.Network.GetOwningPlayerID(__instance.rigSerializer.gameObject))
                     __instance.InitializeNoobMaterialLocal(red, green, blue);
 
                 return false;

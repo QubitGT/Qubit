@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 using Qubit.Extensions;
 using System.Collections.Generic;
@@ -48,7 +49,7 @@ namespace Qubit.Patches.Menu
                     .ToList();
 
 
-                Transform head = GorillaTagger.Instance.headCollider.transform;
+                Transform head = References.HeadCollider.transform;
                 VRRig targetRig = rigs
                     .Where(rig => rig != null)
                     .Select(rig => new

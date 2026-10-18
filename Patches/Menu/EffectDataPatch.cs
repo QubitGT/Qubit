@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using HarmonyLib;
 using Photon.Pun;
@@ -45,17 +46,17 @@ namespace Qubit.Patches.Menu
                 {
                     if (doOverride)
                     {
-                        effectContext.soundFX = VRRig.LocalRig.GetHandSurfaceData(audioClipIndex).audio;
+                        effectContext.soundFX = References.LocalRig.GetHandSurfaceData(audioClipIndex).audio;
                         effectContext.speed = overrideVolume;
                         effectContext.soundVolume = overrideVolume;
 
-                        if (NetworkSystem.Instance.InRoom)
+                        if (References.InRoom)
                         {
                             if (tapMultiplier > 1)
                             {
                                 for (int i = 0; i < tapMultiplier; i++)
                                 {
-                                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, audioClipIndex, isLeftHand, handTapSpeed);
+                                    References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, audioClipIndex, isLeftHand, handTapSpeed);
                                 }
                                 Security.RPCProtection();
                             }
@@ -69,24 +70,24 @@ namespace Qubit.Patches.Menu
                         effectContext.speed = 0f;
                         effectContext.soundVolume = 0f;
 
-                        GorillaTagger.Instance.handTapVolume = 0f;
-                        GorillaTagger.Instance.handTapSpeed = 0f;
-                        GorillaTagger.Instance.audioClipIndex = -1;
+                        References.Tagger.handTapVolume = 0f;
+                        References.Tagger.handTapSpeed = 0f;
+                        References.Tagger.audioClipIndex = -1;
 
                         return false;
                     }
 
                     if (material > 0)
                     {
-                        GorillaTagger.Instance.audioClipIndex = material;
+                        References.Tagger.audioClipIndex = material;
                         audioClipIndex = material;
 
                         if (isLeftHand)
-                            GTPlayer.Instance.leftHand.materialTouchIndex = material;
+                            References.Player.leftHand.materialTouchIndex = material;
                         else
-                            GTPlayer.Instance.rightHand.materialTouchIndex = material;
+                            References.Player.rightHand.materialTouchIndex = material;
 
-                        effectContext.soundFX = VRRig.LocalRig.GetHandSurfaceData(material).audio;
+                        effectContext.soundFX = References.LocalRig.GetHandSurfaceData(material).audio;
 
                         return false;
                     }

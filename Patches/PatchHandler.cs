@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using HarmonyLib;
 using Qubit.Libraries.Core;
@@ -337,9 +338,9 @@ namespace Qubit.Patches
                 {
                     string message = "A critical patch has failed, and you have been blocked from joining rooms for safety reasons. Please report this as an issue to the GitHub repository.";
                     Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> {message}", 10000);
-                    GorillaComputer.instance.GeneralFailureMessage(message);
-                    if (NetworkSystem.Instance.InRoom)
-                        NetworkSystem.Instance.ReturnToSinglePlayer();
+                    References.Computer.GeneralFailureMessage(message);
+                    if (References.InRoom)
+                        References.Network.ReturnToSinglePlayer();
                 }
                 else
                     Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> {PatchErrors} patch{(PatchErrors > 1 ? "es" : "")} failed to initialize. Please report this as an issue to the GitHub repository.", 10000);

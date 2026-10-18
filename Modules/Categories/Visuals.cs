@@ -176,7 +176,7 @@ namespace Qubit.Modules.Categories
 
         public static void CoreESP()
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -199,7 +199,7 @@ namespace Qubit.Modules.Categories
 
         public static void CritterESP()
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -222,7 +222,7 @@ namespace Qubit.Modules.Categories
 
         public static void CreatureESP()
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -245,7 +245,7 @@ namespace Qubit.Modules.Categories
 
         public static void EnemyESP()
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -268,7 +268,7 @@ namespace Qubit.Modules.Categories
 
         public static void ResourceESP()
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -307,7 +307,7 @@ namespace Qubit.Modules.Categories
         private static float removeBlindfoldDelay;
         public static void RemoveBlindfold()
         {
-            if (NetworkSystem.Instance.InRoom && Time.time > removeBlindfoldDelay)
+            if (References.InRoom && Time.time > removeBlindfoldDelay)
             {
                 removeBlindfoldDelay = Time.time + 0.5f;
                 GameObject mainCamera = GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/Main Camera");
@@ -418,10 +418,10 @@ namespace Qubit.Modules.Categories
 
         public static void InstantiateWatch()
         {
-            GameObject mainwatch = VRRig.LocalRig.transform.Find("rig/hand.L/huntcomputer (1)").gameObject;
+            GameObject mainwatch = References.LocalRig.transform.Find("rig/hand.L/huntcomputer (1)").gameObject;
             GameObject watch = Object.Instantiate(mainwatch,
-                rightHand ? VRRig.LocalRig.transform.Find("rig/hand.R").transform
-                          : VRRig.LocalRig.transform.Find("rig/hand.L").transform, false);
+                rightHand ? References.LocalRig.transform.Find("rig/hand.R").transform
+                          : References.LocalRig.transform.Find("rig/hand.L").transform, false);
 
             Object.DestroyImmediate(watch.GetComponent<GorillaHuntComputer>());
 
@@ -491,7 +491,7 @@ namespace Qubit.Modules.Categories
                     watchText += DateTime.Now.ToString("hh:mm tt") + "\n";
 
                 if (infoWatchCode)
-                    watchText += (NetworkSystem.Instance.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room") + "\n";
+                    watchText += (References.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room") + "\n";
 
                 if (infoWatchClip)
                 {
@@ -560,7 +560,7 @@ namespace Qubit.Modules.Categories
 
                 trailRenderer.emitting = GetGunInput(true);
                 trailRenderer.gameObject.transform.position = NewPointer.transform.position;
-            }, new GunLibrary.GunSettings { layerMask = GTPlayer.Instance.locomotionEnabledLayers });
+            }, new GunLibrary.GunSettings { layerMask = References.Player.locomotionEnabledLayers });
         }
 
         public static void DisableDrawGun()
@@ -582,7 +582,7 @@ namespace Qubit.Modules.Categories
             if (rig.isLocal)
                 return;
 
-            if (Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, position) > 20f)
+            if (Vector3.Distance(References.BodyCollider.transform.position, position) > 20f)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -610,7 +610,7 @@ namespace Qubit.Modules.Categories
 
             Renderer renderer = cube.GetComponent<Renderer>();
             renderer.material = tapMat;
-            renderer.material.mainTexture = (VRRig.LocalRig.IsTagged() == rig.IsTagged()) ? tapTxt : warningTxt;
+            renderer.material.mainTexture = (References.LocalRig.IsTagged() == rig.IsTagged()) ? tapTxt : warningTxt;
 
             Color targetColor = rig.GetColor();
             if (fmt) targetColor = backgroundColor.GetCurrentColor();
@@ -721,7 +721,7 @@ namespace Qubit.Modules.Categories
                 if (Manager.GetIndex("Hidden Labels").enabled)
                     go.layer = 19;
 
-                go.transform.localScale = Vector3.one * (0.25f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f));
+                go.transform.localScale = Vector3.one * (0.25f * (scaleWithPlayer ? References.Player.scale : 1f));
 
                 labelDictionary.Add(codeName, go);
             }
@@ -737,7 +737,7 @@ namespace Qubit.Modules.Categories
 
             TextMeshPro.SafeSetText(text);
 
-            go.transform.position = (leftHand ? GorillaTagger.Instance.leftHandTransform : GorillaTagger.Instance.rightHandTransform).position + Vector3.up * (GetLabelDistance(leftHand) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f));
+            go.transform.position = (leftHand ? References.LeftHand : References.RightHand).position + Vector3.up * (GetLabelDistance(leftHand) * (scaleWithPlayer ? References.Player.scale : 1f));
             go.transform.LookAt(Camera.main.transform.position);
             go.transform.Rotate(0f, 180f, 0f);
         }
@@ -760,11 +760,11 @@ namespace Qubit.Modules.Categories
 
         public static void ExtraRoomInfo(bool? overlapInRoom = null)
         {
-            if (overlapInRoom ?? NetworkSystem.Instance.InRoom)
+            if (overlapInRoom ?? References.InRoom)
             {
-                NetworkSystem.Instance.CurrentRoom.CustomProps.TryGetValue("platform", out var platform);
-                NetworkSystem.Instance.CurrentRoom.CustomProps.TryGetValue("language", out var language);
-                NetworkSystem.Instance.CurrentRoom.CustomProps.TryGetValue("mmrTier", out var mmrTier);
+                References.Network.CurrentRoom.CustomProps.TryGetValue("platform", out var platform);
+                References.Network.CurrentRoom.CustomProps.TryGetValue("language", out var language);
+                References.Network.CurrentRoom.CustomProps.TryGetValue("mmrTier", out var mmrTier);
 
                 Notifications.information["Language"] = language?.ToString() ?? "Unknown";
                 Notifications.information["Platform"] = platform?.ToString() ?? "Unknown";
@@ -787,8 +787,8 @@ namespace Qubit.Modules.Categories
             (
                 "Velocity",
                 false,
-                $"{GorillaTagger.Instance.rigidbody.linearVelocity.magnitude:F1}m/s",
-                GorillaTagger.Instance.rigidbody.linearVelocity.magnitude >= GTPlayer.Instance.maxJumpSpeed ? Color.green : Color.white
+                $"{References.Rigidbody.linearVelocity.magnitude:F1}m/s",
+                References.Rigidbody.linearVelocity.magnitude >= References.Player.maxJumpSpeed ? Color.green : Color.white
             );
         }
 
@@ -810,13 +810,13 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
                 bool isThereTagged = InfectedList().Count > 0;
 
                 if (isThereTagged)
                 {
-                    bool playerIsTagged = VRRig.LocalRig.IsTagged();
+                    bool playerIsTagged = References.LocalRig.IsTagged();
                     switch (playerIsTagged)
                     {
                         case true when !lastWasTagged:
@@ -845,7 +845,7 @@ namespace Qubit.Modules.Categories
         public static void PingOverlay()
         {
             VRRig masterRig = PhotonNetwork.MasterClient?.VRRig();
-            if (!NetworkSystem.Instance.InRoom || PhotonNetwork.IsMasterClient || masterRig == null || !playerPing.ContainsKey(masterRig))
+            if (!References.InRoom || PhotonNetwork.IsMasterClient || masterRig == null || !playerPing.ContainsKey(masterRig))
             {
                 Notifications.information["Ping"] = PhotonNetwork.GetPing() + "ms";
                 return;
@@ -861,9 +861,9 @@ namespace Qubit.Modules.Categories
             float closest = float.MaxValue;
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (vrrig.IsTagged() != VRRig.LocalRig.IsTagged())
+                if (vrrig.IsTagged() != References.LocalRig.IsTagged())
                 {
-                    float dist = Vector3.Distance(GorillaTagger.Instance.headCollider.transform.position, vrrig.headMesh.transform.position);
+                    float dist = Vector3.Distance(References.HeadCollider.transform.position, vrrig.headMesh.transform.position);
                     if (dist < closest)
                         closest = dist;
                 }
@@ -948,14 +948,14 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (!VRRig.LocalRig.IsTagged())
+            if (!References.LocalRig.IsTagged())
             {
                 float closest = float.MaxValue;
                 foreach (VRRig vrrig in Players.ActiveRigs)
                 {
-                    if (vrrig.IsTagged() != VRRig.LocalRig.IsTagged())
+                    if (vrrig.IsTagged() != References.LocalRig.IsTagged())
                     {
-                        float dist = Vector3.Distance(GorillaTagger.Instance.headCollider.transform.position, vrrig.headMesh.transform.position);
+                        float dist = Vector3.Distance(References.HeadCollider.transform.position, vrrig.headMesh.transform.position);
                         if (dist < closest)
                             closest = dist;
                     }
@@ -984,7 +984,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
                 bool isThereTagged = InfectedList().Count > 0;
                 int left = PhotonNetwork.PlayerList.Length - InfectedList().Count;
@@ -996,7 +996,7 @@ namespace Qubit.Modules.Categories
                         "LastLabel",
                         true,
                         left + " left",
-                        left <= 1 && !VRRig.LocalRig.IsTagged() ? Color.green : Color.white
+                        left <= 1 && !References.LocalRig.IsTagged() ? Color.green : Color.white
                     );
                 }
             }
@@ -1006,8 +1006,8 @@ namespace Qubit.Modules.Categories
         {
             PhotonNetworkController.Instance.UpdateTriggerScreens();
             GorillaScoreboardTotalUpdater.instance.ClearOfflineFailureText();
-            GorillaComputer.instance.screenText.DisableFailedState();
-            GorillaComputer.instance.functionSelectText.DisableFailedState();
+            References.Computer.screenText.DisableFailedState();
+            References.Computer.functionSelectText.DisableFailedState();
         }
 
         private static GameObject visualizerObject;
@@ -1025,12 +1025,12 @@ namespace Qubit.Modules.Categories
             visualizerObject.GetComponent<Renderer>().material.color = backgroundColor.GetCurrentColor();
             visualizerOutline.GetComponent<Renderer>().material.color = buttonColors[0].GetCurrentColor();
 
-            Physics.Raycast(GorillaTagger.Instance.bodyCollider.transform.position - new Vector3(0f, 0.2f, 0f), Vector3.down, out var Ray, 512f, GTPlayer.Instance.locomotionEnabledLayers);
+            Physics.Raycast(References.BodyCollider.transform.position - new Vector3(0f, 0.2f, 0f), Vector3.down, out var Ray, 512f, References.Player.locomotionEnabledLayers);
             visualizerObject.transform.position = Ray.point;
             visualizerObject.transform.rotation = Quaternion.LookRotation(Ray.normal) * Quaternion.Euler(90f, 0f, 0f);
 
             float size = 0f;
-            GorillaSpeakerLoudness recorder = VRRig.LocalRig.GetComponent<GorillaSpeakerLoudness>();
+            GorillaSpeakerLoudness recorder = References.LocalRig.GetComponent<GorillaSpeakerLoudness>();
             if (recorder != null)
                 size = recorder.Loudness;
 
@@ -1272,7 +1272,7 @@ namespace Qubit.Modules.Categories
                     SlingshotProjectile projectileInstance = projectileArray[index].projectileInstance;
                     if (projectileInstance == null || !projectileInstance.gameObject.activeSelf) continue;
 
-                    if ((VRRig.LocalRig.GetSlingshot() as Slingshot).dummyProjectile && (VRRig.LocalRig.GetSlingshot() as Slingshot).dummyProjectile.GetComponent<SlingshotProjectile>() == projectileInstance) continue;
+                    if ((References.LocalRig.GetSlingshot() as Slingshot).dummyProjectile && (References.LocalRig.GetSlingshot() as Slingshot).dummyProjectile.GetComponent<SlingshotProjectile>() == projectileInstance) continue;
 
                     if (!trajectoryPool.TryGetValue(projectileInstance, out LineRenderer Line))
                     {
@@ -1393,7 +1393,7 @@ namespace Qubit.Modules.Categories
                     localTrajectoryLine.gameObject.SetActive(false);
             }
 
-            Slingshot localSlingshot = VRRig.LocalRig.GetSlingshot() as Slingshot;
+            Slingshot localSlingshot = References.LocalRig.GetSlingshot() as Slingshot;
             if (localSlingshot == null || !localSlingshot.InDrawingState())
                 return;
 
@@ -1418,7 +1418,7 @@ namespace Qubit.Modules.Categories
             if (hoc)
                 localTrajectoryLine.gameObject.layer = 19;
 
-            Color localColor = VRRig.LocalRig.GetColor();
+            Color localColor = References.LocalRig.GetColor();
 
             if (fmt)
                 localColor = backgroundColor.GetCurrentColor();
@@ -1468,7 +1468,7 @@ namespace Qubit.Modules.Categories
                 Vector3 nextVelocity = velocity + (overrideGravity ?? Physics.gravity) * 0.1f;
                 Vector3 nextPosition = position + velocity * 0.1f;
 
-                if (i >= 1 && Physics.Raycast(position, nextPosition - position, out RaycastHit hit, (nextPosition - position).magnitude, overrideLayerMask ?? GTPlayer.Instance.locomotionEnabledLayers))
+                if (i >= 1 && Physics.Raycast(position, nextPosition - position, out RaycastHit hit, (nextPosition - position).magnitude, overrideLayerMask ?? References.Player.locomotionEnabledLayers))
                 {
                     points[i] = hit.point;
                     i++;
@@ -3345,9 +3345,9 @@ namespace Qubit.Modules.Categories
         {
             try
             {
-                Transform HeadCosmetics = VRRig.LocalRig.mainCamera.transform.Find("HeadCosmetics");
-                Transform Head = VRRig.LocalRig.transform.Find("rig/head");
-                foreach (GameObject Cosmetic in VRRig.LocalRig.cosmetics)
+                Transform HeadCosmetics = References.LocalRig.mainCamera.transform.Find("HeadCosmetics");
+                Transform Head = References.LocalRig.transform.Find("rig/head");
+                foreach (GameObject Cosmetic in References.LocalRig.cosmetics)
                 {
                     if (Cosmetic.activeSelf && (Cosmetic.transform.parent == HeadCosmetics || Cosmetic.transform.parent == Head))
                     {
@@ -3406,8 +3406,8 @@ namespace Qubit.Modules.Categories
         {
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
-                vrrig.lerpValueBody = VRRig.LocalRig.lerpValueBody;
-                vrrig.lerpValueFingers = VRRig.LocalRig.lerpValueFingers;
+                vrrig.lerpValueBody = References.LocalRig.lerpValueBody;
+                vrrig.lerpValueFingers = References.LocalRig.lerpValueFingers;
             }
         }
 
@@ -3514,7 +3514,7 @@ namespace Qubit.Modules.Categories
 
                     indicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.01f) * vrrig.scaleFactor;
                     indicator.transform.position = GetNameTagPosition(vrrig);
-                    indicator.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                    indicator.transform.LookAt(References.HeadCollider.transform.position);
                 }
                 else if (currentCosmetic == null && cosmeticIndicators.TryGetValue(vrrig, out GameObject staleIndicator))
                 {
@@ -3586,7 +3586,7 @@ namespace Qubit.Modules.Categories
 
                 indicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.01f) * vrrig.scaleFactor;
                 indicator.transform.position = GetNameTagPosition(vrrig);
-                indicator.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                indicator.transform.LookAt(References.HeadCollider.transform.position);
             }
         }
 
@@ -3620,7 +3620,7 @@ namespace Qubit.Modules.Categories
 
                 indicator.transform.localScale = new Vector3(0.5f, 0.5f, 0.01f) * vrrig.scaleFactor;
                 indicator.transform.position = GetNameTagPosition(vrrig);
-                indicator.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                indicator.transform.LookAt(References.HeadCollider.transform.position);
             }
         }
 
@@ -3686,7 +3686,7 @@ namespace Qubit.Modules.Categories
                         volIndicator.GetComponent<Renderer>().material.color = vrrig.GetColor();
                         volIndicator.transform.localScale = new Vector3(size, size, 0.01f) * vrrig.scaleFactor;
                         volIndicator.transform.position = GetNameTagPosition(vrrig);
-                        volIndicator.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                        volIndicator.transform.LookAt(References.HeadCollider.transform.position);
                     }
                     else
                     {
@@ -3736,7 +3736,7 @@ namespace Qubit.Modules.Categories
                         volIndicator.GetComponent<Renderer>().material.color = vrrig.GetColor();
                         volIndicator.transform.localScale = new Vector3(size, size, 0.01f) * vrrig.scaleFactor;
                         volIndicator.transform.position = GetNameTagPosition(vrrig);
-                        volIndicator.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                        volIndicator.transform.LookAt(References.HeadCollider.transform.position);
                     }
                     else
                     {
@@ -3813,7 +3813,7 @@ namespace Qubit.Modules.Categories
                     renderer.material.color = vrrig.GetColor();
                     gripIcon.transform.localScale = new Vector3(0.5f, 0.5f, 0.01f) * vrrig.scaleFactor;
                     gripIcon.transform.position = GetNameTagPosition(vrrig);
-                    gripIcon.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                    gripIcon.transform.LookAt(References.HeadCollider.transform.position);
                 }
             }
         }
@@ -3830,7 +3830,7 @@ namespace Qubit.Modules.Categories
 
         private static void UpdateLimbColor()
         {
-            Color color = VRRig.LocalRig.GetColor();
+            Color color = References.LocalRig.GetColor();
 
             l.GetComponent<Renderer>().material.color = color;
             r.GetComponent<Renderer>().material.color = color;
@@ -3855,8 +3855,8 @@ namespace Qubit.Modules.Categories
         {
             l.transform.position = Controllers.GetTrueLeftHand().position;
             r.transform.position = Controllers.GetTrueRightHand().position;
-            VRRig.LocalRig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
-            VRRig.LocalRig.mainSkin.material.color = new Color(VRRig.LocalRig.mainSkin.sharedMaterial.color.r, VRRig.LocalRig.mainSkin.sharedMaterial.color.g, VRRig.LocalRig.mainSkin.sharedMaterial.color.b, 0f);
+            References.LocalRig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
+            References.LocalRig.mainSkin.material.color = new Color(References.LocalRig.mainSkin.sharedMaterial.color.r, References.LocalRig.mainSkin.sharedMaterial.color.g, References.LocalRig.mainSkin.sharedMaterial.color.b, 0f);
             UpdateLimbColor();
         }
 
@@ -3865,8 +3865,8 @@ namespace Qubit.Modules.Categories
             Object.Destroy(l);
             Object.Destroy(r);
 
-            VRRig.LocalRig.mainSkin.material.shader = Shader.Find("GorillaTag/UberShader");
-            VRRig.LocalRig.mainSkin.material.color = new Color(VRRig.LocalRig.mainSkin.sharedMaterial.color.r, VRRig.LocalRig.mainSkin.sharedMaterial.color.g, VRRig.LocalRig.mainSkin.sharedMaterial.color.b, 1f);
+            References.LocalRig.mainSkin.material.shader = Shader.Find("GorillaTag/UberShader");
+            References.LocalRig.mainSkin.material.color = new Color(References.LocalRig.mainSkin.sharedMaterial.color.r, References.LocalRig.mainSkin.sharedMaterial.color.g, References.LocalRig.mainSkin.sharedMaterial.color.b, 1f);
         }
 
         private static readonly Dictionary<VRRig, List<LineRenderer>> boneESP = new Dictionary<VRRig, List<LineRenderer>>();
@@ -3970,7 +3970,7 @@ namespace Qubit.Modules.Categories
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
             bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
-            bool selfTagged = VRRig.LocalRig.IsTagged();
+            bool selfTagged = References.LocalRig.IsTagged();
 
             List<VRRig> toRemove = new List<VRRig>();
 
@@ -4063,7 +4063,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntBoneESP()
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -4073,7 +4073,7 @@ namespace Qubit.Modules.Categories
 
             List<VRRig> toRemove = new List<VRRig>();
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
 
             foreach (var boness in boneESP.Where(boness => !Players.ActiveRigs.Contains(boness.Key)))
             {
@@ -4120,7 +4120,7 @@ namespace Qubit.Modules.Categories
 
                 NetPlayer owner = GetPlayerFromVRRig(vrrig);
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
-                Color color = owner == target ? vrrig.GetColor() : theirTarget == NetworkSystem.Instance.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? vrrig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
 
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
@@ -4135,7 +4135,7 @@ namespace Qubit.Modules.Categories
                 liner.startColor = color;
                 liner.endColor = color;
 
-                liner.enabled = owner == target || theirTarget == NetworkSystem.Instance.LocalPlayer;
+                liner.enabled = owner == target || theirTarget == References.LocalPlayer;
 
                 liner.SetPosition(0, vrrig.head.rigTarget.transform.position + new Vector3(0f, 0.16f, 0f));
                 liner.SetPosition(1, vrrig.head.rigTarget.transform.position - new Vector3(0f, 0.4f, 0f));
@@ -4155,7 +4155,7 @@ namespace Qubit.Modules.Categories
 
                     liner.material.shader = Shader.Find("GUI/Text Shader");
 
-                    liner.enabled = owner == target || theirTarget == NetworkSystem.Instance.LocalPlayer;
+                    liner.enabled = owner == target || theirTarget == References.LocalPlayer;
 
                     liner.SetPosition(0, vrrig.mainSkin.bones[bones[i * 2]].position);
                     liner.SetPosition(1, vrrig.mainSkin.bones[bones[i * 2 + 1]].position);
@@ -4196,7 +4196,7 @@ namespace Qubit.Modules.Categories
             }
             if (isInfectedPlayers)
             {
-                if (!VRRig.LocalRig.IsTagged())
+                if (!References.LocalRig.IsTagged())
                 {
                     foreach (VRRig vrrig in Players.ActiveRigs)
                     {
@@ -4243,7 +4243,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntSkeletonESP()
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -4328,11 +4328,11 @@ namespace Qubit.Modules.Categories
 
                 wireframe.meshRenderer.material.color = color;
 
-                Vector3 toTarget = rig.transform.position - GorillaTagger.Instance.headCollider.transform.position;
-                float angle = Vector3.Angle(GorillaTagger.Instance.headCollider.transform.forward, toTarget);
+                Vector3 toTarget = rig.transform.position - References.HeadCollider.transform.position;
+                float angle = Vector3.Angle(References.HeadCollider.transform.forward, toTarget);
 
                 bool enabled = angle <= Camera.main.fieldOfView / 1.75f;
-                enabled &= Vector3.Distance(rig.transform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.headMesh.transform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.leftHandTransform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.rightHandTransform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f;
+                enabled &= Vector3.Distance(rig.transform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.headMesh.transform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.leftHandTransform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.rightHandTransform.position, References.HeadCollider.transform.position) < 35f;
 
                 wireframe.enabled = enabled;
                 wireframe.meshRenderer.enabled = enabled;
@@ -4369,7 +4369,7 @@ namespace Qubit.Modules.Categories
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
             bool tt = Manager.GetIndex("Transparent Theme").enabled;
-            bool selfTagged = VRRig.LocalRig.IsTagged();
+            bool selfTagged = References.LocalRig.IsTagged();
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
@@ -4393,11 +4393,11 @@ namespace Qubit.Modules.Categories
 
                 bool enabled = (selfTagged ? !playerTagged : playerTagged) || InfectedList().Count <= 0;
 
-                Vector3 toTarget = rig.transform.position - GorillaTagger.Instance.headCollider.transform.position;
-                float angle = Vector3.Angle(GorillaTagger.Instance.headCollider.transform.forward, toTarget);
+                Vector3 toTarget = rig.transform.position - References.HeadCollider.transform.position;
+                float angle = Vector3.Angle(References.HeadCollider.transform.forward, toTarget);
 
                 enabled &= angle <= Camera.main.fieldOfView / 1.75f;
-                enabled &= Vector3.Distance(rig.transform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.headMesh.transform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.leftHandTransform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.rightHandTransform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f;
+                enabled &= Vector3.Distance(rig.transform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.headMesh.transform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.leftHandTransform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.rightHandTransform.position, References.HeadCollider.transform.position) < 35f;
 
                 wireframe.enabled = enabled;
                 wireframe.meshRenderer.enabled = enabled;
@@ -4420,7 +4420,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntWireframeESP()
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             List<VRRig> toRemove = new List<VRRig>();
@@ -4439,7 +4439,7 @@ namespace Qubit.Modules.Categories
             bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
@@ -4452,7 +4452,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer owner = rig.GetPlayer();
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
-                Color color = owner == target ? rig.GetColor() : theirTarget == NetworkSystem.Instance.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? rig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
 
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
@@ -4463,13 +4463,13 @@ namespace Qubit.Modules.Categories
 
                 wireframe.meshRenderer.material.color = color;
 
-                bool enabled = owner == target || theirTarget == NetworkSystem.Instance.LocalPlayer;
+                bool enabled = owner == target || theirTarget == References.LocalPlayer;
 
-                Vector3 toTarget = rig.transform.position - GorillaTagger.Instance.headCollider.transform.position;
-                float angle = Vector3.Angle(GorillaTagger.Instance.headCollider.transform.forward, toTarget);
+                Vector3 toTarget = rig.transform.position - References.HeadCollider.transform.position;
+                float angle = Vector3.Angle(References.HeadCollider.transform.forward, toTarget);
 
                 enabled &= angle <= Camera.main.fieldOfView / 1.75f;
-                enabled &= Vector3.Distance(rig.transform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.headMesh.transform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.leftHandTransform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f && Vector3.Distance(rig.rightHandTransform.position, GorillaTagger.Instance.headCollider.transform.position) < 35f;
+                enabled &= Vector3.Distance(rig.transform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.headMesh.transform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.leftHandTransform.position, References.HeadCollider.transform.position) < 35f && Vector3.Distance(rig.rightHandTransform.position, References.HeadCollider.transform.position) < 35f;
 
                 wireframe.enabled = enabled;
                 wireframe.meshRenderer.enabled = enabled;
@@ -4757,7 +4757,7 @@ namespace Qubit.Modules.Categories
             }
             if (isInfectedPlayers)
             {
-                if (!VRRig.LocalRig.IsTagged())
+                if (!References.LocalRig.IsTagged())
                 {
                     foreach (VRRig vrrig in Players.ActiveRigs)
                     {
@@ -4806,7 +4806,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntChams()
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -4894,7 +4894,7 @@ namespace Qubit.Modules.Categories
                 box.GetComponent<Renderer>().material.color = color;
 
                 box.transform.position = vrrig.transform.position;
-                box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                box.transform.LookAt(References.HeadCollider.transform.position);
             }
         }
 
@@ -4903,7 +4903,7 @@ namespace Qubit.Modules.Categories
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
             bool tt = Manager.GetIndex("Transparent Theme").enabled;
-            bool selfTagged = VRRig.LocalRig.IsTagged();
+            bool selfTagged = References.LocalRig.IsTagged();
 
             List<VRRig> toRemove = new List<VRRig>();
 
@@ -4943,13 +4943,13 @@ namespace Qubit.Modules.Categories
                 box.SetActive((selfTagged ? !playerTagged : playerTagged) || InfectedList().Count <= 0);
 
                 box.transform.position = vrrig.transform.position;
-                box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                box.transform.LookAt(References.HeadCollider.transform.position);
             }
         }
 
         public static void HuntBoxESP()
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -4958,7 +4958,7 @@ namespace Qubit.Modules.Categories
 
             List<VRRig> toRemove = new List<VRRig>();
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
 
             foreach (var box in boxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
@@ -4985,7 +4985,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer owner = GetPlayerFromVRRig(vrrig);
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
-                Color color = owner == target ? vrrig.GetColor() : theirTarget == NetworkSystem.Instance.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? vrrig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
                 if (tt)
@@ -4995,10 +4995,10 @@ namespace Qubit.Modules.Categories
 
                 box.GetComponent<Renderer>().material.color = color;
 
-                box.SetActive(owner == target || theirTarget == NetworkSystem.Instance.LocalPlayer);
+                box.SetActive(owner == target || theirTarget == References.LocalPlayer);
 
                 box.transform.position = vrrig.transform.position;
-                box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                box.transform.LookAt(References.HeadCollider.transform.position);
             }
         }
 
@@ -5037,7 +5037,7 @@ namespace Qubit.Modules.Categories
                     box.transform.position = vrrig.transform.position;
                     Object.Destroy(box.GetComponent<BoxCollider>());
                     box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                    box.transform.LookAt(References.HeadCollider.transform.position);
                     Renderer boxRenderer = box.GetComponent<Renderer>();
                     boxRenderer.enabled = false;
                     boxRenderer.material.shader = Shader.Find("GUI/Text Shader");
@@ -5088,7 +5088,7 @@ namespace Qubit.Modules.Categories
                 box.GetComponent<Renderer>().material.color = color;
 
                 box.transform.position = vrrig.transform.position;
-                box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                box.transform.LookAt(References.HeadCollider.transform.position);
             }
         }
 
@@ -5098,7 +5098,7 @@ namespace Qubit.Modules.Categories
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
             bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
-            bool selfTagged = VRRig.LocalRig.IsTagged();
+            bool selfTagged = References.LocalRig.IsTagged();
 
             List<VRRig> toRemove = new List<VRRig>();
 
@@ -5119,7 +5119,7 @@ namespace Qubit.Modules.Categories
                     box.transform.position = vrrig.transform.position;
                     Object.Destroy(box.GetComponent<BoxCollider>());
                     box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                    box.transform.LookAt(References.HeadCollider.transform.position);
                     Renderer boxRenderer = box.GetComponent<Renderer>();
                     boxRenderer.enabled = false;
                     boxRenderer.material.shader = Shader.Find("GUI/Text Shader");
@@ -5173,13 +5173,13 @@ namespace Qubit.Modules.Categories
                 box.SetActive((selfTagged ? !playerTagged : playerTagged) || InfectedList().Count <= 0);
 
                 box.transform.position = vrrig.transform.position;
-                box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                box.transform.LookAt(References.HeadCollider.transform.position);
             }
         }
 
         public static void HollowHuntBoxESP()
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5189,7 +5189,7 @@ namespace Qubit.Modules.Categories
 
             List<VRRig> toRemove = new List<VRRig>();
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
 
             foreach (var box in hollowBoxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
@@ -5208,7 +5208,7 @@ namespace Qubit.Modules.Categories
                     box.transform.position = vrrig.transform.position;
                     Object.Destroy(box.GetComponent<BoxCollider>());
                     box.transform.localScale = new Vector3(0.5f, 0.5f, 0f);
-                    box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                    box.transform.LookAt(References.HeadCollider.transform.position);
                     Renderer boxRenderer = box.GetComponent<Renderer>();
                     boxRenderer.enabled = false;
                     boxRenderer.material.shader = Shader.Find("GUI/Text Shader");
@@ -5251,7 +5251,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer owner = GetPlayerFromVRRig(vrrig);
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
-                Color color = owner == target ? vrrig.GetColor() : theirTarget == NetworkSystem.Instance.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? vrrig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
                 if (tt)
@@ -5260,10 +5260,10 @@ namespace Qubit.Modules.Categories
                     box.layer = 19;
 
                 box.GetComponent<Renderer>().material.color = color;
-                box.SetActive(owner == target || theirTarget == NetworkSystem.Instance.LocalPlayer);
+                box.SetActive(owner == target || theirTarget == References.LocalPlayer);
 
                 box.transform.position = vrrig.transform.position;
-                box.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                box.transform.LookAt(References.HeadCollider.transform.position);
             }
         }
 
@@ -5351,7 +5351,7 @@ namespace Qubit.Modules.Categories
             bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
             bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
-            bool selfTagged = VRRig.LocalRig.IsTagged();
+            bool selfTagged = References.LocalRig.IsTagged();
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
@@ -5395,7 +5395,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntBreadcrumbs()
         {
-            if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             List<VRRig> toRemove = new List<VRRig>();
@@ -5416,7 +5416,7 @@ namespace Qubit.Modules.Categories
             bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
 
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
@@ -5444,7 +5444,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer owner = rig.GetPlayer();
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
-                Color color = owner == target ? rig.GetColor() : theirTarget == NetworkSystem.Instance.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? rig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
 
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
@@ -5456,7 +5456,7 @@ namespace Qubit.Modules.Categories
                 trail.startColor = color;
                 trail.endColor = color;
 
-                trail.enabled = owner == target || theirTarget == NetworkSystem.Instance.LocalPlayer;
+                trail.enabled = owner == target || theirTarget == References.LocalPlayer;
             }
         }
 
@@ -5499,7 +5499,7 @@ namespace Qubit.Modules.Categories
                     LeftSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     Object.Destroy(LeftSphere.GetComponent<SphereCollider>());
 
-                    LeftSphere.transform.parent = GorillaTagger.Instance.leftHandTransform;
+                    LeftSphere.transform.parent = References.LeftHand;
                     LeftSphere.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
                 }
 
@@ -5508,7 +5508,7 @@ namespace Qubit.Modules.Categories
                     RightSphere = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     Object.Destroy(RightSphere.GetComponent<SphereCollider>());
 
-                    RightSphere.transform.parent = GorillaTagger.Instance.leftHandTransform;
+                    RightSphere.transform.parent = References.LeftHand;
                     RightSphere.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
                 }
             }
@@ -5531,7 +5531,7 @@ namespace Qubit.Modules.Categories
 
         public static void AutomaticESP(Action infection, Action hunt, Action other)
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             try
             {
                 switch (GorillaGameManager.instance.GameType())
@@ -5566,7 +5566,7 @@ namespace Qubit.Modules.Categories
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
-            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? References.Player.scale : 1f);
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
@@ -5589,7 +5589,7 @@ namespace Qubit.Modules.Categories
                 line.endColor = lineColor;
                 line.startWidth = lineWidth;
                 line.endWidth = lineWidth;
-                line.SetPosition(0, GorillaTagger.Instance.rightHandTransform.position);
+                line.SetPosition(0, References.RightHand.position);
                 line.SetPosition(1, playerRig.transform.position);
             }
         }
@@ -5604,15 +5604,15 @@ namespace Qubit.Modules.Categories
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
-            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? References.Player.scale : 1f);
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
             float distance = float.MaxValue;
-            VRRig playerRig = VRRig.LocalRig;
-            foreach (var rig in Players.ActiveRigs.Where(rig => distance > Vector3.Distance(rig.transform.position, VRRig.LocalRig.transform.position) && !rig.isLocal))
+            VRRig playerRig = References.LocalRig;
+            foreach (var rig in Players.ActiveRigs.Where(rig => distance > Vector3.Distance(rig.transform.position, References.LocalRig.transform.position) && !rig.isLocal))
             {
-                distance = Vector3.Distance(rig.transform.position, VRRig.LocalRig.transform.position);
+                distance = Vector3.Distance(rig.transform.position, References.LocalRig.transform.position);
                 playerRig = rig;
             }
 
@@ -5632,7 +5632,7 @@ namespace Qubit.Modules.Categories
                 line.endColor = lineColor;
                 line.startWidth = lineWidth;
                 line.endWidth = lineWidth;
-                line.SetPosition(0, GorillaTagger.Instance.rightHandTransform.position);
+                line.SetPosition(0, References.RightHand.position);
                 line.SetPosition(1, playerRig.transform.position);
             }
         }
@@ -5646,9 +5646,9 @@ namespace Qubit.Modules.Categories
                 return;
 
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
-            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? References.Player.scale : 1f);
 
-            bool LocalTagged = VRRig.LocalRig.IsTagged();
+            bool LocalTagged = References.LocalRig.IsTagged();
             bool NoInfected = InfectedList().Count == 0;
 
             foreach (VRRig playerRig in Players.ActiveRigs)
@@ -5683,7 +5683,7 @@ namespace Qubit.Modules.Categories
                 line.endColor = lineColor;
                 line.startWidth = lineWidth;
                 line.endWidth = lineWidth;
-                line.SetPosition(0, GorillaTagger.Instance.rightHandTransform.position);
+                line.SetPosition(0, References.RightHand.position);
                 line.SetPosition(1, playerRig.transform.position);
             }
         }
@@ -5705,7 +5705,7 @@ namespace Qubit.Modules.Categories
                 return;
 
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
-            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? References.Player.scale : 1f);
 
             NetPlayer currentTarget = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
 
@@ -5724,7 +5724,7 @@ namespace Qubit.Modules.Categories
                     line.endColor = lineColor;
                     line.startWidth = lineWidth;
                     line.endWidth = lineWidth;
-                    line.SetPosition(0, GorillaTagger.Instance.rightHandTransform.position);
+                    line.SetPosition(0, References.RightHand.position);
                     line.SetPosition(1, playerRig.transform.position);
                 }
                 else if (sillyComputer.IsTargetOf(GetPlayerFromVRRig(playerRig), PhotonNetwork.LocalPlayer))
@@ -5740,7 +5740,7 @@ namespace Qubit.Modules.Categories
                     line.endColor = lineColor;
                     line.startWidth = lineWidth;
                     line.endWidth = lineWidth;
-                    line.SetPosition(0, GorillaTagger.Instance.rightHandTransform.position);
+                    line.SetPosition(0, References.RightHand.position);
                     line.SetPosition(1, playerRig.transform.position);
                 }
             }
@@ -5800,7 +5800,7 @@ namespace Qubit.Modules.Categories
             _ = Manager.GetIndex("Hidden on Camera").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
-            bool LocalTagged = VRRig.LocalRig.IsTagged();
+            bool LocalTagged = References.LocalRig.IsTagged();
             bool NoInfected = InfectedList().Count == 0;
 
             Color menuColor = backgroundColor.GetCurrentColor();
@@ -5976,7 +5976,7 @@ namespace Qubit.Modules.Categories
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             bool hiddenOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
 
-            bool LocalTagged = VRRig.LocalRig.IsTagged();
+            bool LocalTagged = References.LocalRig.IsTagged();
             bool NoInfected = InfectedList().Count == 0;
 
             Color menuColor = backgroundColor.GetCurrentColor();
@@ -6288,8 +6288,8 @@ namespace Qubit.Modules.Categories
             Color userColor = Color.red;
 
             Notifications.SendNotification("<color=grey>[</color><color=purple>ADMIN</color><color=grey>]</color> " + sender.NickName + " is using " + menuName + " version " + version + ".", 3000);
-            VRRig.LocalRig.PlayHandTapLocal(29, false, 99999f);
-            VRRig.LocalRig.PlayHandTapLocal(29, true, 99999f);
+            References.LocalRig.PlayHandTapLocal(29, false, 99999f);
+            References.LocalRig.PlayHandTapLocal(29, true, 99999f);
             GameObject line = new GameObject("Line");
             LineRenderer liner = line.AddComponent<LineRenderer>();
             liner.startColor = userColor; liner.endColor = userColor; liner.startWidth = 0.25f; liner.endWidth = 0.25f; liner.positionCount = 2; liner.useWorldSpace = true;

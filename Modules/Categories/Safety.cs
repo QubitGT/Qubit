@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaLocomotion;
 using GorillaNetworking;
@@ -69,18 +70,18 @@ namespace Qubit.Modules.Categories
 
         public static void NoFinger()
         {
-            ControllerInputPoller.instance.leftControllerGripFloat = 0f;
-            ControllerInputPoller.instance.rightControllerGripFloat = 0f;
-            ControllerInputPoller.instance.leftControllerIndexFloat = 0f;
-            ControllerInputPoller.instance.rightControllerIndexFloat = 0f;
-            ControllerInputPoller.instance.leftControllerPrimaryButton = false;
-            ControllerInputPoller.instance.leftControllerSecondaryButton = false;
-            ControllerInputPoller.instance.rightControllerPrimaryButton = false;
-            ControllerInputPoller.instance.rightControllerSecondaryButton = false;
-            ControllerInputPoller.instance.leftControllerPrimaryButtonTouch = false;
-            ControllerInputPoller.instance.leftControllerSecondaryButtonTouch = false;
-            ControllerInputPoller.instance.rightControllerPrimaryButtonTouch = false;
-            ControllerInputPoller.instance.rightControllerSecondaryButtonTouch = false;
+            References.InputPoller.leftControllerGripFloat = 0f;
+            References.InputPoller.rightControllerGripFloat = 0f;
+            References.InputPoller.leftControllerIndexFloat = 0f;
+            References.InputPoller.rightControllerIndexFloat = 0f;
+            References.InputPoller.leftControllerPrimaryButton = false;
+            References.InputPoller.leftControllerSecondaryButton = false;
+            References.InputPoller.rightControllerPrimaryButton = false;
+            References.InputPoller.rightControllerSecondaryButton = false;
+            References.InputPoller.leftControllerPrimaryButtonTouch = false;
+            References.InputPoller.leftControllerSecondaryButtonTouch = false;
+            References.InputPoller.rightControllerPrimaryButtonTouch = false;
+            References.InputPoller.rightControllerSecondaryButtonTouch = false;
         }
 
         public static void SetGamemodeButtonActive(bool active = true) =>
@@ -103,26 +104,26 @@ namespace Qubit.Modules.Categories
             if (leftSecondary)
                 NoFinger();
 
-            GTPlayer.Instance.inOverlay = leftPrimary;
+            References.Player.inOverlay = leftPrimary;
         }
 
         public static void FakeBrokenController()
         {
-            Vector3 Position = leftPrimary ? GorillaTagger.Instance.leftHandTransform.position : GorillaTagger.Instance.rightHandTransform.position;
-            Quaternion Rotation = leftPrimary ? GorillaTagger.Instance.leftHandTransform.rotation : GorillaTagger.Instance.rightHandTransform.rotation;
+            Vector3 Position = leftPrimary ? References.LeftHand.position : References.RightHand.position;
+            Quaternion Rotation = leftPrimary ? References.LeftHand.rotation : References.RightHand.rotation;
 
-            GTPlayer.Instance.GetControllerTransform(true).position = GTPlayer.Instance.headCollider.transform.position + GTPlayer.Instance.headCollider.transform.up * (-0.5f * GTPlayer.Instance.scale);
-            GTPlayer.Instance.GetControllerTransform(true).rotation = Camera.main.transform.rotation * Quaternion.Euler(-55f, 90f, 0f);
+            References.Player.GetControllerTransform(true).position = References.Player.headCollider.transform.position + References.Player.headCollider.transform.up * (-0.5f * References.Player.scale);
+            References.Player.GetControllerTransform(true).rotation = Camera.main.transform.rotation * Quaternion.Euler(-55f, 90f, 0f);
 
-            GTPlayer.Instance.GetControllerTransform(false).position = Position;
-            GTPlayer.Instance.GetControllerTransform(false).rotation = Rotation;
+            References.Player.GetControllerTransform(false).position = Position;
+            References.Player.GetControllerTransform(false).rotation = Rotation;
 
-            ControllerInputPoller.instance.leftControllerGripFloat = 0f;
-            ControllerInputPoller.instance.leftControllerIndexFloat = 0f;
-            ControllerInputPoller.instance.leftControllerPrimaryButton = false;
-            ControllerInputPoller.instance.leftControllerSecondaryButton = false;
-            ControllerInputPoller.instance.leftControllerPrimaryButtonTouch = false;
-            ControllerInputPoller.instance.leftControllerSecondaryButtonTouch = false;
+            References.InputPoller.leftControllerGripFloat = 0f;
+            References.InputPoller.leftControllerIndexFloat = 0f;
+            References.InputPoller.leftControllerPrimaryButton = false;
+            References.InputPoller.leftControllerSecondaryButton = false;
+            References.InputPoller.leftControllerPrimaryButtonTouch = false;
+            References.InputPoller.leftControllerSecondaryButtonTouch = false;
         }
 
         public static Vector3 deadPosition = Vector3.zero;
@@ -133,32 +134,32 @@ namespace Qubit.Modules.Categories
             {
                 if (deadPosition == Vector3.zero)
                 {
-                    deadPosition = GorillaTagger.Instance.rigidbody.transform.position;
-                    lvel = GorillaTagger.Instance.rigidbody.linearVelocity;
+                    deadPosition = References.Rigidbody.transform.position;
+                    lvel = References.Rigidbody.linearVelocity;
                 }
-                VRRig.LocalRig.enabled = false;
-                GorillaTagger.Instance.rigidbody.transform.position = deadPosition;
-                GorillaTagger.Instance.rigidbody.linearVelocity = lvel;
+                References.LocalRig.enabled = false;
+                References.Rigidbody.transform.position = deadPosition;
+                References.Rigidbody.linearVelocity = lvel;
             }
             else
             {
                 deadPosition = Vector3.zero;
-                VRRig.LocalRig.enabled = true;
+                References.LocalRig.enabled = true;
             }
         }
 
         public static void FakeValveTracking()
         {
             if (rightJoystickClick)
-                VRRig.LocalRig.head.rigTarget.transform.rotation = Quaternion.identity;
+                References.LocalRig.head.rigTarget.transform.rotation = Quaternion.identity;
         }
 
         public static void SpoofSupportPage() =>
-            GorillaComputer.instance.screenText.Set(
-                GorillaComputer.instance.screenText.stringBuilder.ToString()
+            References.Computer.screenText.Set(
+                References.Computer.screenText.stringBuilder.ToString()
                     .Replace("STEAM", "QUEST")
-                    .Replace(GorillaComputer.instance.buildDate,
-                        $"{GorillaComputer.instance.buildDate}\nBUILD CODE 4893\nMANAGED ACCOUNT: NO")
+                    .Replace(References.Computer.buildDate,
+                        $"{References.Computer.buildDate}\nBUILD CODE 4893\nMANAGED ACCOUNT: NO")
             );
 
         private static string previousNickName;
@@ -246,7 +247,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (GorillaPlayerScoreboardLine line in GorillaScoreboardTotalUpdater.allScoreboardLines)
             {
-                if (line.linePlayer != NetworkSystem.Instance.LocalPlayer) continue;
+                if (line.linePlayer != References.LocalPlayer) continue;
                 Transform report = line.reportButton.gameObject.transform;
 
                 Visuals.Visualize(PrimitiveType.Sphere, report.position, Quaternion.identity, new Vector3(threshold, threshold, threshold), Color.red, alpha: 0.1f);
@@ -269,7 +270,7 @@ namespace Qubit.Modules.Categories
         public static VRRig reportRig;
         public static void AntiReport(Action<VRRig, Vector3> onReport)
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             if (reportRig != null)
             {
@@ -289,7 +290,7 @@ namespace Qubit.Modules.Categories
 
             foreach (GorillaPlayerScoreboardLine line in GorillaScoreboardTotalUpdater.allScoreboardLines)
             {
-                if (line.linePlayer != NetworkSystem.Instance.LocalPlayer) continue;
+                if (line.linePlayer != References.LocalPlayer) continue;
                 Transform report = line.reportButton.gameObject.transform;
 
                 foreach (var vrrig in from vrrig in Players.ActiveRigs where !vrrig.isLocal where OverlappingButton(vrrig, report.position) || (antiMute && OverlappingButton(vrrig, line.muteButton.gameObject.transform.position)) where !smartAntiReport || SmartAntiReport(line.linePlayer) select vrrig)
@@ -302,7 +303,7 @@ namespace Qubit.Modules.Categories
         {
             AntiReport((vrrig, position) =>
             {
-                NetworkSystem.Instance.ReturnToSinglePlayer();
+                References.Network.ReturnToSinglePlayer();
                 Security.RPCProtection();
 
                 if (!(Time.time > antiReportDelay)) return;
@@ -462,7 +463,7 @@ namespace Qubit.Modules.Categories
                     }
                 }
                 catch { }
-                NetworkSystem.Instance.ReturnToSinglePlayer();
+                References.Network.ReturnToSinglePlayer();
                 Notifications.SendNotification($"<color=grey>[</color><color=purple>ANTI-MODERATOR</color><color=grey>]</color> {vrrig.GetName()} is a moderator, you have been disconnected. Their player ID and room code have been saved to a file.");
             }
         }
@@ -506,7 +507,7 @@ namespace Qubit.Modules.Categories
                     }
                 }
                 catch { }
-                NetworkSystem.Instance.ReturnToSinglePlayer();
+                References.Network.ReturnToSinglePlayer();
                 Notifications.SendNotification($"<color=grey>[</color><color=purple>ANTI-CONTENT CREATOR</color><color=grey>]</color> {vrrig.GetName()} is a content creator, you have been disconnected. Their player ID and room code have been saved to a file.");
             }
         }
@@ -544,14 +545,14 @@ namespace Qubit.Modules.Categories
         {
             GorillaTagger.moderationMutedTime = -1f;
 
-            if (GorillaComputer.instance.autoMuteType != "OFF")
+            if (References.Computer.autoMuteType != "OFF")
             {
-                GorillaComputer.instance.autoMuteType = "OFF";
+                References.Computer.autoMuteType = "OFF";
                 PlayerPrefs.SetInt("autoMute", 0);
                 PlayerPrefs.Save();
             }
 
-            Recorder mic = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
+            Recorder mic = References.Network.VoiceConnection.PrimaryRecorder;
             if (mic == null)
                 return;
 
@@ -559,7 +560,7 @@ namespace Qubit.Modules.Categories
                 return;
 
             float volume = 0f;
-            GorillaSpeakerLoudness recorder = VRRig.LocalRig.GetComponent<GorillaSpeakerLoudness>();
+            GorillaSpeakerLoudness recorder = References.LocalRig.GetComponent<GorillaSpeakerLoudness>();
             if (recorder != null)
                 volume = recorder.Loudness;
 
@@ -608,21 +609,21 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
-                Vector3 leftHandPosition = VRRig.LocalRig.leftHand.rigTarget.localPosition;
-                Vector3 rightHandPosition = VRRig.LocalRig.rightHand.rigTarget.localPosition;
+                Vector3 leftHandPosition = References.LocalRig.leftHand.rigTarget.localPosition;
+                Vector3 rightHandPosition = References.LocalRig.rightHand.rigTarget.localPosition;
 
                 smoothedLeftHandPosition = Vector3.Lerp(smoothedLeftHandPosition, leftHandPosition, 0.75f);
                 smoothedRightHandPosition = Vector3.Lerp(smoothedRightHandPosition, rightHandPosition, 0.75f);
 
-                VRRig.LocalRig.leftHand.rigTarget.localPosition = smoothedLeftHandPosition;
-                VRRig.LocalRig.rightHand.rigTarget.localPosition = smoothedRightHandPosition;
+                References.LocalRig.leftHand.rigTarget.localPosition = smoothedLeftHandPosition;
+                References.LocalRig.rightHand.rigTarget.localPosition = smoothedRightHandPosition;
 
-                SendSerialize(VRRig.LocalRig.GetPhotonView());
+                SendSerialize(References.LocalRig.GetPhotonView());
 
-                VRRig.LocalRig.leftHand.rigTarget.localPosition = leftHandPosition;
-                VRRig.LocalRig.rightHand.rigTarget.localPosition = rightHandPosition;
+                References.LocalRig.leftHand.rigTarget.localPosition = leftHandPosition;
+                References.LocalRig.rightHand.rigTarget.localPosition = rightHandPosition;
 
                 return false;
             };
@@ -695,10 +696,10 @@ namespace Qubit.Modules.Categories
         private static bool previouslyInLobby;
         public static void ChangeIdentityOnDisconnect(Action identityType)
         {
-            if (!NetworkSystem.Instance.InRoom && previouslyInLobby)
+            if (!References.InRoom && previouslyInLobby)
                 identityType?.Invoke();
 
-            previouslyInLobby = NetworkSystem.Instance.InRoom;
+            previouslyInLobby = References.InRoom;
         }
 
         private static readonly List<VRRig> nameSpoofRigs = new List<VRRig>();
@@ -727,7 +728,7 @@ namespace Qubit.Modules.Categories
                     string fName = prefix + names[Random.Range(0, names.Length)] + suffix;
                     ChangeName(fName.EnforceLength(12), true);
 
-                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_InitializeNoobMaterial", rig.GetPlayer(), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+                    References.MyRigView.SendRPC("RPC_InitializeNoobMaterial", rig.GetPlayer(), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
                     nameSpoofRigs.Add(rig);
                 }
             }
@@ -753,7 +754,7 @@ namespace Qubit.Modules.Categories
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => !colorSpoofRigs.Contains(rig)))
             {
-                GorillaTagger.Instance.myVRRig.SendRPC("RPC_InitializeNoobMaterial", rig.GetPlayer(), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
+                References.MyRigView.SendRPC("RPC_InitializeNoobMaterial", rig.GetPlayer(), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
                 colorSpoofRigs.Add(rig);
             }
         }
@@ -793,7 +794,7 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                SendSerialize(VRRig.LocalRig.GetPhotonView());
+                SendSerialize(References.LocalRig.GetPhotonView());
                 //SendSerialize(GorillaTagger.Instance.myVRRig.reliableView);
                 return false;
             };

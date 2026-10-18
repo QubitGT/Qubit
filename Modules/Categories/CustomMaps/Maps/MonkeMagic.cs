@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
@@ -114,7 +115,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
             if (Time.time > materialDelay)
             {
                 materialDelay = Time.time + 0.1f;
-                PhotonNetwork.RaiseEvent(180, new object[] { "ChangingMaterial", (double)PhotonNetwork.LocalPlayer.ActorNumber, (double)Random.Range(0, VRRig.LocalRig.materialsToChangeTo.Length) }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
+                PhotonNetwork.RaiseEvent(180, new object[] { "ChangingMaterial", (double)PhotonNetwork.LocalPlayer.ActorNumber, (double)Random.Range(0, References.LocalRig.materialsToChangeTo.Length) }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
                 RPCProtection();
             }
         }
@@ -128,7 +129,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
                 if (gunLocked && lockTarget != null && Time.time > materialDelay)
                 {
                     materialDelay = Time.time + 0.1f;
-                    PhotonNetwork.RaiseEvent(180, new object[] { "ChangingMaterial", (double)PhotonNetwork.LocalPlayer.ActorNumber, (double)Random.Range(0, VRRig.LocalRig.materialsToChangeTo.Length) }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
+                    PhotonNetwork.RaiseEvent(180, new object[] { "ChangingMaterial", (double)PhotonNetwork.LocalPlayer.ActorNumber, (double)Random.Range(0, References.LocalRig.materialsToChangeTo.Length) }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
                     RPCProtection();
                 }
 
@@ -153,7 +154,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
             if (Time.time > materialDelay)
             {
                 materialDelay = Time.time + 0.2f;
-                PhotonNetwork.RaiseEvent(180, new object[] { "ChangingMaterial", (double)lockTarget.GetPlayer().ActorNumber, (double)Random.Range(0, VRRig.LocalRig.materialsToChangeTo.Length) }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
+                PhotonNetwork.RaiseEvent(180, new object[] { "ChangingMaterial", (double)lockTarget.GetPlayer().ActorNumber, (double)Random.Range(0, References.LocalRig.materialsToChangeTo.Length) }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
                 RPCProtection();
             }
         }
@@ -177,7 +178,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
 
         public static void SpawnLucyAll()
         {
-            foreach (NetPlayer player in NetworkSystem.Instance.PlayerListOthers)
+            foreach (NetPlayer player in References.Network.PlayerListOthers)
             {
                 PhotonNetwork.RaiseEvent(180, new object[] { "SummonLucy", (double)player.ActorNumber }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
                 RPCProtection();
@@ -230,12 +231,12 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
             if (Time.time < crashDelay)
                 return;
 
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
+                if (Vector3.Distance(vrrig.transform.position, References.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -254,7 +255,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         {
             if (Time.time < crashDelay)
                 return;
-            foreach (var Player in from rig in Players.ActiveRigs where !rig.isLocal && (Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f) select rig.GetPlayer())
+            foreach (var Player in from rig in Players.ActiveRigs where !rig.isLocal && (Vector3.Distance(References.LeftHand.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(References.RightHand.position, rig.headMesh.transform.position) < 0.25f) select rig.GetPlayer())
             {
                 CrashPlayer(Player.ActorNumber);
                 crashDelay = Time.time + 0.2f;
@@ -264,7 +265,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         {
             if (Time.time < crashDelay)
                 return;
-            foreach (var Player in from vrrig in Players.ActiveRigs where !vrrig.isMyPlayer && !vrrig.isOfflineVRRig && (Vector3.Distance(vrrig.rightHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.leftHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.transform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5) select GetPlayerFromVRRig(vrrig))
+            foreach (var Player in from vrrig in Players.ActiveRigs where !vrrig.isMyPlayer && !vrrig.isOfflineVRRig && (Vector3.Distance(vrrig.rightHandTransform.position, References.Tagger.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.leftHandTransform.position, References.Tagger.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.transform.position, References.Tagger.offlineVRRig.transform.position) <= 0.5) select GetPlayerFromVRRig(vrrig))
             {
                 CrashPlayer(Player.ActorNumber);
                 crashDelay = Time.time + 0.2f;
@@ -274,7 +275,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         {
             if (Time.time > crashDelay)
             {
-                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                foreach (NetPlayer Player in References.Network.PlayerListOthers)
                 {
                     CrashPlayer(Player.ActorNumber);
                 }

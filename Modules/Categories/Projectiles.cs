@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
 using GorillaLocomotion;
@@ -136,7 +137,7 @@ namespace Qubit.Modules.Categories
                             return;
                         }
 
-                        var registry = VRRig.LocalRig?.cosmeticsObjectRegistry;
+                        var registry = References.LocalRig?.cosmeticsObjectRegistry;
                         if (registry == null)
                         {
                             Logs.LogError("CosmeticsItemRegistry on our rig is null??");
@@ -295,18 +296,18 @@ namespace Qubit.Modules.Categories
         public static void UpdateNetworkedProjectile(int index = -1, int modelIndex = -1, ThrowableHand hand = ThrowableHand.Dynamic, bool serialize = false)
         {
             if (hand == ThrowableHand.Left || hand == ThrowableHand.Both)
-                VRRig.LocalRig.LeftThrowableProjectileIndex = index;
+                References.LocalRig.LeftThrowableProjectileIndex = index;
             if (hand == ThrowableHand.Right || hand == ThrowableHand.Both)
-                VRRig.LocalRig.RightThrowableProjectileIndex = index;
+                References.LocalRig.RightThrowableProjectileIndex = index;
             else if (hand == ThrowableHand.Dynamic)
-                if (VRRig.LocalRig.LeftThrowableProjectileIndex == -1)
-                    VRRig.LocalRig.RightThrowableProjectileIndex = index;
-                else if (VRRig.LocalRig.RightThrowableProjectileIndex == -1)
-                    VRRig.LocalRig.LeftThrowableProjectileIndex = index;
-            VRRig.LocalRig.SetRandomThrowableModelIndex(modelIndex);
-            VRRig.LocalRig.myBodyDockPositions.RefreshTransferrableItems();
-            if (serialize && NetworkSystem.Instance.InRoom)
-                SendSerialize(VRRig.LocalRig.GetPhotonView());
+                if (References.LocalRig.LeftThrowableProjectileIndex == -1)
+                    References.LocalRig.RightThrowableProjectileIndex = index;
+                else if (References.LocalRig.RightThrowableProjectileIndex == -1)
+                    References.LocalRig.LeftThrowableProjectileIndex = index;
+            References.LocalRig.SetRandomThrowableModelIndex(modelIndex);
+            References.LocalRig.myBodyDockPositions.RefreshTransferrableItems();
+            if (serialize && References.InRoom)
+                SendSerialize(References.LocalRig.GetPhotonView());
         }
 
         public static void ClearNetworkedProjectile(ThrowableHand hand = ThrowableHand.Dynamic, bool serialize = false)
@@ -324,10 +325,10 @@ namespace Qubit.Modules.Categories
         {
             GameObject throwable = hand switch
             {
-                ThrowableHand.Left => VRRig.LocalRig.myBodyDockPositions.GetLeftHandThrowable(),
-                ThrowableHand.Right => VRRig.LocalRig.myBodyDockPositions.GetRightHandThrowable(),
-                ThrowableHand.Dynamic => VRRig.LocalRig.myBodyDockPositions.GetRightHandThrowable() ?? VRRig.LocalRig.myBodyDockPositions.GetLeftHandThrowable(),
-                _ => VRRig.LocalRig.myBodyDockPositions.GetRightHandThrowable()
+                ThrowableHand.Left => References.LocalRig.myBodyDockPositions.GetLeftHandThrowable(),
+                ThrowableHand.Right => References.LocalRig.myBodyDockPositions.GetRightHandThrowable(),
+                ThrowableHand.Dynamic => References.LocalRig.myBodyDockPositions.GetRightHandThrowable() ?? References.LocalRig.myBodyDockPositions.GetLeftHandThrowable(),
+                _ => References.LocalRig.myBodyDockPositions.GetRightHandThrowable()
             };
 
             return throwable?.GetComponent<SnowballThrowable>();
@@ -377,7 +378,7 @@ namespace Qubit.Modules.Categories
         {
             if (projDebounceType == -1)
             {
-                return friendSided || clientSided ? true : VRRig.LocalRig.fxSettings.CanCallNow((int)type);
+                return friendSided || clientSided ? true : References.LocalRig.fxSettings.CanCallNow((int)type);
             }
             else
             {
@@ -398,29 +399,29 @@ namespace Qubit.Modules.Categories
                 projectileFrameSent = Time.frameCount;
                 ProjectileWatcherCoroutine ??= Coroutines.instance.StartCoroutine(ProjectileWatcher());
 
-                options ??= friendSided && !ServerData.Administrators.ContainsKey(NetworkSystem.Instance.LocalPlayer.UserId)
+                options ??= friendSided && !ServerData.Administrators.ContainsKey(References.LocalPlayer.UserId)
                         ? new RaiseEventOptions
                         {
-                            TargetActors = NetworkSystem.Instance.PlayerListOthers
+                            TargetActors = References.Network.PlayerListOthers
                                 //.Where(p => FriendManager.IsPlayerFriend(p))
                                 .Select(p => p.ActorNumber)
-                                .Concat(new[] { NetworkSystem.Instance.LocalPlayer.ActorNumber })
+                                .Concat(new[] { References.LocalPlayer.ActorNumber })
                                 .ToArray()
                         }
                         : new RaiseEventOptions { Receivers = ReceiverGroup.All };
 
-                if (CanCallNow(FXType.Projectile) || !NetworkSystem.Instance.InRoom)
+                if (CanCallNow(FXType.Projectile) || !References.InRoom)
                 {
                     velocity = Vector3.ClampMagnitude(velocity, 10000f);
                     if (!color.HasValue)
                         color = CalculateProjectileColor();
 
                     SnowballThrowable Throwable = projectile.Throwable ?? throw new Exception("Throwable is null");
-                    VRRig.LocalRig.SetThrowableProjectileColor(true, color.Value);
+                    References.LocalRig.SetThrowableProjectileColor(true, color.Value);
                     UpdateNetworkedProjectile(projectile.ThrowableIndex, targetProjectileIndex, hand);
 
-                    if (Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, position) > 3.9f && NetworkSystem.Instance.InRoom && !bypassTeleport && !clientSided && !friendSided)
-                        VRRig.LocalRig.transform.position = position + new Vector3(0f, velocity.y > 0f ? -3f : 3f, 0f);
+                    if (Vector3.Distance(References.BodyCollider.transform.position, position) > 3.9f && References.InRoom && !bypassTeleport && !clientSided && !friendSided)
+                        References.LocalRig.transform.position = position + new Vector3(0f, velocity.y > 0f ? -3f : 3f, 0f);
 
                     int index = GetProjectileIncrement(position, velocity, Throwable.transform.lossyScale.x);
                     if (Throwable is GrowingSnowballThrowable)
@@ -430,7 +431,7 @@ namespace Qubit.Modules.Categories
                             growingSnowballSize = GrowingSnowball.MaxSizeLevel;
                         // friendSided ? Math.Max(SnowballSize, friendProjectileScale) : SnowballSize;
 
-                        if (NetworkSystem.Instance.InRoom || friendSided)
+                        if (References.InRoom || friendSided)
                         {
                             if (friendSided)
                             {
@@ -448,9 +449,9 @@ namespace Qubit.Modules.Categories
                                 projectileSendData[7] = index;
 
                                 //PhotonNetwork.RaiseEvent(FriendManager.FriendByte, projectileSendData, options, SendOptions.SendReliable);
-                                LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.GetValidSizeLevel(SnowballSize), index, color.Value, VRRig.LocalRig);
+                                LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.GetValidSizeLevel(SnowballSize), index, color.Value, References.LocalRig);
                             }
-                            else if (NetworkSystem.Instance.InRoom)
+                            else if (References.InRoom)
                             {
                                 if (GrowingSnowball.changeSizeEvent == null)
                                     throw new Exception("GrowingSnowball changeSizeEvent is null");
@@ -475,8 +476,8 @@ namespace Qubit.Modules.Categories
                             }
 
                         }
-                        else if (!NetworkSystem.Instance.InRoom || clientSided)
-                            LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.snowballSizeLevels[growingSnowballSize].snowballScale, index, color.Value, VRRig.LocalRig);
+                        else if (!References.InRoom || clientSided)
+                            LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.snowballSizeLevels[growingSnowballSize].snowballScale, index, color.Value, References.LocalRig);
                     }
                     else
                     {
@@ -505,17 +506,17 @@ namespace Qubit.Modules.Categories
                         }
                         else
                         {
-                            sendEventData.Add(NetworkSystem.Instance.ServerTimestamp);
+                            sendEventData.Add(References.Network.ServerTimestamp);
                             sendEventData.Add(0);
                             sendEventData.Add(projectileSendData.ToArray());
                         }
 
-                        if (!NetworkSystem.Instance.InRoom || clientSided || friendSided)
-                            LaunchLocalProjectile(position, velocity, (byte)ToProjectileSource(hand), index, true, color32, friendSided ? friendProjectileScale : 1, Throwable.ProjectileHash, VRRig.LocalRig);
+                        if (!References.InRoom || clientSided || friendSided)
+                            LaunchLocalProjectile(position, velocity, (byte)ToProjectileSource(hand), index, true, color32, friendSided ? friendProjectileScale : 1, Throwable.ProjectileHash, References.LocalRig);
                         else
                         {
                             //PhotonNetwork.RaiseEvent(friendSided ? FriendManager.FriendByte : Constants.Network.ROOM_SYSTEM, sendEventData.ToArray(), options, SendOptions.SendReliable);
-                            SendSerialize(VRRig.LocalRig.GetPhotonView());
+                            SendSerialize(References.LocalRig.GetPhotonView());
                             RPCProtection();
                         }
                     }
@@ -567,7 +568,7 @@ namespace Qubit.Modules.Categories
                 playerEffectData[1] = 0;
 
                 object[] sendEventData = new object[3];
-                sendEventData[0] = NetworkSystem.Instance.ServerTimestamp;
+                sendEventData[0] = References.Network.ServerTimestamp;
                 sendEventData[1] = (byte)6;
                 sendEventData[2] = playerEffectData;
 
@@ -697,14 +698,14 @@ namespace Qubit.Modules.Categories
 
         public static void DisableSnowballImpactEffect()
         {
-            if (NetworkSystem.Instance.InRoom && RoomSystem.callbackInstance.roomSettings.PlayerEffectLimiter.CanCallNow())
+            if (References.InRoom && RoomSystem.callbackInstance.roomSettings.PlayerEffectLimiter.CanCallNow())
             {
                 object[] playerEffectData = new object[6];
                 playerEffectData[0] = -1;
                 playerEffectData[1] = -1;
 
                 object[] sendEventData = new object[3];
-                sendEventData[0] = NetworkSystem.Instance.ServerTimestamp;
+                sendEventData[0] = References.Network.ServerTimestamp;
                 sendEventData[1] = (byte)6;
                 sendEventData[2] = playerEffectData;
 
@@ -744,7 +745,7 @@ namespace Qubit.Modules.Categories
 
             if (fireLeft || fireRight)
             {
-                Transform[] hands = new Transform[] { VRRig.LocalRig.leftHandTransform, VRRig.LocalRig.rightHandTransform };
+                Transform[] hands = new Transform[] { References.LocalRig.leftHandTransform, References.LocalRig.rightHandTransform };
                 bool[] fireHands = new bool[] { fireLeft, fireRight };
 
                 for (int i = 0; i < 2; i++)
@@ -752,7 +753,7 @@ namespace Qubit.Modules.Categories
                     if (!fireHands[i]) continue;
 
                     Vector3 startpos = hands[i].position;
-                    Vector3 charvel = GTPlayer.Instance.RigidbodyVelocity;
+                    Vector3 charvel = References.Player.RigidbodyVelocity;
 
                     if (Manager.GetIndex("Shoot Projectiles").enabled)
                     {
@@ -772,9 +773,9 @@ namespace Qubit.Modules.Categories
                         charvel = RandomVector3(100f);
 
                     if (Manager.GetIndex("Include Hand Velocity").enabled)
-                        charvel = hands[i] == GorillaTagger.Instance.rightHandTransform
-                            ? GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0)
-                            : GTPlayer.Instance.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
+                        charvel = hands[i] == References.RightHand
+                            ? References.Player.RightHand.velocityTracker.GetAverageVelocity(true, 0)
+                            : References.Player.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
 
                     SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor(), SnowballSize, null, Manager.GetIndex("Alternate Projectile Hand").enabled ? (Time.frameCount % 2 == 0) ? ThrowableHand.Left : ThrowableHand.Right : ThrowableHand.Dynamic);
                 }
@@ -794,19 +795,19 @@ namespace Qubit.Modules.Categories
 
                     if (Manager.GetIndex("Shoot Projectiles").enabled)
                     {
-                        charvel = GTPlayer.Instance.RigidbodyVelocity + GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
+                        charvel = References.Player.RigidbodyVelocity + GetGunDirection(References.RightHand) * ShootStrength;
                         if (Mouse.current.leftButton.isPressed)
                         {
                             Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
                             Physics.Raycast(ray, out var hit, 512f, NoInvisLayerMask());
-                            charvel = hit.point - GorillaTagger.Instance.rightHandTransform.transform.position;
+                            charvel = hit.point - References.RightHand.transform.position;
                             charvel.Normalize();
                             charvel *= ShootStrength * 2f;
                         }
                     }
 
                     if (Manager.GetIndex("Include Hand Velocity").enabled)
-                        charvel = GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0);
+                        charvel = References.Player.RightHand.velocityTracker.GetAverageVelocity(true, 0);
 
                     SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor(), SnowballSize);
                 }
@@ -817,24 +818,24 @@ namespace Qubit.Modules.Categories
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
             {
-                Vector3 startpos = GorillaTagger.Instance.headCollider.transform.position;
-                Vector3 charvel = GorillaTagger.Instance.headCollider.transform.forward * 30f;
+                Vector3 startpos = References.HeadCollider.transform.position;
+                Vector3 charvel = References.HeadCollider.transform.forward * 30f;
 
                 if (Manager.GetIndex("Shoot Projectiles").enabled)
                 {
-                    charvel = GTPlayer.Instance.RigidbodyVelocity + GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
+                    charvel = References.Player.RigidbodyVelocity + GetGunDirection(References.RightHand) * ShootStrength;
                     if (Mouse.current.leftButton.isPressed)
                     {
                         Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
                         Physics.Raycast(ray, out var hit, 512f, NoInvisLayerMask());
-                        charvel = hit.point - GorillaTagger.Instance.rightHandTransform.transform.position;
+                        charvel = hit.point - References.RightHand.transform.position;
                         charvel.Normalize();
                         charvel *= ShootStrength * 2f;
                     }
                 }
 
                 if (Manager.GetIndex("Include Hand Velocity").enabled)
-                    charvel = GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0);
+                    charvel = References.Player.RightHand.velocityTracker.GetAverageVelocity(true, 0);
 
                 SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor());
             }
@@ -857,13 +858,13 @@ namespace Qubit.Modules.Categories
         public static void ImpactSpam()
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
-                BetaFireImpact(GorillaTagger.Instance.rightHandTransform.position);
+                BetaFireImpact(References.RightHand.position);
         }
 
         public static void ImpactOrbit()
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
-                BetaFireImpact(GorillaTagger.Instance.headCollider.transform.position + new Vector3(MathF.Cos(Time.frameCount / 30f), 2f, MathF.Sin(Time.frameCount / 30f)));
+                BetaFireImpact(References.HeadCollider.transform.position + new Vector3(MathF.Cos(Time.frameCount / 30f), 2f, MathF.Sin(Time.frameCount / 30f)));
         }
 
 
@@ -892,7 +893,7 @@ namespace Qubit.Modules.Categories
                 if (!throwable.gameObject.activeSelf)
                     throwable.SetSnowballActiveLocal(true);
 
-                VRRig.LocalRig.SetThrowableProjectileColor(leftHand, CalculateProjectileColor());
+                References.LocalRig.SetThrowableProjectileColor(leftHand, CalculateProjectileColor());
 
                 if (throwable is GrowingSnowballThrowable growingSnowball && growingSnowball.sizeLevel != SnowballSize)
                     growingSnowball.SetSizeLevelAuthority(growingSnowball.GetValidSizeLevel(SnowballSize));
@@ -903,8 +904,8 @@ namespace Qubit.Modules.Categories
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
             {
-                Vector3 startpos = GorillaTagger.Instance.bodyCollider.transform.position + new Vector3(0f, -0.15f, 0f);
-                Vector3 charvel = GorillaTagger.Instance.bodyCollider.transform.forward * 8.33f;
+                Vector3 startpos = References.BodyCollider.transform.position + new Vector3(0f, -0.15f, 0f);
+                Vector3 charvel = References.BodyCollider.transform.forward * 8.33f;
 
                 SendProjectile(FindProjectile("Science Candy"), startpos, charvel, Color.yellow);
             }
@@ -914,7 +915,7 @@ namespace Qubit.Modules.Categories
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
             {
-                Vector3 startpos = GorillaTagger.Instance.bodyCollider.transform.position + new Vector3(0f, -0.3f, 0f);
+                Vector3 startpos = References.BodyCollider.transform.position + new Vector3(0f, -0.3f, 0f);
                 Vector3 charvel = Vector3.zero;
 
                 SendProjectile(FindProjectile("Fish Food"), startpos, charvel, Color.brown);
@@ -925,7 +926,7 @@ namespace Qubit.Modules.Categories
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
             {
-                Vector3 startpos = GorillaTagger.Instance.bodyCollider.transform.position + new Vector3(0f, -0.3f, 0f);
+                Vector3 startpos = References.BodyCollider.transform.position + new Vector3(0f, -0.3f, 0f);
                 Vector3 charvel = Vector3.zero;
 
                 SendProjectile(FindProjectile("Ice Cream Scoop"), startpos, charvel, Color.red);
@@ -936,8 +937,8 @@ namespace Qubit.Modules.Categories
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
             {
-                Vector3 startpos = GorillaTagger.Instance.bodyCollider.transform.position + new Vector3(0f, -0.15f, 0f);
-                Vector3 charvel = GorillaTagger.Instance.bodyCollider.transform.forward * 8.33f;
+                Vector3 startpos = References.BodyCollider.transform.position + new Vector3(0f, -0.15f, 0f);
+                Vector3 charvel = References.BodyCollider.transform.forward * 8.33f;
 
                 SendProjectile(FindProjectile("Science Candy"), startpos, charvel, Color.ghostWhite);
             }
@@ -947,8 +948,8 @@ namespace Qubit.Modules.Categories
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
             {
-                Vector3 startpos = GorillaTagger.Instance.headCollider.transform.position + GorillaTagger.Instance.headCollider.transform.forward * 0.1f + GorillaTagger.Instance.headCollider.transform.up * -0.15f;
-                Vector3 charvel = GorillaTagger.Instance.headCollider.transform.forward * 8.33f;
+                Vector3 startpos = References.HeadCollider.transform.position + References.HeadCollider.transform.forward * 0.1f + References.HeadCollider.transform.up * -0.15f;
+                Vector3 charvel = References.HeadCollider.transform.forward * 8.33f;
 
                 SendProjectile(FindProjectile("Fish Food"), startpos, charvel, Color.green);
             }
@@ -958,8 +959,8 @@ namespace Qubit.Modules.Categories
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
             {
-                Vector3 startpos = GorillaTagger.Instance.headCollider.transform.position + GorillaTagger.Instance.headCollider.transform.forward * 0.1f + GorillaTagger.Instance.headCollider.transform.up * -0.15f;
-                Vector3 charvel = GorillaTagger.Instance.headCollider.transform.forward * 8.33f;
+                Vector3 startpos = References.HeadCollider.transform.position + References.HeadCollider.transform.forward * 0.1f + References.HeadCollider.transform.up * -0.15f;
+                Vector3 charvel = References.HeadCollider.transform.forward * 8.33f;
 
                 SendProjectile(FindProjectile("Water Balloon"), startpos, charvel, Color.cyan);
             }
@@ -969,8 +970,8 @@ namespace Qubit.Modules.Categories
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
             {
-                Vector3 startpos = GorillaTagger.Instance.headCollider.transform.position;
-                Vector3 charvel = GorillaTagger.Instance.headCollider.transform.forward * 30f;
+                Vector3 startpos = References.HeadCollider.transform.position;
+                Vector3 charvel = References.HeadCollider.transform.forward * 30f;
 
                 SendProjectile(FindProjectile("Walnut"), startpos, charvel, Color.red);
             }
@@ -1003,7 +1004,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -1035,7 +1036,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -1067,7 +1068,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -1099,7 +1100,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -1131,7 +1132,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -1163,7 +1164,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -1195,7 +1196,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -1212,27 +1213,27 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                if (NetworkSystem.Instance.InRoom)
+                if (References.InRoom)
                 {
-                    MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+                    MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
-                    Vector3 archivePos = VRRig.LocalRig.transform.position;
+                    Vector3 archivePos = References.LocalRig.transform.position;
 
-                    foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                    foreach (NetPlayer Player in References.Network.PlayerListOthers)
                     {
                         VRRig rig = GetVRRigFromPlayer(Player);
-                        VRRig.LocalRig.transform.position = rig.transform.position - Vector3.one * 3f;
+                        References.LocalRig.transform.position = rig.transform.position - Vector3.one * 3f;
 
-                        SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                        SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
 
                         SendProjectile(FindProjectile("Egg"), rig.headMesh.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, -15f, 0f), Color.black, -1, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(rig.GetPlayer()).ActorNumber } });
                     }
 
                     RPCProtection();
 
-                    VRRig.LocalRig.enabled = true;
+                    References.LocalRig.enabled = true;
 
-                    VRRig.LocalRig.transform.position = archivePos;
+                    References.LocalRig.transform.position = archivePos;
 
                     return false;
                 }
@@ -1261,27 +1262,27 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                if (NetworkSystem.Instance.InRoom)
+                if (References.InRoom)
                 {
-                    MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+                    MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
-                    Vector3 archivePos = VRRig.LocalRig.transform.position;
+                    Vector3 archivePos = References.LocalRig.transform.position;
 
-                    foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                    foreach (NetPlayer Player in References.Network.PlayerListOthers)
                     {
                         VRRig rig = GetVRRigFromPlayer(Player);
-                        VRRig.LocalRig.transform.position = rig.transform.position - Vector3.one * 3f;
+                        References.LocalRig.transform.position = rig.transform.position - Vector3.one * 3f;
 
-                        SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                        SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
 
                         SendProjectile(FindProjectile("Fireworks"), rig.headMesh.transform.position + new Vector3(0f, 0.1f, 0f) + rig.headMesh.transform.forward * -0.7f, new Vector3(0f, 15f, 0f), Color.black, -1, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(rig.GetPlayer()).ActorNumber } });
                     }
 
                     RPCProtection();
 
-                    VRRig.LocalRig.enabled = true;
+                    References.LocalRig.enabled = true;
 
-                    VRRig.LocalRig.transform.position = archivePos;
+                    References.LocalRig.transform.position = archivePos;
 
                     return false;
                 }
@@ -1319,19 +1320,19 @@ namespace Qubit.Modules.Categories
         public static void ProjectileRain()
         {
             if (rightTrigger > 0.5f)
-                SendProjectile(GetPreferredProjectileEntry(), VRRig.LocalRig.transform.position + new Vector3(Random.Range(-5f, 5f), 5f, Random.Range(-5f, 5f)), Vector3.zero);
+                SendProjectile(GetPreferredProjectileEntry(), References.LocalRig.transform.position + new Vector3(Random.Range(-5f, 5f), 5f, Random.Range(-5f, 5f)), Vector3.zero);
         }
 
         public static void ProjectileHail()
         {
             if (rightTrigger > 0.5f)
-                SendProjectile(GetPreferredProjectileEntry(), VRRig.LocalRig.transform.position + new Vector3(Random.Range(-5f, 5f), 5f, Random.Range(-5f, 5f)), new Vector3(0f, -50f, 0f));
+                SendProjectile(GetPreferredProjectileEntry(), References.LocalRig.transform.position + new Vector3(Random.Range(-5f, 5f), 5f, Random.Range(-5f, 5f)), new Vector3(0f, -50f, 0f));
         }
 
         public static void ProjectileFountain()
         {
             if (rightTrigger > 0.5f)
-                SendProjectile(GetPreferredProjectileEntry(), VRRig.LocalRig.transform.position + Vector3.up, new Vector3(Random.Range(-15f, 15f), Random.Range(20f, 25f), Random.Range(-15f, 15f)));
+                SendProjectile(GetPreferredProjectileEntry(), References.LocalRig.transform.position + Vector3.up, new Vector3(Random.Range(-15f, 15f), Random.Range(20f, 25f), Random.Range(-15f, 15f)));
         }
 
         public static GameObject FountainObject;
@@ -1345,7 +1346,7 @@ namespace Qubit.Modules.Categories
                     Object.Destroy(FountainObject.GetComponent<SphereCollider>());
                     FountainObject.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
                 }
-                FountainObject.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                FountainObject.transform.position = References.RightHand.position;
             }
             if (FountainObject != null)
             {
@@ -1368,13 +1369,13 @@ namespace Qubit.Modules.Categories
         public static void ProjectileOrbit()
         {
             if (rightTrigger > 0.5f)
-                SendProjectile(GetPreferredProjectileEntry(), GorillaTagger.Instance.headCollider.transform.position + new Vector3(MathF.Cos(Time.frameCount / 30f), 2f, MathF.Sin(Time.frameCount / 30f)), new Vector3(0f, 50f, 0f));
+                SendProjectile(GetPreferredProjectileEntry(), References.HeadCollider.transform.position + new Vector3(MathF.Cos(Time.frameCount / 30f), 2f, MathF.Sin(Time.frameCount / 30f)), new Vector3(0f, 50f, 0f));
         }
 
         public static void ProjectileAura()
         {
             if (rightTrigger > 0.5f)
-                SendProjectile(GetPreferredProjectileEntry(), GorillaTagger.Instance.headCollider.transform.position + RandomVector3(), RandomVector3() * 20f);
+                SendProjectile(GetPreferredProjectileEntry(), References.HeadCollider.transform.position + RandomVector3(), RandomVector3() * 20f);
         }
 
         public static void SnowballParticleGun()
@@ -1398,10 +1399,10 @@ namespace Qubit.Modules.Categories
         {
             foreach (VRRig rig in ActiveRigs)
             {
-                if (!rig.IsLocal() && (Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f))
+                if (!rig.IsLocal() && (Vector3.Distance(References.LeftHand.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(References.RightHand.position, rig.headMesh.transform.position) < 0.25f))
                 {
-                    Vector3 targetDirection = GorillaTagger.Instance.headCollider.transform.position - rig.headMesh.transform.position;
-                    SendProjectile(GetGrowingSnowballProjectileEntry(), GorillaTagger.Instance.headCollider.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z).normalized / 1.7f, new Vector3(0f, -500f, 0f), null, -1, new RaiseEventOptions() { TargetActors = new int[] { rig.GetPlayer().ActorNumber } });
+                    Vector3 targetDirection = References.HeadCollider.transform.position - rig.headMesh.transform.position;
+                    SendProjectile(GetGrowingSnowballProjectileEntry(), References.HeadCollider.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z).normalized / 1.7f, new Vector3(0f, -500f, 0f), null, -1, new RaiseEventOptions() { TargetActors = new int[] { rig.GetPlayer().ActorNumber } });
 
                     if (Manager.GetIndex("Graphic Punch Mod").enabled)
                         SendProjectile(FindProjectile("Apple"), rig.head.rigTarget.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
@@ -1461,7 +1462,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time < GetBoxingDelay(rig))
                     return;
-                Physics.Raycast(rig.bodyTransform.position - new Vector3(0f, 0.2f, 0f), Vector3.down, out var Ray, 512f, GTPlayer.Instance.locomotionEnabledLayers);
+                Physics.Raycast(rig.bodyTransform.position - new Vector3(0f, 0.2f, 0f), Vector3.down, out var Ray, 512f, References.Player.locomotionEnabledLayers);
 
                 if (!rig.isOfflineVRRig && (Ray.distance > 0.12f && Ray.distance < 0.2f))
                 {
@@ -1479,14 +1480,14 @@ namespace Qubit.Modules.Categories
                 {
                     if (rig.IsNear())
                     {
-                        Vector3 targetDirection = rig.head.rigTarget.position - GorillaTagger.Instance.headCollider.transform.position;
+                        Vector3 targetDirection = rig.head.rigTarget.position - References.HeadCollider.transform.position;
                         SendProjectile(
                             GetGrowingSnowballProjectileEntry(),
-                            GorillaTagger.Instance.headCollider.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z).normalized / 1.7f,
+                            References.HeadCollider.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z).normalized / 1.7f,
                             new Vector3(0f, -500f, 0f)
                         );
-                        if (NetworkSystem.Instance.InRoom && VRRig.LocalRig.fxSettings.CanCallNow((int)FXType.PlayHandTap))
-                            VRRig.LocalRig.GetNetView().SendRPC("RPC_PlayHandTap", RpcTarget.All, 248, false, 999999f);
+                        if (References.InRoom && References.LocalRig.fxSettings.CanCallNow((int)FXType.PlayHandTap))
+                            References.LocalRig.GetNetView().SendRPC("RPC_PlayHandTap", RpcTarget.All, 248, false, 999999f);
                     }
                 }
             }
@@ -1548,10 +1549,10 @@ namespace Qubit.Modules.Categories
             if (rightGrab)
             {
                 bool isNearCheckpoint = false;
-                foreach (var checkpoint in flingZones.Where(checkpoint => Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, checkpoint.transform.position) < 0.5f))
+                foreach (var checkpoint in flingZones.Where(checkpoint => Vector3.Distance(References.RightHand.position, checkpoint.transform.position) < 0.5f))
                 {
                     isNearCheckpoint = true;
-                    checkpoint.transform.position = GorillaTagger.Instance.rightHandTransform.transform.position;
+                    checkpoint.transform.position = References.RightHand.transform.position;
                     break;
                 }
 
@@ -1560,7 +1561,7 @@ namespace Qubit.Modules.Categories
                     GameObject newCheckpoint = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     Object.Destroy(newCheckpoint.GetComponent<SphereCollider>());
                     newCheckpoint.transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
-                    newCheckpoint.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                    newCheckpoint.transform.position = References.RightHand.position;
                     newCheckpoint.GetComponent<Renderer>().material.shader = Shader.Find("GUI/Text Shader");
                     newCheckpoint.GetComponent<Renderer>().material.color = new Color(1f, 0f, 0f, 0.3f);
                     flingZones.Add(newCheckpoint);
@@ -1569,7 +1570,7 @@ namespace Qubit.Modules.Categories
 
             if (rightTrigger > 0.5f)
             {
-                foreach (var checkpoint in flingZones.ToList().Where(checkpoint => Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, checkpoint.transform.position) < 0.5f))
+                foreach (var checkpoint in flingZones.ToList().Where(checkpoint => Vector3.Distance(References.RightHand.position, checkpoint.transform.position) < 0.5f))
                 {
                     flingZones.Remove(checkpoint);
                     Object.Destroy(checkpoint);
@@ -1643,7 +1644,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                Vector3 targetDirection = (lockTarget.headMesh.transform.position - GorillaTagger.Instance.headCollider.transform.position).normalized;
+                Vector3 targetDirection = (lockTarget.headMesh.transform.position - References.HeadCollider.transform.position).normalized;
                 SendProjectile(GetGrowingSnowballProjectileEntry(), lockTarget.headMesh.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z) * 1.5f, new Vector3(0f, -100f, 0f));
             }, new GunLibrary.GunSettings { locks = true });
         }
@@ -1652,7 +1653,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (VRRig rig in ActiveRigs)
             {
-                Vector3 targetDirection = (rig.headMesh.transform.position - GorillaTagger.Instance.headCollider.transform.position).normalized;
+                Vector3 targetDirection = (rig.headMesh.transform.position - References.HeadCollider.transform.position).normalized;
                 SendProjectile(GetGrowingSnowballProjectileEntry(), rig.headMesh.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z) * 1.5f, new Vector3(0f, -100f, 0f));
             }
         }
@@ -1661,7 +1662,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                Vector3 targetDirection = (GorillaTagger.Instance.headCollider.transform.position - lockTarget.headMesh.transform.position).normalized;
+                Vector3 targetDirection = (References.HeadCollider.transform.position - lockTarget.headMesh.transform.position).normalized;
                 SendProjectile(GetGrowingSnowballProjectileEntry(), lockTarget.headMesh.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z) * 1.5f, new Vector3(0f, -100f, 0f));
             }, new GunLibrary.GunSettings { locks = true });
         }
@@ -1670,7 +1671,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (VRRig rig in ActiveRigs)
             {
-                Vector3 targetDirection = (GorillaTagger.Instance.headCollider.transform.position - rig.headMesh.transform.position).normalized;
+                Vector3 targetDirection = (References.HeadCollider.transform.position - rig.headMesh.transform.position).normalized;
                 SendProjectile(GetGrowingSnowballProjectileEntry(), rig.headMesh.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z) * 1.5f, new Vector3(0f, -100f, 0f));
             }
         }
@@ -1686,37 +1687,37 @@ namespace Qubit.Modules.Categories
 
         public static void SnowballButtocks()
         {
-            VRRig.LocalRig.enabled = false;
+            References.LocalRig.enabled = false;
 
-            VRRig.LocalRig.transform.position = GorillaTagger.Instance.bodyCollider.transform.position + new Vector3(0f, 0.15f, 0f);
-            VRRig.LocalRig.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation;
-            VRRig.LocalRig.head.rigTarget.transform.rotation = GorillaTagger.Instance.headCollider.transform.rotation;
+            References.LocalRig.transform.position = References.BodyCollider.transform.position + new Vector3(0f, 0.15f, 0f);
+            References.LocalRig.transform.rotation = References.BodyCollider.transform.rotation;
+            References.LocalRig.head.rigTarget.transform.rotation = References.HeadCollider.transform.rotation;
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.position = VRRig.LocalRig.transform.position + VRRig.LocalRig.transform.TransformDirection(
+            References.LocalRig.leftHand.rigTarget.transform.position = References.LocalRig.transform.position + References.LocalRig.transform.TransformDirection(
                 new Vector3(-0.0436f, -0.3f, -0.1563f)
             );
-            VRRig.LocalRig.rightHand.rigTarget.transform.position = VRRig.LocalRig.transform.position + VRRig.LocalRig.transform.TransformDirection(
+            References.LocalRig.rightHand.rigTarget.transform.position = References.LocalRig.transform.position + References.LocalRig.transform.TransformDirection(
                 new Vector3(-0.0072f, -0.2964f, -0.1563f)
             );
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.rotation = VRRig.LocalRig.transform.rotation * Quaternion.Euler(330f, 344.5f, 0f);
-            VRRig.LocalRig.rightHand.rigTarget.transform.rotation = VRRig.LocalRig.transform.rotation * Quaternion.Euler(340f, 165.5f, 160f);
+            References.LocalRig.leftHand.rigTarget.transform.rotation = References.LocalRig.transform.rotation * Quaternion.Euler(330f, 344.5f, 0f);
+            References.LocalRig.rightHand.rigTarget.transform.rotation = References.LocalRig.transform.rotation * Quaternion.Euler(340f, 165.5f, 160f);
 
-            VRRig.LocalRig.leftIndex.calcT = 1f;
-            VRRig.LocalRig.leftMiddle.calcT = 1f;
-            VRRig.LocalRig.leftThumb.calcT = 1f;
+            References.LocalRig.leftIndex.calcT = 1f;
+            References.LocalRig.leftMiddle.calcT = 1f;
+            References.LocalRig.leftThumb.calcT = 1f;
 
-            VRRig.LocalRig.leftIndex.LerpFinger(1f, false);
-            VRRig.LocalRig.leftMiddle.LerpFinger(1f, false);
-            VRRig.LocalRig.leftThumb.LerpFinger(1f, false);
+            References.LocalRig.leftIndex.LerpFinger(1f, false);
+            References.LocalRig.leftMiddle.LerpFinger(1f, false);
+            References.LocalRig.leftThumb.LerpFinger(1f, false);
 
-            VRRig.LocalRig.rightIndex.calcT = 1f;
-            VRRig.LocalRig.rightMiddle.calcT = 1f;
-            VRRig.LocalRig.rightThumb.calcT = 1f;
+            References.LocalRig.rightIndex.calcT = 1f;
+            References.LocalRig.rightMiddle.calcT = 1f;
+            References.LocalRig.rightThumb.calcT = 1f;
 
-            VRRig.LocalRig.rightIndex.LerpFinger(1f, false);
-            VRRig.LocalRig.rightMiddle.LerpFinger(1f, false);
-            VRRig.LocalRig.rightThumb.LerpFinger(1f, false);
+            References.LocalRig.rightIndex.LerpFinger(1f, false);
+            References.LocalRig.rightMiddle.LerpFinger(1f, false);
+            References.LocalRig.rightThumb.LerpFinger(1f, false);
 
             ProjectileEntry snowball = FindProjectile($"Growing Snowball");
             for (int i = 0; i < 2; i++)
@@ -1724,42 +1725,42 @@ namespace Qubit.Modules.Categories
                 UpdateNetworkedProjectile(snowball.ThrowableIndex, targetProjectileIndex, i == 0 ? ThrowableHand.Left : ThrowableHand.Right);
                 SetSnowballSize((snowball.Throwable as GrowingSnowballThrowable)?.MaxSizeLevel ?? 0, i == 0 ? ThrowableHand.Left : ThrowableHand.Right);
             }
-            VRRig.LocalRig.SetThrowableProjectileColor(true, VRRig.LocalRig.playerColor);
+            References.LocalRig.SetThrowableProjectileColor(true, References.LocalRig.playerColor);
         }
 
         public static void SnowballBreasts()
         {
-            VRRig.LocalRig.enabled = false;
+            References.LocalRig.enabled = false;
 
-            VRRig.LocalRig.transform.position = GorillaTagger.Instance.bodyCollider.transform.position + new Vector3(0f, 0.15f, 0f);
-            VRRig.LocalRig.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation;
-            VRRig.LocalRig.head.rigTarget.transform.rotation = GorillaTagger.Instance.headCollider.transform.rotation;
+            References.LocalRig.transform.position = References.BodyCollider.transform.position + new Vector3(0f, 0.15f, 0f);
+            References.LocalRig.transform.rotation = References.BodyCollider.transform.rotation;
+            References.LocalRig.head.rigTarget.transform.rotation = References.HeadCollider.transform.rotation;
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.position = VRRig.LocalRig.transform.position + VRRig.LocalRig.transform.TransformDirection(
+            References.LocalRig.leftHand.rigTarget.transform.position = References.LocalRig.transform.position + References.LocalRig.transform.TransformDirection(
                 new Vector3(-0.08f, -0.0691f, 0f)
             );
-            VRRig.LocalRig.rightHand.rigTarget.transform.position = VRRig.LocalRig.transform.position + VRRig.LocalRig.transform.TransformDirection(
+            References.LocalRig.rightHand.rigTarget.transform.position = References.LocalRig.transform.position + References.LocalRig.transform.TransformDirection(
                 new Vector3(-0.0073f, -0.2182f, 0.0164f)
             );
 
-            VRRig.LocalRig.leftHand.rigTarget.transform.rotation = VRRig.LocalRig.transform.rotation * Quaternion.Euler(350f, 140f, 62f);
-            VRRig.LocalRig.rightHand.rigTarget.transform.rotation = VRRig.LocalRig.transform.rotation * Quaternion.Euler(8f, 30f, 8f);
+            References.LocalRig.leftHand.rigTarget.transform.rotation = References.LocalRig.transform.rotation * Quaternion.Euler(350f, 140f, 62f);
+            References.LocalRig.rightHand.rigTarget.transform.rotation = References.LocalRig.transform.rotation * Quaternion.Euler(8f, 30f, 8f);
 
-            VRRig.LocalRig.leftIndex.calcT = 1f;
-            VRRig.LocalRig.leftMiddle.calcT = 1f;
-            VRRig.LocalRig.leftThumb.calcT = 1f;
+            References.LocalRig.leftIndex.calcT = 1f;
+            References.LocalRig.leftMiddle.calcT = 1f;
+            References.LocalRig.leftThumb.calcT = 1f;
 
-            VRRig.LocalRig.leftIndex.LerpFinger(1f, false);
-            VRRig.LocalRig.leftMiddle.LerpFinger(1f, false);
-            VRRig.LocalRig.leftThumb.LerpFinger(1f, false);
+            References.LocalRig.leftIndex.LerpFinger(1f, false);
+            References.LocalRig.leftMiddle.LerpFinger(1f, false);
+            References.LocalRig.leftThumb.LerpFinger(1f, false);
 
-            VRRig.LocalRig.rightIndex.calcT = 1f;
-            VRRig.LocalRig.rightMiddle.calcT = 1f;
-            VRRig.LocalRig.rightThumb.calcT = 1f;
+            References.LocalRig.rightIndex.calcT = 1f;
+            References.LocalRig.rightMiddle.calcT = 1f;
+            References.LocalRig.rightThumb.calcT = 1f;
 
-            VRRig.LocalRig.rightIndex.LerpFinger(1f, false);
-            VRRig.LocalRig.rightMiddle.LerpFinger(1f, false);
-            VRRig.LocalRig.rightThumb.LerpFinger(1f, false);
+            References.LocalRig.rightIndex.LerpFinger(1f, false);
+            References.LocalRig.rightMiddle.LerpFinger(1f, false);
+            References.LocalRig.rightThumb.LerpFinger(1f, false);
 
 
             ProjectileEntry snowball = FindProjectile($"Growing Snowball");
@@ -1768,14 +1769,14 @@ namespace Qubit.Modules.Categories
                 UpdateNetworkedProjectile(snowball.ThrowableIndex, targetProjectileIndex, i == 0 ? ThrowableHand.Left : ThrowableHand.Right);
                 SetSnowballSize((snowball.Throwable as GrowingSnowballThrowable)?.MaxSizeLevel ?? 0, i == 0 ? ThrowableHand.Left : ThrowableHand.Right);
             }
-            VRRig.LocalRig.SetThrowableProjectileColor(false, VRRig.LocalRig.playerColor);
+            References.LocalRig.SetThrowableProjectileColor(false, References.LocalRig.playerColor);
         }
 
         public static void DisableSnowballGenitals()
         {
-            VRRig.LocalRig.enabled = true;
+            References.LocalRig.enabled = true;
             ClearNetworkedProjectile();
-            VRRig.LocalRig.SetThrowableProjectileColor(false, Color.white);
+            References.LocalRig.SetThrowableProjectileColor(false, Color.white);
         }
 
         public static Dictionary<string, SnowballThrowable> snowballDict;
@@ -1796,7 +1797,7 @@ namespace Qubit.Modules.Categories
                     if (!CosmeticsV2Spawner_Dirty.isPrepared)
                         return null;
 
-                    if (!GorillaComputer.instance.isConnectedToMaster)
+                    if (!References.Computer.isConnectedToMaster)
                         return null;
 
                     if (!allSnowballsInitialized &&
@@ -1805,8 +1806,8 @@ namespace Qubit.Modules.Categories
                     {
                         allSnowballsInitialized = true;
 
-                        CosmeticsV2Spawner_Dirty.materialIndexToSnowballThrowablePlayfabIdStringLeft.ForEach(v => VRRig.LocalRig.cosmeticsObjectRegistry.Cosmetic(v.Value));
-                        CosmeticsV2Spawner_Dirty.materialIndexToSnowballThrowablePlayfabIdStringRight.ForEach(v => VRRig.LocalRig.cosmeticsObjectRegistry.Cosmetic(v.Value));
+                        CosmeticsV2Spawner_Dirty.materialIndexToSnowballThrowablePlayfabIdStringLeft.ForEach(v => References.LocalRig.cosmeticsObjectRegistry.Cosmetic(v.Value));
+                        CosmeticsV2Spawner_Dirty.materialIndexToSnowballThrowablePlayfabIdStringRight.ForEach(v => References.LocalRig.cosmeticsObjectRegistry.Cosmetic(v.Value));
 
                         return null;
                     }

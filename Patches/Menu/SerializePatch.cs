@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using HarmonyLib;
 using Photon.Pun;
 using Qubit.Libraries.Core;
@@ -41,7 +42,7 @@ namespace Qubit.Patches.Menu
 
         public static bool Prefix()
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return true;
 
             try

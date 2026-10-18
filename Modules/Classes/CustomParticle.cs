@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using UnityEngine;
 using static Qubit.Extensions.Random;
@@ -41,7 +42,7 @@ namespace Qubit.Modules.Classes
             startScale = transform.localScale.x;
 
             renderer = gameObject.GetComponent<Renderer>() ?? null;
-            velocity = RandomVector3(scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            velocity = RandomVector3(scaleWithPlayer ? References.Player.scale : 1f);
 
             Update();
         }

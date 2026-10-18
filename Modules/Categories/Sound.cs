@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaLocomotion;
 using Photon.Pun;
@@ -525,7 +526,7 @@ namespace Qubit.Modules.Categories
 
                 if (!activeSounds.ContainsKey(hash))
                 {
-                    if (RecorderPatch.enabled && NetworkSystem.Instance.InRoom)
+                    if (RecorderPatch.enabled && References.InRoom)
                     {
                         var id = Voices.Get().AudioClip(clip, false);
                         activeSounds[hash] = new SoundData { Clip = id, AudioClip = clip };
@@ -572,7 +573,7 @@ namespace Qubit.Modules.Categories
                 }
             }
 
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
                 if (RecorderPatch.enabled)
                 {
@@ -593,14 +594,14 @@ namespace Qubit.Modules.Categories
                     }
                     Voices.Get().StopAudioClips();
 
-                    NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
+                    References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
                 }
                 else
                 {
-                    NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
-                    NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip = null;
-                    NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-                    NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
+                    References.Network.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
+                    References.Network.VoiceConnection.PrimaryRecorder.AudioClip = null;
+                    References.Network.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+                    References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
                 }
             }
 
@@ -610,7 +611,7 @@ namespace Qubit.Modules.Categories
 
         public static void FixMicrophone()
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
             if (RecorderPatch.enabled)
             {
@@ -635,10 +636,10 @@ namespace Qubit.Modules.Categories
             {
 
             }
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip = null;
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
+            References.Network.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
+            References.Network.VoiceConnection.PrimaryRecorder.AudioClip = null;
+            References.Network.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
         }
 
         private static bool lastBindPressed;
@@ -660,7 +661,7 @@ namespace Qubit.Modules.Categories
             bool bindPressed = bindings[BindMode - 1];
             if (bindPressed && !lastBindPressed)
             {
-                if (NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType == Recorder.InputSourceType.AudioClip)
+                if (References.Network.VoiceConnection.PrimaryRecorder.SourceType == Recorder.InputSourceType.AudioClip)
                     FixMicrophone();
                 else
                     Fun.PlayAudio(file);
@@ -683,7 +684,7 @@ namespace Qubit.Modules.Categories
         public static float sendEffectDelay;
         public static void BetaPlayTag(int id, float volume)
         {
-            if (!NetworkSystem.Instance.IsMasterClient)
+            if (!References.IsMasterClient)
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
             else
             {
@@ -714,13 +715,13 @@ namespace Qubit.Modules.Categories
                 else
                     return;
 
-                if (NetworkSystem.Instance.InRoom)
+                if (References.InRoom)
                 {
-                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, soundId, false, 999999f);
+                    References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, soundId, false, 999999f);
                     RPCProtection();
                 }
                 else
-                    VRRig.LocalRig.PlayHandTapLocal(soundId, false, 999999f);
+                    References.LocalRig.PlayHandTapLocal(soundId, false, 999999f);
             }
         }
 
@@ -728,7 +729,7 @@ namespace Qubit.Modules.Categories
             SoundSpam(Random.Range(336, 338));
 
         public static void RandomSoundSpam() =>
-            SoundSpam(Random.Range(0, GTPlayer.Instance.materialData.Count));
+            SoundSpam(Random.Range(0, References.Player.materialData.Count));
 
         public static void CrystalSoundSpam()
         {

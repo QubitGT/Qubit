@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using Qubit.Libraries.Core;
 using Qubit.Utilities;
@@ -85,7 +86,7 @@ namespace Qubit.Modules.Categories.CustomMaps
 
             CustomGameMode.LuaScript = string.Join(Environment.NewLine, lines);
 
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
                 LuauHud.Instance.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();
@@ -121,7 +122,7 @@ namespace Qubit.Modules.Categories.CustomMaps
             if (File.Exists(DirectoryTarget))
                 CustomGameMode.LuaScript = File.ReadAllText(DirectoryTarget);
 
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
                 LuauHud.Instance.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();
@@ -131,7 +132,7 @@ namespace Qubit.Modules.Categories.CustomMaps
         {
             CustomGameMode.LuaScript = mapScriptArchives[CustomMapManager.currentRoomMapModId];
 
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
                 LuauHud.Instance.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();

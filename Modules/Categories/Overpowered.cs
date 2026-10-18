@@ -78,7 +78,7 @@ namespace Qubit.Modules.Categories
 
         private static float playerColorDelay;
         public static void SetColorSelf(int color) =>
-            GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { NetworkSystem.Instance.LocalPlayer.ActorNumber, color } });
+            GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { References.LocalPlayer.ActorNumber, color } });
 
         public static void SetColorGun(int color)
         {
@@ -95,7 +95,7 @@ namespace Qubit.Modules.Categories
         public static void SetColorAll(int color)
         {
             if (PhotonNetwork.IsMasterClient)
-                GameModes.SetMonkeBallTeams(NetworkSystem.Instance.AllNetPlayers.ToDictionary(p => p.ActorNumber, p => color));
+                GameModes.SetMonkeBallTeams(References.Network.AllNetPlayers.ToDictionary(p => p.ActorNumber, p => color));
             else
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
         }
@@ -105,7 +105,7 @@ namespace Qubit.Modules.Categories
             if (Time.time > playerColorDelay)
             {
                 playerColorDelay = Time.time + 0.1f;
-                if (NetworkSystem.Instance.IsMasterClient)
+                if (References.IsMasterClient)
                     SetColorSelf(Time.time % 0.2f > 0.1f ? 1 : 0);
                 else
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
@@ -123,7 +123,7 @@ namespace Qubit.Modules.Categories
                     if (Time.time > playerColorDelay)
                     {
                         playerColorDelay = Time.time + 0.1f;
-                        if (NetworkSystem.Instance.IsMasterClient)
+                        if (References.IsMasterClient)
                             GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { lockTarget.GetPlayer().ActorNumber, Time.time % 0.2f > 0.1f ? 1 : 0 } });
                         else
                             Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
@@ -153,7 +153,7 @@ namespace Qubit.Modules.Categories
             if (Time.time > playerColorDelay)
             {
                 playerColorDelay = Time.time + 0.1f;
-                if (NetworkSystem.Instance.IsMasterClient)
+                if (References.IsMasterClient)
                     SetColorAll(Time.time % 0.2f > 0.1f ? 1 : 0);
                 else
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
@@ -168,7 +168,7 @@ namespace Qubit.Modules.Categories
         public static float guardianProtectorDelay;
         public static void GuardianProtector()
         {
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
 
                 if (!GameModes.IsGuardian(PhotonNetwork.LocalPlayer)) return;
@@ -284,7 +284,7 @@ namespace Qubit.Modules.Categories
             if (manager == null)
                 return;
 
-            targetPosition ??= GorillaTagger.Instance.bodyCollider.transform.position;
+            targetPosition ??= References.BodyCollider.transform.position;
 
             int[] objectIds = manager.itemPrefabFactory.Keys.ToArray();
             int[] ids = new int[ItemCrashCount];
@@ -310,10 +310,10 @@ namespace Qubit.Modules.Categories
             if (Visuals.DoPerformanceCheck())
                 return;
 
-            if (NetworkSystem.Instance.IsMasterClient)
+            if (References.IsMasterClient)
                 return;
 
-            VRRig rig = NetworkSystem.Instance.MasterClient.VRRig();
+            VRRig rig = References.Network.MasterClient.VRRig();
             if (rig == null)
                 return;
 
@@ -335,7 +335,7 @@ namespace Qubit.Modules.Categories
                     line.startWidth = width;
                     line.endWidth = width;
                     line.SetPosition(0, rig.transform.position);
-                    line.SetPosition(1, GorillaTagger.Instance.rightHandTransform.position);
+                    line.SetPosition(1, References.RightHand.position);
                     break;
             }
         }
@@ -348,7 +348,7 @@ namespace Qubit.Modules.Categories
                 gunLocked = true;
                 lockTarget = gunTarget;
 
-                if (VRRig.LocalRig.IsTagged())
+                if (References.LocalRig.IsTagged())
                 {
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must not be tagged.");
                     return;
@@ -375,19 +375,19 @@ namespace Qubit.Modules.Categories
                 SerializePatch.OverrideSerialization = () =>
                 {
                     lockTarget.GetPlayer();
-                    MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+                    MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
-                    Vector3 positionArchive = VRRig.LocalRig.transform.position;
-                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => !(new[] { PhotonNetwork.MasterClient.ActorNumber, lockTarget.GetPlayer().ActorNumber }).Contains(plr.ActorNumber)).Select(plr => plr.ActorNumber).ToArray() });
+                    Vector3 positionArchive = References.LocalRig.transform.position;
+                    SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => !(new[] { PhotonNetwork.MasterClient.ActorNumber, lockTarget.GetPlayer().ActorNumber }).Contains(plr.ActorNumber)).Select(plr => plr.ActorNumber).ToArray() });
 
-                    VRRig.LocalRig.transform.position = new Vector3(99999f, 99999f, 99999f);
-                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
+                    References.LocalRig.transform.position = new Vector3(99999f, 99999f, 99999f);
+                    SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
 
-                    VRRig.LocalRig.transform.position = lockTarget.rightHandTransform.position;
-                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
+                    References.LocalRig.transform.position = lockTarget.rightHandTransform.position;
+                    SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
 
                     RPCProtection();
-                    VRRig.LocalRig.transform.position = positionArchive;
+                    References.LocalRig.transform.position = positionArchive;
 
                     return false;
                 };
@@ -405,7 +405,7 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                if (VRRig.LocalRig.IsTagged())
+                if (References.LocalRig.IsTagged())
                 {
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must not be tagged.");
                     return true;
@@ -418,26 +418,26 @@ namespace Qubit.Modules.Categories
                 }
 
                 lockTarget.GetPlayer();
-                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
-                Vector3 positionArchive = VRRig.LocalRig.transform.position;
-                SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(player => !player.IsMasterClient && player.VRRig().IsTagged()).Select(player => player.ActorNumber).ToArray() });
+                Vector3 positionArchive = References.LocalRig.transform.position;
+                SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(player => !player.IsMasterClient && player.VRRig().IsTagged()).Select(player => player.ActorNumber).ToArray() });
 
-                VRRig.LocalRig.transform.position = new Vector3(99999f, 99999f, 99999f);
-                SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
+                References.LocalRig.transform.position = new Vector3(99999f, 99999f, 99999f);
+                SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
 
-                foreach (NetPlayer player in NetworkSystem.Instance.PlayerListOthers)
+                foreach (NetPlayer player in References.Network.PlayerListOthers)
                 {
                     VRRig rig = GetVRRigFromPlayer(player);
                     if (!player.IsMasterClient && rig.IsTagged())
                     {
-                        VRRig.LocalRig.transform.position = rig.rightHandTransform.position;
-                        SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
+                        References.LocalRig.transform.position = rig.rightHandTransform.position;
+                        SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
                     }
                 }
 
                 RPCProtection();
-                VRRig.LocalRig.transform.position = positionArchive;
+                References.LocalRig.transform.position = positionArchive;
 
                 return false;
             };
@@ -461,13 +461,13 @@ namespace Qubit.Modules.Categories
             {
                 if (!rig.isLocal)
                 {
-                    if (rig.leftHandLink.grabbedPlayer == NetworkSystem.Instance.LocalPlayer || rig.rightHandLink.grabbedPlayer == NetworkSystem.Instance.LocalPlayer)
+                    if (rig.leftHandLink.grabbedPlayer == References.LocalPlayer || rig.rightHandLink.grabbedPlayer == References.LocalPlayer)
                     {
-                        bool grabbedOnLeft = VRRig.LocalRig.leftHandLink.grabbedPlayer == rig.GetPlayer();
+                        bool grabbedOnLeft = References.LocalRig.leftHandLink.grabbedPlayer == rig.GetPlayer();
                         if (grabbedOnLeft ? rig.leftIndex.calcT > 0 : rig.rightIndex.calcT > 0)
                         {
-                            GTPlayer.Instance.transform.position += rig.headMesh.transform.forward * (Time.deltaTime * Movement.FlySpeed);
-                            GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+                            References.Player.transform.position += rig.headMesh.transform.forward * (Time.deltaTime * Movement.FlySpeed);
+                            References.Rigidbody.linearVelocity = Vector3.zero;
                         }
                     }
                 }
@@ -491,17 +491,17 @@ namespace Qubit.Modules.Categories
 
             if (!isLeftHand && !isRightHand)
             {
-                VRRig.LocalRig.enabled = true;
+                References.LocalRig.enabled = true;
                 return false;
             }
 
-            VRRig.LocalRig.enabled = false;
-            VRRig.LocalRig.transform.position = rig.syncPos;
+            References.LocalRig.enabled = false;
+            References.LocalRig.transform.position = rig.syncPos;
 
-            var localLink = isLeftHand ? VRRig.LocalRig.leftHandLink : VRRig.LocalRig.rightHandLink;
+            var localLink = isLeftHand ? References.LocalRig.leftHandLink : References.LocalRig.rightHandLink;
             var remoteLink = isLeftHand ? rig.leftHandLink : rig.rightHandLink;
 
-            if (remoteLink.grabbedPlayer != NetworkSystem.Instance.LocalPlayer)
+            if (remoteLink.grabbedPlayer != References.LocalPlayer)
             {
                 if (grabDelay == 0)
                     grabDelay = remoteLink.rejectGrabsUntilTimestamp > Time.time ? remoteLink.rejectGrabsUntilTimestamp : Time.time + 1f;
@@ -509,15 +509,15 @@ namespace Qubit.Modules.Categories
                 if (Time.time > grabDelay)
                 {
                     localLink.TentacleTryCreateLink(remoteLink);
-                    VRRig.LocalRig.transform.position = targetTransform;
+                    References.LocalRig.transform.position = targetTransform;
                     Notifications.SendNotification("<color=grey>[</color><color=purple>MENU</color><color=grey>]</color> Tried to grab " + rig.GetPlayer().NickName + ".");
                     grabDelay = remoteLink.rejectGrabsUntilTimestamp > Time.time ? remoteLink.rejectGrabsUntilTimestamp : Time.time + 1f;
                 }
             }
             else if (returnOnGrab)
             {
-                if (enableRigOnceDone && !VRRig.LocalRig.enabled)
-                    VRRig.LocalRig.enabled = true;
+                if (enableRigOnceDone && !References.LocalRig.enabled)
+                    References.LocalRig.enabled = true;
                 return true;
             }
 
@@ -527,10 +527,10 @@ namespace Qubit.Modules.Categories
 
         public static void FlingOnGrab()
         {
-            if (VRRig.LocalRig.IsBeingHeld())
+            if (References.LocalRig.IsBeingHeld())
             {
-                Transform transform = VRRig.LocalRig.leftHandLink.IsLinkActive() ? VRRig.LocalRig.leftHandTransform : VRRig.LocalRig.rightHandTransform;
-                VRRig rig = VRRig.LocalRig.leftHandLink.grabbedPlayer.VRRig() ?? VRRig.LocalRig.rightHandLink.grabbedPlayer.VRRig();
+                Transform transform = References.LocalRig.leftHandLink.IsLinkActive() ? References.LocalRig.leftHandTransform : References.LocalRig.rightHandTransform;
+                VRRig rig = References.LocalRig.leftHandLink.grabbedPlayer.VRRig() ?? References.LocalRig.rightHandLink.grabbedPlayer.VRRig();
                 Vector3 velocity = rig.transform.up * 3f;
                 rig.GetNetView().SendRPC("DroppedByPlayer", rig.GetPlayer(), velocity);
             }
@@ -542,7 +542,7 @@ namespace Qubit.Modules.Categories
         public static void CreateItem(object target, int hash, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angVelocity, long sendData = 0L, GameEntityManager manager = null)
         {
             GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;
-            if (NetworkSystem.Instance.IsMasterClient)
+            if (References.IsMasterClient)
             {
                 if (gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
                 {
@@ -609,7 +609,7 @@ namespace Qubit.Modules.Categories
                 GamePlayer gamePlayer = GamePlayer.GetGamePlayer(PhotonNetwork.LocalPlayer);
                 if (gamePlayer.IsHoldingEntity(gameEntityManager, true) && gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
                 {
-                    VRRig.LocalRig.enabled = true;
+                    References.LocalRig.enabled = true;
                     if (ServerLeftHandPos.Distance(position) < maxDistance)
                         gameEntityManager.GetGameEntity(gamePlayer.GetGrabbedGameEntityId(GamePlayer.GetHandIndex(true))).RequestThrow(true, position, rotation, velocity, angVelocity, gameEntityManager);
                     else
@@ -620,7 +620,7 @@ namespace Qubit.Modules.Categories
                     e != null &&
                     e.typeId == hash &&
                     Vector3.Distance(ServerLeftHandPos, e.transform.position) < maxDistance &&
-                    Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, e.transform.position) > 3f &&
+                    Vector3.Distance(References.BodyCollider.transform.position, e.transform.position) > 3f &&
                     gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
 
                 if (entities.Count <= 0)
@@ -644,12 +644,12 @@ namespace Qubit.Modules.Categories
                 if (entities.Count <= 0)
                     return;
 
-                GameEntity entity = entities.OrderByDescending(entity => entity.transform.position.Distance(GorillaTagger.Instance.bodyCollider.transform.position)).FirstOrDefault();
+                GameEntity entity = entities.OrderByDescending(entity => entity.transform.position.Distance(References.BodyCollider.transform.position)).FirstOrDefault();
 
-                if (Vector3.Distance(entity.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > maxDistance)
+                if (Vector3.Distance(entity.transform.position, References.BodyCollider.transform.position) > maxDistance)
                 {
-                    VRRig.LocalRig.enabled = false;
-                    VRRig.LocalRig.transform.position = entity.transform.position - Vector3.one * 5f;
+                    References.LocalRig.enabled = false;
+                    References.LocalRig.transform.position = entity.transform.position - Vector3.one * 5f;
 
                     if (CritterCoroutine != null)
                         Coroutines.instance.StopCoroutine(CritterCoroutine);
@@ -659,7 +659,7 @@ namespace Qubit.Modules.Categories
 
                 if (Vector3.Distance(entity.transform.position, ServerPos) < maxDistance && gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
                 {
-                    entity.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                    entity.transform.position = References.RightHand.position;
                     entity.transform.rotation = RandomQuaternion();
 
                     entity.RequestGrab(true, Vector3.zero, Quaternion.identity, gameEntityManager);
@@ -671,7 +671,7 @@ namespace Qubit.Modules.Categories
         public static void CreateItems(object target, int[] hashes, Vector3[] positions, Quaternion[] rotations, long[] sendData = null, GameEntityManager manager = null)
         {
             GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;
-            if (NetworkSystem.Instance.IsMasterClient)
+            if (References.IsMasterClient)
             {
                 if (gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItems].CanCallNow())
                 {
@@ -980,8 +980,8 @@ namespace Qubit.Modules.Categories
 
         public static SIGadgetChargeBlaster GetBlaster()
         {
-            ControllerInputPoller.instance.leftGrab = true;
-            ControllerInputPoller.instance.leftControllerGripFloat = 1f;
+            References.InputPoller.leftGrab = true;
+            References.InputPoller.leftControllerGripFloat = 1f;
 
             int hash = Fun.GadgetByName["MegaChargeBlasterGadget"];
 
@@ -997,7 +997,7 @@ namespace Qubit.Modules.Categories
             }
             else
             {
-                if (NetworkSystem.Instance.IsMasterClient)
+                if (References.IsMasterClient)
                 {
                     if (spawnedNetId != null && spawnedFrame > Time.frameCount - 10)
                     {
@@ -1016,8 +1016,8 @@ namespace Qubit.Modules.Categories
                     object[] createData = {
                         new[] { netId },
                         new[] { hash },
-                        new[] { BitPackUtils.PackWorldPosForNetwork(GorillaTagger.Instance.leftHandTransform.position) },
-                        new[] { BitPackUtils.PackQuaternionForNetwork(GorillaTagger.Instance.leftHandTransform.rotation) },
+                        new[] { BitPackUtils.PackWorldPosForNetwork(References.LeftHand.position) },
+                        new[] { BitPackUtils.PackQuaternionForNetwork(References.LeftHand.rotation) },
                         new[] { 0L },
                         new[] { gameEntityManager.GetInvalidNetId() }
                     };
@@ -1030,7 +1030,7 @@ namespace Qubit.Modules.Categories
                 }
                 else
                 {
-                    Vector3 position = GorillaTagger.Instance.leftHandTransform.position;
+                    Vector3 position = References.LeftHand.position;
 
                     float maxDistance = 12f;
                     if (Vector3.Distance(ServerLeftHandPos, position) > maxDistance)
@@ -1040,7 +1040,7 @@ namespace Qubit.Modules.Categories
                         e != null &&
                         e.typeId == hash &&
                         Vector3.Distance(ServerLeftHandPos, e.transform.position) < maxDistance &&
-                        Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, e.transform.position) > 3f &&
+                        Vector3.Distance(References.BodyCollider.transform.position, e.transform.position) > 3f &&
                         gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
 
                     if (entities.Count <= 0)
@@ -1064,12 +1064,12 @@ namespace Qubit.Modules.Categories
                     if (entities.Count <= 0)
                         return null;
 
-                    GameEntity entity = entities.OrderByDescending(entity => entity.transform.position.Distance(GorillaTagger.Instance.bodyCollider.transform.position)).FirstOrDefault();
+                    GameEntity entity = entities.OrderByDescending(entity => entity.transform.position.Distance(References.BodyCollider.transform.position)).FirstOrDefault();
 
-                    if (Vector3.Distance(entity.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > maxDistance)
+                    if (Vector3.Distance(entity.transform.position, References.BodyCollider.transform.position) > maxDistance)
                     {
-                        VRRig.LocalRig.enabled = false;
-                        VRRig.LocalRig.transform.position = entity.transform.position - Vector3.one * 5f;
+                        References.LocalRig.enabled = false;
+                        References.LocalRig.transform.position = entity.transform.position - Vector3.one * 5f;
 
                         if (CritterCoroutine != null)
                             Coroutines.instance.StopCoroutine(CritterCoroutine);
@@ -1079,7 +1079,7 @@ namespace Qubit.Modules.Categories
 
                     if (Vector3.Distance(entity.transform.position, ServerPos) < maxDistance && gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
                     {
-                        entity.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                        entity.transform.position = References.RightHand.position;
                         entity.transform.rotation = RandomQuaternion();
 
                         entity.RequestGrab(true, Vector3.zero, Quaternion.identity, gameEntityManager);
@@ -1106,10 +1106,10 @@ namespace Qubit.Modules.Categories
 
             blasterDelay = Time.time + SIPlayer.LocalPlayer.clientToClientRPCLimiter.GetDelay();
 
-            if ((position - GorillaTagger.Instance.leftHandTransform.position).magnitude > blaster.blaster.maxLagDistance)
+            if ((position - References.LeftHand.position).magnitude > blaster.blaster.maxLagDistance)
             {
-                VRRig.LocalRig.enabled = false;
-                VRRig.LocalRig.transform.position = position - Vector3.one;
+                References.LocalRig.enabled = false;
+                References.LocalRig.transform.position = position - Vector3.one;
 
                 if (BlasterCoroutine != null)
                     Coroutines.instance.StopCoroutine(BlasterCoroutine);
@@ -1138,10 +1138,10 @@ namespace Qubit.Modules.Categories
 
             perPlayerDictionary[target] = Time.time + SIPlayer.LocalPlayer.clientToClientRPCLimiter.GetDelay();
 
-            if (!ignoreDistnace && (position - GorillaTagger.Instance.leftHandTransform.position).magnitude > blaster.blaster.maxLagDistance)
+            if (!ignoreDistnace && (position - References.LeftHand.position).magnitude > blaster.blaster.maxLagDistance)
             {
-                VRRig.LocalRig.enabled = false;
-                VRRig.LocalRig.transform.position = position - Vector3.one;
+                References.LocalRig.enabled = false;
+                References.LocalRig.transform.position = position - Vector3.one;
 
                 if (BlasterCoroutine != null)
                     Coroutines.instance.StopCoroutine(BlasterCoroutine);
@@ -1188,7 +1188,7 @@ namespace Qubit.Modules.Categories
             if (velocity.sqrMagnitude > 20f)
                 velocity = Vector3.Normalize(velocity) * 20f;
 
-            if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+            if (GameModes.IsGuardian(References.LocalPlayer))
             {
                 GetNetworkViewFromVRRig(GetVRRigFromPlayer(victim)).SendRPC("GrabbedByPlayer", victim, true, false, false);
                 GetNetworkViewFromVRRig(GetVRRigFromPlayer(victim)).SendRPC("DroppedByPlayer", victim, velocity);
@@ -1202,7 +1202,7 @@ namespace Qubit.Modules.Categories
             if (velocity.sqrMagnitude > 20f)
                 velocity = Vector3.Normalize(velocity) * 20f;
 
-            if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+            if (GameModes.IsGuardian(References.LocalPlayer))
             {
                 switch (victim)
                 {
@@ -1227,8 +1227,8 @@ namespace Qubit.Modules.Categories
                         }
                     case RpcTarget.MasterClient:
                         {
-                            GetNetworkViewFromVRRig(GetVRRigFromPlayer(NetworkSystem.Instance.MasterClient)).SendRPC("GrabbedByPlayer", RpcTarget.Others, true, false, false);
-                            GetNetworkViewFromVRRig(GetVRRigFromPlayer(NetworkSystem.Instance.MasterClient)).SendRPC("DroppedByPlayer", RpcTarget.Others, velocity);
+                            GetNetworkViewFromVRRig(GetVRRigFromPlayer(References.Network.MasterClient)).SendRPC("GrabbedByPlayer", RpcTarget.Others, true, false, false);
+                            GetNetworkViewFromVRRig(GetVRRigFromPlayer(References.Network.MasterClient)).SendRPC("DroppedByPlayer", RpcTarget.Others, velocity);
                             break;
                         }
                 }
@@ -1242,7 +1242,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(gunTarget =>
             {
-                if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+                if (GameModes.IsGuardian(References.LocalPlayer))
                 {
                     GetNetworkViewFromVRRig(gunTarget).SendRPC("GrabbedByPlayer", RpcTarget.Others, true, false, false);
                     RPCProtection();
@@ -1258,7 +1258,7 @@ namespace Qubit.Modules.Categories
             if (rightGrab && Time.time > grabDelay)
             {
                 grabDelay = Time.time + 0.1f;
-                if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+                if (GameModes.IsGuardian(References.LocalPlayer))
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                     {
@@ -1276,7 +1276,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(gunTarget =>
             {
-                if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+                if (GameModes.IsGuardian(References.LocalPlayer))
                 {
                     GetNetworkViewFromVRRig(gunTarget).SendRPC("DroppedByPlayer", RpcTarget.Others, new Vector3(0f, 0f, 0f));
                     RPCProtection();
@@ -1293,7 +1293,7 @@ namespace Qubit.Modules.Categories
             if (rightTrigger > 0.5f && Time.time > releaseDelay)
             {
                 releaseDelay = Time.time + 0.1f;
-                if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+                if (GameModes.IsGuardian(References.LocalPlayer))
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                     {
@@ -1384,13 +1384,13 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.PhotonServerSettings.RpcList.Contains(method))
                     rpcData[5] = (byte)PhotonNetwork.PhotonServerSettings.RpcList.IndexOf(method);
 
-                if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(NetworkSystem.Instance.LocalPlayer.ActorNumber)))
+                if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber)))
                 {
                     if (options.Receivers == ReceiverGroup.All)
                         options.Receivers = ReceiverGroup.Others;
 
-                    if (options.TargetActors != null && options.TargetActors.Contains(NetworkSystem.Instance.LocalPlayer.ActorNumber))
-                        options.TargetActors = options.TargetActors.Where(id => id != NetworkSystem.Instance.LocalPlayer.ActorNumber).ToArray();
+                    if (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber))
+                        options.TargetActors = options.TargetActors.Where(id => id != References.LocalPlayer.ActorNumber).ToArray();
 
                     PhotonNetwork.ExecuteRpc(rpcData, PhotonNetwork.LocalPlayer);
                 }
@@ -1435,7 +1435,7 @@ namespace Qubit.Modules.Categories
         {
             if (Time.time > flingDelay)
             {
-                BetaSetVelocityPlayer(player, (GorillaTagger.Instance.bodyCollider.transform.position - GetVRRigFromPlayer(player).transform.position).normalized * 20f);
+                BetaSetVelocityPlayer(player, (References.BodyCollider.transform.position - GetVRRigFromPlayer(player).transform.position).normalized * 20f);
                 RPCProtection();
                 flingDelay = Time.time + 0.1f;
             }
@@ -1460,7 +1460,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > flingDelay)
                 {
-                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), (GorillaTagger.Instance.bodyCollider.transform.position - lockTarget.transform.position).normalized * 20f);
+                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), (References.BodyCollider.transform.position - lockTarget.transform.position).normalized * 20f);
                     RPCProtection();
                     flingDelay = Time.time + 0.1f;
                 }
@@ -1474,7 +1474,7 @@ namespace Qubit.Modules.Categories
                 flingDelay = Time.time + 0.2f;
                 foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                 {
-                    BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), (GorillaTagger.Instance.bodyCollider.transform.position - plr.transform.position).normalized * 20f);
+                    BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), (References.BodyCollider.transform.position - plr.transform.position).normalized * 20f);
                     RPCProtection();
                 }
             }
@@ -1486,7 +1486,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > flingDelay)
                 {
-                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), (lockTarget.transform.position - GorillaTagger.Instance.bodyCollider.transform.position).normalized * 20f);
+                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), (lockTarget.transform.position - References.BodyCollider.transform.position).normalized * 20f);
                     RPCProtection();
                     flingDelay = Time.time + 0.1f;
                 }
@@ -1500,7 +1500,7 @@ namespace Qubit.Modules.Categories
                 flingDelay = Time.time + 0.2f;
                 foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                 {
-                    BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), (plr.transform.position - GorillaTagger.Instance.bodyCollider.transform.position).normalized * 20f);
+                    BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), (plr.transform.position - References.BodyCollider.transform.position).normalized * 20f);
                     RPCProtection();
                 }
             }
@@ -1518,7 +1518,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig rig in rigs)
                 {
                     float offset = 360f / rigs.Length * index;
-                    Vector3 targetPosition = GorillaTagger.Instance.headCollider.transform.position + new Vector3(MathF.Cos(offset + Time.time) * scale, 2, MathF.Sin(offset + Time.time) * scale);
+                    Vector3 targetPosition = References.HeadCollider.transform.position + new Vector3(MathF.Cos(offset + Time.time) * scale, 2, MathF.Sin(offset + Time.time) * scale);
 
                     BetaSetVelocityPlayer(rig.GetPlayer(), (targetPosition - rig.transform.position) * 1f);
                     RPCProtection();
@@ -1563,12 +1563,12 @@ namespace Qubit.Modules.Categories
             {
                 foreach (VRRig rig in Players.ActiveRigs)
                 {
-                    bool leftHand = Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f;
-                    bool rightHand = Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f;
+                    bool leftHand = Vector3.Distance(References.LeftHand.position, rig.headMesh.transform.position) < 0.25f;
+                    bool rightHand = Vector3.Distance(References.RightHand.position, rig.headMesh.transform.position) < 0.25f;
 
                     if (!rig.isLocal && (leftHand || rightHand))
                     {
-                        Vector3 vel = rightHand ? GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0) : GTPlayer.Instance.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
+                        Vector3 vel = rightHand ? References.Player.RightHand.velocityTracker.GetAverageVelocity(true, 0) : References.Player.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
 
                         BetaSetVelocityPlayer(rig.GetPlayer(), vel);
                         thingdeb = Time.time + 0.1f;
@@ -1652,9 +1652,9 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+                    if (GameModes.IsGuardian(References.LocalPlayer))
                     {
-                        GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, GorillaTagger.Instance.rightHandTransform.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
+                        GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, References.RightHand.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
                         flip = !flip;
                     }
@@ -1668,9 +1668,9 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+                    if (GameModes.IsGuardian(References.LocalPlayer))
                     {
-                        GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, GorillaTagger.Instance.leftHandTransform.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
+                        GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, References.LeftHand.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
                         flip = !flip;
                     }
@@ -1688,7 +1688,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(NetworkSystem.Instance.LocalPlayer))
+                    if (GameModes.IsGuardian(References.LocalPlayer))
                     {
                         GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, NewPointer.transform.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
@@ -1743,7 +1743,7 @@ namespace Qubit.Modules.Categories
         private static float closeRoomDelay;
         public static void CloseRoom()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             if (Time.time < closeRoomDelay) return;
 
             closeRoomDelay = Time.time + 0.1f;
@@ -1781,7 +1781,7 @@ namespace Qubit.Modules.Categories
         private static bool zaWarudoTrigger;
         public static void ZaWarudo()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             if (rightTrigger > 0.5f)
             {
@@ -1845,7 +1845,7 @@ namespace Qubit.Modules.Categories
             yield return new WaitForSeconds(2.4f);
 
             float endWhiteFadeTime = Time.time;
-            Vector3 originPoint = GorillaTagger.Instance.bodyCollider.transform.position;
+            Vector3 originPoint = References.BodyCollider.transform.position;
 
             while (Time.time < endWhiteFadeTime + 0.2f)
             {
@@ -1943,7 +1943,7 @@ namespace Qubit.Modules.Categories
 
         public static void LagPlayer(object target)
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             if (Time.time < lagDebounce) return;
 
             if (target is VRRig rig) target = rig.GetPhotonPlayer();
@@ -1989,8 +1989,8 @@ namespace Qubit.Modules.Categories
             {
                 HandLinkPatch.enabled = value;
 
-                if (!value && !VRRig.LocalRig.enabled)
-                    VRRig.LocalRig.enabled = true;
+                if (!value && !References.LocalRig.enabled)
+                    References.LocalRig.enabled = true;
             }
         }
 
@@ -2001,7 +2001,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
-                    ForceGrab(lockTarget, VRRig.LocalRig.transform.position);
+                    ForceGrab(lockTarget, References.LocalRig.transform.position);
 
                 if (GetGunInput(true))
                 {
@@ -2016,7 +2016,7 @@ namespace Qubit.Modules.Categories
                 {
                     if (gunLocked)
                         gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
+                    References.LocalRig.enabled = true;
                 } });
         }
 
@@ -2032,16 +2032,16 @@ namespace Qubit.Modules.Categories
                     {
                         if (!lockTarget.IsNear())
                         {
-                            VRRig.LocalRig.enabled = false;
-                            VRRig.LocalRig.transform.position = lockTarget.transform.position;
+                            References.LocalRig.enabled = false;
+                            References.LocalRig.transform.position = lockTarget.transform.position;
                         }
-                        else if (!VRRig.LocalRig.enabled)
-                            VRRig.LocalRig.enabled = true;
-                        VRRig.LocalRig.rightHandLink.TentacleTryCreateLink(lockTarget.rightHandLink);
+                        else if (!References.LocalRig.enabled)
+                            References.LocalRig.enabled = true;
+                        References.LocalRig.rightHandLink.TentacleTryCreateLink(lockTarget.rightHandLink);
                     }
-                    else if (lockTarget.IsBeingHeld(VRRig.LocalRig))
+                    else if (lockTarget.IsBeingHeld(References.LocalRig))
                     {
-                        if (lockTarget.rightHandLink.grabbedPlayer == VRRig.LocalRig.GetPlayer())
+                        if (lockTarget.rightHandLink.grabbedPlayer == References.LocalRig.GetPlayer())
                         {
                             Vector3 velocity = lockTarget.transform.up * 3f;
                             lockTarget.GetNetView().SendRPC("DroppedByPlayer", lockTarget.GetPlayer(), velocity);
@@ -2063,23 +2063,23 @@ namespace Qubit.Modules.Categories
                 {
                     if (gunLocked)
                         gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
+                    References.LocalRig.enabled = true;
                 } });
         }
 
         public static void GrabFlingAll()
         {
-            if (!VRRig.LocalRig.IsBeingHeld() && !lockTarget.IsNear())
+            if (!References.LocalRig.IsBeingHeld() && !lockTarget.IsNear())
             {
-                VRRig.LocalRig.enabled = false;
-                VRRig.LocalRig.transform.position = lockTarget.transform.position;
-                VRRig.LocalRig.rightHandLink.TentacleTryCreateLink(lockTarget.rightHandLink);
+                References.LocalRig.enabled = false;
+                References.LocalRig.transform.position = lockTarget.transform.position;
+                References.LocalRig.rightHandLink.TentacleTryCreateLink(lockTarget.rightHandLink);
             }
-            else if (VRRig.LocalRig.IsBeingHeld())
+            else if (References.LocalRig.IsBeingHeld())
             {
                 FlingOnGrab();
-                if (!VRRig.LocalRig.enabled)
-                    VRRig.LocalRig.enabled = true;
+                if (!References.LocalRig.enabled)
+                    References.LocalRig.enabled = true;
             }
         }
 
@@ -2087,12 +2087,12 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                ForceGrab(lockTarget, VRRig.LocalRig.transform.position - VRRig.LocalRig.transform.forward * 10f);
+                ForceGrab(lockTarget, References.LocalRig.transform.position - References.LocalRig.transform.forward * 10f);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void BringAllPlayers() =>
-            ForceGrab(VRRig.LocalRig.transform.position - VRRig.LocalRig.transform.forward * 10f);
+            ForceGrab(References.LocalRig.transform.position - References.LocalRig.transform.forward * 10f);
 
         public static void PushPlayerGun()
         {
@@ -2101,7 +2101,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
-                    ForceGrab(lockTarget, VRRig.LocalRig.transform.position = lockTarget.transform.position - lockTarget.transform.forward * 10f);
+                    ForceGrab(lockTarget, References.LocalRig.transform.position = lockTarget.transform.position - lockTarget.transform.forward * 10f);
 
                 if (GetGunInput(true))
                 {
@@ -2116,7 +2116,7 @@ namespace Qubit.Modules.Categories
                 {
                     if (gunLocked)
                         gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
+                    References.LocalRig.enabled = true;
                 } });
         }
 
@@ -2148,7 +2148,7 @@ namespace Qubit.Modules.Categories
                 {
                     if (gunLocked)
                         gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
+                    References.LocalRig.enabled = true;
                 } });
         }
 
@@ -2171,12 +2171,12 @@ namespace Qubit.Modules.Categories
 
         public static void LagAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<int> nearbyPlayers = new List<int>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsTagged())
+                if (Vector3.Distance(vrrig.transform.position, References.LocalRig.transform.position) < 4 && !vrrig.IsTagged())
                     nearbyPlayers.Add(GetPlayerFromVRRig(vrrig).ActorNumber);
                 else if (nearbyPlayers.Contains(GetPlayerFromVRRig(vrrig).ActorNumber))
                     nearbyPlayers.Remove(GetPlayerFromVRRig(vrrig).ActorNumber);
@@ -2188,7 +2188,7 @@ namespace Qubit.Modules.Categories
 
         public static void LagOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             List<int> touchedPlayers = new List<int>();
 
@@ -2282,7 +2282,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -2316,7 +2316,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -2348,7 +2348,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -2362,10 +2362,10 @@ namespace Qubit.Modules.Categories
         {
             foreach (VRRig rig in Players.ActiveRigs)
             {
-                if (!rig.isLocal && (Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f))
+                if (!rig.isLocal && (Vector3.Distance(References.LeftHand.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(References.RightHand.position, rig.headMesh.transform.position) < 0.25f))
                 {
-                    Vector3 targetDirection = rig.headMesh.transform.position - GorillaTagger.Instance.headCollider.transform.position;
-                    SendBarrelProjectile(rig.transform.position + (GorillaTagger.Instance.headCollider.transform.position - rig.headMesh.transform.position).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(rig.GetPlayer()).ActorNumber } });
+                    Vector3 targetDirection = rig.headMesh.transform.position - References.HeadCollider.transform.position;
+                    SendBarrelProjectile(rig.transform.position + (References.HeadCollider.transform.position - rig.headMesh.transform.position).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(rig.GetPlayer()).ActorNumber } });
 
                     if (Manager.GetIndex("Graphic Punch Mod").enabled)
                         Projectiles.SendProjectile(Projectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
@@ -2396,7 +2396,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -2419,17 +2419,17 @@ namespace Qubit.Modules.Categories
                 Coroutines.instance.StopCoroutine(Fun.DisableThrowableCoroutine);
 
             Fun.DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(Fun.DisableThrowable(index));
-            TransferrableObject transferrableObject = VRRig.LocalRig.myBodyDockPositions.allObjects[index];
+            TransferrableObject transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
 
             if (transferrableObject == null)
             {
                 if (!CosmeticsOwned.Contains("Lucky Smash Barrel"))
                 {
-                    VRRig.LocalRig.transform.position = TryOnRoom.transform.position;
+                    References.LocalRig.transform.position = TryOnRoom.transform.position;
                     CosmeticsController.instance.PressWardrobeItemButton(CosmeticsController.instance.allCosmetics.FirstOrDefault(c => string.Equals(c.overrideDisplayName, "Lucky Smash Barrel", StringComparison.OrdinalIgnoreCase)), false, false);
                 }
-                VRRig.LocalRig.SetActiveTransferrableObjectIndex(1, index);
-                transferrableObject = VRRig.LocalRig.myBodyDockPositions.allObjects[index];
+                References.LocalRig.SetActiveTransferrableObjectIndex(1, index);
+                transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
             }
 
             if (transferrableObject == null)
@@ -2445,7 +2445,7 @@ namespace Qubit.Modules.Categories
 
                 object[] data = {
                     barrel._deploySignal._signalID,
-                    NetworkSystem.Instance.ServerTimestamp,
+                    References.Network.ServerTimestamp,
                     BitPackUtils.PackWorldPosForNetwork(pos),
                     BitPackUtils.PackQuaternionForNetwork(rot),
                     BitPackUtils.PackWorldPosForNetwork(vel)
@@ -2482,7 +2482,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -2505,7 +2505,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
-                    SendBarrelProjectile(lockTarget.transform.position + (GorillaTagger.Instance.headCollider.transform.position - lockTarget.headMesh.transform.position).normalized * 0.1f, (GorillaTagger.Instance.bodyCollider.transform.position - lockTarget.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(lockTarget.GetPlayer()).ActorNumber } });
+                    SendBarrelProjectile(lockTarget.transform.position + (References.HeadCollider.transform.position - lockTarget.headMesh.transform.position).normalized * 0.1f, (References.BodyCollider.transform.position - lockTarget.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(lockTarget.GetPlayer()).ActorNumber } });
 
                 if (GetGunInput(true))
                 {
@@ -2521,7 +2521,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -2529,7 +2529,7 @@ namespace Qubit.Modules.Categories
         public static void BarrelFlingTowardsAll()
         {
             foreach (var TargetRig in Players.ActiveRigs.Where(TargetRig => !TargetRig.IsTagged()))
-                SendBarrelProjectile(TargetRig.transform.position + (GorillaTagger.Instance.headCollider.transform.position - TargetRig.headMesh.transform.position).normalized * 0.1f, (GorillaTagger.Instance.bodyCollider.transform.position - TargetRig.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(TargetRig.GetPlayer()).ActorNumber } }, true);
+                SendBarrelProjectile(TargetRig.transform.position + (References.HeadCollider.transform.position - TargetRig.headMesh.transform.position).normalized * 0.1f, (References.BodyCollider.transform.position - TargetRig.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(TargetRig.GetPlayer()).ActorNumber } }, true);
         }
 
         public static void CityKickGun()
@@ -2555,7 +2555,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -2572,8 +2572,8 @@ namespace Qubit.Modules.Categories
         private static float notifyTime;
         public static bool IsModded(bool notify)
         {
-            if (!NetworkSystem.Instance.InRoom) return false;
-            bool modded = NetworkSystem.Instance.GameModeString.Contains("MODDED_");
+            if (!References.InRoom) return false;
+            bool modded = References.Network.GameModeString.Contains("MODDED_");
             if (!modded && notify && Time.time > notifyTime)
             {
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in a modded gamemode. Use Utilla to create one, or join an already existing modded room.");
@@ -2606,9 +2606,9 @@ namespace Qubit.Modules.Categories
 
             bool joinedRoomPatchEnabled = JoinedRoomPatch.enabled;
 
-            string queueArchive = GorillaComputer.instance.currentQueue;
+            string queueArchive = References.Computer.currentQueue;
             if (changeQueue)
-                GorillaComputer.instance.currentQueue = RandomString();
+                References.Computer.currentQueue = RandomString();
 
             action?.Invoke();
             yield return new WaitForSeconds(0.3f);
@@ -2616,7 +2616,7 @@ namespace Qubit.Modules.Categories
             yield return new WaitForSeconds(1f);
 
             if (changeQueue)
-                GorillaComputer.instance.currentQueue = queueArchive;
+                References.Computer.currentQueue = queueArchive;
 
             yield return new WaitForSeconds(30f);
 
@@ -2647,13 +2647,13 @@ namespace Qubit.Modules.Categories
                 NetPlayer player = GetPlayerFromVRRig(gunTarget);
                 kickDelay = Time.time + 0.5f;
 
-                if (!GorillaComputer.instance.friendJoinCollider.playerIDsCurrentlyTouching.Contains(player.UserId))
+                if (!References.Computer.friendJoinCollider.playerIDsCurrentlyTouching.Contains(player.UserId))
                 {
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> The player must be in stump.");
                     return;
                 }
 
-                if (!NetworkSystem.Instance.SessionIsPrivate)
+                if (!References.Network.SessionIsPrivate)
                 {
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be in a private room.");
                     return;
@@ -2664,7 +2664,7 @@ namespace Qubit.Modules.Categories
                     PhotonNetworkController.Instance.shuffler = Random.Range(0, 99).ToString().PadLeft(2, '0') + Random.Range(0, 99999999).ToString().PadLeft(8, '0');
                     PhotonNetworkController.Instance.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
 
-                    BetaNearbyFollowCommand(GorillaComputer.instance.friendJoinCollider, NetPlayerToPlayer(player));
+                    BetaNearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(player));
                     RPCProtection();
                 }, () =>
                 {
@@ -2675,9 +2675,9 @@ namespace Qubit.Modules.Categories
 
         public static void StumpKickAll()
         {
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
-                if (!NetworkSystem.Instance.SessionIsPrivate)
+                if (!References.Network.SessionIsPrivate)
                 {
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be in a private room.");
                     return;
@@ -2688,8 +2688,8 @@ namespace Qubit.Modules.Categories
                     PhotonNetworkController.Instance.shuffler = Random.Range(0, 99).ToString().PadLeft(2, '0') + Random.Range(0, 99999999).ToString().PadLeft(8, '0');
                     PhotonNetworkController.Instance.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
 
-                    foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && GorillaComputer.instance.friendJoinCollider.playerIDsCurrentlyTouching.Contains(rig.GetPlayer().UserId)))
-                        BetaNearbyFollowCommand(GorillaComputer.instance.friendJoinCollider, NetPlayerToPlayer(rig.GetPlayer()));
+                    foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && References.Computer.friendJoinCollider.playerIDsCurrentlyTouching.Contains(rig.GetPlayer().UserId)))
+                        BetaNearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(rig.GetPlayer()));
 
                     RPCProtection();
                 }, () =>
@@ -2727,12 +2727,12 @@ namespace Qubit.Modules.Categories
 
         public static void ElevatorKickAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
+                if (Vector3.Distance(vrrig.transform.position, References.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -2754,7 +2754,7 @@ namespace Qubit.Modules.Categories
 
         public static void ElevatorKickOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -2802,7 +2802,7 @@ namespace Qubit.Modules.Categories
                 photonPeer = PhotonNetwork.NetworkingClient.LoadBalancingPeer,
                 usedTransportProtocol = ConnectionProtocol.Udp
             };
-            NetworkSystem.Instance.ReturnToSinglePlayer();
+            References.Network.ReturnToSinglePlayer();
         }
 
         public static void BetaShuttleFollowCommand(Player player)
@@ -2822,7 +2822,7 @@ namespace Qubit.Modules.Categories
         public static Coroutine wipeOverride;
         public static IEnumerator ClearOverride()
         {
-            yield return new WaitUntil(() => !NetworkSystem.Instance.InRoom);
+            yield return new WaitUntil(() => !References.InRoom);
             SerializePatch.OverrideSerialization = null;
 
             wipeOverride = null;
@@ -2853,7 +2853,7 @@ namespace Qubit.Modules.Categories
             {
                 partyLastCode = PhotonNetwork.CurrentRoom.Name;
                 waitForPlayerJoin = true;
-                PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(GorillaComputer.instance.anywhereTwoWeek[Random.Range(0, GorillaComputer.instance.anywhereTwoWeek.Length)], JoinType.ForceJoinWithParty);
+                PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)], JoinType.ForceJoinWithParty);
                 partyTime = Time.time + 0.25f;
                 partyKickReconnecting = false;
                 amountPartying = FriendshipGroupDetection.Instance.myPartyMemberIDs.Count - 1;
@@ -2932,7 +2932,7 @@ namespace Qubit.Modules.Categories
 
                             SerializePatch.OverrideSerialization = () =>
                             {
-                                VRRig.LocalRig.GetPhotonView().Serialize();
+                                References.LocalRig.GetPhotonView().Serialize();
                                 return true;
                             };
                         }
@@ -2999,7 +2999,7 @@ namespace Qubit.Modules.Categories
                         new RaiseEventOptions
                         {
                             TargetActors =
-                            NetworkSystem.Instance.PlayerListOthers
+                            References.Network.PlayerListOthers
                                 .Where(plr => FriendshipGroupDetection.Instance.IsInMyGroup(plr.UserId))
                                 .Select(plr => plr.ActorNumber).ToArray()
                         },
@@ -3015,12 +3015,12 @@ namespace Qubit.Modules.Categories
 
         public static void PartyKickAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
+                if (Vector3.Distance(vrrig.transform.position, References.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -3044,7 +3044,7 @@ namespace Qubit.Modules.Categories
 
         public static void PartyKickOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -3097,7 +3097,7 @@ namespace Qubit.Modules.Categories
         public static float setMasterDelay;
         public static void SetMasterClient(bool skip = false)
         {
-            if (NetworkSystem.Instance.IsMasterClient)
+            if (References.IsMasterClient)
                 return;
             if (PhotonNetwork.PlayerList.Length > 5)
             {
@@ -3145,12 +3145,12 @@ namespace Qubit.Modules.Categories
 
         public static void DestroyAura()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
-                if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
+                if (Vector3.Distance(vrrig.transform.position, References.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
                 else if (nearbyPlayers.Contains(vrrig))
                     nearbyPlayers.Remove(vrrig);
@@ -3167,7 +3167,7 @@ namespace Qubit.Modules.Categories
 
         public static void DestroyOnTouch()
         {
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!References.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -3198,14 +3198,14 @@ namespace Qubit.Modules.Categories
 
         public static void BetaSetStatus(RoomSystem.StatusEffects state, RaiseEventOptions reo)
         {
-            if (!NetworkSystem.Instance.IsMasterClient)
+            if (!References.IsMasterClient)
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
             else
             {
                 object[] statusSendData = new object[1];
                 statusSendData[0] = (int)state;
                 object[] sendEventData = new object[3];
-                sendEventData[0] = NetworkSystem.Instance.ServerTimestamp;
+                sendEventData[0] = References.Network.ServerTimestamp;
                 sendEventData[1] = (byte)2;
                 sendEventData[2] = statusSendData;
                 PhotonNetwork.RaiseEvent(Constants.Network.ROOM_SYSTEM, sendEventData, reo, SendOptions.SendUnreliable);
@@ -3224,7 +3224,7 @@ namespace Qubit.Modules.Categories
 
                 if (gunLocked && lockTarget != null)
                 {
-                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", lockTarget.GetPlayer(), 111, false, 999999f);
+                    References.MyRigView.SendRPC("RPC_PlayHandTap", lockTarget.GetPlayer(), 111, false, 999999f);
                     RPCProtection();
                 }
                 if (GetGunInput(true))
@@ -3241,7 +3241,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        VRRig.LocalRig.enabled = true;
+                        References.LocalRig.enabled = true;
                     }
                 } });
         }
@@ -3250,7 +3250,7 @@ namespace Qubit.Modules.Categories
         {
             if (rightTrigger > 0.5f)
             {
-                GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.Others, 111, false, 999999f);
+                References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.Others, 111, false, 999999f);
             }
         }
 
@@ -3258,7 +3258,7 @@ namespace Qubit.Modules.Categories
         public static IEnumerator RopeEnableRig()
         {
             yield return new WaitForSeconds(0.3f);
-            VRRig.LocalRig.enabled = true;
+            References.LocalRig.enabled = true;
         }
 
         public static void BetaSetRopeVelocity(int RopeId, Vector3 Velocity)
@@ -3273,7 +3273,7 @@ namespace Qubit.Modules.Categories
                     {
                         index = i,
                         transform = v,
-                        distance = Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, v.transform.position)
+                        distance = Vector3.Distance(References.BodyCollider.transform.position, v.transform.position)
                     })
                     .OrderBy(x => x.distance)
                     .First();
@@ -3285,8 +3285,8 @@ namespace Qubit.Modules.Categories
 
                     RopeCoroutine = Coroutines.instance.StartCoroutine(RopeEnableRig());
 
-                    VRRig.LocalRig.enabled = false;
-                    VRRig.LocalRig.transform.position = ClosestNode.transform.position;
+                    References.LocalRig.enabled = false;
+                    References.LocalRig.transform.position = ClosestNode.transform.position;
                 }
 
                 if (Vector3.Distance(ServerPos, ClosestNode.transform.position) < 5f)
