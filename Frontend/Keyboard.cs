@@ -43,6 +43,7 @@ using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Modules.Manager;
 using static Qubit.Utilities.Assets;
 using ButtonCollider = Qubit.Frontend.Classes.ButtonCollider;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Frontend
 {

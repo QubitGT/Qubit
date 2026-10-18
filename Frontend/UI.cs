@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Libraries.Audio;
 using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
@@ -97,7 +98,7 @@ namespace Qubit.Frontend
 
             Button joinButton = canvas.Find("ControlUI/JoinButton")?.GetComponent<Button>();
             if (joinButton != null)
-                joinButton.onClick.AddListener(() => PhotonNetworkController.Instance?.AttemptToJoinSpecificRoom(textInput?.text ?? "", JoinType.Solo));
+                joinButton.onClick.AddListener(() => ManagerRegistry.PhotonNetworkController?.AttemptToJoinSpecificRoom(textInput?.text ?? "", JoinType.Solo));
 
             Button colorButton = canvas.Find("ControlUI/ColorButton")?.GetComponent<Button>();
             if (colorButton != null)
@@ -287,9 +288,9 @@ namespace Qubit.Frontend
                 if (watermark != null)
                     watermark.transform.rotation = Quaternion.Euler(0f, 0f, rockWatermark ? Mathf.Sin(Time.time * 2f) * 10f : 0f);
 
-                if (!versionLabel.text.Contains(PluginInfo.Version) || !versionLabel.text.Contains(serverLink))
+                if (!versionLabel.text.Contains(PluginInfo.Version) || !versionLabel.text.Contains(PluginInfo.DiscordInvite))
                     versionLabel.SafeSetText(FollowMenuSettings("Build") + " " + PluginInfo.Version + "\n" +
-                                        serverLink.Replace("https://", ""));
+                                        PluginInfo.DiscordInvite.Replace("https://", ""));
 
                 if (versionLabel != null)
                 {
@@ -603,7 +604,7 @@ namespace Qubit.Frontend
                     isOnPC = true;
 
                     if (!XRSettings.isDeviceActive)
-                        PrivateUIRoom.instance.ToggleLevelVisibility(true);
+                        ManagerRegistry.PrivateUIRoom.ToggleLevelVisibility(true);
 
                     if (joystickMenu)
                         Manager.Toggle("Joystick Menu");

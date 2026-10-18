@@ -116,7 +116,7 @@ namespace Qubit.Frontend
             var queueButton = transform.Find("RoomPanel/Queue");
             if (queueButton != null) queueButton.gameObject.SetActive(false);
             disconnect.onClick.AddListener(() => {
-                References.Network?.ReturnToSinglePlayer();
+                ManagerRegistry.NetworkSystem?.ReturnToSinglePlayer();
                 feedback.text = "Disconnect requested.";
             });
             Button setName = Find<Button>("RoomPanel/SetName");
@@ -322,8 +322,8 @@ namespace Qubit.Frontend
         private void JoinRoom()
         {
             string code = GetRoomCode();
-            if (code == null || PhotonNetworkController.Instance == null) return;
-            PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(code, JoinType.Solo);
+            if (code == null || ManagerRegistry.PhotonNetworkController == null) return;
+            ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(code, JoinType.Solo);
             feedback.text = "Join requested for " + code + ".";
         }
 
@@ -331,10 +331,10 @@ namespace Qubit.Frontend
         {
             if (Time.unscaledTime < nextRefresh) return;
             nextRefresh = Time.unscaledTime + (Frontend.Settings.advancedArraylist ? .1f : .5f);
-            bool inRoom = References.Network != null && Networking.InRoom;
+            bool inRoom = ManagerRegistry.NetworkSystem != null && Networking.InRoom;
             roomStatus.text = inRoom ? "Connected  /  " + (PhotonNetwork.CurrentRoom?.Name ?? "Room") : "Not connected to a room";
             disconnect.interactable = inRoom;
-            join.interactable = PhotonNetworkController.Instance != null;
+            join.interactable = ManagerRegistry.PhotonNetworkController != null;
             brand.SetActive(!Frontend.Settings.disableWatermark);
 
             if (flipped != Frontend.Settings.flipArraylist)

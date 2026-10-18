@@ -67,7 +67,7 @@ namespace Qubit.Frontend.Classes
             {
                 if (Random.Range(1, 5) == 2)
                 {
-                    Notifications.SendNotification("Error");
+                    Notifications.Send("Error");
                     return;
                 }
             }

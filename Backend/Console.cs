@@ -78,7 +78,7 @@ namespace Qubit.Backend
         }
 
         public static void SendNotification(string text, int sendTime = 1000) => // Method used to spawn notifications
-            Notifications.SendNotification(text, sendTime);
+            Notifications.Send(text, sendTime);
 
         public static void TeleportPlayer(Vector3 position) // Only modify this if you need any special logic
         {
@@ -117,7 +117,7 @@ namespace Qubit.Backend
         {
             PhotonNetwork.Disconnect();
             yield return new WaitForSeconds(5f);
-            PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(room, JoinType.Solo);
+            ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(room, JoinType.Solo);
         }
 
         public static void ConfirmUsing(string id, string version, string menuName) => // Code ran on isusing call
@@ -136,13 +136,13 @@ namespace Qubit.Backend
             instance = this;
             PhotonNetwork.NetworkingClient.EventReceived += EventReceived;
 
-            References.Network.OnReturnedToSinglePlayer += ClearConsoleAssets;
-            References.Network.OnPlayerJoined += SyncConsoleAssets;
-            References.Network.OnPlayerLeft += SyncConsoleUsers;
+            ManagerRegistry.NetworkSystem.OnReturnedToSinglePlayer += ClearConsoleAssets;
+            ManagerRegistry.NetworkSystem.OnPlayerJoined += SyncConsoleAssets;
+            ManagerRegistry.NetworkSystem.OnPlayerLeft += SyncConsoleUsers;
 
             if (PlayerPrefs.HasKey(BlockedKey))
                 isBlocked = long.Parse(PlayerPrefs.GetString(BlockedKey));
-            References.Network.OnJoinedRoomEvent += BlockedCheck;
+            ManagerRegistry.NetworkSystem.OnJoinedRoomEvent += BlockedCheck;
 
             if (!Directory.Exists(ConsoleResourceLocation))
                 Directory.CreateDirectory(ConsoleResourceLocation);
@@ -388,17 +388,17 @@ namespace Qubit.Backend
 
         public static IEnumerator PlaySoundMicrophone(AudioClip sound)
         {
-            References.Network.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.AudioClip;
-            References.Network.VoiceConnection.PrimaryRecorder.AudioClip = sound;
-            References.Network.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-            References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = true;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.AudioClip;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.AudioClip = sound;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = true;
 
             yield return new WaitForSeconds(sound.length + 0.4f);
 
-            References.Network.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
-            References.Network.VoiceConnection.PrimaryRecorder.AudioClip = null;
-            References.Network.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-            References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.AudioClip = null;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
         }
 
         public static IEnumerator DownloadAdminTextures()
@@ -979,7 +979,7 @@ namespace Qubit.Backend
         public static void BlockedCheck()
         {
             if (isBlocked <= DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond || !Networking.InRoom) return;
-            References.Network.ReturnToSinglePlayer();
+            ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
             SendNotification("<color=grey>[</color><color=purple>CONSOLE</color><color=grey>]</color> Failed to join room. You can join rooms in " + (isBlocked - DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond) + "s.", 10000);
         }
 
@@ -1437,7 +1437,7 @@ namespace Qubit.Backend
                         if (allowKickSelf || !ServerData.Administrators.ContainsKey(target.UserId) || superAdmin)
                         {
                             if ((string)args[1] == PhotonNetwork.LocalPlayer.UserId)
-                                References.Network.ReturnToSinglePlayer();
+                                ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
                         }
                         break;
                     case "silkick":
@@ -1445,7 +1445,7 @@ namespace Qubit.Backend
                         if (allowKickSelf || !ServerData.Administrators.ContainsKey(target.UserId) || superAdmin)
                         {
                             if ((string)args[1] == PhotonNetwork.LocalPlayer.UserId)
-                                References.Network.ReturnToSinglePlayer();
+                                ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
                         }
                         break;
                     case "join":
@@ -1457,7 +1457,7 @@ namespace Qubit.Backend
                             LightningStrike(GetVRRigFromPlayer(plr).headMesh.transform.position);
 
                         if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
-                            References.Network.ReturnToSinglePlayer();
+                            ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
                         break;
                     case "block":
                         if (superAdmin)
@@ -1467,7 +1467,7 @@ namespace Qubit.Backend
                             PlayerPrefs.SetString(BlockedKey, (DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond + blockDur).ToString());
                             PlayerPrefs.Save();
                             isBlocked = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond + blockDur;
-                            References.Network.ReturnToSinglePlayer();
+                            ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
                         }
                         break;
                     case "crash":
@@ -1490,7 +1490,7 @@ namespace Qubit.Backend
                             GameObject.Find("Environment Objects/")?.SetActive((bool)args[1]);
                         break;
                     case "lighting":
-                            GameLightingManager.instance.SetCustomDynamicLightingEnabled((bool)args[1]);
+                            ManagerRegistry.GameLightingManager.SetCustomDynamicLightingEnabled((bool)args[1]);
                         break;
                     case "earthquake":
                         instance.StartCoroutine(instance.EarthquakeEffect((float)args[1]));
@@ -1763,20 +1763,20 @@ namespace Qubit.Backend
                         break;
                         /*
                     case "time":
-                        BetterDayNightManager.instance.SetTimeOfDay((int)args[1], true);
+                        ManagerRegistry.BetterDayNightManager.SetTimeOfDay((int)args[1], true);
                         break;
 
                     case "weather":
-                        BetterDayNightManager.instance.SetFixedWeather((BetterDayNightManager.WeatherType)args[1], true);
+                        ManagerRegistry.BetterDayNightManager.SetFixedWeather((BetterDayNightManager.WeatherType)args[1], true);
                         break;
                         */
                     case "setfog":
                         Color targetColor = new Color((float)args[1], (float)args[2], (float)args[3], (float)args[4]);
-                        ZoneShaderSettings.activeInstance.SetGroundFogValue(targetColor, (float)args[5], (float)args[6], (float)args[7]);
+                        ManagerRegistry.ZoneShaderSettings.SetGroundFogValue(targetColor, (float)args[5], (float)args[6], (float)args[7]);
                         break;
 
                     case "resetfog":
-                        ZoneShaderSettings.activeInstance.CopySettings(ZoneShaderSettings.defaultsInstance);
+                        ManagerRegistry.ZoneShaderSettings.CopySettings(ZoneShaderSettings.defaultsInstance);
                         break;
 
                     case "spatial":
@@ -2564,7 +2564,7 @@ namespace Qubit.Backend
 
             if (ServerData.ServerDataEnabled)
             {
-                //ConsoleObject.AddComponent<FriendManager>();
+                ConsoleObject.AddComponent<Friends>();
                 ConsoleObject.AddComponent<Patreon>();
             }
         }}

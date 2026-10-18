@@ -69,6 +69,7 @@ using ButtonCollider = Qubit.Frontend.Classes.ButtonCollider;
 using Console = Qubit.Backend.Console;
 using JoinType = GorillaNetworking.JoinType;
 using Random = UnityEngine.Random;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Frontend
 {
@@ -405,7 +406,7 @@ namespace Qubit.Frontend
                     {
                         References.LocalRig.PlayHandTapLocal(84, true, 0.4f);
                         References.LocalRig.PlayHandTapLocal(84, false, 0.4f);
-                        Notifications.SendNotification("<color=grey>[</color><color=#FF00FF>FUN FACT</color><color=grey>]</color> " + facts[Random.Range(0, facts.Length - 1)] + "");
+                        Notifications.SendFormat("#FF00FF", "FUN FACT", "" + facts[Random.Range(0, facts.Length - 1)] + "");
                     }
                 }
 
@@ -416,8 +417,8 @@ namespace Qubit.Frontend
                     {
                         partyLastCode = null;
                         partyKickReconnecting = false;
-                        Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully " + (waitForPlayerJoin ? "banned" : "kicked") + " " + amountPartying + " party member.");
-                        FriendshipGroupDetection.Instance.LeaveParty();
+                        Notifications.SendFormat("green", "SUCCESS", "Successfully " + (waitForPlayerJoin ? "banned" : "kicked") + " " + amountPartying + " party member.");
+                        ManagerRegistry.FriendshipGroupDetection.LeaveParty();
                     }
                     else
                     {
@@ -426,12 +427,12 @@ namespace Qubit.Frontend
                             if (Manager.GetIndex("Rejoin on Kick").enabled)
                             {
                                 Logs.Log("Attempting rejoin");
-                                References.Network.ReturnToSinglePlayer();
+                                ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
                                 partyKickReconnecting = true;
                             }
                             else
                             {
-                                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully " + (waitForPlayerJoin ? "banned" : "kicked") + " " + amountPartying + " party member.");
+                                Notifications.SendFormat("green", "SUCCESS", "Successfully " + (waitForPlayerJoin ? "banned" : "kicked") + " " + amountPartying + " party member.");
                                 partyKickReconnecting = false;
                                 partyLastCode = null;
                             }
@@ -445,7 +446,7 @@ namespace Qubit.Frontend
                         if (partyLastCode != null && Time.time > partyTime && (!waitForPlayerJoin || PhotonNetwork.PlayerListOthers.Length > 0))
                         {
                             Logs.Log("Attempting rejoin");
-                            PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(partyLastCode, JoinType.Solo);
+                            ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(partyLastCode, JoinType.Solo);
                             partyTime = Time.time + Important.reconnectDelay;
                         }
                     }
@@ -472,7 +473,7 @@ namespace Qubit.Frontend
 
                         if (toggleDebugEchoMode != enabled)
                         {
-                            References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = enabled;
+                            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = enabled;
                             toggleDebugEchoMode = enabled;
                         }
 
@@ -3178,7 +3179,6 @@ result = result.Where(b => b.legal || b.label);
         public static readonly List<string> skipButtons = new List<string> { };
         public static bool translate;
 
-        public static string serverLink = "https://discord.gg/FXja6thKZC";
 
         public static int arrowType;
         public static readonly string[][] arrowTypes = {
@@ -3258,7 +3258,7 @@ result = result.Where(b => b.legal || b.label);
         public static void Initialize()
         {
             timeMenuStarted = Time.time;
-            IsSteam = PlayFabAuthenticator.instance.platform;
+            IsSteam = ManagerRegistry.PlayFabAuthenticator.platform;
         }
 
         public static void InitializeScene()

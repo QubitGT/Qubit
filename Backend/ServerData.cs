@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Libraries.Audio;
 using GorillaNetworking;
 using MonoMod.Utils;
 using Photon.Pun;
@@ -54,7 +55,7 @@ namespace Qubit.Backend
         public static readonly string ServerDataEndpoint = $"{ServerEndpoint}/serverdata";
         public static readonly string ServerWebsocket = "wss://api.qubit.mom/";
 
-        public const string AssetURL = "https://raw.githubusercontent.com/QubitGT/Console/refs/heads/master/ServerData";
+        public static string AssetURL => PluginInfo.GitMaster.Substring(0, PluginInfo.GitMaster.LastIndexOf('/')).Replace("github.com", "raw.githubusercontent.com") + "/Console/refs/heads/master/ServerData";
 
         public static readonly Dictionary<string, string> LocalAdmins = new Dictionary<string, string>()
         {
@@ -69,7 +70,7 @@ namespace Qubit.Backend
             List<Module> buttons = Manager.modules["Main"].ToList();
             buttons.Add(new Module { buttonText = "Admin Mods", method = () => Manager.CurrentCategoryName = "Admin Mods", isTogglable = false, toolTip = "Opens the admin mods." });
             Manager.modules["Main"] = buttons.ToArray();
-            Notifications.SendNotification($"<color=grey>[</color><color=purple>{(playername == "Twig" ? "OWNER" : "ADMIN")}</color><color=grey>]</color> Welcome, {playername}! Admin mods have been enabled.", 10000);
+            Notifications.SendFormat("purple", playername == "Twig" ? "OWNER" : "ADMIN", $"Welcome, {playername}! Admin mods have been enabled.", 10000);
             Frontend.Core.isAdmin = true;
         }
         #endregion
@@ -101,10 +102,10 @@ namespace Qubit.Backend
             instance = this;
             DataLoadTime = Time.time + 5f;
 
-            References.Network.OnJoinedRoomEvent += OnJoinRoom;
+            ManagerRegistry.NetworkSystem.OnJoinedRoomEvent += OnJoinRoom;
 
-            References.Network.OnPlayerJoined += UpdatePlayerCount;
-            References.Network.OnPlayerLeft += UpdatePlayerCount;
+            ManagerRegistry.NetworkSystem.OnPlayerJoined += UpdatePlayerCount;
+            ManagerRegistry.NetworkSystem.OnPlayerLeft += UpdatePlayerCount;
 
             if (File.Exists($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt"))
                 LastPollAnswered = File.ReadAllText($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt");
@@ -146,7 +147,7 @@ namespace Qubit.Backend
             if (Networking.InRoom && PhotonNetwork.PlayerList.Length != PlayerCount)
             {
                 instance.StartCoroutine(PlayerDataSync(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.CloudRegion));
-                References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+                ManagerRegistry.NetworkSystem.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
             }
 
             PlayerCount = Networking.InRoom ? PhotonNetwork.PlayerList.Length : -1;
@@ -161,8 +162,8 @@ namespace Qubit.Backend
 
         public static void OnJoinRoom()
         {
-            instance.StartCoroutine(TelemetryRequest(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.NickName, PhotonNetwork.CloudRegion, PhotonNetwork.LocalPlayer.UserId, PhotonNetwork.CurrentRoom.IsVisible, PhotonNetwork.PlayerList.Length, References.Network.GameModeString));
-            References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+            instance.StartCoroutine(TelemetryRequest(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.NickName, PhotonNetwork.CloudRegion, PhotonNetwork.LocalPlayer.UserId, PhotonNetwork.CurrentRoom.IsVisible, PhotonNetwork.PlayerList.Length, ManagerRegistry.NetworkSystem.GameModeString));
+            ManagerRegistry.NetworkSystem.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
         }
 
         public static void ShouldWeReport(Player player)
@@ -175,7 +176,7 @@ namespace Qubit.Backend
 
             lock (entry.reportedIn)
             {
-                if (!entry.reportedIn.Add(References.Network.RoomName))
+                if (!entry.reportedIn.Add(ManagerRegistry.NetworkSystem.RoomName))
                     return;
 
                 GorillaPlayerScoreboardLine.ReportPlayer(
@@ -186,8 +187,7 @@ namespace Qubit.Backend
 
                 if (Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
                 {
-                    Notifications.SendNotification(
-                        $"<color=grey>[</color><color=purple>ARS</color><color=grey>]</color> Player {player.NickName} (also known as {entry.KnownAs}) has been reported for {entry.Reason}. Added by {entry.Actor}",
+                    Notifications.SendFormat("purple", "ARS", $"Player {player.NickName} (also known as {entry.KnownAs}) has been reported for {entry.Reason}. Added by {entry.Actor}",
                         10000
                     );
                 }
@@ -243,7 +243,9 @@ namespace Qubit.Backend
 
                 JObject data = JObject.Parse(json);
 
-                Frontend.Settings.serverLink = (string)data["discord-invite"];
+                PluginInfo.DiscordInvite = (string)data["discord-invite"];
+                if (data["git-master"] != null)
+                    PluginInfo.GitMaster = (string)data["git-master"];
                 if (CustomBoards.motdTemplate != (string)data["motd"])
                 {
                     CustomBoards.motdTextDirty = true;
@@ -272,7 +274,7 @@ namespace Qubit.Backend
                         Console.Log("Version is severely outdated");
                         References.Computer.GeneralFailureMessage("Please update your menu. For safety purposes, you have been blocked from joining rooms.");
                         if (Networking.InRoom)
-                            References.Network.ReturnToSinglePlayer();
+                            ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
                         Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> You are using a severely outdated version of the menu. Please update your menu if available. For safety purposes, you have been blocked from joining rooms.", 10000);
                         Prompts.UpdatePrompt(version);
                     }
@@ -384,7 +386,7 @@ namespace Qubit.Backend
                         string overlapText = button.overlapText ?? button.buttonText;
 
                         button.overlapText = overlapText + " <color=grey>[</color><color=red>Disabled</color><color=grey>]</color>";
-                        if (!Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId ?? PlayFabAuthenticator.instance.GetPlayFabPlayerId(), out _))
+                        if (!Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId ?? ManagerRegistry.PlayFabAuthenticator.GetPlayFabPlayerId(), out _))
                         {
                             button.isTogglable = false;
                             button.SetEnabled(false);
@@ -421,7 +423,7 @@ namespace Qubit.Backend
                                         toolTip = "Sex"
                                     });
                                     Qubit.Utilities.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/achievement.ogg", "Audio/Menu/achievement.ogg", clip => clip.Play(Frontend.Settings.buttonClickVolume / 10f));
-                                    Notifications.SendNotification($"<color=grey>[</color><color=#FFC0CB>SEX</color><color=grey>]</color> Sex mods have been enabled. Check the main page.", 10000);
+                                    Notifications.SendFormat("#FFC0CB", "SEX", $"Sex mods have been enabled. Check the main page.", 10000);
                                 }
                             }
                             else
@@ -475,7 +477,7 @@ namespace Qubit.Backend
 
         public static void UpdatePlayerCount(NetPlayer Player)
         {
-            References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+            ManagerRegistry.NetworkSystem.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
             PlayerCount = -1;
         }
 
@@ -674,7 +676,7 @@ namespace Qubit.Backend
                     }
                 }
                 if (Networking.InRoom)
-                    References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+                    ManagerRegistry.NetworkSystem.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
             }
             catch { }
         }

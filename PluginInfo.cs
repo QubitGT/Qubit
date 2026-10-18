@@ -35,9 +35,11 @@ namespace Qubit
 #else
             "Qubit";
 #endif
+        public static string GitMaster = "https://github.com/QubitGT/Qubit";
+        public static string DiscordInvite = "https://discord.gg/FXja6thKZC";
         public const string ClientResourcePath = "Qubit.Resources.Client";
-        public const string ServerResourcePath = "https://raw.githubusercontent.com/QubitGT/Qubit/master/Resources/Server"; 
-        public const string ServerAPI = "https://api.Qubit.mom";
+        public static string ServerResourcePath => GitMaster.Replace("github.com", "raw.githubusercontent.com") + "/master/Resources/Server";
+        public const string ServerAPI = "https://api.qubit.mom";
         public const string Logo = @"
                                                                                                                                            
                                                                                                                                            
