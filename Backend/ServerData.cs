@@ -101,10 +101,10 @@ namespace Qubit.Backend
             instance = this;
             DataLoadTime = Time.time + 5f;
 
-            NetworkSystem.Instance.OnJoinedRoomEvent += OnJoinRoom;
+            References.Network.OnJoinedRoomEvent += OnJoinRoom;
 
-            NetworkSystem.Instance.OnPlayerJoined += UpdatePlayerCount;
-            NetworkSystem.Instance.OnPlayerLeft += UpdatePlayerCount;
+            References.Network.OnPlayerJoined += UpdatePlayerCount;
+            References.Network.OnPlayerLeft += UpdatePlayerCount;
 
             if (File.Exists($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt"))
                 LastPollAnswered = File.ReadAllText($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt");
@@ -112,7 +112,7 @@ namespace Qubit.Backend
 
         public void Update()
         {
-            if (DataLoadTime > 0f && Time.time > DataLoadTime && GorillaComputer.instance.isConnectedToMaster)
+            if (DataLoadTime > 0f && Time.time > DataLoadTime && References.Computer.isConnectedToMaster)
             {
                 DataLoadTime = Time.time + 5f;
 
@@ -138,18 +138,18 @@ namespace Qubit.Backend
             }
             else
             {
-                if (GorillaComputer.instance.isConnectedToMaster)
+                if (References.Computer.isConnectedToMaster)
                     ReloadTime = Time.time + 5f;
             }
 
-            if (!(Time.time > DataSyncDelay) && NetworkSystem.Instance.InRoom) return;
-            if (NetworkSystem.Instance.InRoom && PhotonNetwork.PlayerList.Length != PlayerCount)
+            if (!(Time.time > DataSyncDelay) && References.InRoom) return;
+            if (References.InRoom && PhotonNetwork.PlayerList.Length != PlayerCount)
             {
                 instance.StartCoroutine(PlayerDataSync(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.CloudRegion));
-                NetworkSystem.Instance.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+                References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
             }
 
-            PlayerCount = NetworkSystem.Instance.InRoom ? PhotonNetwork.PlayerList.Length : -1;
+            PlayerCount = References.InRoom ? PhotonNetwork.PlayerList.Length : -1;
         }
 
         private IEnumerator RefreshServerData()
@@ -161,8 +161,8 @@ namespace Qubit.Backend
 
         public static void OnJoinRoom()
         {
-            instance.StartCoroutine(TelemetryRequest(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.NickName, PhotonNetwork.CloudRegion, PhotonNetwork.LocalPlayer.UserId, PhotonNetwork.CurrentRoom.IsVisible, PhotonNetwork.PlayerList.Length, NetworkSystem.Instance.GameModeString));
-            NetworkSystem.Instance.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+            instance.StartCoroutine(TelemetryRequest(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.NickName, PhotonNetwork.CloudRegion, PhotonNetwork.LocalPlayer.UserId, PhotonNetwork.CurrentRoom.IsVisible, PhotonNetwork.PlayerList.Length, References.Network.GameModeString));
+            References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
         }
 
         public static void ShouldWeReport(Player player)
@@ -175,7 +175,7 @@ namespace Qubit.Backend
 
             lock (entry.reportedIn)
             {
-                if (!entry.reportedIn.Add(NetworkSystem.Instance.RoomName))
+                if (!entry.reportedIn.Add(References.Network.RoomName))
                     return;
 
                 GorillaPlayerScoreboardLine.ReportPlayer(
@@ -270,9 +270,9 @@ namespace Qubit.Backend
                     {
                         OutdatedVersion = true;
                         Console.Log("Version is severely outdated");
-                        GorillaComputer.instance.GeneralFailureMessage("Please update your menu. For safety purposes, you have been blocked from joining rooms.");
-                        if (NetworkSystem.Instance.InRoom)
-                            NetworkSystem.Instance.ReturnToSinglePlayer();
+                        References.Computer.GeneralFailureMessage("Please update your menu. For safety purposes, you have been blocked from joining rooms.");
+                        if (References.InRoom)
+                            References.Network.ReturnToSinglePlayer();
                         Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> You are using a severely outdated version of the menu. Please update your menu if available. For safety purposes, you have been blocked from joining rooms.", 10000);
                         Prompts.UpdatePrompt(version);
                     }
@@ -475,7 +475,7 @@ namespace Qubit.Backend
 
         public static void UpdatePlayerCount(NetPlayer Player)
         {
-            NetworkSystem.Instance.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+            References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
             PlayerCount = -1;
         }
 
@@ -495,14 +495,14 @@ namespace Qubit.Backend
             DataSyncDelay = Time.time + 3f;
             yield return new WaitForSeconds(3f);
 
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 yield break;
 
             Dictionary<string, Dictionary<string, string>> data = new Dictionary<string, Dictionary<string, string>>();
 
             foreach (Player identification in PhotonNetwork.PlayerList)
             {
-                VRRig rig = Console.GetVRRigFromPlayer(identification) ?? VRRig.LocalRig;
+                VRRig rig = Console.GetVRRigFromPlayer(identification) ?? References.LocalRig;
                 data.Add(identification.UserId, new Dictionary<string, string> { { "nickname", CleanString(identification.NickName) }, { "cosmetics", rig.Cosmetics() }, { "color", $"{Math.Round(rig.playerColor.r * 255)} {Math.Round(rig.playerColor.g * 255)} {Math.Round(rig.playerColor.b * 255)}" }, { "platform", IsPlayerSteam(rig) ? "STEAM" : "QUEST" } });
             }
 
@@ -673,8 +673,8 @@ namespace Qubit.Backend
                         reportData[item.Name] = entry;
                     }
                 }
-                if (NetworkSystem.Instance.InRoom)
-                    NetworkSystem.Instance.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
+                if (References.InRoom)
+                    References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
             }
             catch { }
         }

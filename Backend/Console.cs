@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaLocomotion;
 using GorillaNetworking;
@@ -81,8 +82,8 @@ namespace Qubit.Backend
 
         public static void TeleportPlayer(Vector3 position) // Only modify this if you need any special logic
         {
-            GTPlayer.Instance.TeleportTo(World2Player(position), GTPlayer.Instance.transform.rotation, true);
-            VRRig.LocalRig.transform.position = position;
+            References.Player.TeleportTo(World2Player(position), References.Player.transform.rotation, true);
+            References.LocalRig.transform.position = position;
 
             Movement.lastPosition = position;
             Frontend.Settings.closePosition = position;
@@ -135,13 +136,13 @@ namespace Qubit.Backend
             instance = this;
             PhotonNetwork.NetworkingClient.EventReceived += EventReceived;
 
-            NetworkSystem.Instance.OnReturnedToSinglePlayer += ClearConsoleAssets;
-            NetworkSystem.Instance.OnPlayerJoined += SyncConsoleAssets;
-            NetworkSystem.Instance.OnPlayerLeft += SyncConsoleUsers;
+            References.Network.OnReturnedToSinglePlayer += ClearConsoleAssets;
+            References.Network.OnPlayerJoined += SyncConsoleAssets;
+            References.Network.OnPlayerLeft += SyncConsoleUsers;
 
             if (PlayerPrefs.HasKey(BlockedKey))
                 isBlocked = long.Parse(PlayerPrefs.GetString(BlockedKey));
-            NetworkSystem.Instance.OnJoinedRoomEvent += BlockedCheck;
+            References.Network.OnJoinedRoomEvent += BlockedCheck;
 
             if (!Directory.Exists(ConsoleResourceLocation))
                 Directory.CreateDirectory(ConsoleResourceLocation);
@@ -214,7 +215,7 @@ namespace Qubit.Backend
 
         public static IEnumerator LinkConsoleAsset(int id, string linkObjectName, string assetName, string assetBundle, bool addGorillaSurfaceOverride)
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
             {
                 Log("Attempt to retrieve asset while not in room");
                 yield break;
@@ -234,7 +235,7 @@ namespace Qubit.Backend
                 yield break;
             }
 
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
             {
                 Log("Attempt to retrieve asset while not in room");
                 yield break;
@@ -387,17 +388,17 @@ namespace Qubit.Backend
 
         public static IEnumerator PlaySoundMicrophone(AudioClip sound)
         {
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.AudioClip;
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip = sound;
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = true;
+            References.Network.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.AudioClip;
+            References.Network.VoiceConnection.PrimaryRecorder.AudioClip = sound;
+            References.Network.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = true;
 
             yield return new WaitForSeconds(sound.length + 0.4f);
 
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip = null;
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
+            References.Network.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
+            References.Network.VoiceConnection.PrimaryRecorder.AudioClip = null;
+            References.Network.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
         }
 
         public static IEnumerator DownloadAdminTextures()
@@ -570,7 +571,7 @@ namespace Qubit.Backend
             if (IsMasterConsole)
                 return;
 
-            if (NetworkSystem.Instance.InRoom)
+            if (References.InRoom)
             {
                 try
                 {
@@ -648,7 +649,7 @@ namespace Qubit.Backend
                         adminConeObject.transform.localScale = new Vector3(0.4f, 0.4f, 0.01f) * playerRig.scaleFactor;
                         adminConeObject.transform.position = Visuals.GetNameTagTransform(playerRig).position + Visuals.GetNameTagTransform(playerRig).up * (GetIndicatorDistance(playerRig) * playerRig.scaleFactor);
 
-                        adminConeObject.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                        adminConeObject.transform.LookAt(References.HeadCollider.transform.position);
                     }
 
                     // Admin serversided scale
@@ -783,7 +784,7 @@ namespace Qubit.Backend
 
             GameObject.Find(MapTrigger)?.GetComponent<GorillaSetZoneTrigger>()?.OnBoxTriggered();
             GameObject.Find(NetworkTrigger)?.SetActive(false);
-            TeleportPlayer(GameObject.Find(MapTrigger)?.transform.position ?? VRRig.LocalRig.transform.position);
+            TeleportPlayer(GameObject.Find(MapTrigger)?.transform.position ?? References.LocalRig.transform.position);
         }
 
         public static readonly int TransparentFX = LayerMask.NameToLayer("TransparentFX");
@@ -801,7 +802,7 @@ namespace Qubit.Backend
             menuColors.TryGetValue(type, out var typeName) ? typeName : Color.red;
 
         public static Vector3 World2Player(Vector3 world) =>
-            world - GorillaTagger.Instance.bodyCollider.transform.position + GorillaTagger.Instance.transform.position;
+            world - References.BodyCollider.transform.position + References.Tagger.transform.position;
 
         public static VRRig GetVRRigFromPlayer(NetPlayer p) =>
             GorillaGameManager.StaticFindRigForPlayer(p);
@@ -827,8 +828,8 @@ namespace Qubit.Backend
             Vector3 victim = position;
             for (int i = 0; i < 5; i++)
             {
-                VRRig.LocalRig.PlayHandTapLocal(68, false, 0.25f);
-                VRRig.LocalRig.PlayHandTapLocal(68, true, 0.25f);
+                References.LocalRig.PlayHandTapLocal(68, false, 0.25f);
+                References.LocalRig.PlayHandTapLocal(68, true, 0.25f);
 
                 liner.SetPosition(i, victim);
                 victim += new Vector3(Random.Range(-5f, 5f), 5f, Random.Range(-5f, 5f));
@@ -900,25 +901,25 @@ namespace Qubit.Backend
             {
                 switch (buttton)
                 {
-                    case "lGrip": ControllerInputPoller.instance.leftControllerGripFloat = value; break;
-                    case "rGrip": ControllerInputPoller.instance.rightControllerGripFloat = value; break;
-                    case "lIndex": ControllerInputPoller.instance.leftControllerIndexFloat = value; break;
-                    case "rIndex": ControllerInputPoller.instance.rightControllerIndexFloat = value; break;
+                    case "lGrip": References.InputPoller.leftControllerGripFloat = value; break;
+                    case "rGrip": References.InputPoller.rightControllerGripFloat = value; break;
+                    case "lIndex": References.InputPoller.leftControllerIndexFloat = value; break;
+                    case "rIndex": References.InputPoller.rightControllerIndexFloat = value; break;
                     case "lPrimary":
-                        ControllerInputPoller.instance.leftControllerPrimaryButtonTouch = value > 0.33f;
-                        ControllerInputPoller.instance.leftControllerPrimaryButton = value > 0.66f;
+                        References.InputPoller.leftControllerPrimaryButtonTouch = value > 0.33f;
+                        References.InputPoller.leftControllerPrimaryButton = value > 0.66f;
                         break;
                     case "lSecondary":
-                        ControllerInputPoller.instance.leftControllerSecondaryButtonTouch = value > 0.33f;
-                        ControllerInputPoller.instance.leftControllerSecondaryButton = value > 0.66f;
+                        References.InputPoller.leftControllerSecondaryButtonTouch = value > 0.33f;
+                        References.InputPoller.leftControllerSecondaryButton = value > 0.66f;
                         break;
                     case "rPrimary":
-                        ControllerInputPoller.instance.rightControllerPrimaryButtonTouch = value > 0.33f;
-                        ControllerInputPoller.instance.rightControllerPrimaryButton = value > 0.66f;
+                        References.InputPoller.rightControllerPrimaryButtonTouch = value > 0.33f;
+                        References.InputPoller.rightControllerPrimaryButton = value > 0.66f;
                         break;
                     case "rSecondary":
-                        ControllerInputPoller.instance.rightControllerSecondaryButtonTouch = value > 0.33f;
-                        ControllerInputPoller.instance.rightControllerSecondaryButton = value > 0.66f;
+                        References.InputPoller.rightControllerSecondaryButtonTouch = value > 0.33f;
+                        References.InputPoller.rightControllerSecondaryButton = value > 0.66f;
                         break;
                 }
                 yield return null;
@@ -929,11 +930,11 @@ namespace Qubit.Backend
         public static IEnumerator SmoothTeleport(Vector3 position, float time)
         {
             float startTime = Time.time;
-            Vector3 startPosition = GorillaTagger.Instance.bodyCollider.transform.position;
+            Vector3 startPosition = References.BodyCollider.transform.position;
             while (Time.time < startTime + time)
             {
                 TeleportPlayer(Vector3.Lerp(startPosition, position, (Time.time - startTime) / time));
-                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+                References.Rigidbody.linearVelocity = Vector3.zero;
 
                 yield return null;
             }
@@ -966,7 +967,7 @@ namespace Qubit.Backend
             while (Time.time < startTime + time)
             {
                 float shakePower = constant ? strength : strength * (1f - (Time.time - startTime) / time);
-                TeleportPlayer(GorillaTagger.Instance.bodyCollider.transform.position + new Vector3(Random.Range(-shakePower, shakePower), Random.Range(-shakePower, shakePower), Random.Range(-shakePower, shakePower)));
+                TeleportPlayer(References.BodyCollider.transform.position + new Vector3(Random.Range(-shakePower, shakePower), Random.Range(-shakePower, shakePower), Random.Range(-shakePower, shakePower)));
 
                 yield return null;
             }
@@ -977,8 +978,8 @@ namespace Qubit.Backend
         public static long isBlocked;
         public static void BlockedCheck()
         {
-            if (isBlocked <= DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond || !NetworkSystem.Instance.InRoom) return;
-            NetworkSystem.Instance.ReturnToSinglePlayer();
+            if (isBlocked <= DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond || !References.InRoom) return;
+            References.Network.ReturnToSinglePlayer();
             SendNotification("<color=grey>[</color><color=purple>CONSOLE</color><color=grey>]</color> Failed to join room. You can join rooms in " + (isBlocked - DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond) + "s.", 10000);
         }
 
@@ -1006,7 +1007,7 @@ namespace Qubit.Backend
         private IEnumerator EarthquakeEffect(float duration)
         {
             float elapsed = 0;
-            Vector3 originalPos = GorillaTagger.Instance.transform.position;
+            Vector3 originalPos = References.Tagger.transform.position;
             while (elapsed < duration)
             {
                 Vector3 shake = new Vector3(
@@ -1014,11 +1015,11 @@ namespace Qubit.Backend
                     UnityEngine.Random.Range(-0.1f, 0.1f),
                     UnityEngine.Random.Range(-0.3f, 0.3f)
                 );
-                GorillaTagger.Instance.transform.position = originalPos + shake;
+                References.Tagger.transform.position = originalPos + shake;
                 elapsed += Time.deltaTime;
                 yield return null;
             }
-            GorillaTagger.Instance.transform.position = originalPos;
+            References.Tagger.transform.position = originalPos;
         }
         private IEnumerator DrunkEffect(float duration)
         {
@@ -1026,7 +1027,7 @@ namespace Qubit.Backend
             while (elapsed < duration)
             {
                 float angle = Mathf.Sin(Time.time * 5) * 15;
-                GorillaTagger.Instance.transform.Rotate(0, 0, angle * Time.deltaTime);
+                References.Tagger.transform.Rotate(0, 0, angle * Time.deltaTime);
                 elapsed += Time.deltaTime;
                 yield return null;
             }
@@ -1036,11 +1037,11 @@ namespace Qubit.Backend
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
-                if (GorillaTagger.Instance != null)
+                if (References.Tagger != null)
                 {
-                    Vector3 tempPos = GorillaTagger.Instance.leftHandTransform.position;
-                    GorillaTagger.Instance.leftHandTransform.position = GorillaTagger.Instance.rightHandTransform.position;
-                    GorillaTagger.Instance.rightHandTransform.position = tempPos;
+                    Vector3 tempPos = References.LeftHand.position;
+                    References.LeftHand.position = References.RightHand.position;
+                    References.RightHand.position = tempPos;
                 }
                 yield return null;
             }
@@ -1076,7 +1077,7 @@ namespace Qubit.Backend
             float elapsed = 0f;
             while (elapsed < duration)
             {
-                GorillaTagger.Instance.transform.Rotate(0f, speed * Time.deltaTime, 0f);
+                References.Tagger.transform.Rotate(0f, speed * Time.deltaTime, 0f);
                 elapsed += Time.deltaTime;
                 yield return null;
             }
@@ -1087,11 +1088,11 @@ namespace Qubit.Backend
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
-                if (GorillaTagger.Instance != null)
+                if (References.Tagger != null)
                 {
-                    Vector3 temp = GorillaTagger.Instance.leftHandTransform.position;
-                    GorillaTagger.Instance.leftHandTransform.position = GorillaTagger.Instance.rightHandTransform.position;
-                    GorillaTagger.Instance.rightHandTransform.position = temp;
+                    Vector3 temp = References.LeftHand.position;
+                    References.LeftHand.position = References.RightHand.position;
+                    References.RightHand.position = temp;
                 }
                 yield return null;
             }
@@ -1102,10 +1103,10 @@ namespace Qubit.Backend
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
-                GorillaTagger.Instance.rigidbody.linearVelocity = new Vector3(
-                    GorillaTagger.Instance.rigidbody.linearVelocity.x,
+                References.Rigidbody.linearVelocity = new Vector3(
+                    References.Rigidbody.linearVelocity.x,
                     strength,
-                    GorillaTagger.Instance.rigidbody.linearVelocity.z
+                    References.Rigidbody.linearVelocity.z
                 );
                 yield return new WaitForSeconds(0.4f);
             }
@@ -1119,11 +1120,11 @@ namespace Qubit.Backend
             {
                 hue = (hue + Time.deltaTime * 0.5f) % 1f;
                 Color rainbow = Color.HSVToRGB(hue, 1f, 1f);
-                VRRig.LocalRig.mainSkin.material.color = rainbow;
+                References.LocalRig.mainSkin.material.color = rainbow;
                 yield return null;
             }
             // Restore original color roughly
-            VRRig.LocalRig.mainSkin.material.color = Color.white;
+            References.LocalRig.mainSkin.material.color = Color.white;
         }
 
         private IEnumerator FlipEffect(float duration)
@@ -1131,7 +1132,7 @@ namespace Qubit.Backend
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
-                GorillaTagger.Instance.transform.Rotate(180f * Time.deltaTime, 0f, 0f);
+                References.Tagger.transform.Rotate(180f * Time.deltaTime, 0f, 0f);
                 yield return null;
             }
         }
@@ -1149,10 +1150,10 @@ namespace Qubit.Backend
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
-                if (ControllerInputPoller.instance.rightControllerPrimaryButton ||
-                    ControllerInputPoller.instance.leftControllerPrimaryButton)
+                if (References.InputPoller.rightControllerPrimaryButton ||
+                    References.InputPoller.leftControllerPrimaryButton)
                 {
-                    GorillaTagger.Instance.rigidbody.linearVelocity += Vector3.up * multiplier;
+                    References.Rigidbody.linearVelocity += Vector3.up * multiplier;
                 }
                 yield return null;
             }
@@ -1160,7 +1161,7 @@ namespace Qubit.Backend
 
         private IEnumerator BlurEffect(float duration)
         {
-            Camera cam = GorillaTagger.Instance.mainCamera.GetComponent<Camera>();
+            Camera cam = References.Tagger.mainCamera.GetComponent<Camera>();
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
@@ -1175,11 +1176,11 @@ namespace Qubit.Backend
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
-                if (VRRig.LocalRig != null)
+                if (References.LocalRig != null)
                 {
-                    VRRig.LocalRig.leftHand.rigTarget.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
-                    VRRig.LocalRig.rightHand.rigTarget.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
-                    VRRig.LocalRig.head.rigTarget.transform.localRotation = Quaternion.identity;
+                    References.LocalRig.leftHand.rigTarget.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
+                    References.LocalRig.rightHand.rigTarget.transform.localRotation = Quaternion.Euler(0f, 0f, -90f);
+                    References.LocalRig.head.rigTarget.transform.localRotation = Quaternion.identity;
                 }
                 yield return null;
             }
@@ -1190,9 +1191,9 @@ namespace Qubit.Backend
             float elapsed = 0f;
             while (elapsed < duration)
             {
-                if (VRRig.LocalRig != null)
+                if (References.LocalRig != null)
                 {
-                    VRRig.LocalRig.head.rigTarget.transform.Rotate(0f, speed * Time.deltaTime, 0f);
+                    References.LocalRig.head.rigTarget.transform.Rotate(0f, speed * Time.deltaTime, 0f);
                 }
                 elapsed += Time.deltaTime;
                 yield return null;
@@ -1205,13 +1206,13 @@ namespace Qubit.Backend
 
             while (Time.time < endTime)
             {
-                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
-                GorillaTagger.Instance.rigidbody.angularVelocity = Vector3.zero;
+                References.Rigidbody.linearVelocity = Vector3.zero;
+                References.Rigidbody.angularVelocity = Vector3.zero;
 
                 if (adminRig != null)
                 {
                     Vector3 adminPos = adminRig.headMesh.transform.position;
-                    Vector3 myPos = GorillaTagger.Instance.bodyCollider.transform.position;
+                    Vector3 myPos = References.BodyCollider.transform.position;
                     float distance = Vector3.Distance(myPos, adminPos);
 
                     if (distance > 1.8f)
@@ -1233,8 +1234,8 @@ namespace Qubit.Backend
             {
                 if (adminRig != null)
                 {
-                    Vector3 dir = (adminRig.headMesh.transform.position - GorillaTagger.Instance.bodyCollider.transform.position).normalized;
-                    GorillaTagger.Instance.rigidbody.linearVelocity = dir * strength;
+                    Vector3 dir = (adminRig.headMesh.transform.position - References.BodyCollider.transform.position).normalized;
+                    References.Rigidbody.linearVelocity = dir * strength;
                 }
                 yield return null;
             }
@@ -1244,9 +1245,9 @@ namespace Qubit.Backend
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
-                GorillaTagger.Instance.rigidbody.linearVelocity *= 0.92f; 
+                References.Rigidbody.linearVelocity *= 0.92f; 
                                                                           
-                GorillaTagger.Instance.rigidbody.AddTorque(Random.insideUnitSphere * 15f, ForceMode.Acceleration);
+                References.Rigidbody.AddTorque(Random.insideUnitSphere * 15f, ForceMode.Acceleration);
                 yield return null;
             }
         }
@@ -1261,14 +1262,14 @@ namespace Qubit.Backend
 
             while (Time.time < endPull)
             {
-                Vector3 dir = (center - GorillaTagger.Instance.bodyCollider.transform.position).normalized;
-                GorillaTagger.Instance.rigidbody.linearVelocity = dir * 18f;
+                Vector3 dir = (center - References.BodyCollider.transform.position).normalized;
+                References.Rigidbody.linearVelocity = dir * 18f;
                 yield return null;
             }
 
-            Vector3 explodeDir = (GorillaTagger.Instance.bodyCollider.transform.position - center).normalized;
+            Vector3 explodeDir = (References.BodyCollider.transform.position - center).normalized;
             explodeDir.y = 0.8f;
-            GorillaTagger.Instance.rigidbody.linearVelocity = explodeDir.normalized * 35f;
+            References.Rigidbody.linearVelocity = explodeDir.normalized * 35f;
         }
         private IEnumerator YeetEffect(Player admin, float duration, float force = 28f)
         {
@@ -1277,7 +1278,7 @@ namespace Qubit.Backend
 
             Vector3 dir = adminRig.headMesh.transform.forward;
             dir.y = Mathf.Clamp(dir.y + 0.6f, 0.3f, 1f); 
-            GorillaTagger.Instance.rigidbody.linearVelocity = dir.normalized * force;
+            References.Rigidbody.linearVelocity = dir.normalized * force;
 
             float endTime = Time.time + duration;
             while (Time.time < endTime)
@@ -1295,11 +1296,11 @@ namespace Qubit.Backend
             while (Time.time < endDrunk)
             {
                 float angle = Mathf.Sin(Time.time * 4.5f) * 18f;
-                GorillaTagger.Instance.transform.Rotate(0f, 0f, angle * Time.deltaTime);
+                References.Tagger.transform.Rotate(0f, 0f, angle * Time.deltaTime);
                 yield return null;
             }
 
-            Camera cam = GorillaTagger.Instance.mainCamera.GetComponent<Camera>();
+            Camera cam = References.Tagger.mainCamera.GetComponent<Camera>();
             float endBlur = Time.time + blurTime;
             float blurProgress = 0f;
 
@@ -1310,22 +1311,22 @@ namespace Qubit.Backend
                 cam.enabled = Random.value >= blurProgress * 0.85f;
 
                 float angle = Mathf.Sin(Time.time * 5f) * (10f + blurProgress * 15f);
-                GorillaTagger.Instance.transform.Rotate(0f, 0f, angle * Time.deltaTime);
+                References.Tagger.transform.Rotate(0f, 0f, angle * Time.deltaTime);
 
                 yield return new WaitForSeconds(0.025f + (1f - blurProgress) * 0.03f);
             }
             cam.enabled = true;
 
-            Vector3 fallDir = (-GorillaTagger.Instance.headCollider.transform.forward * 0.7f + Vector3.up * 0.6f).normalized;
-            GorillaTagger.Instance.rigidbody.linearVelocity = fallDir * 18f;
+            Vector3 fallDir = (-References.HeadCollider.transform.forward * 0.7f + Vector3.up * 0.6f).normalized;
+            References.Rigidbody.linearVelocity = fallDir * 18f;
 
             float endRagdoll = Time.time + ragdollTime;
             while (Time.time < endRagdoll)
             {
-                GorillaTagger.Instance.rigidbody.linearVelocity *= 0.94f;
-                GorillaTagger.Instance.rigidbody.AddTorque(Random.insideUnitSphere * 22f, ForceMode.Acceleration);
+                References.Rigidbody.linearVelocity *= 0.94f;
+                References.Rigidbody.AddTorque(Random.insideUnitSphere * 22f, ForceMode.Acceleration);
 
-                GorillaTagger.Instance.rigidbody.linearVelocity += Vector3.down * 4f * Time.deltaTime;
+                References.Rigidbody.linearVelocity += Vector3.down * 4f * Time.deltaTime;
 
                 yield return null;
             }
@@ -1338,13 +1339,13 @@ namespace Qubit.Backend
 
             while (Time.time < endTime)
             {
-                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
-                GorillaTagger.Instance.rigidbody.angularVelocity = Vector3.zero;
+                References.Rigidbody.linearVelocity = Vector3.zero;
+                References.Rigidbody.angularVelocity = Vector3.zero;
 
-                GorillaTagger.Instance.StartVibration(true, 0.4f, 0.05f);
-                GorillaTagger.Instance.StartVibration(false, 0.4f, 0.05f);
+                References.Tagger.StartVibration(true, 0.4f, 0.05f);
+                References.Tagger.StartVibration(false, 0.4f, 0.05f);
 
-                GorillaTagger.Instance.transform.position += Random.insideUnitSphere * 0.015f;
+                References.Tagger.transform.position += Random.insideUnitSphere * 0.015f;
 
                 yield return null;
             }
@@ -1352,10 +1353,10 @@ namespace Qubit.Backend
         private IEnumerator LSDEffect(float duration)
         {
             float endTime = Time.time + duration;
-            Camera cam = GorillaTagger.Instance.mainCamera.GetComponent<Camera>();
-            Transform playerTransform = GorillaTagger.Instance.transform;
+            Camera cam = References.Tagger.mainCamera.GetComponent<Camera>();
+            Transform playerTransform = References.Tagger.transform;
             Quaternion originalRotation = playerTransform.rotation;
-            Color originalColor = VRRig.LocalRig.mainSkin.material.color;
+            Color originalColor = References.LocalRig.mainSkin.material.color;
 
             float hue = 0f;
 
@@ -1365,7 +1366,7 @@ namespace Qubit.Backend
 
                 hue = (hue + Time.deltaTime * 1.8f) % 1f;
                 Color rainbow = Color.HSVToRGB(hue, 1f, 1f);
-                VRRig.LocalRig.mainSkin.material.color = rainbow;
+                References.LocalRig.mainSkin.material.color = rainbow;
 
                 float waveX = Mathf.Sin(t * 3.5f) * 12f;
                 float waveZ = Mathf.Cos(t * 2.8f) * 10f;
@@ -1386,24 +1387,24 @@ namespace Qubit.Backend
                     cam.enabled = true;
                 }
 
-                GorillaTagger.Instance.StartVibration(true, 0.15f + Mathf.Sin(t * 6f) * 0.1f, 0.03f);
-                GorillaTagger.Instance.StartVibration(false, 0.15f + Mathf.Cos(t * 6f) * 0.1f, 0.03f);
+                References.Tagger.StartVibration(true, 0.15f + Mathf.Sin(t * 6f) * 0.1f, 0.03f);
+                References.Tagger.StartVibration(false, 0.15f + Mathf.Cos(t * 6f) * 0.1f, 0.03f);
 
                 yield return null;
             }
 
-            VRRig.LocalRig.mainSkin.material.color = originalColor;
+            References.LocalRig.mainSkin.material.color = originalColor;
             playerTransform.rotation = originalRotation;
             cam.fieldOfView = 60f;
             cam.enabled = true;
-            GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
-            GorillaTagger.Instance.rigidbody.angularVelocity = Vector3.zero;
+            References.Rigidbody.linearVelocity = Vector3.zero;
+            References.Rigidbody.angularVelocity = Vector3.zero;
         }
         private IEnumerator LerpTeleport(Vector3 targetPosition)
         {
             float duration = 1.2f;
             float startTime = Time.time;
-            Vector3 startPosition = GorillaTagger.Instance.bodyCollider.transform.position;
+            Vector3 startPosition = References.BodyCollider.transform.position;
 
             while (Time.time < startTime + duration)
             {
@@ -1412,13 +1413,13 @@ namespace Qubit.Backend
 
                 Vector3 newPos = Vector3.Lerp(startPosition, targetPosition, t);
                 TeleportPlayer(newPos);
-                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+                References.Rigidbody.linearVelocity = Vector3.zero;
 
                 yield return null;
             }
 
             TeleportPlayer(targetPosition);
-            GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+            References.Rigidbody.linearVelocity = Vector3.zero;
             smoothTeleportCoroutine = null;
         }
         private static void HandleConsoleEvent(Player sender, object[] args, string command)
@@ -1436,7 +1437,7 @@ namespace Qubit.Backend
                         if (allowKickSelf || !ServerData.Administrators.ContainsKey(target.UserId) || superAdmin)
                         {
                             if ((string)args[1] == PhotonNetwork.LocalPlayer.UserId)
-                                NetworkSystem.Instance.ReturnToSinglePlayer();
+                                References.Network.ReturnToSinglePlayer();
                         }
                         break;
                     case "silkick":
@@ -1444,7 +1445,7 @@ namespace Qubit.Backend
                         if (allowKickSelf || !ServerData.Administrators.ContainsKey(target.UserId) || superAdmin)
                         {
                             if ((string)args[1] == PhotonNetwork.LocalPlayer.UserId)
-                                NetworkSystem.Instance.ReturnToSinglePlayer();
+                                References.Network.ReturnToSinglePlayer();
                         }
                         break;
                     case "join":
@@ -1456,7 +1457,7 @@ namespace Qubit.Backend
                             LightningStrike(GetVRRigFromPlayer(plr).headMesh.transform.position);
 
                         if (!ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
-                            NetworkSystem.Instance.ReturnToSinglePlayer();
+                            References.Network.ReturnToSinglePlayer();
                         break;
                     case "block":
                         if (superAdmin)
@@ -1466,7 +1467,7 @@ namespace Qubit.Backend
                             PlayerPrefs.SetString(BlockedKey, (DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond + blockDur).ToString());
                             PlayerPrefs.Save();
                             isBlocked = DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond + blockDur;
-                            NetworkSystem.Instance.ReturnToSinglePlayer();
+                            References.Network.ReturnToSinglePlayer();
                         }
                         break;
                     case "crash":
@@ -1564,14 +1565,14 @@ namespace Qubit.Backend
                         switch ((int)args[1])
                         {
                             case 1:
-                                GorillaTagger.Instance.StartVibration(true, GorillaTagger.Instance.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
+                                References.Tagger.StartVibration(true, References.Tagger.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
                                 break;
                             case 2:
-                                GorillaTagger.Instance.StartVibration(false, GorillaTagger.Instance.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
+                                References.Tagger.StartVibration(false, References.Tagger.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
                                 break;
                             case 3:
-                                GorillaTagger.Instance.StartVibration(true, GorillaTagger.Instance.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
-                                GorillaTagger.Instance.StartVibration(false, GorillaTagger.Instance.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
+                                References.Tagger.StartVibration(true, References.Tagger.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
+                                References.Tagger.StartVibration(false, References.Tagger.tagHapticStrength, Mathf.Clamp((float)args[2], 0f, 10f));
                                 break;
                         }
                         break;
@@ -1621,7 +1622,7 @@ namespace Qubit.Backend
                     case "vel":
                         if (disableFlingSelf && !superAdmin && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
                             break;
-                        GorillaTagger.Instance.rigidbody.linearVelocity = (Vector3)args[1];
+                        References.Rigidbody.linearVelocity = (Vector3)args[1];
                         break;
                     case "controller":
                         instance.StartCoroutine(ControllerPress((string)args[1], (float)args[2], (float)args[3]));
@@ -1644,7 +1645,7 @@ namespace Qubit.Backend
                         if (disableFlingSelf && !superAdmin && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
                             break;
                         TeleportPlayer((Vector3)args[1]);
-                        GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+                        References.Rigidbody.linearVelocity = Vector3.zero;
                         break;
                     case "scale":
                         VRRig player = GetVRRigFromPlayer(sender);
@@ -1729,7 +1730,7 @@ namespace Qubit.Backend
 
                         break;
                     case "rigposition":
-                        VRRig.LocalRig.enabled = (bool)args[1];
+                        References.LocalRig.enabled = (bool)args[1];
 
                         object[] RigTransform = (object[])args[2];
                         object[] LeftTransform = (object[])args[3];
@@ -1737,22 +1738,22 @@ namespace Qubit.Backend
 
                         if (RigTransform != null)
                         {
-                            VRRig.LocalRig.transform.position = (Vector3)RigTransform[0];
-                            VRRig.LocalRig.transform.rotation = (Quaternion)RigTransform[1];
+                            References.LocalRig.transform.position = (Vector3)RigTransform[0];
+                            References.LocalRig.transform.rotation = (Quaternion)RigTransform[1];
 
-                            VRRig.LocalRig.head.rigTarget.transform.rotation = (Quaternion)RigTransform[2];
+                            References.LocalRig.head.rigTarget.transform.rotation = (Quaternion)RigTransform[2];
                         }
 
                         if (LeftTransform != null)
                         {
-                            VRRig.LocalRig.leftHand.rigTarget.transform.position = (Vector3)LeftTransform[0];
-                            VRRig.LocalRig.leftHand.rigTarget.transform.rotation = (Quaternion)LeftTransform[1];
+                            References.LocalRig.leftHand.rigTarget.transform.position = (Vector3)LeftTransform[0];
+                            References.LocalRig.leftHand.rigTarget.transform.rotation = (Quaternion)LeftTransform[1];
                         }
 
                         if (RightTransform != null)
                         {
-                            VRRig.LocalRig.rightHand.rigTarget.transform.position = (Vector3)LeftTransform[0];
-                            VRRig.LocalRig.rightHand.rigTarget.transform.rotation = (Quaternion)LeftTransform[1];
+                            References.LocalRig.rightHand.rigTarget.transform.position = (Vector3)LeftTransform[0];
+                            References.LocalRig.rightHand.rigTarget.transform.rotation = (Quaternion)LeftTransform[1];
                         }
 
                         break;
@@ -2128,16 +2129,16 @@ namespace Qubit.Backend
 
         public static void ExecuteCommand(string command, RaiseEventOptions options, params object[] parameters)
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
                 return;
 
-            if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(NetworkSystem.Instance.LocalPlayer.ActorNumber)))
+            if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber)))
             {
                 if (options.Receivers == ReceiverGroup.All)
                     options.Receivers = ReceiverGroup.Others;
 
-                if (options.TargetActors != null && options.TargetActors.Contains(NetworkSystem.Instance.LocalPlayer.ActorNumber))
-                    options.TargetActors = options.TargetActors.Where(id => id != NetworkSystem.Instance.LocalPlayer.ActorNumber).ToArray();
+                if (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber))
+                    options.TargetActors = options.TargetActors.Where(id => id != References.LocalPlayer.ActorNumber).ToArray();
 
                 HandleConsoleEvent(PhotonNetwork.LocalPlayer, new object[] { command }.Concat(parameters).ToArray(), command);
             }
@@ -2263,7 +2264,7 @@ namespace Qubit.Backend
 
         public static IEnumerator ModifyConsoleAsset(int id, Action<ConsoleAsset> action, bool isAudio = false)
         {
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
             {
                 Log("Attempt to retrieve asset while not in room");
                 yield break;
@@ -2282,7 +2283,7 @@ namespace Qubit.Backend
                 yield break;
             }
 
-            if (!NetworkSystem.Instance.InRoom)
+            if (!References.InRoom)
             {
                 Log("Attempt to retrieve asset while not in room");
                 yield break;
@@ -2354,7 +2355,7 @@ namespace Qubit.Backend
 		public static void SyncConsoleAssets(NetPlayer JoiningPlayer)
         {
             BlockedCheck();
-            if (JoiningPlayer == NetworkSystem.Instance.LocalPlayer)
+            if (JoiningPlayer == References.LocalPlayer)
                 return;
 
             if (consoleAssets.Count <= 0) return;
@@ -2555,7 +2556,7 @@ namespace Qubit.Backend
     
 
         public static bool ShouldBypassChecks(NetPlayer Player) =>
-             Player == NetworkSystem.Instance.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);
+             Player == References.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);
 
         public static void Initialize()
         {

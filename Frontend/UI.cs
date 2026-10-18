@@ -309,7 +309,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                bool inRoom = NetworkSystem.Instance.InRoom;
+                bool inRoom = References.InRoom;
                 string roomName = inRoom ? PhotonNetwork.CurrentRoom.Name : "";
 
                 if (inRoom != lastInRoom || roomName != lastRoomName)
@@ -615,12 +615,12 @@ namespace Qubit.Frontend
                         Manager.Toggle("Physical Menu");
 
                     Vector3[] pcPositions = {
-                        TPC?.transform.position ?? GorillaTagger.Instance.headCollider.transform.position,
+                        TPC?.transform.position ?? References.HeadCollider.transform.position,
                         new Vector3(10f, 10f, 10f),
                         new Vector3(10f, 10f, 10f),
                         new Vector3(-67.9299f, 11.9144f, -84.2019f),
                         new Vector3(-63f, 3.634f, -65f),
-                        VRRig.LocalRig.transform.position + VRRig.LocalRig.transform.forward * 1.2f
+                        References.LocalRig.transform.position + References.LocalRig.transform.forward * 1.2f
                     };
 
                     TPC.transform.position = pcPositions[pcbg];

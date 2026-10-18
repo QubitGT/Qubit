@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using UnityEngine;
 
@@ -161,7 +162,7 @@ namespace Qubit.Frontend.Classes
             float distance = direction.magnitude;
 
             if (distance < 0.001f || !Physics.SphereCast(oldPos, collisionRadius, direction.normalized, out RaycastHit hit, distance,
-                    GTPlayer.Instance.locomotionEnabledLayers)) return newPos;
+                    References.Player.locomotionEnabledLayers)) return newPos;
 
             Vector3 collisionPoint = hit.point + hit.normal * collisionRadius;
             return collisionPoint;

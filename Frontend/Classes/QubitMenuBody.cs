@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaLocomotion;
 using Photon.Pun;
 using Qubit.Frontend.Resources;
@@ -255,7 +256,7 @@ handler.positive = increment > 0;
   public static void UpdateDisplay()
                   {
     if (qubitFront == null || menu == null) return;
- Vector3 viewer = isOnPC && TPC != null ? TPC.transform.position : GorillaTagger.Instance.headCollider.transform.position;
+ Vector3 viewer = isOnPC && TPC != null ? TPC.transform.position : References.HeadCollider.transform.position;
             bool frontVisible = Vector3.Dot(viewer - qubitFront.position, -qubitFront.forward) >= 0;
    qubitFrontCanvas.enabled = frontVisible;
 
@@ -389,7 +390,7 @@ label.text = info.overlapText ?? info.buttonText;
                   if (joystickMenuSearching && !disableSearchButton)
                       qubitJoystickTargets.Add(("Search", (RectTransform)qubitFront.Find("Search")));
                   UpdateJoystickSelection();
-    menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? GTPlayer.Instance.scale * menuScale : menuScale;
+    menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? References.Player.scale * menuScale : menuScale;
  qubitStatsTime = 0;
    RecenterMenu();
             UpdateDisplay();

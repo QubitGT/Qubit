@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaExtensions;
 using GorillaLocomotion;
 using GorillaNetworking;
@@ -86,7 +87,7 @@ namespace Qubit.Frontend
                     switch (Controllers.GetLeftControllerType())
                     {
                         case Controllers.ControllerType.ValveIndex:
-                            leftGrab = ControllerInputPoller.instance.leftControllerGripFloat > 0.75f;
+                            leftGrab = References.InputPoller.leftControllerGripFloat > 0.75f;
                             break;
                         case Controllers.ControllerType.VIVE:
                             leftPrimary = leftJoystickClick;
@@ -96,7 +97,7 @@ namespace Qubit.Frontend
                     switch (Controllers.GetRightControllerType())
                     {
                         case Controllers.ControllerType.ValveIndex:
-                            rightGrab = ControllerInputPoller.instance.rightControllerGripFloat > 0.75f;
+                            rightGrab = References.InputPoller.rightControllerGripFloat > 0.75f;
                             break;
                         case Controllers.ControllerType.VIVE:
                             rightPrimary = rightJoystickClick;
@@ -218,7 +219,7 @@ namespace Qubit.Frontend
                         potatoTime = 0f;
                 }
 
-                if (adminTime != null && NetworkSystem.Instance.InRoom)
+                if (adminTime != null && References.InRoom)
                 {
                     if (PhotonNetwork.PlayerListOthers.Any(player => ServerData.Administrators.ContainsKey(player.UserId) && !Console.excludedCones.Contains(player)))
                     {
@@ -320,14 +321,14 @@ namespace Qubit.Frontend
                         {
                             if (!lastGunSpawned)
                             {
-                                AudioSource audioSource = SwapGunHand ? VRRig.LocalRig.leftHandPlayer : VRRig.LocalRig.rightHandPlayer;
+                                AudioSource audioSource = SwapGunHand ? References.LocalRig.leftHandPlayer : References.LocalRig.rightHandPlayer;
                                 audioSource.volume = buttonClickVolume / 10f;
                                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Guns/grip-press.ogg", "Audio/Guns/grip-press.ogg", clip => audioSource.PlayOneShot(clip));
                             }
 
                             if (GetGunInput(true) && (!lastGunTrigger || (handAudioManager != null && !handAudioManager.GetComponent<AudioSource>().isPlaying)))
                             {
-                                AudioSource audioSource = SwapGunHand ? VRRig.LocalRig.leftHandPlayer : VRRig.LocalRig.rightHandPlayer;
+                                AudioSource audioSource = SwapGunHand ? References.LocalRig.leftHandPlayer : References.LocalRig.rightHandPlayer;
                                 audioSource.volume = buttonClickVolume / 10f;
                                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Guns/trigger-press.ogg", "Audio/Guns/trigger-press.ogg", clip => audioSource.PlayOneShot(clip));
 
@@ -336,7 +337,7 @@ namespace Qubit.Frontend
 
                             if (!GetGunInput(true) && lastGunTrigger)
                             {
-                                AudioSource audioSource = SwapGunHand ? VRRig.LocalRig.leftHandPlayer : VRRig.LocalRig.rightHandPlayer;
+                                AudioSource audioSource = SwapGunHand ? References.LocalRig.leftHandPlayer : References.LocalRig.rightHandPlayer;
                                 audioSource.volume = buttonClickVolume / 10f;
                                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Guns/trigger-release.ogg", "Audio/Guns/trigger-release.ogg", clip => audioSource.PlayOneShot(clip));
 
@@ -347,7 +348,7 @@ namespace Qubit.Frontend
                         {
                             if (lastGunSpawned)
                             {
-                                AudioSource audioSource = SwapGunHand ? VRRig.LocalRig.leftHandPlayer : VRRig.LocalRig.rightHandPlayer;
+                                AudioSource audioSource = SwapGunHand ? References.LocalRig.leftHandPlayer : References.LocalRig.rightHandPlayer;
                                 audioSource.volume = buttonClickVolume / 10f;
                                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Guns/grip-release.ogg", "Audio/Guns/grip-release.ogg", clip => audioSource.PlayOneShot(clip));
                             }
@@ -356,7 +357,7 @@ namespace Qubit.Frontend
                             {
                                 handAudioManager.GetComponent<AudioSource>().Stop();
 
-                                AudioSource audioSource = SwapGunHand ? VRRig.LocalRig.leftHandPlayer : VRRig.LocalRig.rightHandPlayer;
+                                AudioSource audioSource = SwapGunHand ? References.LocalRig.leftHandPlayer : References.LocalRig.rightHandPlayer;
                                 audioSource.volume = buttonClickVolume / 10f;
                                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Guns/trigger-release.ogg", "Audio/Guns/trigger-release.ogg", clip => audioSource.PlayOneShot(clip));
                             }
@@ -376,15 +377,15 @@ namespace Qubit.Frontend
                         if (GunSpawned)
                         {
                             if (!lastGunSpawnedVibration)
-                                GorillaTagger.Instance.StartVibration(SwapGunHand, GorillaTagger.Instance.tagHapticStrength / 2f, 0.05f);
+                                References.Tagger.StartVibration(SwapGunHand, References.Tagger.tagHapticStrength / 2f, 0.05f);
 
                             if (GetGunInput(true))
-                                GorillaTagger.Instance.StartVibration(SwapGunHand, GorillaTagger.Instance.tagHapticStrength / 2f, GorillaTagger.Instance.tagHapticDuration / 2f);
+                                References.Tagger.StartVibration(SwapGunHand, References.Tagger.tagHapticStrength / 2f, References.Tagger.tagHapticDuration / 2f);
                         }
                         else
                         {
                             if (lastGunSpawnedVibration)
-                                GorillaTagger.Instance.StartVibration(SwapGunHand, GorillaTagger.Instance.tagHapticStrength / 2f, 0.015f);
+                                References.Tagger.StartVibration(SwapGunHand, References.Tagger.tagHapticStrength / 2f, 0.015f);
                         }
 
                         lastGunSpawnedVibration = GunSpawned;
@@ -402,14 +403,14 @@ namespace Qubit.Frontend
                     int randomChance = Random.Range(1, 400);
                     if (randomChance == 21)
                     {
-                        VRRig.LocalRig.PlayHandTapLocal(84, true, 0.4f);
-                        VRRig.LocalRig.PlayHandTapLocal(84, false, 0.4f);
+                        References.LocalRig.PlayHandTapLocal(84, true, 0.4f);
+                        References.LocalRig.PlayHandTapLocal(84, false, 0.4f);
                         Notifications.SendNotification("<color=grey>[</color><color=#FF00FF>FUN FACT</color><color=grey>]</color> " + facts[Random.Range(0, facts.Length - 1)] + "");
                     }
                 }
 
                 // Party kick code (to return back to the main lobby when you're done)
-                if (NetworkSystem.Instance.InRoom)
+                if (References.InRoom)
                 {
                     if (partyKickReconnecting)
                     {
@@ -425,7 +426,7 @@ namespace Qubit.Frontend
                             if (Manager.GetIndex("Rejoin on Kick").enabled)
                             {
                                 Logs.Log("Attempting rejoin");
-                                NetworkSystem.Instance.ReturnToSinglePlayer();
+                                References.Network.ReturnToSinglePlayer();
                                 partyKickReconnecting = true;
                             }
                             else
@@ -471,7 +472,7 @@ namespace Qubit.Frontend
 
                         if (toggleDebugEchoMode != enabled)
                         {
-                            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = enabled;
+                            References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = enabled;
                             toggleDebugEchoMode = enabled;
                         }
 
@@ -574,11 +575,11 @@ namespace Qubit.Frontend
                         GameObject ghostRigHolder = new GameObject("ghostRigHolder");
                         ghostRigHolder.SetActive(false);
 
-                        GhostRig = Instantiate(VRRig.LocalRig, GTPlayer.Instance.transform.position, GTPlayer.Instance.transform.rotation, ghostRigHolder.transform);
+                        GhostRig = Instantiate(References.LocalRig, References.Player.transform.position, References.Player.transform.rotation, ghostRigHolder.transform);
                         GhostRig.headBodyOffset = Vector3.zero;
 
                         GhostRig.gameObject.SetActive(false);
-                        GhostRig.transform.SetParent(VRRig.LocalRig.transform.parent);
+                        GhostRig.transform.SetParent(References.LocalRig.transform.parent);
 
                         Destroy(ghostRigHolder);
 
@@ -611,7 +612,7 @@ namespace Qubit.Frontend
                         legacyGhostViewRight.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
                     }
 
-                    if ((!VRRig.LocalRig.enabled || ghostException) && !disableGhostview)
+                    if ((!References.LocalRig.enabled || ghostException) && !disableGhostview)
                     {
                         Color color = Manager.GetIndex("Swap Ghostview Colors").enabled ? buttonColors[1].GetCurrentColor() : backgroundColor.GetCurrentColor();
 
@@ -669,9 +670,9 @@ namespace Qubit.Frontend
                 if (Modules.Categories.Settings.TutorialObject != null)
                     Modules.Categories.Settings.UpdateTutorial();
 
-                ServerPos = ServerPos == Vector3.zero ? ServerSyncPos : Vector3.Lerp(ServerPos, VRRig.LocalRig.SanitizeVector3(ServerSyncPos), VRRig.LocalRig.lerpValueBody * 0.66f);
-                ServerLeftHandPos = ServerLeftHandPos == Vector3.zero ? ServerSyncLeftHandPos : Vector3.Lerp(ServerLeftHandPos, VRRig.LocalRig.SanitizeVector3(ServerSyncLeftHandPos), VRRig.LocalRig.lerpValueBody);
-                ServerRightHandPos = ServerRightHandPos == Vector3.zero ? ServerSyncRightHandPos : Vector3.Lerp(ServerRightHandPos, VRRig.LocalRig.SanitizeVector3(ServerSyncRightHandPos), VRRig.LocalRig.lerpValueBody);
+                ServerPos = ServerPos == Vector3.zero ? ServerSyncPos : Vector3.Lerp(ServerPos, References.LocalRig.SanitizeVector3(ServerSyncPos), References.LocalRig.lerpValueBody * 0.66f);
+                ServerLeftHandPos = ServerLeftHandPos == Vector3.zero ? ServerSyncLeftHandPos : Vector3.Lerp(ServerLeftHandPos, References.LocalRig.SanitizeVector3(ServerSyncLeftHandPos), References.LocalRig.lerpValueBody);
+                ServerRightHandPos = ServerRightHandPos == Vector3.zero ? ServerSyncRightHandPos : Vector3.Lerp(ServerRightHandPos, References.LocalRig.SanitizeVector3(ServerSyncRightHandPos), References.LocalRig.lerpValueBody);
                 #endregion
 
                 #region Mod Bindings
@@ -1252,7 +1253,7 @@ namespace Qubit.Frontend
         public static void CreateReference(bool? rightHandOverride = null)
         {
             reference = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            reference.transform.parent = rightHandOverride ?? VR.UsesRightHand() ? GorillaTagger.Instance.leftHandTransform : GorillaTagger.Instance.rightHandTransform;
+            reference.transform.parent = rightHandOverride ?? VR.UsesRightHand() ? References.LeftHand : References.RightHand;
             reference.transform.localPosition = pointerOffset;
             reference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
             buttonCollider = reference.GetComponent<SphereCollider>();
@@ -1308,7 +1309,7 @@ result = result.Where(b => b.legal || b.label);
             if (clickGUI)
             {
                 menu = LoadObject<GameObject>("ClickGUI");
-                menu.transform.localScale *= (menuScale * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f));
+                menu.transform.localScale *= (menuScale * (scaleWithPlayer ? References.Player.scale : 1f));
 
                 Modules.Categories.Settings.InitializeClickGUI();
 
@@ -1979,7 +1980,7 @@ result = result.Where(b => b.legal || b.label);
                 }
             }
 
-            menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? GTPlayer.Instance.scale * menuScale : menuScale;
+            menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? References.Player.scale * menuScale : menuScale;
             return menu;
         }
 
@@ -1990,11 +1991,11 @@ result = result.Where(b => b.legal || b.label);
             bool isKeyboardCondition = UI.IsKeyboardCondition();
             if (clickGUI)
             {
-                if (recenterPosition == null || Vector3.Distance(recenterPosition.Value, GorillaTagger.Instance.bodyCollider.transform.TransformPoint(new Vector3(0f, 0f, 1.5f))) > 1f)
+                if (recenterPosition == null || Vector3.Distance(recenterPosition.Value, References.BodyCollider.transform.TransformPoint(new Vector3(0f, 0f, 1.5f))) > 1f)
                 {
-                    menu.transform.position = GorillaTagger.Instance.bodyCollider.transform.TransformPoint(new Vector3(0f, 0f, 1.5f));
-                    menu.transform.position = new Vector3(menu.transform.position.x, GorillaTagger.Instance.headCollider.transform.position.y + 0.15f, menu.transform.position.z);
-                    menu.transform.LookAt(GorillaTagger.Instance.bodyCollider.transform);
+                    menu.transform.position = References.BodyCollider.transform.TransformPoint(new Vector3(0f, 0f, 1.5f));
+                    menu.transform.position = new Vector3(menu.transform.position.x, References.HeadCollider.transform.position.y + 0.15f, menu.transform.position.z);
+                    menu.transform.LookAt(References.BodyCollider.transform);
                     menu.transform.rotation = Quaternion.Euler(0f, menu.transform.eulerAngles.y + 180f, 0f);
 
                     recenterPosition = menu.transform.position;
@@ -2049,7 +2050,7 @@ result = result.Where(b => b.legal || b.label);
                 {
                     GameObject Particle = GameObject.CreatePrimitive(PrimitiveType.Sphere);
                     Particle.transform.position = menu.transform.position;
-                    Particle.transform.localScale = Vector3.one * (0.025f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f));
+                    Particle.transform.localScale = Vector3.one * (0.025f * (scaleWithPlayer ? References.Player.scale : 1f));
                     Particle.AddComponent<CustomParticle>();
                     Destroy(Particle.GetComponent<Collider>());
                 }
@@ -2164,12 +2165,12 @@ result = result.Where(b => b.legal || b.label);
 
                         if (rightHand || (bothHands && openedwithright))
                         {
-                            comp.linearVelocity = GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0);
+                            comp.linearVelocity = References.Player.RightHand.velocityTracker.GetAverageVelocity(true, 0);
                             comp.angularVelocity = GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/RightHand Controller").GetOrAddComponent<GorillaVelocityEstimator>().angularVelocity;
                         }
                         else
                         {
-                            comp.linearVelocity = GTPlayer.Instance.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
+                            comp.linearVelocity = References.Player.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
                             comp.angularVelocity = GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/LeftHand Controller").GetOrAddComponent<GorillaVelocityEstimator>().angularVelocity;
                         }
 

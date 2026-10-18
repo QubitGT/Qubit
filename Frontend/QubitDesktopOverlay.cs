@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using Photon.Pun;
 using Qubit.Extensions;
@@ -115,7 +116,7 @@ namespace Qubit.Frontend
             var queueButton = transform.Find("RoomPanel/Queue");
             if (queueButton != null) queueButton.gameObject.SetActive(false);
             disconnect.onClick.AddListener(() => {
-                NetworkSystem.Instance?.ReturnToSinglePlayer();
+                References.Network?.ReturnToSinglePlayer();
                 feedback.text = "Disconnect requested.";
             });
             Button setName = Find<Button>("RoomPanel/SetName");
@@ -330,7 +331,7 @@ namespace Qubit.Frontend
         {
             if (Time.unscaledTime < nextRefresh) return;
             nextRefresh = Time.unscaledTime + (Frontend.Settings.advancedArraylist ? .1f : .5f);
-            bool inRoom = NetworkSystem.Instance != null && NetworkSystem.Instance.InRoom;
+            bool inRoom = References.Network != null && References.InRoom;
             roomStatus.text = inRoom ? "Connected  /  " + (PhotonNetwork.CurrentRoom?.Name ?? "Room") : "Not connected to a room";
             disconnect.interactable = inRoom;
             join.interactable = PhotonNetworkController.Instance != null;

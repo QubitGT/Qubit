@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using Qubit.Backend;
 using Qubit.Frontend.Classes;
 using Qubit.Frontend.Resources;
@@ -337,7 +338,7 @@ namespace Qubit.Frontend
             }
             if (touchRenderer != null) touchRenderer.enabled = false;
             bool pc = Frontend.Settings.isOnPC && Frontend.Settings.TPC != null;
-            var viewer = pc ? Frontend.Settings.TPC.transform.position : GorillaTagger.Instance.headCollider.transform.position;
+            var viewer = pc ? Frontend.Settings.TPC.transform.position : References.HeadCollider.transform.position;
             canvas.enabled = Vector3.Dot(viewer - face.position, -face.forward) >= 0;
             pointer.SetActive(canvas.enabled);
             if (!canvas.enabled) { SetHover(null); return; }
@@ -349,7 +350,7 @@ namespace Qubit.Frontend
                 pointer.SetActive(false);
                 return;
             }
-            bool left = Frontend.Settings.reference != null && Frontend.Settings.reference.transform.parent == GorillaTagger.Instance.leftHandTransform;
+            bool left = Frontend.Settings.reference != null && Frontend.Settings.reference.transform.parent == References.LeftHand;
             var hand = Controllers.GetTrueHandPosition(left);
             Ray ray = pc && Mouse.current != null ? UI.GetMouseRay() : VR.GetHandRay(hand.position, hand.forward);
             bool pressed = pc ? UI.IsMousePressed() : VR.IsTriggerPressed(left);

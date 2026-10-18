@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaExtensions;
 using GorillaLocomotion;
 using Qubit.Extensions;
@@ -73,10 +74,10 @@ namespace Qubit.Frontend
         {
             if (VRKeyboard != null)
             {
-                if (Vector3.Distance(VRKeyboard.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > menuScale && !leftSecondary)
+                if (Vector3.Distance(VRKeyboard.transform.position, References.BodyCollider.transform.position) > menuScale && !leftSecondary)
                 {
-                    VRKeyboard.transform.position = GorillaTagger.Instance.bodyCollider.transform.position;
-                    VRKeyboard.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation;
+                    VRKeyboard.transform.position = References.BodyCollider.transform.position;
+                    VRKeyboard.transform.rotation = References.BodyCollider.transform.rotation;
                 }
             }
 
@@ -170,7 +171,7 @@ namespace Qubit.Frontend
                     }
 
                     if (pcKeyboardSounds)
-                        VRRig.LocalRig.PlayHandTapLocal(66, false, buttonClickVolume / 10f);
+                        References.LocalRig.PlayHandTapLocal(66, false, buttonClickVolume / 10f);
 
                     pageNumber = 0;
 
@@ -445,9 +446,9 @@ using (var memory = new MemoryStream())
  body.isKinematic = true;
 
             body.useGravity = false;
-   instance.transform.position = GorillaTagger.Instance.bodyCollider.transform.position;
-instance.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation;
-       instance.transform.localScale *= scaleWithPlayer ? GTPlayer.Instance.scale * menuScale : menuScale;
+   instance.transform.position = References.BodyCollider.transform.position;
+instance.transform.rotation = References.BodyCollider.transform.rotation;
+       instance.transform.localScale *= scaleWithPlayer ? References.Player.scale * menuScale : menuScale;
   var view = instance.AddComponent<View>();
                   view.face = instance.transform.Find("Canvas").GetComponent<Canvas>();
     view.face.renderMode = RenderMode.WorldSpace;
@@ -515,7 +516,7 @@ key.Find("Label").GetComponent<Text>().text = index >= 0 && shift ? shifted[inde
    private void LateUpdate()
 {
 
-  face.enabled = Vector3.Dot(GorillaTagger.Instance.headCollider.transform.position - face.transform.position, -face.transform.forward) >= 0;
+  face.enabled = Vector3.Dot(References.HeadCollider.transform.position - face.transform.position, -face.transform.forward) >= 0;
                   if (lastText != keyboardInput)
     {
  lastText = keyboardInput;

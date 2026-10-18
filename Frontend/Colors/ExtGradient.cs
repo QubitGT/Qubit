@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using Qubit.Extensions;
 using System;
 using System.Linq;
@@ -49,7 +50,7 @@ namespace Qubit.Frontend.Colors
                 return RandomColor();
 
             if (copyRigColor)
-                return VRRig.LocalRig.GetColor();
+                return References.LocalRig.GetColor();
 
             if (!transparent) return customColor != null ? customColor?.Invoke() ?? Color.magenta : colors[index].color;
             Color targetColor = colors[index].color;
@@ -110,7 +111,7 @@ namespace Qubit.Frontend.Colors
                 return RandomColor();
 
             if (copyRigColor)
-                return VRRig.LocalRig.GetColor();
+                return References.LocalRig.GetColor();
 
             if (transparent)
             {

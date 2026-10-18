@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using System.Collections.Generic;
 using UnityEngine;
 using static Qubit.Frontend.Keyboard;
@@ -44,9 +45,9 @@ namespace Qubit.Frontend.Classes
                 delay = Time.time + 0.1f;
 
             if (doButtonsVibrate)
-                GorillaTagger.Instance.StartVibration(collider == lKeyCollider, GorillaTagger.Instance.tagHapticStrength / 2f, GorillaTagger.Instance.tagHapticDuration / 2f);
+                References.Tagger.StartVibration(collider == lKeyCollider, References.Tagger.tagHapticStrength / 2f, References.Tagger.tagHapticDuration / 2f);
 
-            VRRig.LocalRig.PlayHandTapLocal(66, collider == lKeyCollider, buttonClickVolume / 10f);
+            References.LocalRig.PlayHandTapLocal(66, collider == lKeyCollider, buttonClickVolume / 10f);
             if (qubitKeyboard != null) qubitKeyboard.Flash(key);
             PressKeyboardKey(key);
         }

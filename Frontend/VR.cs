@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Controls;
@@ -81,9 +82,9 @@ namespace Qubit.Frontend
 
             if (wristMenu)
             {
-                bool shouldOpen = Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position + GorillaTagger.Instance.leftHandTransform.forward * 0.1f, Controllers.GetTrueRightHand().position) < 0.1f;
+                bool shouldOpen = Vector3.Distance(References.LeftHand.position + References.LeftHand.forward * 0.1f, Controllers.GetTrueRightHand().position) < 0.1f;
                 if (rightHand)
-                    shouldOpen = Vector3.Distance(Controllers.GetTrueLeftHand().position, GorillaTagger.Instance.rightHandTransform.position + GorillaTagger.Instance.rightHandTransform.forward * 0.1f) < 0.1f;
+                    shouldOpen = Vector3.Distance(Controllers.GetTrueLeftHand().position, References.RightHand.position + References.RightHand.forward * 0.1f) < 0.1f;
 
                 if (shouldOpen && !lastChecker)
                     wristOpen = !wristOpen;
@@ -127,7 +128,7 @@ namespace Qubit.Frontend
             {
                 try
                 {
-                    if (Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, menu.transform.position) < 1.5f)
+                    if (Vector3.Distance(References.BodyCollider.transform.position, menu.transform.position) < 1.5f)
                     {
                         if (reference == null)
                             CreateReference();
@@ -228,8 +229,8 @@ namespace Qubit.Frontend
                     {
                         if (menuBackground != null)
                         {
-                            bool leftGrabbing = Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, menuBackground.transform.position) < 0.4f && leftGrab;
-                            bool rightGrabbing = Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, menuBackground.transform.position) < 0.4f && rightGrab;
+                            bool leftGrabbing = Vector3.Distance(References.LeftHand.position, menuBackground.transform.position) < 0.4f && leftGrab;
+                            bool rightGrabbing = Vector3.Distance(References.RightHand.position, menuBackground.transform.position) < 0.4f && rightGrab;
 
                             if (leftGrabbing || rightGrabbing)
                             {
@@ -261,7 +262,7 @@ namespace Qubit.Frontend
                 {
                     static bool IsBangingPosition(Vector3 position)
                     {
-                        Vector3 closestPoint = GorillaTagger.Instance.bodyCollider.ClosestPoint(position);
+                        Vector3 closestPoint = References.BodyCollider.ClosestPoint(position);
                         return closestPoint.Distance(position) <= 0.1f;
                     }
 
@@ -365,16 +366,16 @@ namespace Qubit.Frontend
         {
             if (joystickMenu)
             {
-                menu.transform.position = GorillaTagger.Instance.headCollider.transform.TransformPoint(joystickMenuPositions[joystickMenuPosition]);
+                menu.transform.position = References.HeadCollider.transform.TransformPoint(joystickMenuPositions[joystickMenuPosition]);
                 if (qubitFront != null)
                 {
-                    var head = GorillaTagger.Instance.headCollider.transform;
+                    var head = References.HeadCollider.transform;
                     menu.transform.rotation = Quaternion.LookRotation(menu.transform.position - head.position, head.up)
                         * Quaternion.Inverse(QubitFaceRotation);
                 }
                 else
                 {
-                    menu.transform.LookAt(GorillaTagger.Instance.headCollider.transform);
+                    menu.transform.LookAt(References.HeadCollider.transform);
                     Vector3 rotModify = menu.transform.rotation.eulerAngles;
                     rotModify += new Vector3(-90f, 0f, -90f);
                     menu.transform.rotation = Quaternion.Euler(rotModify);
@@ -386,8 +387,8 @@ namespace Qubit.Frontend
                 {
                     if (oneHand)
                     {
-                        menu.transform.position = GorillaTagger.Instance.headCollider.transform.TransformPoint(new Vector3(0f, -0.1f, 0.5f));
-                        menu.transform.LookAt(GorillaTagger.Instance.headCollider.transform);
+                        menu.transform.position = References.HeadCollider.transform.TransformPoint(new Vector3(0f, -0.1f, 0.5f));
+                        menu.transform.LookAt(References.HeadCollider.transform);
                         Vector3 rotModify = menu.transform.rotation.eulerAngles;
                         rotModify += new Vector3(-90f, 0f, -90f);
                         menu.transform.rotation = Quaternion.Euler(rotModify);
@@ -398,22 +399,22 @@ namespace Qubit.Frontend
                         {
                             if (barkMenuGrabbed.Value)
                             {
-                                menu.transform.position = GorillaTagger.Instance.leftHandTransform.position;
-                                menu.transform.rotation = GorillaTagger.Instance.leftHandTransform.rotation;
+                                menu.transform.position = References.LeftHand.position;
+                                menu.transform.rotation = References.LeftHand.rotation;
                             }
                             else
                             {
-                                menu.transform.position = GorillaTagger.Instance.rightHandTransform.position;
-                                Vector3 rotation = GorillaTagger.Instance.rightHandTransform.rotation.eulerAngles;
+                                menu.transform.position = References.RightHand.position;
+                                Vector3 rotation = References.RightHand.rotation.eulerAngles;
                                 rotation += new Vector3(0f, 0f, 180f);
                                 menu.transform.rotation = Quaternion.Euler(rotation);
                             }
                         }
                         else
                         {
-                            menu.transform.position = GorillaTagger.Instance.bodyCollider.transform.TransformPoint(new Vector3(0f, 0f, 0.5f));
-                            menu.transform.position = new Vector3(menu.transform.position.x, GorillaTagger.Instance.headCollider.transform.position.y, menu.transform.position.z);
-                            menu.transform.LookAt(GorillaTagger.Instance.bodyCollider.transform);
+                            menu.transform.position = References.BodyCollider.transform.TransformPoint(new Vector3(0f, 0f, 0.5f));
+                            menu.transform.position = new Vector3(menu.transform.position.x, References.HeadCollider.transform.position.y, menu.transform.position.z);
+                            menu.transform.LookAt(References.BodyCollider.transform);
                             menu.transform.rotation = Quaternion.Euler(0f, menu.transform.eulerAngles.y, 0f);
                             Vector3 rotModify = menu.transform.rotation.eulerAngles;
                             rotModify += new Vector3(-90f, 0f, -90f);
@@ -424,15 +425,15 @@ namespace Qubit.Frontend
                     {
                         if (VR.UsesRightHand())
                         {
-                            menu.transform.position = GorillaTagger.Instance.rightHandTransform.position;
-                            Vector3 rotation = GorillaTagger.Instance.rightHandTransform.rotation.eulerAngles;
+                            menu.transform.position = References.RightHand.position;
+                            Vector3 rotation = References.RightHand.rotation.eulerAngles;
                             rotation += new Vector3(0f, 0f, 180f);
                             menu.transform.rotation = Quaternion.Euler(rotation);
                         }
                         else
                         {
-                            menu.transform.position = GorillaTagger.Instance.leftHandTransform.position;
-                            menu.transform.rotation = GorillaTagger.Instance.leftHandTransform.rotation;
+                            menu.transform.position = References.LeftHand.position;
+                            menu.transform.rotation = References.LeftHand.rotation;
                         }
                         if (flipMenu)
                         {
@@ -447,10 +448,10 @@ namespace Qubit.Frontend
                     menu.transform.localPosition = Vector3.zero;
                     menu.transform.localRotation = Quaternion.identity;
                     menu.transform.position = rightHand
-                        ? GorillaTagger.Instance.rightHandTransform.position + new Vector3(0f, 0.3f, 0f)
-                        : GorillaTagger.Instance.leftHandTransform.position + new Vector3(0f, 0.3f, 0f);
+                        ? References.RightHand.position + new Vector3(0f, 0.3f, 0f)
+                        : References.LeftHand.position + new Vector3(0f, 0.3f, 0f);
 
-                    menu.transform.LookAt(GorillaTagger.Instance.headCollider.transform.position);
+                    menu.transform.LookAt(References.HeadCollider.transform.position);
                     Vector3 rotModify = menu.transform.rotation.eulerAngles;
                     rotModify += new Vector3(-90f, 0f, -90f);
                     menu.transform.rotation = Quaternion.Euler(rotModify);
@@ -491,7 +492,7 @@ namespace Qubit.Frontend
         }
 
         public static bool UsesRightHand() =>
-            rightHand || (bothHands && ControllerInputPoller.instance.rightControllerSecondaryButton);
+            rightHand || (bothHands && References.InputPoller.rightControllerSecondaryButton);
 
         public static Ray GetHandRay(Vector3 position, Vector3 forward) =>
             new Ray(position, forward);
