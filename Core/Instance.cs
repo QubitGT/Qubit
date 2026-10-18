@@ -27,12 +27,14 @@ using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
+using Qubit.Patches.Terms;
 using Qubit.Patches;
-using Qubit.Patches.Menu;
 using System;
 using System.Collections;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
 using UnityEngine;
 using static Qubit.Backend.Preferences;
 using static Qubit.Frontend.Keyboard;
@@ -41,6 +43,21 @@ using Console = Qubit.Backend.Console;
 
 namespace Qubit.Core
 {
+    /// <summary>
+    /// Runs the static, parameterless method once when the menu launches.
+    /// Lower <see cref="Priority"/> runs first (0, then 1, ...); methods without one run after all prioritised methods.
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Method, Inherited = false)]
+    public sealed class RunOnLaunchAttribute : Attribute
+    {
+        public int? Priority { get; }
+
+        public RunOnLaunchAttribute() { }
+
+        public RunOnLaunchAttribute(int priority) =>
+            Priority = priority;
+    }
+
     public class Instance : MonoBehaviour
     {
         private const float IntegrityCheckIntervalSeconds = 120f;
@@ -70,7 +87,7 @@ namespace Qubit.Core
                     Directory.CreateDirectory(target);
             }
             PatchHandler.PatchAll(true);
-            TOSPatches.enabled = Preferences.IsSavedEnabled(TOSPatches.ButtonName);
+            TermsOfService.enabled = Preferences.IsSavedEnabled(TermsOfService.ButtonName);
             if (File.Exists($"{PluginInfo.BaseDirectory}/Qubit_DisableTelemetry.txt"))
                 ServerData.DisableTelemetry = true;
             GorillaTagger.OnPlayerSpawned(LoadMenu);
@@ -204,29 +221,44 @@ namespace Qubit.Core
             if (Notifications.Instance == null)
                 Logs.LogError("NotificationManager instance is null on menu launch. Features may not function properly.");
 
-            Frontend.Settings.Initialize();
+            RunLaunchMethods();
+        }
 
-            Fonts.Initialize();
-            QubitDetails.Register();
+        private static void RunLaunchMethods()
+        {
+            Type[] types;
+            try
+            {
+                types = typeof(Instance).Assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException exception)
+            {
+                types = exception.Types.Where(type => type != null).ToArray(); // a missing game type must not stop startup
+            }
 
-            Preferences.LoadDonationState();
+            var launchMethods = types
+                .SelectMany(type => type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
+                .Select(method => (method, attribute: method.GetCustomAttribute<RunOnLaunchAttribute>()))
+                .Where(entry => entry.attribute != null)
+                .OrderBy(entry => entry.attribute.Priority ?? int.MaxValue); // OrderBy is stable, unprioritised methods run last
 
-            Rooms.Initialize();
-            Serialization.Initialize();
+            foreach (var (method, _) in launchMethods)
+            {
+                if (method.GetParameters().Length > 0)
+                {
+                    Logs.LogError($"[RunOnLaunch] {method.DeclaringType?.Name}.{method.Name} takes parameters and was skipped.");
+                    continue;
+                }
 
-            Visuals.Initialize();
-            Frontend.Settings.InitializeScene();
-
-            Manager.TagNewModules();
-
-            Plugins.Initialize();
-            Sound.Initialize();
-            Movement.Initialize();
-            Preferences.LoadWithRetry();
-            Modules.Categories.Settings.InitializePCControls();
-
-            Achievements.CheckVeteran();
-            PatchHandler.ReportErrors();
+                try
+                {
+                    method.Invoke(null, null);
+                }
+                catch (TargetInvocationException exception)
+                {
+                    ExceptionDispatchInfo.Capture(exception.InnerException).Throw(); // keep the original stack trace
+                }
+            }
         }
     }
 }
