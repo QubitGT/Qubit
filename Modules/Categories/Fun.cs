@@ -266,7 +266,7 @@ namespace Qubit.Modules.Categories
                             }
                         case int[] targets:
                             {
-                                if (targets.Contains(References.LocalPlayer.ActorNumber))
+                                if (targets.Contains(Networking.LocalPlayer.ActorNumber))
                                     ObjectPools.instance.Instantiate(References.Player.waterParams.rippleEffect, splashPosition, splashRotation, References.Player.waterParams.rippleEffectScale * boundingRadius * 2f);
 
                                 References.LocalRig.GetPhotonView().RPC(WaterVolume.WaterSplashRPC, new RaiseEventOptions { TargetActors = targets }, parameters);
@@ -404,7 +404,7 @@ namespace Qubit.Modules.Categories
             }
             if (isBoopLeft && !lastlhboop)
             {
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, sound, true, 999999f);
                     Security.RPCProtection();
@@ -414,7 +414,7 @@ namespace Qubit.Modules.Categories
             }
             if (isBoopRight && !lastrhboop)
             {
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, sound, false, 999999f);
                     Security.RPCProtection();
@@ -1260,7 +1260,7 @@ namespace Qubit.Modules.Categories
         private static float lastTimeDingied;
         public static void QuestNoises()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (rightTrigger > 0.5f && Time.time > lastTimeDingied)
             {
                 lastTimeDingied = Time.time + References.LocalRig.fxSettings.GetDelay(10);
@@ -1292,7 +1292,7 @@ namespace Qubit.Modules.Categories
         private static bool returnOrTeleport;
         public static void ArcadeTeleporterEffectSpam()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (Time.time > spamDelay)
             {
                 spamDelay = Time.time + 0.1f;
@@ -1305,7 +1305,7 @@ namespace Qubit.Modules.Categories
 
         public static void StumpTeleporterEffectSpam()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (Time.time > spamDelay)
             {
                 spamDelay = Time.time + 0.1f;
@@ -1318,7 +1318,7 @@ namespace Qubit.Modules.Categories
 
         public static void SetBasementDoorState(bool open)
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (Time.time > spamDelay)
             {
                 spamDelay = Time.time + 0.1f;
@@ -1330,7 +1330,7 @@ namespace Qubit.Modules.Categories
 
         public static void SetElevatorDoorState(bool open)
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (Time.time > spamDelay)
             {
                 spamDelay = Time.time + 0.1f;
@@ -1343,7 +1343,7 @@ namespace Qubit.Modules.Categories
         private static bool openOrClose;
         public static void BasementDoorSpam()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (Time.time > spamDelay)
             {
                 spamDelay = Time.time + 0.05f;
@@ -1399,7 +1399,7 @@ namespace Qubit.Modules.Categories
 
         public static void SetPropDistanceLimit(float distance)
         {
-            if (References.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
             {
                 GameModes.SetPropHuntHandDistance(distance);
             }
@@ -1417,7 +1417,7 @@ namespace Qubit.Modules.Categories
 
         public static void RemoveCurrencySelf()
         {
-            if (!References.IsMasterClient) { return; }
+            if (!Networking.IsMasterClient) { return; }
             GRPlayer.Get(PhotonNetwork.LocalPlayer.ActorNumber).shiftCreditCache = 0;
         }
 
@@ -1434,7 +1434,7 @@ namespace Qubit.Modules.Categories
 
         public static void RemoveCurrencyAll()
         {
-            if (!References.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
 
             foreach (Player target in PhotonNetwork.PlayerList)
             {
@@ -1451,7 +1451,7 @@ namespace Qubit.Modules.Categories
                 return;
 
             if ((Target == PhotonNetwork.LocalPlayer && State == GRPlayer.GRPlayerState.Ghost)
-                    || (References.IsMasterClient && State == GRPlayer.GRPlayerState.Alive)
+                    || (Networking.IsMasterClient && State == GRPlayer.GRPlayerState.Alive)
                     )
             {
                 ManagerRegistry.GhostReactor.GhostReactorManager.RequestPlayerStateChange(GRPlayer, State);
@@ -1459,7 +1459,7 @@ namespace Qubit.Modules.Categories
                 return;
             }
 
-            if (!References.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
 
             if (State == GRPlayer.GRPlayerState.Ghost)
                 Coroutines.instance.StartCoroutine(KillTarget(Target));
@@ -1586,7 +1586,7 @@ namespace Qubit.Modules.Categories
         public static void SetMicrophoneQuality(int bitrate, int samplingRate)
         {
 
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             if (!References.Network.LocalRecorder)
@@ -1609,7 +1609,7 @@ namespace Qubit.Modules.Categories
 
         public static void SetMicrophoneAmplification(float gain)
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             if (RecorderPatch.enabled)
@@ -1784,7 +1784,7 @@ namespace Qubit.Modules.Categories
                 Voices.Get().MuteMicrophone = mute;
             else
             {
-                if (!References.InRoom)
+                if (!Networking.InRoom)
                     return;
                 Recorder mic = References.Network.VoiceConnection.PrimaryRecorder;
                 if (mic.IsRecording != mute)
@@ -1795,7 +1795,7 @@ namespace Qubit.Modules.Categories
 
         public static void SetMicrophonePitch(float pitch)
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             if (RecorderPatch.enabled)
@@ -1832,7 +1832,7 @@ namespace Qubit.Modules.Categories
 
         public static void SetDebugEchoMode(bool value)
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
             if (References.Network.VoiceConnection.PrimaryRecorder != null && References.Network.VoiceConnection.PrimaryRecorder.IsRecording)
                 References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = value;
@@ -2015,7 +2015,7 @@ namespace Qubit.Modules.Categories
 
                 if (References.Network.VoiceConnection.PrimaryRecorder != null)
                 {
-                    if (References.InRoom)
+                    if (Networking.InRoom)
                         SpeakText(text, true);
                     else
                         NarrateText(text);
@@ -2287,7 +2287,7 @@ namespace Qubit.Modules.Categories
 
             ThrowableBug bugObject = GetBugObject(objectName);
 
-            if (!References.InRoom)
+            if (!Networking.InRoom)
             {
                 OwnershipPatch.blacklistedGuards.Clear();
                 return;
@@ -2358,7 +2358,7 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -2494,7 +2494,7 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -2694,7 +2694,7 @@ namespace Qubit.Modules.Categories
 
             GameObject bugObject = bug.gameObject;
 
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return bug;
 
             RequestableOwnershipGuard guard = bug.worldShareableInstance.guard;
@@ -2971,7 +2971,7 @@ namespace Qubit.Modules.Categories
                         }
                     case 2:
                         {
-                            if (!References.InRoom)
+                            if (!Networking.InRoom)
                                 break;
 
                             LckSocialCamera camera = LckSocialCameraManager.Instance._networkedCococam;
@@ -3015,7 +3015,7 @@ namespace Qubit.Modules.Categories
                         }
                     case 3:
                         {
-                            if (!References.InRoom)
+                            if (!Networking.InRoom)
                                 break;
 
                             LckSocialCamera camera = LckSocialCameraManager.Instance._networkedTablet;
@@ -3587,7 +3587,7 @@ namespace Qubit.Modules.Categories
         {
             CosmeticsController.instance.ApplyCosmeticItemToSet(CosmeticsController.instance.currentWornSet, CosmeticsController.instance.GetItemFromDict(cosmeticName), true, false);
             CosmeticsController.instance.ApplyCosmeticItemToSet(References.LocalRig.tryOnSet, CosmeticsController.instance.GetItemFromDict(cosmeticName), true, false);
-            CosmeticsController.instance.UpdateWornCosmetics(References.InRoom);
+            CosmeticsController.instance.UpdateWornCosmetics(Networking.InRoom);
             Security.RPCProtection();
         }
 
@@ -3900,7 +3900,7 @@ namespace Qubit.Modules.Categories
         public static bool isFiring;
         public static IEnumerator FireShotgun()
         {
-            if (!References.IsMasterClient)
+            if (!Networking.IsMasterClient)
             {
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
                 yield break;
@@ -3976,7 +3976,7 @@ namespace Qubit.Modules.Categories
 
             BuilderTable table = ManagerRegistry.BuilderTable;
             BuilderTableNetworking Networking = table.builderNetworking;
-            if (References.IsMasterClient)
+            if (Qubit.Core.Networking.IsMasterClient)
             {
                 if (Time.time > blockDelay)
                 {
@@ -4097,7 +4097,7 @@ namespace Qubit.Modules.Categories
         public static void RequestGrabPiece(BuilderPiece piece, bool isLefHand, Vector3 localPosition, Quaternion localRotation)
         {
             BuilderTableNetworking Networking = ManagerRegistry.BuilderTable.builderNetworking;
-            if (References.IsMasterClient)
+            if (Qubit.Core.Networking.IsMasterClient)
             {
                 Networking.photonView.RPC("PieceGrabbedRPC", RpcTarget.All, Networking.CreateLocalCommandId(), piece.pieceId, isLefHand, BitPackUtils.PackHandPosRotForNetwork(localPosition, localRotation), PhotonNetwork.LocalPlayer);
             }
@@ -4111,7 +4111,7 @@ namespace Qubit.Modules.Categories
                 return;
 
             BuilderTableNetworking Networking = ManagerRegistry.BuilderTable.builderNetworking;
-            if (References.IsMasterClient)
+            if (Qubit.Core.Networking.IsMasterClient)
             {
                 Networking.photonView.RPC("PiecePlacedRPC", RpcTarget.All, Networking.CreateLocalCommandId(), piece.pieceId, attachPiece != null ? attachPiece.pieceId : -1, BuilderTable.PackPiecePlacement(twist, bumpOffsetX, bumpOffsetZ), parentPiece != null ? parentPiece.pieceId : -1, attachIndex, parentAttachIndex, PhotonNetwork.LocalPlayer, PhotonNetwork.ServerTimestamp);
             }
@@ -4125,7 +4125,7 @@ namespace Qubit.Modules.Categories
         public static void RequestDropPiece(BuilderPiece piece, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angVelocity)
         {
             BuilderTableNetworking Networking = ManagerRegistry.BuilderTable.builderNetworking;
-            if (References.IsMasterClient)
+            if (Qubit.Core.Networking.IsMasterClient)
             {
                 Networking.photonView.RPC("PieceDroppedRPC", RpcTarget.All, Networking.CreateLocalCommandId(), piece.pieceId, position, rotation, velocity, angVelocity, PhotonNetwork.LocalPlayer);
             }
@@ -4141,7 +4141,7 @@ namespace Qubit.Modules.Categories
             BuilderTable table = ManagerRegistry.BuilderTable;
             BuilderTableNetworking Networking = table.builderNetworking;
 
-            if (References.IsMasterClient)
+            if (Qubit.Core.Networking.IsMasterClient)
             {
                 Networking.photonView.RPC("PieceDestroyedRPC", RpcTarget.All, piece.pieceId, BitPackUtils.PackWorldPosForNetwork(piece.transform.position), BitPackUtils.PackQuaternionForNetwork(piece.transform.rotation), playFX, (short)recyclerID);
             }
@@ -4522,7 +4522,7 @@ namespace Qubit.Modules.Categories
 
         public static IEnumerator CreateShotgun()
         {
-            if (!References.IsMasterClient)
+            if (!Networking.IsMasterClient)
             {
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
                 yield break;
@@ -5067,7 +5067,7 @@ namespace Qubit.Modules.Categories
         public static string name;
         public static void AnimatedName()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
             {
                 ChangeName(name);
                 return;
@@ -5641,7 +5641,7 @@ namespace Qubit.Modules.Categories
 
         public static void CopyIDAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -5664,7 +5664,7 @@ namespace Qubit.Modules.Categories
 
         public static void CopyIDOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -5728,7 +5728,7 @@ namespace Qubit.Modules.Categories
         private static float allNarrationDelay;
         public static void NarrateIDAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -5752,7 +5752,7 @@ namespace Qubit.Modules.Categories
 
         public static void NarrateIDOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -5803,7 +5803,7 @@ namespace Qubit.Modules.Categories
 
         public static void NarrateFakeDoxxAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -5827,7 +5827,7 @@ namespace Qubit.Modules.Categories
 
         public static void NarrateFakeDoxxOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -5878,7 +5878,7 @@ namespace Qubit.Modules.Categories
 
         public static void CopyCreationDateAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -5896,7 +5896,7 @@ namespace Qubit.Modules.Categories
 
         public static void CopyCreationDateOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -5947,7 +5947,7 @@ namespace Qubit.Modules.Categories
 
         public static void NarrateCreationDateAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -5967,7 +5967,7 @@ namespace Qubit.Modules.Categories
 
         public static void NarrateCreationDateOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<VRRig> touchedPlayers = Players.ActiveRigs.Where(rig => !rig.IsLocal()).Where(rig => rig.IsBeingTouched()).ToList();
 
@@ -6130,7 +6130,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(gunTarget =>
             {
-                if (!References.InRoom) return;
+                if (!Networking.InRoom) return;
                 gunLocked = true;
                 lockTarget = gunTarget;
 
@@ -6173,7 +6173,7 @@ namespace Qubit.Modules.Categories
 
         public static void TinnitusAll()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (Movement.tinnitus.Count == 0)
             {
                 AudioClip audioClip = Movement.CreateTinnitusSound(Movement.targetHz);
@@ -6252,7 +6252,7 @@ namespace Qubit.Modules.Categories
                     {
                         Movement.hoverboardSpawnDelay = Time.time + 0.25f;
 
-                        FreeHoverboardManager.DataPerPlayer orCreatePlayerData = FreeHoverboardManager.instance.GetOrCreatePlayerData(References.LocalPlayer.ActorNumber);
+                        FreeHoverboardManager.DataPerPlayer orCreatePlayerData = FreeHoverboardManager.instance.GetOrCreatePlayerData(Networking.LocalPlayer.ActorNumber);
                         int boardIndex = orCreatePlayerData.board0.gameObject.activeSelf ? ((!orCreatePlayerData.board1.gameObject.activeSelf) ? 1 : (1 - FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex)) : 0;
 
                         FreeHoverboardManager.instance.photonView.RPC("DropBoard_RPC", lockTarget.GetPhotonPlayer(), boardIndex == 1,
@@ -6353,7 +6353,7 @@ namespace Qubit.Modules.Categories
             {
                 Movement.hoverboardSpawnDelay = Time.time + 0.25f;
 
-                FreeHoverboardManager.DataPerPlayer orCreatePlayerData = FreeHoverboardManager.instance.GetOrCreatePlayerData(References.LocalPlayer.ActorNumber);
+                FreeHoverboardManager.DataPerPlayer orCreatePlayerData = FreeHoverboardManager.instance.GetOrCreatePlayerData(Networking.LocalPlayer.ActorNumber);
                 int boardIndex = orCreatePlayerData.board0.gameObject.activeSelf ? ((!orCreatePlayerData.board1.gameObject.activeSelf) ? 1 : (1 - FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex)) : 0;
 
                 FreeHoverboardManager.instance.photonView.RPC("DropBoard_RPC", randomRig.GetPhotonPlayer(), boardIndex == 1,
@@ -6652,7 +6652,7 @@ namespace Qubit.Modules.Categories
                     if (gameEntity != null)
                     {
                         Overpowered.destroyDelay = Time.time + 0.02f;
-                        if (References.IsMasterClient)
+                        if (Networking.IsMasterClient)
                         {
                             ManagerRegistry.GhostReactor.GameEntityManager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new[] { gameEntity.GetNetId() });
                             Security.RPCProtection();
@@ -6668,7 +6668,7 @@ namespace Qubit.Modules.Categories
         }
         public static void InfiniteResources()
         {
-            var player = SIPlayer.Get(References.LocalPlayer.ActorNumber);
+            var player = SIPlayer.Get(Networking.LocalPlayer.ActorNumber);
             for (int i = 0; i < player.CurrentProgression.resourceArray.Length; i++)
                 player.CurrentProgression.resourceArray[i] = int.MaxValue;
 
@@ -6695,7 +6695,7 @@ namespace Qubit.Modules.Categories
         public static void ClaimAllTerminals()
         {
             foreach (var terminal in ManagerRegistry.SuperInfection.ZoneSuperInfection.siTerminals)
-                terminal?.PlayerHandScanned(References.LocalPlayer.ActorNumber);
+                terminal?.PlayerHandScanned(Networking.LocalPlayer.ActorNumber);
         }
 
         public static void UnlockAllGadgets()
@@ -7054,7 +7054,7 @@ namespace Qubit.Modules.Categories
                     if (gameEntity != null)
                     {
                         Overpowered.destroyDelay = Time.time + 0.02f;
-                        if (References.IsMasterClient)
+                        if (Networking.IsMasterClient)
                         {
                             ManagerRegistry.SuperInfection.GameEntityManager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new[] { gameEntity.GetNetId() });
                             Security.RPCProtection();
@@ -7243,7 +7243,7 @@ namespace Qubit.Modules.Categories
 
         public static void BecomeLucy()
         {
-            if (!References.IsMasterClient)
+            if (!Networking.IsMasterClient)
             {
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
                 return;
@@ -7855,7 +7855,7 @@ namespace Qubit.Modules.Categories
                 Logs.LogError("AudioClip is null");
                 return;
             }
-            if (!References.InRoom)
+            if (!Networking.InRoom)
             {
                 if (Sound.soundboardAudioManager == null)
                 {
@@ -7899,7 +7899,7 @@ namespace Qubit.Modules.Categories
 
         public static void PlayAudio(string file)
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 LoadSoundFromFile(file, clip =>
                 {

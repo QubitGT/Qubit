@@ -111,7 +111,7 @@ namespace Qubit.Modules.Categories
 
         public static async Task ForceCreateRoom(string name, RoomConfig options)
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
                 await References.Network.ReturnToSinglePlayer();
 
             await (References.Network as NetworkSystemPUN).TryCreateRoom(name, options);
@@ -191,7 +191,7 @@ exit";
                 discord.Initialize();
             }
 
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 endTime = null;
 
@@ -209,7 +209,7 @@ exit";
             if (Time.time > updateTime)
             {
                 updateTime = Time.time + 1f;
-                bool inRoom = References.InRoom;
+                bool inRoom = Networking.InRoom;
                 string roomName = inRoom ? References.Network.RoomName : "-";
 
                 discord.SetPresence(new RichPresence

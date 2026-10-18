@@ -526,7 +526,7 @@ namespace Qubit.Modules.Categories
 
                 if (!activeSounds.ContainsKey(hash))
                 {
-                    if (RecorderPatch.enabled && References.InRoom)
+                    if (RecorderPatch.enabled && Networking.InRoom)
                     {
                         var id = Voices.Get().AudioClip(clip, false);
                         activeSounds[hash] = new SoundData { Clip = id, AudioClip = clip };
@@ -573,7 +573,7 @@ namespace Qubit.Modules.Categories
                 }
             }
 
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 if (RecorderPatch.enabled)
                 {
@@ -611,7 +611,7 @@ namespace Qubit.Modules.Categories
 
         public static void FixMicrophone()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
             if (RecorderPatch.enabled)
             {
@@ -684,7 +684,7 @@ namespace Qubit.Modules.Categories
         public static float sendEffectDelay;
         public static void BetaPlayTag(int id, float volume)
         {
-            if (!References.IsMasterClient)
+            if (!Networking.IsMasterClient)
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
             else
             {
@@ -715,7 +715,7 @@ namespace Qubit.Modules.Categories
                 else
                     return;
 
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, soundId, false, 999999f);
                     RPCProtection();

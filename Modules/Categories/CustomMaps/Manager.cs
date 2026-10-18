@@ -86,7 +86,7 @@ namespace Qubit.Modules.Categories.CustomMaps
 
             CustomGameMode.LuaScript = string.Join(Environment.NewLine, lines);
 
-            if (References.InRoom)
+            if (Networking.InRoom)
                 LuauHud.Instance.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();
@@ -122,7 +122,7 @@ namespace Qubit.Modules.Categories.CustomMaps
             if (File.Exists(DirectoryTarget))
                 CustomGameMode.LuaScript = File.ReadAllText(DirectoryTarget);
 
-            if (References.InRoom)
+            if (Networking.InRoom)
                 LuauHud.Instance.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();
@@ -132,7 +132,7 @@ namespace Qubit.Modules.Categories.CustomMaps
         {
             CustomGameMode.LuaScript = mapScriptArchives[CustomMapManager.currentRoomMapModId];
 
-            if (References.InRoom)
+            if (Networking.InRoom)
                 LuauHud.Instance.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();

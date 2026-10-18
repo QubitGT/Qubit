@@ -42,7 +42,7 @@ namespace Qubit.Patches.Menu
 
         public static bool Prefix()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return true;
 
             try

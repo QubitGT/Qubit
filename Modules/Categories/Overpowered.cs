@@ -78,7 +78,7 @@ namespace Qubit.Modules.Categories
 
         private static float playerColorDelay;
         public static void SetColorSelf(int color) =>
-            GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { References.LocalPlayer.ActorNumber, color } });
+            GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { Networking.LocalPlayer.ActorNumber, color } });
 
         public static void SetColorGun(int color)
         {
@@ -105,7 +105,7 @@ namespace Qubit.Modules.Categories
             if (Time.time > playerColorDelay)
             {
                 playerColorDelay = Time.time + 0.1f;
-                if (References.IsMasterClient)
+                if (Networking.IsMasterClient)
                     SetColorSelf(Time.time % 0.2f > 0.1f ? 1 : 0);
                 else
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
@@ -123,7 +123,7 @@ namespace Qubit.Modules.Categories
                     if (Time.time > playerColorDelay)
                     {
                         playerColorDelay = Time.time + 0.1f;
-                        if (References.IsMasterClient)
+                        if (Networking.IsMasterClient)
                             GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { lockTarget.GetPlayer().ActorNumber, Time.time % 0.2f > 0.1f ? 1 : 0 } });
                         else
                             Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
@@ -153,7 +153,7 @@ namespace Qubit.Modules.Categories
             if (Time.time > playerColorDelay)
             {
                 playerColorDelay = Time.time + 0.1f;
-                if (References.IsMasterClient)
+                if (Networking.IsMasterClient)
                     SetColorAll(Time.time % 0.2f > 0.1f ? 1 : 0);
                 else
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
@@ -168,7 +168,7 @@ namespace Qubit.Modules.Categories
         public static float guardianProtectorDelay;
         public static void GuardianProtector()
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
 
                 if (!GameModes.IsGuardian(PhotonNetwork.LocalPlayer)) return;
@@ -310,7 +310,7 @@ namespace Qubit.Modules.Categories
             if (Visuals.DoPerformanceCheck())
                 return;
 
-            if (References.IsMasterClient)
+            if (Networking.IsMasterClient)
                 return;
 
             VRRig rig = References.Network.MasterClient.VRRig();
@@ -461,7 +461,7 @@ namespace Qubit.Modules.Categories
             {
                 if (!rig.isLocal)
                 {
-                    if (rig.leftHandLink.grabbedPlayer == References.LocalPlayer || rig.rightHandLink.grabbedPlayer == References.LocalPlayer)
+                    if (rig.leftHandLink.grabbedPlayer == Networking.LocalPlayer || rig.rightHandLink.grabbedPlayer == Networking.LocalPlayer)
                     {
                         bool grabbedOnLeft = References.LocalRig.leftHandLink.grabbedPlayer == rig.GetPlayer();
                         if (grabbedOnLeft ? rig.leftIndex.calcT > 0 : rig.rightIndex.calcT > 0)
@@ -501,7 +501,7 @@ namespace Qubit.Modules.Categories
             var localLink = isLeftHand ? References.LocalRig.leftHandLink : References.LocalRig.rightHandLink;
             var remoteLink = isLeftHand ? rig.leftHandLink : rig.rightHandLink;
 
-            if (remoteLink.grabbedPlayer != References.LocalPlayer)
+            if (remoteLink.grabbedPlayer != Networking.LocalPlayer)
             {
                 if (grabDelay == 0)
                     grabDelay = remoteLink.rejectGrabsUntilTimestamp > Time.time ? remoteLink.rejectGrabsUntilTimestamp : Time.time + 1f;
@@ -542,7 +542,7 @@ namespace Qubit.Modules.Categories
         public static void CreateItem(object target, int hash, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angVelocity, long sendData = 0L, GameEntityManager manager = null)
         {
             GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;
-            if (References.IsMasterClient)
+            if (Networking.IsMasterClient)
             {
                 if (gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
                 {
@@ -671,7 +671,7 @@ namespace Qubit.Modules.Categories
         public static void CreateItems(object target, int[] hashes, Vector3[] positions, Quaternion[] rotations, long[] sendData = null, GameEntityManager manager = null)
         {
             GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;
-            if (References.IsMasterClient)
+            if (Networking.IsMasterClient)
             {
                 if (gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItems].CanCallNow())
                 {
@@ -997,7 +997,7 @@ namespace Qubit.Modules.Categories
             }
             else
             {
-                if (References.IsMasterClient)
+                if (Networking.IsMasterClient)
                 {
                     if (spawnedNetId != null && spawnedFrame > Time.frameCount - 10)
                     {
@@ -1188,7 +1188,7 @@ namespace Qubit.Modules.Categories
             if (velocity.sqrMagnitude > 20f)
                 velocity = Vector3.Normalize(velocity) * 20f;
 
-            if (GameModes.IsGuardian(References.LocalPlayer))
+            if (GameModes.IsGuardian(Networking.LocalPlayer))
             {
                 GetNetworkViewFromVRRig(GetVRRigFromPlayer(victim)).SendRPC("GrabbedByPlayer", victim, true, false, false);
                 GetNetworkViewFromVRRig(GetVRRigFromPlayer(victim)).SendRPC("DroppedByPlayer", victim, velocity);
@@ -1202,7 +1202,7 @@ namespace Qubit.Modules.Categories
             if (velocity.sqrMagnitude > 20f)
                 velocity = Vector3.Normalize(velocity) * 20f;
 
-            if (GameModes.IsGuardian(References.LocalPlayer))
+            if (GameModes.IsGuardian(Networking.LocalPlayer))
             {
                 switch (victim)
                 {
@@ -1242,7 +1242,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(gunTarget =>
             {
-                if (GameModes.IsGuardian(References.LocalPlayer))
+                if (GameModes.IsGuardian(Networking.LocalPlayer))
                 {
                     GetNetworkViewFromVRRig(gunTarget).SendRPC("GrabbedByPlayer", RpcTarget.Others, true, false, false);
                     RPCProtection();
@@ -1258,7 +1258,7 @@ namespace Qubit.Modules.Categories
             if (rightGrab && Time.time > grabDelay)
             {
                 grabDelay = Time.time + 0.1f;
-                if (GameModes.IsGuardian(References.LocalPlayer))
+                if (GameModes.IsGuardian(Networking.LocalPlayer))
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                     {
@@ -1276,7 +1276,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(gunTarget =>
             {
-                if (GameModes.IsGuardian(References.LocalPlayer))
+                if (GameModes.IsGuardian(Networking.LocalPlayer))
                 {
                     GetNetworkViewFromVRRig(gunTarget).SendRPC("DroppedByPlayer", RpcTarget.Others, new Vector3(0f, 0f, 0f));
                     RPCProtection();
@@ -1293,7 +1293,7 @@ namespace Qubit.Modules.Categories
             if (rightTrigger > 0.5f && Time.time > releaseDelay)
             {
                 releaseDelay = Time.time + 0.1f;
-                if (GameModes.IsGuardian(References.LocalPlayer))
+                if (GameModes.IsGuardian(Networking.LocalPlayer))
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                     {
@@ -1384,13 +1384,13 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.PhotonServerSettings.RpcList.Contains(method))
                     rpcData[5] = (byte)PhotonNetwork.PhotonServerSettings.RpcList.IndexOf(method);
 
-                if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber)))
+                if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(Networking.LocalPlayer.ActorNumber)))
                 {
                     if (options.Receivers == ReceiverGroup.All)
                         options.Receivers = ReceiverGroup.Others;
 
-                    if (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber))
-                        options.TargetActors = options.TargetActors.Where(id => id != References.LocalPlayer.ActorNumber).ToArray();
+                    if (options.TargetActors != null && options.TargetActors.Contains(Networking.LocalPlayer.ActorNumber))
+                        options.TargetActors = options.TargetActors.Where(id => id != Networking.LocalPlayer.ActorNumber).ToArray();
 
                     PhotonNetwork.ExecuteRpc(rpcData, PhotonNetwork.LocalPlayer);
                 }
@@ -1652,7 +1652,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(References.LocalPlayer))
+                    if (GameModes.IsGuardian(Networking.LocalPlayer))
                     {
                         GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, References.RightHand.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
@@ -1668,7 +1668,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(References.LocalPlayer))
+                    if (GameModes.IsGuardian(Networking.LocalPlayer))
                     {
                         GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, References.LeftHand.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
@@ -1688,7 +1688,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(References.LocalPlayer))
+                    if (GameModes.IsGuardian(Networking.LocalPlayer))
                     {
                         GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, NewPointer.transform.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
@@ -1743,7 +1743,7 @@ namespace Qubit.Modules.Categories
         private static float closeRoomDelay;
         public static void CloseRoom()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (Time.time < closeRoomDelay) return;
 
             closeRoomDelay = Time.time + 0.1f;
@@ -1781,7 +1781,7 @@ namespace Qubit.Modules.Categories
         private static bool zaWarudoTrigger;
         public static void ZaWarudo()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             if (rightTrigger > 0.5f)
             {
@@ -1943,7 +1943,7 @@ namespace Qubit.Modules.Categories
 
         public static void LagPlayer(object target)
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (Time.time < lagDebounce) return;
 
             if (target is VRRig rig) target = rig.GetPhotonPlayer();
@@ -2171,7 +2171,7 @@ namespace Qubit.Modules.Categories
 
         public static void LagAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<int> nearbyPlayers = new List<int>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -2188,7 +2188,7 @@ namespace Qubit.Modules.Categories
 
         public static void LagOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<int> touchedPlayers = new List<int>();
 
@@ -2572,7 +2572,7 @@ namespace Qubit.Modules.Categories
         private static float notifyTime;
         public static bool IsModded(bool notify)
         {
-            if (!References.InRoom) return false;
+            if (!Networking.InRoom) return false;
             bool modded = References.Network.GameModeString.Contains("MODDED_");
             if (!modded && notify && Time.time > notifyTime)
             {
@@ -2675,7 +2675,7 @@ namespace Qubit.Modules.Categories
 
         public static void StumpKickAll()
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 if (!References.Network.SessionIsPrivate)
                 {
@@ -2727,7 +2727,7 @@ namespace Qubit.Modules.Categories
 
         public static void ElevatorKickAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -2754,7 +2754,7 @@ namespace Qubit.Modules.Categories
 
         public static void ElevatorKickOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -2822,7 +2822,7 @@ namespace Qubit.Modules.Categories
         public static Coroutine wipeOverride;
         public static IEnumerator ClearOverride()
         {
-            yield return new WaitUntil(() => !References.InRoom);
+            yield return new WaitUntil(() => !Networking.InRoom);
             SerializePatch.OverrideSerialization = null;
 
             wipeOverride = null;
@@ -3015,7 +3015,7 @@ namespace Qubit.Modules.Categories
 
         public static void PartyKickAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -3044,7 +3044,7 @@ namespace Qubit.Modules.Categories
 
         public static void PartyKickOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -3097,7 +3097,7 @@ namespace Qubit.Modules.Categories
         public static float setMasterDelay;
         public static void SetMasterClient(bool skip = false)
         {
-            if (References.IsMasterClient)
+            if (Networking.IsMasterClient)
                 return;
             if (PhotonNetwork.PlayerList.Length > 5)
             {
@@ -3145,7 +3145,7 @@ namespace Qubit.Modules.Categories
 
         public static void DestroyAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -3167,7 +3167,7 @@ namespace Qubit.Modules.Categories
 
         public static void DestroyOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
@@ -3198,7 +3198,7 @@ namespace Qubit.Modules.Categories
 
         public static void BetaSetStatus(RoomSystem.StatusEffects state, RaiseEventOptions reo)
         {
-            if (!References.IsMasterClient)
+            if (!Networking.IsMasterClient)
                 Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
             else
             {

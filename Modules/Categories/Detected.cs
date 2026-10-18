@@ -158,7 +158,7 @@ namespace Qubit.Modules.Categories
 
         public static void QuarantineAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
             foreach (VRRig vrrig in Players.ActiveRigs)
             {
@@ -201,7 +201,7 @@ namespace Qubit.Modules.Categories
 
         public static void QuarantineOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
@@ -238,7 +238,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (var scoreboard in GorillaScoreboardTotalUpdater.allScoreboards.Where(scoreboard => scoreboard.buttonText.text.Contains("REPORT")))
                 scoreboard.buttonText.text = scoreboard.buttonText.text.Replace("REPORT", "QUARANTINE");
-            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer != References.LocalPlayer))
+            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer != Networking.LocalPlayer))
             {
                 PhotonView view = line.linePlayer.VRRig().GetPhotonView();
 
@@ -336,7 +336,7 @@ namespace Qubit.Modules.Categories
 
         public static void GhostAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -374,7 +374,7 @@ namespace Qubit.Modules.Categories
 
         public static void GhostOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
 
             foreach (VRRig rig in Players.ActiveRigs)
@@ -402,7 +402,7 @@ namespace Qubit.Modules.Categories
             foreach (var scoreboard in GorillaScoreboardTotalUpdater.allScoreboards.Where(scoreboard => scoreboard.buttonText.text.Contains("REPORT")))
                 scoreboard.buttonText.text = scoreboard.buttonText.text.Replace("REPORT", "GHOST");
 
-            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer != References.LocalPlayer))
+            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer != Networking.LocalPlayer))
             {
                 if (line.reportInProgress)
                 {
@@ -481,7 +481,7 @@ namespace Qubit.Modules.Categories
 
         public static void UnghostAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -504,7 +504,7 @@ namespace Qubit.Modules.Categories
 
         public static void UnghostOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -561,7 +561,7 @@ namespace Qubit.Modules.Categories
 
         public static void IsolateAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -594,7 +594,7 @@ namespace Qubit.Modules.Categories
 
         public static void IsolateOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -636,7 +636,7 @@ namespace Qubit.Modules.Categories
 
         public static void LagAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -656,7 +656,7 @@ namespace Qubit.Modules.Categories
 
         public static void LagOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -689,7 +689,7 @@ namespace Qubit.Modules.Categories
 
         public static void MuteAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -712,7 +712,7 @@ namespace Qubit.Modules.Categories
 
         public static void MuteOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
 
             foreach (VRRig rig in Players.ActiveRigs)
@@ -758,7 +758,7 @@ namespace Qubit.Modules.Categories
 
         public static void ChangeNameAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -784,7 +784,7 @@ namespace Qubit.Modules.Categories
 
         public static void ChangeNameOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -869,7 +869,7 @@ namespace Qubit.Modules.Categories
 
         public static void BypassModCheckersAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -897,7 +897,7 @@ namespace Qubit.Modules.Categories
 
         public static void BypassModCheckersOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -947,7 +947,7 @@ namespace Qubit.Modules.Categories
 
         public static void BreakModCheckersAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -973,7 +973,7 @@ namespace Qubit.Modules.Categories
 
         public static void BreakModCheckersOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -1010,7 +1010,7 @@ namespace Qubit.Modules.Categories
 
         public static void GamemodeIncludeAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -1033,7 +1033,7 @@ namespace Qubit.Modules.Categories
 
         public static void GamemodeIncludeOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -1067,7 +1067,7 @@ namespace Qubit.Modules.Categories
 
         public static void GamemodeExcludeAura()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)
@@ -1090,7 +1090,7 @@ namespace Qubit.Modules.Categories
 
         public static void GamemodeExcludeOnTouch()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             foreach (VRRig rig in Players.ActiveRigs)
             {
@@ -1145,7 +1145,7 @@ namespace Qubit.Modules.Categories
         public static bool moddedGamemode;
         public static void ChangeGamemode(GameModeType gamemode)
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             References.Network.NetDestroy(GameMode.activeNetworkHandler.NetView.gameObject);

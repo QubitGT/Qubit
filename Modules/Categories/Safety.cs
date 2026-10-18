@@ -247,7 +247,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (GorillaPlayerScoreboardLine line in GorillaScoreboardTotalUpdater.allScoreboardLines)
             {
-                if (line.linePlayer != References.LocalPlayer) continue;
+                if (line.linePlayer != Networking.LocalPlayer) continue;
                 Transform report = line.reportButton.gameObject.transform;
 
                 Visuals.Visualize(PrimitiveType.Sphere, report.position, Quaternion.identity, new Vector3(threshold, threshold, threshold), Color.red, alpha: 0.1f);
@@ -270,7 +270,7 @@ namespace Qubit.Modules.Categories
         public static VRRig reportRig;
         public static void AntiReport(Action<VRRig, Vector3> onReport)
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             if (reportRig != null)
             {
@@ -290,7 +290,7 @@ namespace Qubit.Modules.Categories
 
             foreach (GorillaPlayerScoreboardLine line in GorillaScoreboardTotalUpdater.allScoreboardLines)
             {
-                if (line.linePlayer != References.LocalPlayer) continue;
+                if (line.linePlayer != Networking.LocalPlayer) continue;
                 Transform report = line.reportButton.gameObject.transform;
 
                 foreach (var vrrig in from vrrig in Players.ActiveRigs where !vrrig.isLocal where OverlappingButton(vrrig, report.position) || (antiMute && OverlappingButton(vrrig, line.muteButton.gameObject.transform.position)) where !smartAntiReport || SmartAntiReport(line.linePlayer) select vrrig)
@@ -696,10 +696,10 @@ namespace Qubit.Modules.Categories
         private static bool previouslyInLobby;
         public static void ChangeIdentityOnDisconnect(Action identityType)
         {
-            if (!References.InRoom && previouslyInLobby)
+            if (!Networking.InRoom && previouslyInLobby)
                 identityType?.Invoke();
 
-            previouslyInLobby = References.InRoom;
+            previouslyInLobby = Networking.InRoom;
         }
 
         private static readonly List<VRRig> nameSpoofRigs = new List<VRRig>();

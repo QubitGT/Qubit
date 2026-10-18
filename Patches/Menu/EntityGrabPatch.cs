@@ -42,7 +42,7 @@ namespace Qubit.Patches.Menu
                 for (int i = 0; i < entities.Count; i++)
                 {
                     GameEntity entity = entities[i];
-                    if (entity != null && __instance.ValidateGrab(entity, References.LocalPlayer.ActorNumber, isLeftHand))
+                    if (entity != null && __instance.ValidateGrab(entity, Networking.LocalPlayer.ActorNumber, isLeftHand))
                     {
                         double reach = 16;
 

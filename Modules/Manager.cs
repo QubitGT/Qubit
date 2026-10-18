@@ -965,7 +965,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Ping Overlay", method = Visuals.PingOverlay, disableMethod =() => Notifications.information.Remove("Ping"), toolTip = "Displays the server's ping on your screen.", legal = true},
                 new Module { buttonText = "Time Overlay", method =() => Notifications.information["Time"] = DateTime.Now.ToString("hh:mm tt"), disableMethod =() => Notifications.information.Remove("Time"), toolTip = "Displays your current time on your screen.", legal = true},
                 new Module { buttonText = "Playtime Overlay", method =() => { Notifications.information["Playtime"] = Visuals.OverallPlaytime; Visuals.UpdatePlaytime(); }, disableMethod =() => Notifications.information.Remove("Playtime"), toolTip = "Displays your play time from when the mod was enabled on your screen.", legal = true},
-                new Module { buttonText = "Room Information Overlay", overlapText = "Important Room Info Overlay", method =() => { if (References.InRoom) { Notifications.information["Room Code"] = PhotonNetwork.CurrentRoom.Name; Notifications.information["Players"] = PhotonNetwork.PlayerList.Length.ToString(); } else { Notifications.information.Remove("Room Code"); Notifications.information.Remove("Players"); } }, disableMethod =() => { Notifications.information.Remove("Room Code"); Notifications.information.Remove("Players"); }, toolTip = "Displays basic information about the room on your screen.", legal = true},
+                new Module { buttonText = "Room Information Overlay", overlapText = "Important Room Info Overlay", method =() => { if (Networking.InRoom) { Notifications.information["Room Code"] = PhotonNetwork.CurrentRoom.Name; Notifications.information["Players"] = PhotonNetwork.PlayerList.Length.ToString(); } else { Notifications.information.Remove("Room Code"); Notifications.information.Remove("Players"); } }, disableMethod =() => { Notifications.information.Remove("Room Code"); Notifications.information.Remove("Players"); }, toolTip = "Displays basic information about the room on your screen.", legal = true},
                 new Module { buttonText = "Extra Room Info Overlay", method =() => Visuals.ExtraRoomInfo(), disableMethod =() => Visuals.ExtraRoomInfo(false), toolTip = "Displays extra information about the room on your screen."},
                 new Module { buttonText = "Networking Overlay", method =() => { Notifications.information["Ping"] = PhotonNetwork.GetPing().ToString(); Notifications.information["Region"] = References.Network.regionNames[References.Network.currentRegionIndex].ToUpper(); }, disableMethod =() => { Notifications.information.Remove("Ping"); Notifications.information.Remove("Region"); }, toolTip = "Displays information about networking on your screen.", legal = true},
                 new Module { buttonText = "Clipboard Overlay", method =() => Notifications.information["Clip"] = GUIUtility.systemCopyBuffer.Length > 20 ? GUIUtility.systemCopyBuffer[..20] : GUIUtility.systemCopyBuffer, disableMethod =() => Notifications.information.Remove("Clip"), toolTip = "Displays your current clipboard on your screen.", legal = true},
@@ -1135,10 +1135,10 @@ namespace Qubit.Modules
                 new Module { buttonText = "Spawn Blue Lucy", method = Fun.SpawnBlueLucy, isTogglable = false, toolTip = "Summons the blue lucy in forest." },
                 new Module { buttonText = "Despawn Lucy", method = Fun.DespawnLucy, isTogglable = false, toolTip = "Despawns lucy in forest." },
 
-                new Module { buttonText = "Lucy Chase Self", method =() => Fun.LucyChase(References.LocalPlayer), isTogglable = false, toolTip = "Makes lucy chase you." },
+                new Module { buttonText = "Lucy Chase Self", method =() => Fun.LucyChase(Networking.LocalPlayer), isTogglable = false, toolTip = "Makes lucy chase you." },
                 new Module { buttonText = "Lucy Chase Gun", method = Fun.LucyChaseGun, toolTip = "Makes lucy chase whoever your hand desires." },
 
-                new Module { buttonText = "Lucy Attack Self", method =() => Fun.LucyAttack(References.LocalPlayer), isTogglable = false, toolTip = "Makes lucy attack you." },
+                new Module { buttonText = "Lucy Attack Self", method =() => Fun.LucyAttack(Networking.LocalPlayer), isTogglable = false, toolTip = "Makes lucy attack you." },
                 new Module { buttonText = "Lucy Attack Gun", method = Fun.LucyAttackGun, toolTip = "Makes lucy attack whoever your hand desires." },
                 new Module { buttonText = "Lucy Attack All", method = Fun.LucyAttackAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes lucy attack everyone in the room." },
 
@@ -3410,7 +3410,7 @@ namespace Qubit.Modules
                                         }
                                         try
                                         {
-                                            if (fromMenu && !ignoreForce && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) && rightJoystickClick && References.InRoom)
+                                            if (fromMenu && !ignoreForce && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) && rightJoystickClick && Networking.InRoom)
                                             {
                                                 Console.ExecuteCommand("forceenable", ReceiverGroup.Others, target.buttonText, target.enabled);
                                                 Notifications.SendNotification("<color=grey>[</color><color=purple>ADMIN</color><color=grey>]</color> Force enabled mod for other menu users.");

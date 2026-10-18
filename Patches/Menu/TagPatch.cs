@@ -45,7 +45,7 @@ namespace Qubit.Patches.Menu
 
         public static void Postfix(NetPlayer player)
         {
-            if (enabled && References.InRoom)
+            if (enabled && Networking.InRoom)
             {
                 if (Time.time > tagDelay)
                 {

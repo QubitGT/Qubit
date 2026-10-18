@@ -143,7 +143,7 @@ namespace Qubit.Patches.Menu
                     }
 
                     callRequestContainer.ErrorCallback = overrideError;
-                    if (!References.InRoom)
+                    if (!Networking.InRoom)
                         Task.Run(async () =>
                         {
                             while (References.Computer == null)

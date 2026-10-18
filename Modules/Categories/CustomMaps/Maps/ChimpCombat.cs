@@ -239,7 +239,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
             if (Time.time < crashDelay)
                 return;
 
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
             foreach (VRRig vrrig in Players.ActiveRigs)

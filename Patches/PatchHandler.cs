@@ -339,7 +339,7 @@ namespace Qubit.Patches
                     string message = "A critical patch has failed, and you have been blocked from joining rooms for safety reasons. Please report this as an issue to the GitHub repository.";
                     Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> {message}", 10000);
                     References.Computer.GeneralFailureMessage(message);
-                    if (References.InRoom)
+                    if (Networking.InRoom)
                         References.Network.ReturnToSinglePlayer();
                 }
                 else

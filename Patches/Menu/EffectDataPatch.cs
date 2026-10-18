@@ -50,7 +50,7 @@ namespace Qubit.Patches.Menu
                         effectContext.speed = overrideVolume;
                         effectContext.soundVolume = overrideVolume;
 
-                        if (References.InRoom)
+                        if (Networking.InRoom)
                         {
                             if (tapMultiplier > 1)
                             {

@@ -321,7 +321,7 @@ namespace Qubit.Modules.Categories
             string blue = ", <color=blue>" + MathF.Floor(PlayerPrefs.GetFloat("blueValue") * 255f) + "</color>";
             Manager.GetIndex("DebugColor").overlapText = "Color: " + red + green + blue;
 
-            string master = References.InRoom && PhotonNetwork.IsMasterClient ? "<color=red> [Master]</color>" : "";
+            string master = Networking.InRoom && PhotonNetwork.IsMasterClient ? "<color=red> [Master]</color>" : "";
             Manager.GetIndex("DebugName").overlapText = PhotonNetwork.LocalPlayer.NickName + master;
 
             Manager.GetIndex("DebugId").overlapText = "<color=green>ID: </color>" + (hideId ? "Hidden" : PhotonNetwork.LocalPlayer.UserId);
@@ -329,8 +329,8 @@ namespace Qubit.Modules.Categories
             Manager.GetIndex("DebugFps").overlapText = "<b>" + lastDeltaTime + "</b> FPS <b>" + PhotonNetwork.GetPing() + "</b> Ping";
             Manager.GetIndex("DebugRoomA").overlapText = "<color=blue>" + References.Network.regionNames[References.Network.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " Players";
 
-            string priv = References.InRoom ? References.Network.SessionIsPrivate ? "Private" : "Public" : "";
-            Manager.GetIndex("DebugRoomB").overlapText = "<color=blue>" + priv + "</color> " + (References.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room");
+            string priv = Networking.InRoom ? References.Network.SessionIsPrivate ? "Private" : "Public" : "";
+            Manager.GetIndex("DebugRoomB").overlapText = "<color=blue>" + priv + "</color> " + (Networking.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room");
         }
         public static void HideDebug()
         {
@@ -359,7 +359,7 @@ namespace Qubit.Modules.Categories
                 }
             };
 
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 buttons.Add(new Module { buttonText = "Not in a Room", label = true, legal = true });
             else
             {
@@ -4877,7 +4877,7 @@ exit 0";
                 bool leftHand = rightHand || (bothHands && References.InputPoller.rightControllerSecondaryButton);
 
                 var (_, _, _, forward, _) = leftHand ? Controllers.GetTrueLeftHand() : Controllers.GetTrueRightHand();
-                bool canSelect = References.InRoom && menu != null && reference != null && Vector3.Distance(menu.transform.position, reference.transform.position) > 0.5f;
+                bool canSelect = Networking.InRoom && menu != null && reference != null && Vector3.Distance(menu.transform.position, reference.transform.position) > 0.5f;
 
                 if (canSelect)
                 {
@@ -5688,13 +5688,13 @@ exit 0";
             string greenS = ", <color=green>" + MathF.Round(PlayerPrefs.GetFloat("greenValue") * 9f) + "</color>";
             string blueS = ", <color=blue>" + MathF.Round(PlayerPrefs.GetFloat("blueValue") * 9f) + "</color>";
             text += "<color=green>Color</color><color=grey>:</color> " + red + green + blue + " <color=grey>[</color>" + redS + greenS + blueS + "<color=grey>]</color>\\n";
-            string master = References.InRoom && PhotonNetwork.IsMasterClient ? "<color=grey> [</color><color=red>Master</color><color=grey>]</color>" : "";
+            string master = Networking.InRoom && PhotonNetwork.IsMasterClient ? "<color=grey> [</color><color=red>Master</color><color=grey>]</color>" : "";
             text += "<color=green>Name</color><color=grey>:</color> " + PhotonNetwork.LocalPlayer?.NickName + master + "\\n";
             text += "<color=green>ID</color><color=grey>:</color> " + (Settings.hideId ? "Hidden" : PhotonNetwork.LocalPlayer?.UserId) + "\\n";
             string clip = GUIUtility.systemCopyBuffer;
             text += "<color=green>Clip</color><color=grey>:</color> " + (clip?.Length > 35 ? clip[..35] : clip) + "\\n";
             text += lastDeltaTime + " <color=green>FPS</color> <color=grey>|</color> " + PhotonNetwork.GetPing() + " <color=green>Ping</color>\\n";
-            string room = References.InRoom ? References.Network.SessionIsPrivate ? "Private" : "Public" : "Not in room";
+            string room = Networking.InRoom ? References.Network.SessionIsPrivate ? "Private" : "Public" : "Not in room";
             text += "<color=green>" + References.Network.regionNames[References.Network.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " <color=green>Players</color> <color=grey>|</color> " + room + "\\n \\n";
             string admin = "";
             if (Time.time > 5f)

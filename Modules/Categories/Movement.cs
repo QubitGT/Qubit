@@ -730,7 +730,7 @@ namespace Qubit.Modules.Categories
                 {
                     isLeftGrappling = true;
                     References.Rigidbody.linearVelocity += References.LeftHand.forward * 5f;
-                    if (References.InRoom)
+                    if (Networking.InRoom)
                     {
                         References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 89, true, 999999f);
                     }
@@ -801,7 +801,7 @@ namespace Qubit.Modules.Categories
                 {
                     isRightGrappling = true;
                     References.Rigidbody.linearVelocity += References.RightHand.forward * 5f;
-                    if (References.InRoom)
+                    if (Networking.InRoom)
                     {
                         References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 89, false, 999999f);
                         RPCProtection();
@@ -877,7 +877,7 @@ namespace Qubit.Modules.Categories
                 {
                     isLeftGrappling = true;
                     References.Rigidbody.linearVelocity += References.LeftHand.forward * 5f;
-                    if (References.InRoom)
+                    if (Networking.InRoom)
                     {
                         References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 89, true, 999999f);
                     }
@@ -936,7 +936,7 @@ namespace Qubit.Modules.Categories
                 {
                     isRightGrappling = true;
                     References.Rigidbody.linearVelocity += References.RightHand.forward * 5f;
-                    if (References.InRoom)
+                    if (Networking.InRoom)
                     {
                         References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 89, false, 999999f);
                         RPCProtection();
@@ -2550,7 +2550,7 @@ namespace Qubit.Modules.Categories
                     if (Ray.collider != null)
                     {
                         TeleportPlayer(pearl.transform.position);
-                        if (References.InRoom)
+                        if (Networking.InRoom)
                             References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 84, true, 999999f);
                         else
                             References.LocalRig.PlayHandTapLocal(84, true, 999999f);
@@ -3395,7 +3395,7 @@ namespace Qubit.Modules.Categories
             {
                 SerializePatch.OverrideSerialization ??= () =>
                 {
-                    if (!References.InRoom)
+                    if (!Networking.InRoom)
                         return true;
 
                     Quaternion archive = References.LocalRig.transform.rotation;
@@ -5084,7 +5084,7 @@ namespace Qubit.Modules.Categories
         {
             if (Time.frameCount % 45 == 0)
             {
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 64, true, 999999f);
 

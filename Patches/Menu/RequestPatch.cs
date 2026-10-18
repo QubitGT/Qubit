@@ -81,7 +81,7 @@ namespace Qubit.Patches.Menu
         private static string[] archiveCosmetics;
         public static IEnumerator LoadCosmetics()
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 Vector3 target = Frontend.Settings.TryOnRoom.transform.position;
 
@@ -106,7 +106,7 @@ namespace Qubit.Patches.Menu
                 References.LocalRig.LocalUpdateCosmeticsWithTryon(CosmeticsController.instance.currentWornSet, CosmeticsController.instance.tryOnSet, false);
 
                 float delay = Time.time + 30f;
-                while (Time.time < delay || References.InRoom)
+                while (Time.time < delay || Networking.InRoom)
                     yield return null;
 
                 currentCoroutine = null;

@@ -176,7 +176,7 @@ namespace Qubit.Modules.Categories
 
         public static void CoreESP()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -199,7 +199,7 @@ namespace Qubit.Modules.Categories
 
         public static void CritterESP()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -222,7 +222,7 @@ namespace Qubit.Modules.Categories
 
         public static void CreatureESP()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -245,7 +245,7 @@ namespace Qubit.Modules.Categories
 
         public static void EnemyESP()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -268,7 +268,7 @@ namespace Qubit.Modules.Categories
 
         public static void ResourceESP()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -307,7 +307,7 @@ namespace Qubit.Modules.Categories
         private static float removeBlindfoldDelay;
         public static void RemoveBlindfold()
         {
-            if (References.InRoom && Time.time > removeBlindfoldDelay)
+            if (Networking.InRoom && Time.time > removeBlindfoldDelay)
             {
                 removeBlindfoldDelay = Time.time + 0.5f;
                 GameObject mainCamera = GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/Main Camera");
@@ -491,7 +491,7 @@ namespace Qubit.Modules.Categories
                     watchText += DateTime.Now.ToString("hh:mm tt") + "\n";
 
                 if (infoWatchCode)
-                    watchText += (References.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room") + "\n";
+                    watchText += (Networking.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room") + "\n";
 
                 if (infoWatchClip)
                 {
@@ -760,7 +760,7 @@ namespace Qubit.Modules.Categories
 
         public static void ExtraRoomInfo(bool? overlapInRoom = null)
         {
-            if (overlapInRoom ?? References.InRoom)
+            if (overlapInRoom ?? Networking.InRoom)
             {
                 References.Network.CurrentRoom.CustomProps.TryGetValue("platform", out var platform);
                 References.Network.CurrentRoom.CustomProps.TryGetValue("language", out var language);
@@ -810,7 +810,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 bool isThereTagged = InfectedList().Count > 0;
 
@@ -845,7 +845,7 @@ namespace Qubit.Modules.Categories
         public static void PingOverlay()
         {
             VRRig masterRig = PhotonNetwork.MasterClient?.VRRig();
-            if (!References.InRoom || PhotonNetwork.IsMasterClient || masterRig == null || !playerPing.ContainsKey(masterRig))
+            if (!Networking.InRoom || PhotonNetwork.IsMasterClient || masterRig == null || !playerPing.ContainsKey(masterRig))
             {
                 Notifications.information["Ping"] = PhotonNetwork.GetPing() + "ms";
                 return;
@@ -984,7 +984,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 bool isThereTagged = InfectedList().Count > 0;
                 int left = PhotonNetwork.PlayerList.Length - InfectedList().Count;
@@ -4063,7 +4063,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntBoneESP()
         {
-            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -4073,7 +4073,7 @@ namespace Qubit.Modules.Categories
 
             List<VRRig> toRemove = new List<VRRig>();
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(Networking.LocalPlayer);
 
             foreach (var boness in boneESP.Where(boness => !Players.ActiveRigs.Contains(boness.Key)))
             {
@@ -4120,7 +4120,7 @@ namespace Qubit.Modules.Categories
 
                 NetPlayer owner = GetPlayerFromVRRig(vrrig);
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
-                Color color = owner == target ? vrrig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? vrrig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
 
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
@@ -4135,7 +4135,7 @@ namespace Qubit.Modules.Categories
                 liner.startColor = color;
                 liner.endColor = color;
 
-                liner.enabled = owner == target || theirTarget == References.LocalPlayer;
+                liner.enabled = owner == target || theirTarget == Networking.LocalPlayer;
 
                 liner.SetPosition(0, vrrig.head.rigTarget.transform.position + new Vector3(0f, 0.16f, 0f));
                 liner.SetPosition(1, vrrig.head.rigTarget.transform.position - new Vector3(0f, 0.4f, 0f));
@@ -4155,7 +4155,7 @@ namespace Qubit.Modules.Categories
 
                     liner.material.shader = Shader.Find("GUI/Text Shader");
 
-                    liner.enabled = owner == target || theirTarget == References.LocalPlayer;
+                    liner.enabled = owner == target || theirTarget == Networking.LocalPlayer;
 
                     liner.SetPosition(0, vrrig.mainSkin.bones[bones[i * 2]].position);
                     liner.SetPosition(1, vrrig.mainSkin.bones[bones[i * 2 + 1]].position);
@@ -4243,7 +4243,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntSkeletonESP()
         {
-            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -4420,7 +4420,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntWireframeESP()
         {
-            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             List<VRRig> toRemove = new List<VRRig>();
@@ -4439,7 +4439,7 @@ namespace Qubit.Modules.Categories
             bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(Networking.LocalPlayer);
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
@@ -4452,7 +4452,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer owner = rig.GetPlayer();
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
-                Color color = owner == target ? rig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? rig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
 
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
@@ -4463,7 +4463,7 @@ namespace Qubit.Modules.Categories
 
                 wireframe.meshRenderer.material.color = color;
 
-                bool enabled = owner == target || theirTarget == References.LocalPlayer;
+                bool enabled = owner == target || theirTarget == Networking.LocalPlayer;
 
                 Vector3 toTarget = rig.transform.position - References.HeadCollider.transform.position;
                 float angle = Vector3.Angle(References.HeadCollider.transform.forward, toTarget);
@@ -4806,7 +4806,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntChams()
         {
-            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -4949,7 +4949,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntBoxESP()
         {
-            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -4958,7 +4958,7 @@ namespace Qubit.Modules.Categories
 
             List<VRRig> toRemove = new List<VRRig>();
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(Networking.LocalPlayer);
 
             foreach (var box in boxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
@@ -4985,7 +4985,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer owner = GetPlayerFromVRRig(vrrig);
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
-                Color color = owner == target ? vrrig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? vrrig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
                 if (tt)
@@ -4995,7 +4995,7 @@ namespace Qubit.Modules.Categories
 
                 box.GetComponent<Renderer>().material.color = color;
 
-                box.SetActive(owner == target || theirTarget == References.LocalPlayer);
+                box.SetActive(owner == target || theirTarget == Networking.LocalPlayer);
 
                 box.transform.position = vrrig.transform.position;
                 box.transform.LookAt(References.HeadCollider.transform.position);
@@ -5179,7 +5179,7 @@ namespace Qubit.Modules.Categories
 
         public static void HollowHuntBoxESP()
         {
-            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5189,7 +5189,7 @@ namespace Qubit.Modules.Categories
 
             List<VRRig> toRemove = new List<VRRig>();
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(Networking.LocalPlayer);
 
             foreach (var box in hollowBoxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
@@ -5251,7 +5251,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer owner = GetPlayerFromVRRig(vrrig);
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
-                Color color = owner == target ? vrrig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? vrrig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
                 if (tt)
@@ -5260,7 +5260,7 @@ namespace Qubit.Modules.Categories
                     box.layer = 19;
 
                 box.GetComponent<Renderer>().material.color = color;
-                box.SetActive(owner == target || theirTarget == References.LocalPlayer);
+                box.SetActive(owner == target || theirTarget == Networking.LocalPlayer);
 
                 box.transform.position = vrrig.transform.position;
                 box.transform.LookAt(References.HeadCollider.transform.position);
@@ -5395,7 +5395,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntBreadcrumbs()
         {
-            if (!References.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
             List<VRRig> toRemove = new List<VRRig>();
@@ -5416,7 +5416,7 @@ namespace Qubit.Modules.Categories
             bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
 
             GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
-            NetPlayer target = hunt.GetTargetOf(References.LocalPlayer);
+            NetPlayer target = hunt.GetTargetOf(Networking.LocalPlayer);
 
             foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
@@ -5444,7 +5444,7 @@ namespace Qubit.Modules.Categories
                 NetPlayer owner = rig.GetPlayer();
                 NetPlayer theirTarget = hunt.GetTargetOf(owner);
 
-                Color color = owner == target ? rig.GetColor() : theirTarget == References.LocalPlayer ? Color.red : Color.clear;
+                Color color = owner == target ? rig.GetColor() : theirTarget == Networking.LocalPlayer ? Color.red : Color.clear;
 
                 if (fmt)
                     color = backgroundColor.GetCurrentColor();
@@ -5456,7 +5456,7 @@ namespace Qubit.Modules.Categories
                 trail.startColor = color;
                 trail.endColor = color;
 
-                trail.enabled = owner == target || theirTarget == References.LocalPlayer;
+                trail.enabled = owner == target || theirTarget == Networking.LocalPlayer;
             }
         }
 
@@ -5531,7 +5531,7 @@ namespace Qubit.Modules.Categories
 
         public static void AutomaticESP(Action infection, Action hunt, Action other)
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             try
             {
                 switch (GorillaGameManager.instance.GameType())

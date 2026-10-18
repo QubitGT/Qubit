@@ -306,7 +306,7 @@ namespace Qubit.Modules.Categories
                     References.LocalRig.LeftThrowableProjectileIndex = index;
             References.LocalRig.SetRandomThrowableModelIndex(modelIndex);
             References.LocalRig.myBodyDockPositions.RefreshTransferrableItems();
-            if (serialize && References.InRoom)
+            if (serialize && Networking.InRoom)
                 SendSerialize(References.LocalRig.GetPhotonView());
         }
 
@@ -399,18 +399,18 @@ namespace Qubit.Modules.Categories
                 projectileFrameSent = Time.frameCount;
                 ProjectileWatcherCoroutine ??= Coroutines.instance.StartCoroutine(ProjectileWatcher());
 
-                options ??= friendSided && !ServerData.Administrators.ContainsKey(References.LocalPlayer.UserId)
+                options ??= friendSided && !ServerData.Administrators.ContainsKey(Networking.LocalPlayer.UserId)
                         ? new RaiseEventOptions
                         {
                             TargetActors = References.Network.PlayerListOthers
                                 //.Where(p => FriendManager.IsPlayerFriend(p))
                                 .Select(p => p.ActorNumber)
-                                .Concat(new[] { References.LocalPlayer.ActorNumber })
+                                .Concat(new[] { Networking.LocalPlayer.ActorNumber })
                                 .ToArray()
                         }
                         : new RaiseEventOptions { Receivers = ReceiverGroup.All };
 
-                if (CanCallNow(FXType.Projectile) || !References.InRoom)
+                if (CanCallNow(FXType.Projectile) || !Networking.InRoom)
                 {
                     velocity = Vector3.ClampMagnitude(velocity, 10000f);
                     if (!color.HasValue)
@@ -420,7 +420,7 @@ namespace Qubit.Modules.Categories
                     References.LocalRig.SetThrowableProjectileColor(true, color.Value);
                     UpdateNetworkedProjectile(projectile.ThrowableIndex, targetProjectileIndex, hand);
 
-                    if (Vector3.Distance(References.BodyCollider.transform.position, position) > 3.9f && References.InRoom && !bypassTeleport && !clientSided && !friendSided)
+                    if (Vector3.Distance(References.BodyCollider.transform.position, position) > 3.9f && Networking.InRoom && !bypassTeleport && !clientSided && !friendSided)
                         References.LocalRig.transform.position = position + new Vector3(0f, velocity.y > 0f ? -3f : 3f, 0f);
 
                     int index = GetProjectileIncrement(position, velocity, Throwable.transform.lossyScale.x);
@@ -431,7 +431,7 @@ namespace Qubit.Modules.Categories
                             growingSnowballSize = GrowingSnowball.MaxSizeLevel;
                         // friendSided ? Math.Max(SnowballSize, friendProjectileScale) : SnowballSize;
 
-                        if (References.InRoom || friendSided)
+                        if (Networking.InRoom || friendSided)
                         {
                             if (friendSided)
                             {
@@ -451,7 +451,7 @@ namespace Qubit.Modules.Categories
                                 //PhotonNetwork.RaiseEvent(FriendManager.FriendByte, projectileSendData, options, SendOptions.SendReliable);
                                 LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.GetValidSizeLevel(SnowballSize), index, color.Value, References.LocalRig);
                             }
-                            else if (References.InRoom)
+                            else if (Networking.InRoom)
                             {
                                 if (GrowingSnowball.changeSizeEvent == null)
                                     throw new Exception("GrowingSnowball changeSizeEvent is null");
@@ -476,7 +476,7 @@ namespace Qubit.Modules.Categories
                             }
 
                         }
-                        else if (!References.InRoom || clientSided)
+                        else if (!Networking.InRoom || clientSided)
                             LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.snowballSizeLevels[growingSnowballSize].snowballScale, index, color.Value, References.LocalRig);
                     }
                     else
@@ -511,7 +511,7 @@ namespace Qubit.Modules.Categories
                             sendEventData.Add(projectileSendData.ToArray());
                         }
 
-                        if (!References.InRoom || clientSided || friendSided)
+                        if (!Networking.InRoom || clientSided || friendSided)
                             LaunchLocalProjectile(position, velocity, (byte)ToProjectileSource(hand), index, true, color32, friendSided ? friendProjectileScale : 1, Throwable.ProjectileHash, References.LocalRig);
                         else
                         {
@@ -698,7 +698,7 @@ namespace Qubit.Modules.Categories
 
         public static void DisableSnowballImpactEffect()
         {
-            if (References.InRoom && RoomSystem.callbackInstance.roomSettings.PlayerEffectLimiter.CanCallNow())
+            if (Networking.InRoom && RoomSystem.callbackInstance.roomSettings.PlayerEffectLimiter.CanCallNow())
             {
                 object[] playerEffectData = new object[6];
                 playerEffectData[0] = -1;
@@ -1213,7 +1213,7 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -1262,7 +1262,7 @@ namespace Qubit.Modules.Categories
         {
             SerializePatch.OverrideSerialization = () =>
             {
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
@@ -1486,7 +1486,7 @@ namespace Qubit.Modules.Categories
                             References.HeadCollider.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z).normalized / 1.7f,
                             new Vector3(0f, -500f, 0f)
                         );
-                        if (References.InRoom && References.LocalRig.fxSettings.CanCallNow((int)FXType.PlayHandTap))
+                        if (Networking.InRoom && References.LocalRig.fxSettings.CanCallNow((int)FXType.PlayHandTap))
                             References.LocalRig.GetNetView().SendRPC("RPC_PlayHandTap", RpcTarget.All, 248, false, 999999f);
                     }
                 }

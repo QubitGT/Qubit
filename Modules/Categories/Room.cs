@@ -170,7 +170,7 @@ namespace Qubit.Modules.Categories
             if (Important.queueCoroutine != null)
                 Coroutines.instance.StopCoroutine(Important.queueCoroutine);
 
-            References.Network.netState = References.InRoom ? NetSystemState.InGame : NetSystemState.Idle;
+            References.Network.netState = Networking.InRoom ? NetSystemState.InGame : NetSystemState.Idle;
 
             partyLastCode = null;
             partyKickReconnecting = false;
@@ -178,7 +178,7 @@ namespace Qubit.Modules.Categories
 
         public static void JoinRandom()
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 References.Network.ReturnToSinglePlayer();
                 Coroutines.instance.StartCoroutine(Important.JoinRandomDelay());

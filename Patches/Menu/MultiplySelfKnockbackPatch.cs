@@ -32,7 +32,7 @@ namespace Qubit.Patches.Menu
 
         public static void Prefix(SlingshotProjectile __instance)
         {
-            if (enabled && __instance.projectileOwner == References.LocalPlayer)
+            if (enabled && __instance.projectileOwner == Networking.LocalPlayer)
             {
                 if (__instance.aoeKnockbackConfig != null)
                 {

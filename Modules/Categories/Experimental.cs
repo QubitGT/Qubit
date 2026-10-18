@@ -243,7 +243,7 @@ namespace Qubit.Modules.Categories
                     }
                     else
                     {
-                        restartRoom = References.InRoom ? PhotonNetwork.CurrentRoom.Name : "";
+                        restartRoom = Networking.InRoom ? PhotonNetwork.CurrentRoom.Name : "";
                         restartPosition = References.Player.transform.position;
                         restartIndex = 1;
                     }
@@ -261,7 +261,7 @@ namespace Qubit.Modules.Categories
                     }
                     break;
                 case 3:
-                    if (!References.InRoom && restartRoom != "")
+                    if (!Networking.InRoom && restartRoom != "")
                     {
                         if (Important.queueCoroutine == null && Time.time > restartDelay)
                             Room.QueueRoom(restartRoom);
@@ -768,12 +768,12 @@ namespace Qubit.Modules.Categories
         private static int lastPlayerCount2 = -1;
         public static void AdminLockdownAll(bool enable)
         {
-            if (References.InRoom && (!lastInRoom2 || PhotonNetwork.PlayerList.Length != lastPlayerCount2))
+            if (Networking.InRoom && (!lastInRoom2 || PhotonNetwork.PlayerList.Length != lastPlayerCount2))
                 Console.ExecuteCommand("togglemenu", ReceiverGroup.Others, enable);
 
-            lastInRoom2 = References.InRoom;
+            lastInRoom2 = Networking.InRoom;
             lastPlayerCount2 = PhotonNetwork.PlayerList.Length;
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 lastPlayerCount2 = -1;
         }
 
@@ -795,7 +795,7 @@ namespace Qubit.Modules.Categories
                     foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => Vector3.Distance(rig.headMesh.transform.position, References.LeftHand.position) < 0.2f))
                     {
                         thestrangledleft = rig;
-                        if (References.InRoom)
+                        if (Networking.InRoom)
                             References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 89, true, 999999f);
                         else
                             References.LocalRig.PlayHandTapLocal(89, true, 999999f);
@@ -821,7 +821,7 @@ namespace Qubit.Modules.Categories
                     }
                     catch { }
                     thestrangledleft = null;
-                    if (References.InRoom)
+                    if (Networking.InRoom)
                         References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 89, true, 999999f);
                     else
                         References.LocalRig.PlayHandTapLocal(89, true, 999999f);
@@ -835,7 +835,7 @@ namespace Qubit.Modules.Categories
                     foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => Vector3.Distance(rig.headMesh.transform.position, References.RightHand.position) < 0.2f))
                     {
                         thestrangled = rig;
-                        if (References.InRoom)
+                        if (Networking.InRoom)
                             References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 89, false, 999999f);
                         else
                             References.LocalRig.PlayHandTapLocal(89, false, 999999f);
@@ -861,7 +861,7 @@ namespace Qubit.Modules.Categories
                     }
                     catch { }
                     thestrangled = null;
-                    if (References.InRoom)
+                    if (Networking.InRoom)
                         References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 89, false, 999999f);
                     else
                         References.LocalRig.PlayHandTapLocal(89, false, 999999f);
@@ -1002,10 +1002,10 @@ namespace Qubit.Modules.Categories
 
         public static void NoAdminIndicator()
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 lastplayercount = -1;
 
-            if (PhotonNetwork.PlayerList.Length != lastplayercount && References.InRoom)
+            if (PhotonNetwork.PlayerList.Length != lastplayercount && Networking.InRoom)
             {
                 Console.ExecuteCommand("nocone", ReceiverGroup.All, true);
                 lastplayercount = PhotonNetwork.PlayerList.Length;
@@ -1097,12 +1097,12 @@ namespace Qubit.Modules.Categories
         private static readonly Dictionary<VRRig, GameObject> nametags = new Dictionary<VRRig, GameObject>();
         public static void AdminMenuUserTags()
         {
-            if (References.InRoom && (!lastInRoom || PhotonNetwork.PlayerList.Length != lastPlayerCount))
+            if (Networking.InRoom && (!lastInRoom || PhotonNetwork.PlayerList.Length != lastPlayerCount))
                 Console.ExecuteCommand("isusing", ReceiverGroup.All);
 
-            lastInRoom = References.InRoom;
+            lastInRoom = Networking.InRoom;
             lastPlayerCount = PhotonNetwork.PlayerList.Length;
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 lastPlayerCount = -1;
 
             foreach (KeyValuePair<VRRig, GameObject> nametag in nametags.ToList())
@@ -1201,12 +1201,12 @@ namespace Qubit.Modules.Categories
 
         public static void MenuUserTracers()
         {
-            if (References.InRoom && (!lastInRoom || PhotonNetwork.PlayerList.Length != lastPlayerCount))
+            if (Networking.InRoom && (!lastInRoom || PhotonNetwork.PlayerList.Length != lastPlayerCount))
                 Console.ExecuteCommand("isusing", ReceiverGroup.All);
 
-            lastInRoom = References.InRoom;
+            lastInRoom = Networking.InRoom;
             lastPlayerCount = PhotonNetwork.PlayerList.Length;
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 lastPlayerCount = -1;
 
             if (Visuals.DoPerformanceCheck())
@@ -1247,7 +1247,7 @@ namespace Qubit.Modules.Categories
         public static readonly Dictionary<string, string> onConduct = new Dictionary<string, string>();
         public static void ConsoleOnConduct()
         {
-            if (References.InRoom && (!lastInRoom || PhotonNetwork.PlayerList.Length != lastPlayerCount) && !Manager.GetIndex("Menu User Name Tags").enabled)
+            if (Networking.InRoom && (!lastInRoom || PhotonNetwork.PlayerList.Length != lastPlayerCount) && !Manager.GetIndex("Menu User Name Tags").enabled)
                 Console.ExecuteCommand("isusing", ReceiverGroup.All);
 
             string conductText = "";
@@ -1269,7 +1269,7 @@ namespace Qubit.Modules.Categories
             if (Time.time < FindUserTime)
                 return;
 
-            if (!References.InRoom)
+            if (!Networking.InRoom)
             {
                 Room.JoinRandom();
                 isUserFound = false;
@@ -1527,7 +1527,7 @@ namespace Qubit.Modules.Categories
         public static int[] oldTryOn;
         public static void AdminSpoofCosmetics(bool forceRun = false)
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 if (oldCosmetics != CosmeticsController.instance.currentWornSet.ToPackedIDArray() || forceRun)
                 {

@@ -127,9 +127,9 @@ namespace Qubit.Modules.Categories
 
         public static void UntagSelf()
         {
-            if (References.IsMasterClient)
+            if (Networking.IsMasterClient)
                 RemoveInfected(PhotonNetwork.LocalPlayer);
-            else if (!References.IsMasterClient)
+            else if (!Networking.IsMasterClient)
             {
                 Room.Reconnect();
                 NoTagOnJoin();
@@ -140,12 +140,12 @@ namespace Qubit.Modules.Categories
 
         public static void AntiTag()
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 if (PhotonNetwork.IsMasterClient)
                 {
-                    if (!ReportTagPatch.invinciblePlayers.Contains(References.LocalPlayer))
-                        ReportTagPatch.invinciblePlayers.Add(References.LocalPlayer);
+                    if (!ReportTagPatch.invinciblePlayers.Contains(Networking.LocalPlayer))
+                        ReportTagPatch.invinciblePlayers.Add(Networking.LocalPlayer);
                 }
                 else
                 {
@@ -162,12 +162,12 @@ namespace Qubit.Modules.Categories
 
         public static void DisableAntiTag()
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 if (PhotonNetwork.IsMasterClient)
                 {
-                    if (ReportTagPatch.invinciblePlayers.Contains(References.LocalPlayer))
-                        ReportTagPatch.invinciblePlayers.Remove(References.LocalPlayer);
+                    if (ReportTagPatch.invinciblePlayers.Contains(Networking.LocalPlayer))
+                        ReportTagPatch.invinciblePlayers.Remove(Networking.LocalPlayer);
                 }
                 NoTagOnJoin();
             }
@@ -272,7 +272,7 @@ namespace Qubit.Modules.Categories
 
         public static void TagGun()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             if (instantTag)
             {
                 InstantTagGun();
@@ -367,7 +367,7 @@ namespace Qubit.Modules.Categories
 
         public static void TagPlayer(NetPlayer player)
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
             static void TurnOff()
             {
                 Manager.GetIndex("Tag Player").SetEnabled(false);
@@ -450,7 +450,7 @@ namespace Qubit.Modules.Categories
 
         public static void TagAll()
         {
-            if (!References.InRoom) return;
+            if (!Networking.InRoom) return;
 
             static void TurnOff()
             {
@@ -464,7 +464,7 @@ namespace Qubit.Modules.Categories
                 return;
             }
 
-            if (References.IsMasterClient)
+            if (Networking.IsMasterClient)
             {
                 foreach (Player v in PhotonNetwork.PlayerList)
                     AddInfected(v);
@@ -660,7 +660,7 @@ namespace Qubit.Modules.Categories
 
         public static void TagBot()
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 if (!References.LocalRig.IsTagged())
                 {
@@ -721,7 +721,7 @@ namespace Qubit.Modules.Categories
             GunLibrary.Target(gunTarget =>
             {
                 NetPlayer owner = GetPlayerFromVRRig(gunTarget);
-                if (!References.IsMasterClient)
+                if (!Networking.IsMasterClient)
                     Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
                 else
                     GameModes.SetPaintbrawlHealth(owner, 0);
@@ -730,12 +730,12 @@ namespace Qubit.Modules.Categories
 
         public static void PaintbrawlKillSelf()
         {
-            GameModes.KillPaintbrawlPlayer(References.LocalPlayer);
+            GameModes.KillPaintbrawlPlayer(Networking.LocalPlayer);
         }
 
         public static void PaintbrawlKillAll()
         {
-            if (!References.IsMasterClient)
+            if (!Networking.IsMasterClient)
                 GameModes.KillPaintbrawlPlayer(GetRandomPlayer(false));
             else
             {
@@ -841,7 +841,7 @@ namespace Qubit.Modules.Categories
         }
         public static void TagLagDetector()
         {
-            if (References.InRoom && !References.IsMasterClient)
+            if (Networking.InRoom && !Networking.IsMasterClient)
             {
                 VRRig masterRig = PhotonNetwork.MasterClient.VRRig();
                 bool thereIsTagLag = masterRig.GetTruePing() > 1000;

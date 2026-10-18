@@ -33,7 +33,7 @@ namespace Qubit.Patches.Menu
         public static bool Prefix(LurkerGhost __instance, LurkerGhost.ghostState newState) =>
             !(enabled &&
                 newState == LurkerGhost.ghostState.possess &&
-                __instance.targetPlayer == References.LocalPlayer);
+                __instance.targetPlayer == Networking.LocalPlayer);
 
     }
 }
