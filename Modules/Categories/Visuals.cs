@@ -209,7 +209,7 @@ namespace Qubit.Modules.Categories
                     };
 
                     _infoSpriteAsset.spriteInfoList = new List<TMP_Sprite>();
-                    Traverse.Create(_infoSpriteAsset).Field("m_Version").SetValue("1.1.0"); // TextMeshPro kills itself unless this is set.
+                    Traverse.Create(_infoSpriteAsset).Field("m_Version").SetValue("1.1.0"); 
 
                     _infoSpriteAsset.spriteGlyphTable.Clear();
                     for (int i = 0; i < spriteDataList.Count; i++)
@@ -303,8 +303,8 @@ namespace Qubit.Modules.Categories
 
         private static readonly Dictionary<VRRig, GameObject> hitboxESP = new Dictionary<VRRig, GameObject>();
 
-        // TODO: Fix the other players' slingshot trajectory prediction.
-        // TODO: Fix gravity of slingshot prediction
+        
+        
 
         public static readonly Dictionary<SlingshotProjectile, LineRenderer> trajectoryPool = new Dictionary<SlingshotProjectile, LineRenderer>();
         public static LineRenderer localTrajectoryLine;
@@ -632,7 +632,7 @@ namespace Qubit.Modules.Categories
         static GameObject LeftSphere;
         static GameObject RightSphere;
 
-        // Cache backend
+        
 
         private static readonly List<TextMeshPro> nameTagPool = new List<TextMeshPro>();
 
@@ -1162,18 +1162,18 @@ namespace Qubit.Modules.Categories
             return 0.1f + frames.Count * 0.1f;
         }
 
-        /// <summary>
-        /// Displays a label with the specified text and color at the position of the player's left or right hand. If a
-        /// label with the given code name does not exist, a new label is created.
-        /// </summary>
-        /// <remarks>If the label already exists, its properties are updated; otherwise, a new label is
-        /// created and added. The label is positioned and oriented to face the main camera, and its scale may be
-        /// adjusted based on the player's scale. The label is always set active when this method is called.</remarks>
-        /// <param name="codeName">The unique identifier for the label. If a label with this code name does not exist, a new label is created.</param>
-        /// <param name="leftHand">Indicates whether the label should be positioned at the left hand (<see langword="true"/>) or right hand
-        /// (<see langword="false"/>) of the player.</param>
-        /// <param name="text">The text content to display on the label.</param>
-        /// <param name="color">The color to apply to the label's text.</param>
+        
+
+
+
+
+
+
+
+
+
+
+
         public static void GetLabel(string codeName, bool leftHand, string text, Color color)
         {
             if (!labelDictionary.TryGetValue(codeName, out GameObject go))
@@ -3106,7 +3106,7 @@ namespace Qubit.Modules.Categories
 
                             GameObject infoTag = new GameObject("infotag");
                             infoTag.transform.parent = textContainer.transform;
-                            infoTag.transform.localPosition = new Vector3(0f, 0.5f, 0f); // change the y to make the info tag farther or closer to the nametag 
+                            infoTag.transform.localPosition = new Vector3(0f, 0.5f, 0f); 
                             infoTag.transform.localScale = Vector3.one;
                             TextMeshPro infoMesh = infoTag.AddComponent<TextMeshPro>();
                             infoMesh.fontSize = 2.4f;
@@ -3129,7 +3129,7 @@ namespace Qubit.Modules.Categories
 
                             GameObject infoBg = new GameObject("infobg");
                             infoBg.transform.parent = bgContainer.transform;
-                            infoBg.transform.localPosition = new Vector3(0f, 0.5f, 0f);  // change the y to make the info tag farther or closer to the nametag 
+                            infoBg.transform.localPosition = new Vector3(0f, 0.5f, 0f);  
                             infoBg.transform.localScale = Vector3.one;
                             infoBg.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
                             Object.Destroy(infoBg.GetComponent<Collider>());
@@ -5492,7 +5492,7 @@ namespace Qubit.Modules.Categories
             breadcrumbs.Clear();
         }
 
-        // Thanks DrPerky for rewriting visual mods <@427495360517111809>
+        
         public static bool DoPerformanceCheck()
         {
             if (PerformanceVisuals)
@@ -5576,7 +5576,7 @@ namespace Qubit.Modules.Categories
             catch { }
         }
 
-        // Tracers
+        
         public static void CasualTracers()
         {
             if (DoPerformanceCheck())
@@ -5767,7 +5767,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        // Beacons
+        
         public static void CasualBeacons()
         {
             if (DoPerformanceCheck())
@@ -5935,7 +5935,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        // Distance ESP
+        
         public static void CasualDistanceESP()
         {
             if (DoPerformanceCheck())
@@ -5952,7 +5952,7 @@ namespace Qubit.Modules.Categories
 
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
-                if (playerRig.isLocal) // Skip local player
+                if (playerRig.isLocal) 
                     continue;
 
                 Color tagColor = followMenuTheme ? textColors[0].GetCurrentColor() : Color.white;
@@ -5974,7 +5974,7 @@ namespace Qubit.Modules.Categories
 
                 _ = $"{Vector3.Distance(Camera.main.transform.position, playerRig.transform.position):F1}m";
 
-                foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) //background color
+                foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) 
                 {
                     if (transform.gameObject.name == "bg")
                     {
@@ -6004,7 +6004,7 @@ namespace Qubit.Modules.Categories
 
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
-                if (playerRig.isLocal) //skip local player
+                if (playerRig.isLocal) 
                     continue;
 
                 Color tagColor = followMenuTheme ? textColors[0].GetCurrentColor() : Color.white;
@@ -6042,7 +6042,7 @@ namespace Qubit.Modules.Categories
 
                 _ = $"{Vector3.Distance(Camera.main.transform.position, playerRig.transform.position):F1}m";
 
-                foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) //background color
+                foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) 
                 {
                     if (transform.gameObject.name == "bg")
                     {
@@ -6059,7 +6059,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            // Sanity checks, dont remove these
+            
 
             if (ManagerRegistry.GorillaGameManager == null)
                 return;
@@ -6072,7 +6072,7 @@ namespace Qubit.Modules.Categories
             if (sillyComputer == null)
                 return;
 
-            // Cache these here so your not finding the values from Buttons.GetIndex every call (Buttons.GetIndex is fucking slow)
+            
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             bool hiddenOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
@@ -6081,11 +6081,11 @@ namespace Qubit.Modules.Categories
 
             NetPlayer currentTarget = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
 
-            // Color bgColor = backgroundColor.GetCurrentColor(); //dont need to call this function twice, just use a variable
+            
 
             foreach (var playerRig in Players.ActiveRigs.Where(playerRig => !playerRig.isLocal))
             {
-                if (GetPlayerFromVRRig(playerRig) == currentTarget) // Use ID for quick comparison
+                if (GetPlayerFromVRRig(playerRig) == currentTarget) 
                 {
                     Color tagColor = followMenuTheme ? textColors[0].GetCurrentColor() : Color.white;
                     Color backgroundColor = playerRig.playerColor;
@@ -6106,7 +6106,7 @@ namespace Qubit.Modules.Categories
 
                     _ = $"{Vector3.Distance(Camera.main.transform.position, playerRig.transform.position):F1}m";
 
-                    foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) // Background color
+                    foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) 
                     {
                         if (transform.gameObject.name == "bg")
                         {
@@ -6136,7 +6136,7 @@ namespace Qubit.Modules.Categories
 
                     _ = $"{Vector3.Distance(Camera.main.transform.position, playerRig.transform.position):F1}m";
 
-                    foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) // Background color
+                    foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) 
                     {
                         if (transform.gameObject.name == "bg")
                         {
@@ -6164,7 +6164,7 @@ namespace Qubit.Modules.Categories
                 TextMeshPro.SafeSetFontStyle(activeFontStyle);
                 TextMeshPro.SafeSetFont(activeFont);
 
-                // Update font style of outline here
+                
 
                 finalTextMeshPro = TextMeshPro;
             }
@@ -6203,13 +6203,13 @@ namespace Qubit.Modules.Categories
                 finalTextMeshPro = newMesh;
             }
 
-            finalTextMeshPro.gameObject.layer = hideOnCamera ? 19 : // What does 19 actually do?
+            finalTextMeshPro.gameObject.layer = hideOnCamera ? 19 : 
                 nameTagHolder.layer;
 
             return finalTextMeshPro;
         }
 
-        public static void ClearNameTagPool(bool destroy = false) // Set destroy when you disable a feature that needs a lot of nameTags
+        public static void ClearNameTagPool(bool destroy = false) 
         {
             if (DoPerformanceCheck())
                 return;
@@ -6269,7 +6269,7 @@ namespace Qubit.Modules.Categories
             return finalRender;
         }
 
-        public static void ClearLinePool(bool destroy = false) // Set destroy when you disable a feature that needs a lot of lines
+        public static void ClearLinePool(bool destroy = false) 
         {
             if (DoPerformanceCheck())
                 return;

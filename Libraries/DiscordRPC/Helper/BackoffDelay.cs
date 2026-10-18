@@ -5,31 +5,31 @@ namespace Qubit.Libraries.DiscordRPC.Helper
 
     internal class BackoffDelay
     {
-        /// <summary>
-        /// The maximum time the backoff can reach
-        /// </summary>
+        
+
+
         public int Maximum { get; private set; }
 
-        /// <summary>
-        /// The minimum time the backoff can start at
-        /// </summary>
+        
+
+
         public int Minimum { get; private set; }
 
-        /// <summary>
-        /// The current time of the backoff
-        /// </summary>
+        
+
+
         public int Current { get { return _current; } }
         private int _current;
 
-        /// <summary>
-        /// The current number of failures
-        /// </summary>
+        
+
+
         public int Fails { get { return _fails; } }
         private int _fails;
 
-        /// <summary>
-        /// The random generator
-        /// </summary>
+        
+
+
         public Random Random { get; set; }
 
         private BackoffDelay() { }
@@ -44,9 +44,9 @@ namespace Qubit.Libraries.DiscordRPC.Helper
             Random = random;
         }
 
-        /// <summary>
-        /// Resets the backoff
-        /// </summary>
+        
+
+
         public void Reset()
         {
             _fails = 0;
@@ -55,7 +55,7 @@ namespace Qubit.Libraries.DiscordRPC.Helper
 
         public int NextDelay()
         {
-            //Increment the failures
+            
             _fails++;
 
             double diff = (Maximum - Minimum) / 100f;

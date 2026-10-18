@@ -340,7 +340,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        // Credits to Malachi for the idea
+        
         public static void PaintbrawlNoDelay()
         {
             if (!Networking.IsMasterClient)

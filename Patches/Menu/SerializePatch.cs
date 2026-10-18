@@ -30,14 +30,14 @@ namespace Qubit.Patches.Menu
     [HarmonyPatch(typeof(PhotonNetwork), nameof(PhotonNetwork.RunViewUpdate))]
     public class SerializePatch
     {
-        /// <summary>
-        /// Occurs when a serialization process is initiated.
-        /// </summary>
+        
+
+
         public static event Action OnSerialize;
 
-        /// <summary>
-        /// Delegate that determines whether serialization should be overridden.
-        /// </summary>
+        
+
+
         public static Func<bool> OverrideSerialization;
 
         public static bool Prefix()

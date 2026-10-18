@@ -35,14 +35,14 @@ namespace Qubit.Libraries.Core
     {
         private static Action<Level, string> _sink;
 
-        /// <summary>Call once from the loader entrypoint (BepInEx or MelonLoader).</summary>
+        
         public static void SetLogger(Action<Level, string> sink) => _sink = sink;
 
         private static void Write(Level level, object log)
         {
             string msg = log?.ToString() ?? string.Empty;
 
-            // Fallback
+            
             if (_sink is null)
             {
                 UnityEngine.Debug.Log($"[{level}] {msg}");

@@ -148,7 +148,7 @@ namespace Qubit.Frontend
                                     keyboardInput = keyboardInput[..^1];
                                 break;
                             case Key.Escape:
-                                Toggle(isSearching ? "Search" : "Decline Prompt");
+                                Toggle(CurrentPrompt != null ? "Decline Prompt" : "Search");
                                 break;
                             case Key.Enter:
                                 HandleSearchOrPrompt();
@@ -191,6 +191,11 @@ namespace Qubit.Frontend
         }
         private static void HandleSearchOrPrompt()
         {
+            if (CurrentPrompt != null)
+            {
+                if (CurrentPrompt.IsText) Toggle("Accept Prompt");
+                return;
+            }
             if (isSearching)
             {
                 List<Module> searchedMods = new List<Module>();
@@ -259,8 +264,8 @@ namespace Qubit.Frontend
                   return;
 
     case "Escape":
- if (isSearching) Toggle("Search");
-            else if (CurrentPrompt != null) Toggle("Decline Prompt");
+ if (CurrentPrompt != null) Toggle("Decline Prompt");
+            else if (isSearching) Toggle("Search");
    else { Modules.Categories.Settings.DestroyKeyboard(); ReloadMenu(); }
 return;
        case "Space":
@@ -407,7 +412,7 @@ if (!clickGUI)
         public static Texture2D searchIcon;
 
         public static bool shift;
-        public static bool lockShift; // KonekoKitten KTOH
+        public static bool lockShift; 
 
         public static bool lowercaseMode;
         public static bool uppercaseMode;
@@ -416,10 +421,10 @@ if (!clickGUI)
 
         public sealed class View : MonoBehaviour
             {
-   private static AssetBundle bundle;
+   
 private static GameObject prefab;
        private Canvas face;
-  private Text input;
+  private TMP_Text input;
                   private GameObject placeholder;
     private Transform keys;
  private string lastText;
@@ -428,19 +433,7 @@ private static GameObject prefab;
 private float pressedUntil;
        public static GameObject Create()
   {
-                  if (prefab == null)
-    {
-
- using (Stream stream = typeof(View).Assembly.GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.qubitkeyboard"))
-            {
-using (var memory = new MemoryStream())
-       {
-  stream.CopyTo(memory);
-                  bundle = AssetBundle.LoadFromMemory(memory.ToArray());
-    }
- }
-   prefab = bundle.LoadAsset<GameObject>("QubitKeyboard");
-       }
+                  if (prefab == null) prefab = QubitAssets.Load<GameObject>("QubitKeyboard");
   var instance = Instantiate(prefab);
                   instance.name = "Qubit Keyboard";
     var body = instance.AddComponent<Rigidbody>();
@@ -457,11 +450,11 @@ instance.transform.rotation = References.BodyCollider.transform.rotation;
             view.face.transform.localPosition = new Vector3(0, .1f, 1.1f);
    view.face.transform.localRotation = Quaternion.Euler(35f, 0, 0);
 view.keys = view.face.transform.Find("Keys");
-       view.input = view.face.transform.Find("InputBar/InputText").GetComponent<Text>();
-  view.input.supportRichText = false;
+       view.input = view.face.transform.Find("InputBar/InputText").GetComponent<TMP_Text>();
+  view.input.richText = false;
                   view.placeholder = view.face.transform.Find("InputBar/Placeholder").gameObject;
     foreach (Transform child in instance.GetComponentsInChildren<Transform>(true)) child.gameObject.layer = 0;
- foreach (Graphic graphic in instance.GetComponentsInChildren<Graphic>(true)) graphic.material = null;
+ foreach (Graphic graphic in instance.GetComponentsInChildren<Graphic>(true)) if (graphic is Image) graphic.material = null;
        Fonts.Apply(instance);
             KeyboardKey.keyLookupDictionary.Clear();
 
@@ -473,7 +466,7 @@ view.keys = view.face.transform.Find("Keys");
     KeyboardKey.keyLookupDictionary[key.name] = handler;
  key.gameObject.layer = 2;
             key.GetComponent<Button>().transition = Selectable.Transition.None;
-   key.GetComponent<Image>().color = Color.black;
+   key.GetComponent<Image>().color = Color.white;
 }
        menuSpawnPosition = instance.transform.Find("MenuSpawnPosition").gameObject;
   menuSpawnPosition.transform.localPosition = new Vector3(0, .68f, 1.1f);
@@ -500,14 +493,14 @@ RefreshKeys();
    bool selected = key.name == "CapsLock" && lockShift || key.name == "Shift" && shift;
 bool down = key.name == pressed && Time.unscaledTime < pressedUntil;
 
-       key.GetComponent<Image>().color = down ? new Color(.3f,.12f,.43f) : selected ? new Color(.2f,.08f,.29f) : Color.black;
+       key.GetComponent<Image>().color = down ? new Color(.78f,.64f,1f) : selected ? new Color(.65f,.49f,.96f) : Color.white;
   if (key.name.Length == 1)
                   {
     string value = key.name;
  const string unshifted = "1234567890-=[]\\;',./";
             const string shifted = "!@#$%^&*()_+{}|:\"<>?";
    int index = unshifted.IndexOf(value, StringComparison.Ordinal);
-key.Find("Label").GetComponent<Text>().text = index >= 0 && shift ? shifted[index].ToString() :
+key.Find("Label").GetComponent<TMP_Text>().text = index >= 0 && shift ? shifted[index].ToString() :
        char.IsLetter(value[0]) && !(shift ^ lockShift) ? value.ToLowerInvariant() : value.ToUpperInvariant();
   }
                   }

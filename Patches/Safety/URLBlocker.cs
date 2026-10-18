@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// The purpose of this class is to block known malicious URLs from being accessed by the game or mods
+
 using HarmonyLib;
 using Qubit.Libraries.Core;
 using System;
@@ -94,7 +94,7 @@ namespace Qubit.Patches.Safety
 
                     string name = asm.GetName().Name;
 
-                    // this is ugly
+                    
                     if (name.StartsWith("Unity") ||
                         name.StartsWith("System") ||
                         name.StartsWith("Mono") ||

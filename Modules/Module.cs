@@ -27,18 +27,18 @@ namespace Qubit.Modules
 {
     public class Module
     {
-        public string buttonText = "-"; // Button code name, displayed in menu if overlapText is null
-        public string overlapText;      // Button text displayed on menu, overrides buttonText
+        public string buttonText = "-"; 
+        public string overlapText;      
 
-        public string[] aliases;        // Other terms a button can go by for searching, not displayed in menu
+        public string[] aliases;        
 
-        public string toolTip = "This button doesn't have a tooltip/tutorial."; // Tooltip of button, a short description
+        public string toolTip = "This button doesn't have a tooltip/tutorial."; 
 
-        public Action method;           // Every frame before GTPlayer.LateUpdate is called
-        public Action postMethod;       // Every frame after GTPlayer.LateUpdate is called
+        public Action method;           
+        public Action postMethod;       
 
-        public Action enableMethod;     // Once before method on enable
-        public Action disableMethod;    // Once on disable
+        public Action enableMethod;     
+        public Action disableMethod;    
 
         public bool enabled;
         public bool isTogglable = true;

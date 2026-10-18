@@ -38,7 +38,6 @@ using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Libraries.Interface
 {
-    [AddOnStart]
     public class CustomBoards : MonoBehaviour
     {
         public static CustomBoards instance;

@@ -503,7 +503,7 @@ namespace Qubit.Modules.Categories
                         ? new RaiseEventOptions
                         {
                             TargetActors = ManagerRegistry.NetworkSystem.PlayerListOthers
-                                //.Where(p => FriendManager.IsPlayerFriend(p))
+                                
                                 .Select(p => p.ActorNumber)
                                 .Concat(new[] { Networking.LocalPlayer.ActorNumber })
                                 .ToArray()
@@ -529,7 +529,7 @@ namespace Qubit.Modules.Categories
                         GrowingSnowballThrowable GrowingSnowball = GetThrowableByHand(hand) as GrowingSnowballThrowable ?? throw new Exception("GrowingSnowball Throwable is null");
                         if (growingSnowballSize == -1)
                             growingSnowballSize = GrowingSnowball.MaxSizeLevel;
-                        // friendSided ? Math.Max(SnowballSize, friendProjectileScale) : SnowballSize;
+                        
 
                         if (Networking.InRoom || friendSided)
                         {
@@ -548,7 +548,7 @@ namespace Qubit.Modules.Categories
                                 projectileSendData[6] = GrowingSnowball.GetValidSizeLevel(SnowballSize);
                                 projectileSendData[7] = index;
 
-                                //PhotonNetwork.RaiseEvent(FriendManager.FriendByte, projectileSendData, options, SendOptions.SendReliable);
+                                
                                 LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.GetValidSizeLevel(SnowballSize), index, color.Value, References.LocalRig);
                             }
                             else if (Networking.InRoom)
@@ -615,7 +615,7 @@ namespace Qubit.Modules.Categories
                             LaunchLocalProjectile(position, velocity, (byte)ToProjectileSource(hand), index, true, color32, friendSided ? friendProjectileScale : 1, Throwable.ProjectileHash, References.LocalRig);
                         else
                         {
-                            //PhotonNetwork.RaiseEvent(friendSided ? FriendManager.FriendByte : Constants.Network.ROOM_SYSTEM, sendEventData.ToArray(), options, SendOptions.SendReliable);
+                            
                             SendSerialize(References.LocalRig.GetPhotonView());
                             RPCProtection();
                         }
@@ -1829,17 +1829,17 @@ namespace Qubit.Modules.Categories
             References.LocalRig.SetThrowableProjectileColor(false, Color.white);
         }
 
-        /// <summary>
-        /// Retrieves a SnowballThrowable instance by its projectile name.
-        /// </summary>
-        /// <param name="projectileName">The name of the projectile to retrieve.</param>
-        /// <returns>The matching SnowballThrowable instance if found; otherwise, null.</returns>
+        
+
+
+
+
         public static SnowballThrowable GetProjectile(string projectileName)
         {
             if (CosmeticsV2Spawner_Dirty.isPrepared)
             {
                 var throwables = ((AllCosmeticsArraySO)ManagerRegistry.CosmeticsController.v2_allCosmeticsInfoAssetRef.Asset).sturdyAssetRefs.Where(x => x.obj != null && x.obj.info.isThrowable).Select(x => x.obj.info.playFabID).Distinct().ToList();
-                if (snowballDict == null || snowballDict.Count != (throwables.Count - 3)) // lazy fix
+                if (snowballDict == null || snowballDict.Count != (throwables.Count - 3)) 
                 {
                     if (!CosmeticsV2Spawner_Dirty.isPrepared)
                         return null;

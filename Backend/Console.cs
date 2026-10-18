@@ -70,17 +70,17 @@ namespace Qubit.Backend
         public static readonly string ConsoleSuperAdminIcon = $"{ServerData.AssetURL}/icon.png";
         public static readonly string ConsoleAdminIcon = $"{ServerData.AssetURL}/crown.png";
 
-        public static bool DisableMenu // Variable used to disable menu from opening
+        public static bool DisableMenu 
         {
             get => Frontend.Settings.Lockdown;
             set =>
                 Frontend.Settings.Lockdown = value;
         }
 
-        public static void SendNotification(string text, int sendTime = 1000) => // Method used to spawn notifications
+        public static void SendNotification(string text, int sendTime = 1000) => 
             Notifications.Send(text, sendTime);
 
-        public static void TeleportPlayer(Vector3 position) // Only modify this if you need any special logic
+        public static void TeleportPlayer(Vector3 position) 
         {
             References.Player.TeleportTo(World2Player(position), References.Player.transform.rotation, true);
             References.LocalRig.transform.position = position;
@@ -90,9 +90,9 @@ namespace Qubit.Backend
         }
 		public static Shader _textShader;
 		public static Shader TextShader => _textShader ??= Shader.Find("GUI/Text Shader");
-		public static void EnableMod(string mod, bool enable) // Method used to enable mods
+		public static void EnableMod(string mod, bool enable) 
         {
-            if (mod == "Decline Prompt" || mod == "Accept Prompt") // Can be vulnerabized
+            if (mod == "Decline Prompt" || mod == "Accept Prompt") 
                 return;
 
             Module Button = Manager.GetIndex(mod);
@@ -107,23 +107,23 @@ namespace Qubit.Backend
 
         public static void ToggleMod(string mod)
         {
-            if (mod == "Decline Prompt" || mod == "Accept Prompt") // Can be vulnerabized
+            if (mod == "Decline Prompt" || mod == "Accept Prompt") 
                 return;
 
             Manager.Toggle(mod);
         }
 
-        public static IEnumerator JoinRoom(string room) // Do not modify this unless needed
+        public static IEnumerator JoinRoom(string room) 
         {
             PhotonNetwork.Disconnect();
             yield return new WaitForSeconds(5f);
             ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(room, JoinType.Solo);
         }
 
-        public static void ConfirmUsing(string id, string version, string menuName) => // Code ran on isusing call
+        public static void ConfirmUsing(string id, string version, string menuName) => 
             Visuals.ConsoleBeacon(id, version, menuName);
 
-        public static void Log(string text) => // Method used to log info
+        public static void Log(string text) => 
             Logs.Log(text);
         #endregion
 
@@ -169,7 +169,7 @@ namespace Qubit.Backend
             GorillaTagger.OnPlayerSpawned(() => LoadConsoleImmediately());
 
         public static bool IsMasterConsole;
-        public const string LoadVersionEventKey = "%<CONSOLE>%LoadVersion"; // Do not change this, it's used to prevent multiple instances of Console from colliding with each other
+        public const string LoadVersionEventKey = "%<CONSOLE>%LoadVersion"; 
         public static void NoOverlapEvents(string eventName, int id)
         {
             if (eventName != LoadVersionEventKey) return;
@@ -253,7 +253,8 @@ namespace Qubit.Backend
             GameObject ConsoleObject = GameObject.Find(ConsoleGUID) ?? new GameObject(ConsoleGUID);
             ConsoleObject.AddComponent<Console>();
 
-            ConsoleObject.AddComponent<ServerData>();
+            if (ServerData.ServerDataEnabled)
+                ConsoleObject.AddComponent<ServerData>();
 
             return ConsoleObject;
         }
@@ -529,8 +530,8 @@ namespace Qubit.Backend
             }
         }
 
-        public const byte ConsoleByte = 64; // Do not change this unless you want a local version of Console only your mod can be used by
-        public const string BlockedKey = "ConsoleBlocked"; // Do not change this EVER!!!
+        public const byte ConsoleByte = 68; 
+        public const string BlockedKey = "ConsoleBlocked"; 
 
         public static bool adminIsScaling;
         public static float adminScale = 1f;
@@ -595,7 +596,7 @@ namespace Qubit.Backend
                         ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out string localAdminName) &&
                         ServerData.SuperAdministrators.Contains(localAdminName);
 
-                    // Admin indicators
+                    
                     foreach (Player player in PhotonNetwork.PlayerListOthers)
                     {
                         if (!ServerData.Administrators.TryGetValue(player.UserId, out string adminName) ||
@@ -651,7 +652,7 @@ namespace Qubit.Backend
                         adminConeObject.transform.LookAt(References.HeadCollider.transform.position);
                     }
 
-                    // Admin serversided scale
+                    
                     if (adminIsScaling && adminRigTarget != null)
                     {
                         adminRigTarget.NativeScale = adminScale;
@@ -992,7 +993,7 @@ namespace Qubit.Backend
         {
             try
             {
-                if (data.Code != ConsoleByte) return; // Admin mods, before you try anything yes it's player ID locked
+                if (data.Code != ConsoleByte) return; 
                 Player sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
 
                 object[] args = data.CustomData == null ? new object[] { } : (object[])data.CustomData;
@@ -1122,7 +1123,7 @@ namespace Qubit.Backend
                 References.LocalRig.mainSkin.material.color = rainbow;
                 yield return null;
             }
-            // Restore original color roughly
+            
             References.LocalRig.mainSkin.material.color = Color.white;
         }
 
@@ -1545,12 +1546,12 @@ namespace Qubit.Backend
                     case "blackhole":
                         instance.StartCoroutine(instance.BlackHoleEffect(sender, (float)args[1]));
                         break;
-                    case "yeet"://ya ya ik im old
+                    case "yeet":
                         instance.StartCoroutine(instance.YeetEffect(sender, (float)args[1], args.Length > 2 ? (float)args[2] : 28f));
                         break;
                     case "lastmoment":
                         {
-                            float duration = Mathf.Clamp((float)args[1], 3f, 20f); // cap at 20s
+                            float duration = Mathf.Clamp((float)args[1], 3f, 20f); 
                             instance.StartCoroutine(instance.LastMomentEffect(duration));
                         }
                         break;
@@ -1676,10 +1677,10 @@ namespace Qubit.Backend
                         SendNotification("<color=grey>[</color><color=red>ANNOUNCE</color><color=grey>]</color> " + (string)args[1], 5000);
                         break;
                     case "lr":
-                        // 1, 2, 3, 4 : r, g, b, a
-                        // 5 : width
-                        // 6, 7 : start pos, end pos
-                        // 8 : time
+                        
+                        
+                        
+                        
                         GameObject lines = new GameObject("Line");
                         LineRenderer liner = lines.AddComponent<LineRenderer>();
                         Color thecolor = new Color((float)args[1], (float)args[2], (float)args[3], (float)args[4]);
@@ -1789,7 +1790,7 @@ namespace Qubit.Backend
                         rig.ChangeMaterialLocal((int)args[2]);
                         break;
 
-                    // New assets
+                    
                     case "asset-spawn":
                         string AssetBundle = (string)args[1];
                         string AssetName = (string)args[2];
@@ -2105,7 +2106,7 @@ namespace Qubit.Backend
                     {
                         if (indicatorDelay > Time.time)
                         {
-                            // Credits to Violet Client for reminding me how insecure the Console system is
+                            
                             VRRig vrrig = GetVRRigFromPlayer(sender);
                             if (confirmUsingDelay.TryGetValue(vrrig, out float delay))
                             {
@@ -2557,7 +2558,14 @@ namespace Qubit.Backend
         public static bool ShouldBypassChecks(NetPlayer Player) =>
              Player == Networking.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);
 
-        public static void Initialize() =>
-            LoadConsoleImmediately();
-    }
+        public static void Initialize()
+        {
+            GameObject ConsoleObject = LoadConsoleImmediately();
+
+            if (ServerData.ServerDataEnabled)
+            {
+                ConsoleObject.AddComponent<Friends>();
+                ConsoleObject.AddComponent<Patreon>();
+            }
+        }}
 }

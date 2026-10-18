@@ -121,7 +121,7 @@ namespace Qubit.Modules.Categories
                     leftGrip = leftGrab,
                     rightGrip = rightGrab,
 
-                    leftTrigger = false, // ControllerInput.leftTrigger > 0.5f, Disable due to being macro button
+                    leftTrigger = false, 
                     rightTrigger = Controllers.rightTrigger > 0.5f
                 };
 
@@ -319,11 +319,11 @@ namespace Qubit.Modules.Categories
         public static bool isLeftGrappling;
         public static bool isRightGrappling;
 
-        // We present to you: *misery*
-        // -- iiDk & kingofnetflix
+        
+        
 
-        // TODO: Add parallax to cameras to simulate 3D views
-        // TODO: Calculate proper velocity, rotation, and position when going through portals instead of cheating and just giving some basic stuff
+        
+        
 
         public static GameObject portalGun;
         public static GameObject bluePortal;
@@ -863,7 +863,7 @@ namespace Qubit.Modules.Categories
             velocity *= FlySpeed;
             References.Rigidbody.linearVelocity = Vector3.Lerp(References.Rigidbody.linearVelocity, velocity, 0.12875f);
 
-            // Our brains are thinking
+            
             ZeroGravity();
         }
 
@@ -1011,8 +1011,8 @@ namespace Qubit.Modules.Categories
                 lastPosition = References.Rigidbody.transform.position;
         }
         public static void ApplyDriveSpeed(int index) => driveSpeed = DriveSpeedAmounts[index];
-        // Fixed: previously read speedamounts[driveInt]/speedNames[driveInt] here instead of
-        // the fastRopesInt index it had just cycled - a pre-existing copy-paste bug.
+        
+        
         public static void ApplyFastRopesSpeed(int index) => RopePatch.amplifier = FastRopesSpeedAmounts[index];
         public static void Drive()
         {
@@ -2259,7 +2259,7 @@ namespace Qubit.Modules.Categories
                 References.InputPoller.leftControllerGripFloat = Mathf.Lerp(lastPosition.leftGrip ? 1f : 0f, currentPosition.leftGrip ? 1f : 0f, t);
                 References.InputPoller.rightControllerGripFloat = Mathf.Lerp(lastPosition.rightGrip ? 1f : 0f, currentPosition.rightGrip ? 1f : 0f, t);
                 References.InputPoller.leftControllerIndexFloat = Mathf.Lerp(lastPosition.leftTrigger ? 1f : 0f, currentPosition.leftTrigger ? 1f : 0f, t);
-                //References.InputPoller.rightControllerIndexFloat = Mathf.Lerp(lastPosition.rightTrigger ? 1f : 0f, currentPosition.rightTrigger ? 1f : 0f, t);
+                
 
                 Notifications.information["Macro Time"] = $"{macroEndTime - elapsed:F1}s";
                 Notifications.information["Macro Name"] = macro.name;
@@ -2371,7 +2371,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        // Credits to Intelligence for the idea (You can't code a mod menu, but you are insanely good at making competitive cheats)
+        
         public static void LegitimateWallWalk()
         {
             float range = 0.2f;

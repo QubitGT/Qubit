@@ -70,7 +70,15 @@ namespace Qubit.Core
                     Directory.CreateDirectory(target);
             }
             PatchHandler.PatchAll(true);
-            TOSPatches.enabled = Preferences.IsSavedEnabled(TOSPatches.ButtonName);
+            if (File.Exists($"{PluginInfo.BaseDirectory}/Qubit_Preferences.txt"))
+            {
+                if (File.ReadAllLines($"{PluginInfo.BaseDirectory}/Qubit_Preferences.txt")[0]
+                    .Split(";;")
+                    .Contains("Accept TOS"))
+                {
+                    TOSPatches.enabled = true;
+                }
+            }
             if (File.Exists($"{PluginInfo.BaseDirectory}/Qubit_DisableTelemetry.txt"))
                 ServerData.DisableTelemetry = true;
             GorillaTagger.OnPlayerSpawned(LoadMenu);
@@ -80,9 +88,9 @@ namespace Qubit.Core
         {
             PatchHandler.PatchAll();
             Coroutines coroutineManager = gameObject.AddComponent<Coroutines>();
-            AddOnStartAttribute.Apply(gameObject, false);
-            Console.Initialize();
-            AddOnStartAttribute.Apply(gameObject, true);
+            gameObject.AddComponent<Notifications>();
+            gameObject.AddComponent<CustomBoards>();
+            gameObject.AddComponent<UI>();
             coroutineManager.StartCoroutine(PatchIntegrityLoop());
         }
 
@@ -217,6 +225,7 @@ namespace Qubit.Core
             Visuals.Initialize();
             Frontend.Settings.InitializeScene();
 
+            Console.Initialize();
             Manager.TagNewModules();
 
             Plugins.Initialize();

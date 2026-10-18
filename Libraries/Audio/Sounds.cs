@@ -40,11 +40,11 @@ namespace Qubit.Libraries.Audio
     {
         public static GameObject audioManager;
 
-        /// <summary>
-        /// Plays a 2D audio clip at the specified volume using a singleton audio manager.
-        /// </summary>
-        /// <param name="sound">The audio clip to play.</param>
-        /// <param name="volume">The volume at which to play the audio clip. Defaults to 1f.</param>
+        
+
+
+
+
         public static void Play2DAudio(AudioClip sound, float volume = 1f)
         {
             if (audioManager == null)
@@ -58,13 +58,13 @@ namespace Qubit.Libraries.Audio
             ausrc.PlayOneShot(sound);
         }
 
-        /// <summary>
-        /// Plays an audio clip at a specified world position with configurable volume and spatial blend.
-        /// </summary>
-        /// <param name="sound">The audio clip to play.</param>
-        /// <param name="position">The world position where the audio should be played.</param>
-        /// <param name="volume">The volume at which to play the audio clip. Defaults to 1f.</param>
-        /// <param name="spatialBlend">The spatial blend value for 3D audio. Defaults to 1f.</param>
+        
+
+
+
+
+
+
         public static void PlayPositionAudio(AudioClip sound, Vector3 position, float volume = 1f, float spatialBlend = 1f)
         {
             GameObject audioManager = new GameObject("AudioMgr");
@@ -82,12 +82,12 @@ namespace Qubit.Libraries.Audio
 
         public static GameObject handAudioManager;
 
-        /// <summary>
-        /// Plays a looping audio clip at the specified volume from either the left or right hand in the VR rig.
-        /// </summary>
-        /// <param name="sound">The audio clip to play.</param>
-        /// <param name="volume">The playback volume for the audio clip.</param>
-        /// <param name="left">True to play audio from the left hand; false for the right hand.</param>
+        
+
+
+
+
+
         public static void PlayHandAudio(AudioClip sound, float volume, bool left)
         {
             if (handAudioManager == null)

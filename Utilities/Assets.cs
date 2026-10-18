@@ -161,7 +161,7 @@ namespace Qubit.Utilities
             if (stream != null)
             {
                 byte[] fileData = new byte[stream.Length];
-                // ReSharper disable once MustUseReturnValue
+                
                 stream.Read(fileData, 0, (int)stream.Length);
                 texture.LoadImage(fileData);
             }
@@ -182,7 +182,7 @@ namespace Qubit.Utilities
             string filePath = $"{PluginInfo.BaseDirectory}/{fileName}";
             string directory = Path.GetDirectoryName(filePath);
             if (!Directory.Exists(directory))
-                // ReSharper disable once AssignNullToNotNullAttribute
+                
                 Directory.CreateDirectory(directory);
 
             if (!File.Exists(filePath))

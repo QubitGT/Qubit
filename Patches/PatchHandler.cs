@@ -69,7 +69,8 @@ namespace Qubit.Patches
             {
                 try
                 {
-                    var originals = instance.CreateClassProcessor(type).Patch();
+                    instance.CreateClassProcessor(type).Patch();
+                    var originals = FindOriginals(type);
 
                     if (type.GetCustomAttribute<SecurityPatch>() != null && originals != null)
                     {
@@ -264,7 +265,8 @@ namespace Qubit.Patches
         {
             try
             {
-                var reapplied = instance.CreateClassProcessor(type).Patch();
+                instance.CreateClassProcessor(type).Patch();
+                var reapplied = FindOriginals(type);
                 if (reapplied != null)
                 {
                     lock (protectedLock)
@@ -290,6 +292,16 @@ namespace Qubit.Patches
             }
         }
 
+        private static List<MethodBase> FindOriginals(Type patchClass)
+        {
+            return HarmonyLib.Harmony.GetAllPatchedMethods().Where(method =>
+            {
+                var info = HarmonyLib.Harmony.GetPatchInfo(method);
+                return info != null && info.Prefixes.Concat(info.Postfixes)
+                    .Concat(info.Transpilers).Concat(info.Finalizers)
+                    .Any(patch => patch.owner == instance.Id && patch.PatchMethod.DeclaringType == patchClass);
+            }).ToList();
+        }
         private static bool ContainsOwner(IEnumerable<Patch> patches, string ownerId)
         {
             foreach (var p in patches)

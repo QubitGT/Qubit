@@ -2,44 +2,44 @@
 
 namespace Qubit.Libraries.DiscordRPC.RPC.Payload
 {
-    /// <summary>
-    /// See https://discordapp.com/developers/docs/topics/rpc#rpc-server-payloads-rpc-events for documentation
-    /// </summary>
+    
+
+
     internal enum ServerEvent
     {
 
-        /// <summary>
-        /// Sent when the server is ready to accept messages
-        /// </summary>
+        
+
+
         [EnumValue("READY")]
         Ready,
 
-        /// <summary>
-        /// Sent when something bad has happened
-        /// </summary>
+        
+
+
         [EnumValue("ERROR")]
         Error,
 
-        /// <summary>
-        /// Join Event 
-        /// </summary>
+        
+
+
         [EnumValue("ACTIVITY_JOIN")]
         ActivityJoin,
 
-        /// <summary>
-        /// Spectate Event
-        /// </summary>
+        
+
+
         [EnumValue("ACTIVITY_SPECTATE")]
         ActivitySpectate,
 
-        /// <summary>
-        /// Request Event
-        /// </summary>
+        
+
+
         [EnumValue("ACTIVITY_JOIN_REQUEST")]
         ActivityJoinRequest,
 
 #if INCLUDE_FULL_RPC
-        //Old things that are obsolete
+        
         [Obsolete("This value is appart of the RPC API and is not supported by this library.", true)]
         [EnumValue("GUILD_STATUS")]
         GuildStatus,

@@ -5,15 +5,15 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-    /// <summary>
-    /// A Rich Presence button.
-    /// </summary>
+    
+
+
     public class Button
     {
-        /// <summary>
-        /// Text shown on the button
-        /// <para>Max 31 bytes.</para>
-        /// </summary>
+        
+
+
+
         [JsonProperty("label")]
         public string Label
         {
@@ -26,10 +26,10 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _label;
 
-        /// <summary>
-        /// The URL opened when clicking the button.
-        /// <para>Max 512 characters.</para>
-        /// </summary>
+        
+
+
+
         [JsonProperty("url")]
         public string Url
         {

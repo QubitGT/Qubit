@@ -578,7 +578,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void StopAllSounds() // used to be FixMicrophone
+        public static void StopAllSounds() 
         {
             if (soundboardAudioManager != null)
             {

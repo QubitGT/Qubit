@@ -27,7 +27,6 @@ namespace Qubit.Patches.Menu
 {
     public class TOSPatches
     {
-        public const string ButtonName = "Accept TOS";
         public static bool enabled;
 
         [HarmonyPatch(typeof(LegalAgreements), nameof(LegalAgreements.Update))]

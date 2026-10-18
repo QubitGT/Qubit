@@ -123,7 +123,7 @@ namespace Qubit.Frontend
 
         public static void UpdatePhysicalReference()
         {
-            // Remove physical menu reference if too far away
+            
             if (physicalMenu && menu != null)
             {
                 try

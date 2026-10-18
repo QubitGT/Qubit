@@ -60,7 +60,7 @@ namespace Qubit.Frontend.Classes
             buttonCooldown = Time.time + 0.2f;
             if (qubitAction != null) { qubitAction(); return; }
             if (qubitFront != null) QubitDetails.Inspect(relatedText);
-            if (relatedText != "Global Return") // HARDCODED GLOBAL RETURN CHECK (im gonna forget)
+            if (relatedText != "Global Return") 
                 Sounds.Play(Sounds.DefaultSounds["Button"], buttonText: relatedText);
 
             if (annoyingMode)

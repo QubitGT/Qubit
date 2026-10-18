@@ -77,7 +77,7 @@ namespace Qubit.Modules.Categories
             public byte size;
         }
 
-        // Credits to The-Graze/MusicControls for control methods
+        
         internal enum VirtualKeyCodes : uint
         {
             NEXT_TRACK = 0xB0,
@@ -150,7 +150,7 @@ namespace Qubit.Modules.Categories
                     };
 
                     _mediaSpriteSheet.spriteInfoList = new List<TMP_Sprite>();
-                    Traverse.Create(_mediaSpriteSheet).Field("m_Version").SetValue("1.1.0"); // TextMeshPro kills itself unless this is set.
+                    Traverse.Create(_mediaSpriteSheet).Field("m_Version").SetValue("1.1.0"); 
 
                     _mediaSpriteSheet.spriteGlyphTable.Clear();
                     for (int i = 0; i < spriteDataList.Count; i++)
@@ -236,7 +236,7 @@ namespace Qubit.Modules.Categories
             yield return new WaitUntil(() => instance.netState == NetSystemState.Idle);
             yield return new WaitForSeconds(0.5f);
 
-            // instance.netState = NetSystemState.Connecting;
+            
 
             while (!instance.InRoom)
             {
@@ -273,7 +273,7 @@ namespace Qubit.Modules.Categories
             ManagerRegistry.GorillaServer.BroadcastMyRoom(broadcastMyRoomRequest, delegate { }, delegate { });
         }
 
-        // The code below is fully safe. I know, it seems suspicious.
+        
         public static void RestartGame()
         {
             Preferences.Save();
@@ -847,7 +847,7 @@ exit";
             References.InputPoller.rightControllerIndexFloat += UnityInput.GetKey(Key.Equals) ? 1f : 0f;
         }
 
-        // Credits to Zlothy29IQ on GitHub. I saw he made it first and just took it. Thanks. Thanks. Thanks. Thanks
+        
         public static void DisableAprilFoolsFX()
         {
             try
