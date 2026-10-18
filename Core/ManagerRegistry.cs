@@ -26,7 +26,6 @@ namespace Qubit.Core
 {
     public class ManagerRegistry
     {
-        #region Public Properties
         public class GhostReactor
         {
             public static GhostReactorManager GhostReactorManager
@@ -111,7 +110,7 @@ namespace Qubit.Core
             get => GetBuilderTable();
         }
 
-        private static LightningManager _lightningManager;
+        public static LightningManager _lightningManager;
         public static LightningManager LightningManager
         {
             get
@@ -123,14 +122,11 @@ namespace Qubit.Core
             }
             set => _lightningManager = value;
         }
-        #endregion
 
-        #region Private Methods
-        private static BuilderTable GetBuilderTable()
+        public static BuilderTable GetBuilderTable()
         {
-            BuilderTable.TryGetBuilderTableForZone(VRRig.LocalRig.zoneEntity.currentZone, out BuilderTable table);
+            BuilderTable.TryGetBuilderTableForZone(References.LocalRig.zoneEntity.currentZone, out BuilderTable table);
             return table;
         }
-        #endregion
     }
 }
