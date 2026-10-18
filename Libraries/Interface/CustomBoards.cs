@@ -177,8 +177,8 @@ namespace Qubit.Libraries.Interface
         }
 
         #region Game Boards
-        public const int StumpLeaderboardIndex = 3;
-        public const int ForestLeaderboardIndex = 6;
+        public const int StumpLeaderboardIndex = 8;
+        public const int ForestLeaderboardIndex = 7;
 
         public static bool motdTextDirty = true;
         public static string motdTemplate = "You are using build {0}. This menu was created by Qubit Software. " +
