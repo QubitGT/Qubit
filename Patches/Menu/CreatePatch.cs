@@ -22,6 +22,7 @@
 using GorillaTagScripts;
 using HarmonyLib;
 using Qubit.Modules.Categories;
+using Qubit.Libraries.Entities;
 
 namespace Qubit.Patches.Menu
 {
@@ -37,7 +38,7 @@ namespace Qubit.Patches.Menu
             {
                 if (pieceTypeSearch == pieceType)
                 {
-                    Fun.pieceId = pieceId;
+                    Blocks.pieceId = pieceId;
                     enabled = false;
                 }
             }

@@ -40,7 +40,7 @@ namespace Qubit.Patches.Menu
                 {
                     bool grounded = false;
 
-                    TakeMyHand_HandLink handLink = releasingHand == EquipmentInteractor.instance.leftHand ? References.LocalRig.leftHandLink : References.LocalRig.rightHandLink;
+                    TakeMyHand_HandLink handLink = releasingHand == ManagerRegistry.EquipmentInteractor.leftHand ? References.LocalRig.leftHandLink : References.LocalRig.rightHandLink;
 
                     HandLinkAuthorityStatus selfHandLinkAuthority = References.Player.TakeMyHand_GetSelfHandLinkAuthority();
                     HandLinkAuthorityStatus selfChainAuthority = handLink.GetChainAuthority(out _);

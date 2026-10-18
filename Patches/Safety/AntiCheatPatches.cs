@@ -46,19 +46,19 @@ namespace Qubit.Patches.Safety
                 if (AntiCheatSelf || AntiCheatAll)
                 {
                     if (susId == PhotonNetwork.LocalPlayer.UserId)
-                        Notifications.SendNotification($"<color=grey>[</color><color=green>ANTI-CHEAT</color><color=grey>]</color> You have been reported for {(AntiCheatReasonHide ? "hidden reason" : susReason)}.");
+                        Notifications.SendFormat("green", "ANTI-CHEAT", $"You have been reported for {(AntiCheatReasonHide ? "hidden reason" : susReason)}.");
                     else
                     {
                         if (AntiCheatAll)
-                            Notifications.SendNotification($"<color=grey>[</color><color=green>ANTI-CHEAT</color><color=grey>]</color> {susNick} was reported for {(AntiCheatReasonHide ? "hidden reason" : susReason)}.");
+                            Notifications.SendFormat("green", "ANTI-CHEAT", $"{susNick} was reported for {(AntiCheatReasonHide ? "hidden reason" : susReason)}.");
                     }
                 }
 
                 if (AntiACReport)
                 {
                     Modules.Categories.Safety.AntiReportFRT(PhotonNetwork.LocalPlayer);
-                    Notifications.ClearAllNotifications();
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> The anti cheat attempted to report you, you have been disconnected.");
+                    Notifications.Clear();
+                    Notifications.SendFormat("purple", "ANTI-REPORT", "The anti cheat attempted to report you, you have been disconnected.");
                 }
 
                 return false;

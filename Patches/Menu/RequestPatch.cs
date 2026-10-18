@@ -32,6 +32,7 @@ using UnityEngine;
 
 namespace Qubit.Patches.Menu
 {
+    using Cosmetics = Qubit.Libraries.Entities.Cosmetics;
     [HarmonyPatch(typeof(VRRig), nameof(VRRig.RequestCosmetics))]
     public class RequestPatch
     {
@@ -45,7 +46,7 @@ namespace Qubit.Patches.Menu
             {
                 if (CosmeticsController.hasInstance)
                 {
-                    if (CosmeticsController.instance.isHidingCosmeticsFromRemotePlayers)
+                    if (ManagerRegistry.CosmeticsController.isHidingCosmeticsFromRemotePlayers)
                     {
                         References.MyRigView.SendRPC("RPC_HideAllCosmetics", info.Sender);
                         return false;
@@ -61,16 +62,16 @@ namespace Qubit.Patches.Menu
                     {
                         CosmeticsController.CosmeticSet items = new CosmeticsController.CosmeticSet
                         (
-                            CosmeticsController.instance.currentWornSet.ToDisplayNameArray().Select(
+                            ManagerRegistry.CosmeticsController.currentWornSet.ToDisplayNameArray().Select(
                                 cosmetic => Frontend.Settings.CosmeticsOwned.Contains(cosmetic)
                                     ? cosmetic
                                     : "null"
                                 )
                             .ToArray(),
-                            CosmeticsController.instance
+                            ManagerRegistry.CosmeticsController
                         );
 
-                        References.MyRigView.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", References.Network.GetPlayer(info.senderID), items.ToPackedIDArray(), CosmeticsController.instance.tryOnSet.ToPackedIDArray(), false);
+                        References.MyRigView.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", ManagerRegistry.NetworkSystem.GetPlayer(info.senderID), items.ToPackedIDArray(), ManagerRegistry.CosmeticsController.tryOnSet.ToPackedIDArray(), false);
                         return false;
                     }
                 }
@@ -90,20 +91,20 @@ namespace Qubit.Patches.Menu
 
                 string[] cosmeticArray = { "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU." };
 
-                archiveCosmetics = CosmeticsController.instance.currentWornSet.ToDisplayNameArray();
-                CosmeticsController.instance.currentWornSet = new CosmeticsController.CosmeticSet(cosmeticArray, CosmeticsController.instance);
+                archiveCosmetics = ManagerRegistry.CosmeticsController.currentWornSet.ToDisplayNameArray();
+                ManagerRegistry.CosmeticsController.currentWornSet = new CosmeticsController.CosmeticSet(cosmeticArray, ManagerRegistry.CosmeticsController);
 
                 while (Vector3.Distance(Serialization.ServerPos, target) > 0.2f)
                     yield return null;
 
                 yield return new WaitForSeconds(0.1f);
 
-                References.MyRigView.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.Others, Fun.PackCosmetics(cosmeticArray), CosmeticsController.instance.currentWornSet.ToPackedIDArray(), false);
+                References.MyRigView.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.Others, Cosmetics.PackCosmetics(cosmeticArray), ManagerRegistry.CosmeticsController.currentWornSet.ToPackedIDArray(), false);
                 References.LocalRig.enabled = true;
                 yield return new WaitForSeconds(0.5f);
 
-                CosmeticsController.instance.currentWornSet = new CosmeticsController.CosmeticSet(archiveCosmetics, CosmeticsController.instance);
-                References.LocalRig.LocalUpdateCosmeticsWithTryon(CosmeticsController.instance.currentWornSet, CosmeticsController.instance.tryOnSet, false);
+                ManagerRegistry.CosmeticsController.currentWornSet = new CosmeticsController.CosmeticSet(archiveCosmetics, ManagerRegistry.CosmeticsController);
+                References.LocalRig.LocalUpdateCosmeticsWithTryon(ManagerRegistry.CosmeticsController.currentWornSet, ManagerRegistry.CosmeticsController.tryOnSet, false);
 
                 float delay = Time.time + 30f;
                 while (Time.time < delay || Networking.InRoom)

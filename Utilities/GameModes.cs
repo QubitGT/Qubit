@@ -19,6 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Reflection;
+using static Qubit.Extensions.Colors;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Networking.Serialization;
 using GorillaGameModes;
 using GorillaTagScripts;
 using Photon.Pun;
@@ -33,23 +38,23 @@ using static Qubit.Utilities.GameObj;
 
 namespace Qubit.Utilities
 {
-    public class GameModes
+    public static class GameModes
     {
         public static List<NetPlayer> InfectedList()
         {
             List<NetPlayer> infected = new List<NetPlayer>();
 
-            if (!Networking.InRoom || GorillaGameManager.instance == null)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager == null)
                 return infected;
 
-            switch (GorillaGameManager.instance.GameType())
+            switch (ManagerRegistry.GorillaGameManager.GameType())
             {
                 case GameModeType.Infection:
                 case GameModeType.InfectionCompetitive:
                 case GameModeType.SuperInfect:
                 case GameModeType.FreezeTag:
                 case GameModeType.PropHunt:
-                    if (GorillaGameManager.instance is GorillaTagManager tagManager)
+                    if (ManagerRegistry.GorillaGameManager is GorillaTagManager tagManager)
                     {
                         if (tagManager.isCurrentlyTag)
                         {
@@ -65,7 +70,7 @@ namespace Qubit.Utilities
 
                 case GameModeType.Ghost:
                 case GameModeType.Ambush:
-                    if (GorillaGameManager.instance is GorillaAmbushManager ghostManager)
+                    if (ManagerRegistry.GorillaGameManager is GorillaAmbushManager ghostManager)
                     {
                         if (ghostManager.isCurrentlyTag)
                         {
@@ -80,7 +85,7 @@ namespace Qubit.Utilities
                     break;
 
                 case GameModeType.Paintbrawl:
-                    if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
+                    if (ManagerRegistry.GorillaGameManager is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
                     {
                         infected.AddRange(
                             paintbrawlManager.playerLives
@@ -90,7 +95,7 @@ namespace Qubit.Utilities
                                 .Select(dummy => (NetPlayer)dummy)
                         );
 
-                        if (References.Network?.LocalPlayer != null && !infected.Contains(Networking.LocalPlayer))
+                        if (ManagerRegistry.NetworkSystem?.LocalPlayer != null && !infected.Contains(Networking.LocalPlayer))
                             infected.Add(Networking.LocalPlayer);
                     }
                     break;
@@ -101,17 +106,17 @@ namespace Qubit.Utilities
 
         public static void AddInfected(NetPlayer plr)
         {
-            if (!Networking.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager == null || plr == null)
                 return;
 
-            switch (GorillaGameManager.instance.GameType())
+            switch (ManagerRegistry.GorillaGameManager.GameType())
             {
                 case GameModeType.Infection:
                 case GameModeType.InfectionCompetitive:
                 case GameModeType.SuperInfect:
                 case GameModeType.FreezeTag:
                 case GameModeType.PropHunt:
-                    if (GorillaGameManager.instance is GorillaTagManager tagManager)
+                    if (ManagerRegistry.GorillaGameManager is GorillaTagManager tagManager)
                     {
                         if (tagManager.isCurrentlyTag)
                             tagManager.ChangeCurrentIt(plr);
@@ -122,7 +127,7 @@ namespace Qubit.Utilities
 
                 case GameModeType.Ghost:
                 case GameModeType.Ambush:
-                    if (GorillaGameManager.instance is GorillaAmbushManager ghostManager)
+                    if (ManagerRegistry.GorillaGameManager is GorillaAmbushManager ghostManager)
                     {
                         if (ghostManager.isCurrentlyTag)
                             ghostManager.ChangeCurrentIt(plr);
@@ -132,7 +137,7 @@ namespace Qubit.Utilities
                     break;
 
                 case GameModeType.Paintbrawl:
-                    if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
+                    if (ManagerRegistry.GorillaGameManager is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
                         SetPaintbrawlHealth(plr.ActorNumber, 0);
 
                     break;
@@ -141,17 +146,17 @@ namespace Qubit.Utilities
 
         public static void RemoveInfected(NetPlayer plr)
         {
-            if (!Networking.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager == null || plr == null)
                 return;
 
-            switch (GorillaGameManager.instance.GameType())
+            switch (ManagerRegistry.GorillaGameManager.GameType())
             {
                 case GameModeType.Infection:
                 case GameModeType.InfectionCompetitive:
                 case GameModeType.SuperInfect:
                 case GameModeType.FreezeTag:
                 case GameModeType.PropHunt:
-                    if (GorillaGameManager.instance is GorillaTagManager tagManager)
+                    if (ManagerRegistry.GorillaGameManager is GorillaTagManager tagManager)
                     {
                         switch (tagManager.isCurrentlyTag)
                         {
@@ -167,7 +172,7 @@ namespace Qubit.Utilities
 
                 case GameModeType.Ghost:
                 case GameModeType.Ambush:
-                    if (GorillaGameManager.instance is GorillaAmbushManager ghostManager)
+                    if (ManagerRegistry.GorillaGameManager is GorillaAmbushManager ghostManager)
                     {
                         switch (ghostManager.isCurrentlyTag)
                         {
@@ -182,7 +187,7 @@ namespace Qubit.Utilities
                     break;
 
                 case GameModeType.Paintbrawl:
-                    if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
+                    if (ManagerRegistry.GorillaGameManager is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
                         SetPaintbrawlHealth(plr.ActorNumber, 3);
 
                     break;
@@ -191,30 +196,30 @@ namespace Qubit.Utilities
 
         public static void AddRock(NetPlayer plr)
         {
-            if (!Networking.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager == null || plr == null)
                 return;
 
-            switch (GorillaGameManager.instance.GameType())
+            switch (ManagerRegistry.GorillaGameManager.GameType())
             {
                 case GameModeType.Infection:
                 case GameModeType.InfectionCompetitive:
                 case GameModeType.SuperInfect:
                 case GameModeType.FreezeTag:
                 case GameModeType.PropHunt:
-                    if (GorillaGameManager.instance is GorillaTagManager tagManager)
+                    if (ManagerRegistry.GorillaGameManager is GorillaTagManager tagManager)
                         tagManager.ChangeCurrentIt(plr);
 
                     break;
 
                 case GameModeType.Ghost:
                 case GameModeType.Ambush:
-                    if (GorillaGameManager.instance is GorillaAmbushManager ghostManager)
+                    if (ManagerRegistry.GorillaGameManager is GorillaAmbushManager ghostManager)
                         ghostManager.ChangeCurrentIt(plr);
 
                     break;
 
                 case GameModeType.Paintbrawl:
-                    if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
+                    if (ManagerRegistry.GorillaGameManager is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
                         SetPaintbrawlHealth(plr.ActorNumber, 0);
 
                     break;
@@ -223,30 +228,30 @@ namespace Qubit.Utilities
 
         public static void RemoveRock(NetPlayer plr)
         {
-            if (!Networking.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager == null || plr == null)
                 return;
 
-            switch (GorillaGameManager.instance.GameType())
+            switch (ManagerRegistry.GorillaGameManager.GameType())
             {
                 case GameModeType.Infection:
                 case GameModeType.InfectionCompetitive:
                 case GameModeType.SuperInfect:
                 case GameModeType.FreezeTag:
                 case GameModeType.PropHunt:
-                    if (GorillaGameManager.instance is GorillaTagManager tagManager && tagManager.currentIt == plr)
+                    if (ManagerRegistry.GorillaGameManager is GorillaTagManager tagManager && tagManager.currentIt == plr)
                         tagManager.ChangeCurrentIt(null);
 
                     break;
 
                 case GameModeType.Ghost:
                 case GameModeType.Ambush:
-                    if (GorillaGameManager.instance is GorillaAmbushManager ghostManager && ghostManager.currentIt == plr)
+                    if (ManagerRegistry.GorillaGameManager is GorillaAmbushManager ghostManager && ghostManager.currentIt == plr)
                         ghostManager.ChangeCurrentIt(null);
 
                     break;
 
                 case GameModeType.Paintbrawl:
-                    if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
+                    if (ManagerRegistry.GorillaGameManager is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
                         SetPaintbrawlHealth(plr.ActorNumber, 3);
 
                     break;
@@ -318,7 +323,7 @@ namespace Qubit.Utilities
 
         public static void SetGuardian(NetPlayer target)
         {
-            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
             if (IsGuardian(target))
                 return;
 
@@ -341,7 +346,7 @@ namespace Qubit.Utilities
         {
             if (Networking.InRoom)
             {
-                if (GorillaGameManager.instance.GameType() != GameModeType.Guardian)
+                if (ManagerRegistry.GorillaGameManager.GameType() != GameModeType.Guardian)
                     return;
 
                 if (Networking.IsMasterClient)
@@ -384,19 +389,19 @@ namespace Qubit.Utilities
         #region Prop Hunt
         public static void SetPropHuntHandDistance(float distance)
         {
-            if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (Networking.InRoom && ManagerRegistry.GorillaGameManager.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager.m_ph_hand_follow_distance = distance;
         }
 
         public static void SetPropHuntRoundStart(int millis)
         {
-            if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (Networking.InRoom && ManagerRegistry.GorillaGameManager.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager._ph_timeRoundStartedMillis = millis;
         }
 
         public static void RandomizePropHuntSeed()
         {
-            if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (Networking.InRoom && ManagerRegistry.GorillaGameManager.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager._ph_randomSeed = UnityEngine.Random.Range(1, int.MaxValue);
         }
         #endregion
@@ -404,24 +409,56 @@ namespace Qubit.Utilities
         #region Monke Ball
         public static void SetMonkeBallTeams(Dictionary<int, int> colors) // ActorNumber : Team // 0 = Blue, 1 = Red, -1 = None
         {
-            var filteredPlayers = References.Network.AllNetPlayers
+            var filteredPlayers = ManagerRegistry.NetworkSystem.AllNetPlayers
                 .Where(p => colors.ContainsKey(p.ActorNumber));
-            MonkeBallGame.Instance.photonView.RPC(
+            ManagerRegistry.MonkeBallGame.photonView.RPC(
                 "RequestSetGameStateRPC",
                 RpcTarget.All,
                 (int)MonkeBallGame.GameState.Playing,
-                PhotonNetwork.Time + (MonkeBallGame.Instance.gameDuration - 1f),
+                PhotonNetwork.Time + (ManagerRegistry.MonkeBallGame.gameDuration - 1f),
                 filteredPlayers.Select(p => p.ActorNumber).ToArray(),
                 filteredPlayers.Select(p => colors[p.ActorNumber]).ToArray(),
-                new int[MonkeBallGame.Instance.team.Count],
-                MonkeBallGame.Instance.startingBalls
+                new int[ManagerRegistry.MonkeBallGame.team.Count],
+                ManagerRegistry.MonkeBallGame.startingBalls
                     .Select(ball => BitPackUtils.PackHandPosRotForNetwork(ball.transform.position, ball.transform.rotation))
                     .ToArray(),
-                MonkeBallGame.Instance.startingBalls
+                ManagerRegistry.MonkeBallGame.startingBalls
                     .Select(ball => BitPackUtils.PackWorldPosForNetwork(ball.gameBall.GetVelocity()))
                     .ToArray()
             );
         }
         #endregion
-}
+
+
+        public static void RequestGrab(this GameEntity gameEntity, bool isLeftHand, Vector3 localPosition, Quaternion localRotation, GameEntityManager manager = null)
+        {
+            GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;
+            if (gameEntityManager.IsAuthority())
+                (manager ?? ManagerRegistry.GhostReactor.GameEntityManager).photonView.RPC("GrabEntityRPC", RpcTarget.All, new object[] { gameEntity.id, isLeftHand, BitPackUtils.PackHandPosRotForNetwork(localPosition, localRotation), Networking.LocalPlayer.GetPlayer() });
+            else
+                (manager ?? ManagerRegistry.GhostReactor.GameEntityManager).RequestGrabEntity(gameEntity.id, isLeftHand, localPosition, localRotation);
+        }
+
+        public static void RequestThrow(this GameEntity gameEntity, bool isLeftHand, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angVelocity, GameEntityManager manager = null)
+        {
+            GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;
+            if (gameEntityManager.IsAuthority())
+                gameEntityManager.photonView.RPC("ThrowEntityRPC", RpcTarget.All, new object[] { gameEntity.id, isLeftHand, position, rotation, velocity, angVelocity, Networking.LocalPlayer.GetPlayer(), PhotonNetwork.Time });
+            else
+                gameEntityManager.photonView.RPC("RequestThrowEntityRPC", RpcTarget.MasterClient, new object[]
+                {
+                    gameEntityManager.GetNetIdFromEntityId(gameEntity.id),
+                    isLeftHand,
+                    position,
+                    rotation,
+                    velocity,
+                    angVelocity
+                });
+        }
+
+        public static int CreateTypeNetId(this GameEntityManager manager, int typeId) =>
+            manager.CreateNetId(1 + manager.FactoryGetBuiltInEntityCountById(typeId));
+
+        public static int GetInvalidNetId(this GameEntityManager manager) =>
+            manager.GetNetIdFromEntityId(GameEntityId.Invalid);}
 }

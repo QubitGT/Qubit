@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using HarmonyLib;
 
@@ -33,21 +34,21 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                CosmeticsController.CosmeticItem itemFromDict = CosmeticsController.instance.GetItemFromDict(CosmeticsController.instance.itemToBuy.itemName);
+                CosmeticsController.CosmeticItem itemFromDict = ManagerRegistry.CosmeticsController.GetItemFromDict(ManagerRegistry.CosmeticsController.itemToBuy.itemName);
                 if (itemFromDict.itemCategory == CosmeticsController.CosmeticCategory.Set)
                 {
-                    CosmeticsController.instance.UnlockItem(CosmeticsController.instance.itemToBuy.itemName);
+                    ManagerRegistry.CosmeticsController.UnlockItem(ManagerRegistry.CosmeticsController.itemToBuy.itemName);
                     foreach (string item in itemFromDict.bundledItems)
-                        CosmeticsController.instance.UnlockItem(item);
+                        ManagerRegistry.CosmeticsController.UnlockItem(item);
                 }
                 else
-                    CosmeticsController.instance.UnlockItem(CosmeticsController.instance.itemToBuy.itemName);
+                    ManagerRegistry.CosmeticsController.UnlockItem(ManagerRegistry.CosmeticsController.itemToBuy.itemName);
 
-                CosmeticsController.instance.UpdateMyCosmetics();
-                CosmeticsController.instance.currentPurchaseItemStage = CosmeticsController.PurchaseItemStages.Success;
+                ManagerRegistry.CosmeticsController.UpdateMyCosmetics();
+                ManagerRegistry.CosmeticsController.currentPurchaseItemStage = CosmeticsController.PurchaseItemStages.Success;
 
-                CosmeticsController.instance.UpdateShoppingCart();
-                CosmeticsController.instance.ProcessPurchaseItemState(null, CosmeticsController.instance.isLastHandTouchedLeft);
+                ManagerRegistry.CosmeticsController.UpdateShoppingCart();
+                ManagerRegistry.CosmeticsController.ProcessPurchaseItemState(null, ManagerRegistry.CosmeticsController.isLastHandTouchedLeft);
 
                 return false;
             }

@@ -24,7 +24,7 @@ using HarmonyLib;
 
 namespace Qubit.Patches.Menu
 {
-    [HarmonyPatch(typeof(BuilderTable), nameof(BuilderTable.RequestPlacePiece))]
+    [HarmonyPatch(typeof(BuilderTable), nameof(BuilderTable.PlacePiece))]
     public class PlacePatch
     {
         public static BuilderPiece _piece;

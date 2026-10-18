@@ -337,13 +337,13 @@ namespace Qubit.Patches
                 if (CriticalPatchFailed)
                 {
                     string message = "A critical patch has failed, and you have been blocked from joining rooms for safety reasons. Please report this as an issue to the GitHub repository.";
-                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> {message}", 10000);
+                    Notifications.SendFormat("red", "ERROR", $"{message}", 10000);
                     References.Computer.GeneralFailureMessage(message);
                     if (Networking.InRoom)
-                        References.Network.ReturnToSinglePlayer();
+                        ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
                 }
                 else
-                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> {PatchErrors} patch{(PatchErrors > 1 ? "es" : "")} failed to initialize. Please report this as an issue to the GitHub repository.", 10000);
+                    Notifications.SendFormat("red", "ERROR", $"{PatchErrors} patch{(PatchErrors > 1 ? "es" : "")} failed to initialize. Please report this as an issue to the GitHub repository.", 10000);
             }
         }
     }

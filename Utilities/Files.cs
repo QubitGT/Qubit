@@ -20,13 +20,14 @@
  */
 
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEngine;
 
 namespace Qubit.Utilities
 {
-    public class Files
+    public static class Files
     {
         public static string GetFileExtension(string fileName)
         {
@@ -105,5 +106,14 @@ namespace Qubit.Utilities
 
             return input;
         }
+
+        public static Process Start(string fileName, string arguments = null) =>
+            Start(arguments == null ? new ProcessStartInfo(fileName) : new ProcessStartInfo(fileName, arguments));
+
+        public static Process Start(ProcessStartInfo startInfo) =>
+            Process.Start(startInfo);
+
+        public static void OpenURL(string url) =>
+            Application.OpenURL(url);
     }
 }

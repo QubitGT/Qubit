@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using HarmonyLib;
 
@@ -35,9 +36,9 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                PhotonNetworkController.Instance.AttemptToJoinRankedPublicRoomAsync(
+                ManagerRegistry.PhotonNetworkController.AttemptToJoinRankedPublicRoomAsync(
                     triggeredTrigger,
-                    targetTier ?? RankedProgressionManager.Instance.GetRankedMatchmakingTier().ToString(),
+                    targetTier ?? ManagerRegistry.RankedProgressionManager.GetRankedMatchmakingTier().ToString(),
                     targetPlatform ?? "PC",
                     roomJoinType
                 );

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using HarmonyLib;
 
@@ -32,7 +33,7 @@ namespace Qubit.Patches.Menu
         private static void Prefix()
         {
             if (enabled)
-                PhotonNetworkController.Instance.currentJoinType = JoinType.FollowingParty;
+                ManagerRegistry.PhotonNetworkController.currentJoinType = JoinType.FollowingParty;
         }
     }
 }

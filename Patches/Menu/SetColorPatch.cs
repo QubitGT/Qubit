@@ -34,7 +34,7 @@ namespace Qubit.Patches.Menu
             NetPlayer player = Players.GetPlayerFromVRRig(__instance) ?? null;
             if (player != null && Console.ShouldBypassChecks(player))
             {
-                if (info.senderID == References.Network.GetOwningPlayerID(__instance.rigSerializer.gameObject))
+                if (info.senderID == ManagerRegistry.NetworkSystem.GetOwningPlayerID(__instance.rigSerializer.gameObject))
                     __instance.InitializeNoobMaterialLocal(red, green, blue);
 
                 return false;

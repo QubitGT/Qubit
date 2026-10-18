@@ -114,9 +114,9 @@ namespace Qubit.Patches.Menu
                         if (error.ErrorMessage.ToLower().Contains("ban") || error.ErrorMessage.ToLower().Contains("banned") || error.ErrorMessage.ToLower().Contains("suspended") || error.ErrorMessage.ToLower().Contains("suspension"))
                         {
                             if (error.ErrorMessage.ToLower().Contains("this ip"))
-                                Notifications.SendNotification("<color=grey>[</color><color=red>ANTI-BAN</color><color=grey>]</color> Your IP address is currently banned.");
+                                Notifications.SendFormat("red", "ANTI-BAN", "Your IP address is currently banned.");
                             else
-                                Notifications.SendNotification("<color=grey>[</color><color=red>ANTI-BAN</color><color=grey>]</color> Your account is currently banned.");
+                                Notifications.SendFormat("red", "ANTI-BAN", "Your account is currently banned.");
                             Dictionary<string, List<string>>.Enumerator enumerator = error.ErrorDetails.GetEnumerator();
                             if (enumerator.Current.Value[0] == null || enumerator.Current.Value[0] == "Indefinite")
                             {

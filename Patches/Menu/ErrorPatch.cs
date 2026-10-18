@@ -50,7 +50,7 @@ namespace Qubit.Patches.Menu
             DateTime banEnd = isIndefinite ? DateTime.MaxValue : DateTime.Parse(keyValuePair.Value[0]);
             TimeSpan remaining = banEnd - DateTime.UtcNow;
 
-            string banMessage = @$"Your account {PlayFabAuthenticator.instance.GetPlayFabPlayerId()} has been banned.
+            string banMessage = @$"Your account {ManagerRegistry.PlayFabAuthenticator.GetPlayFabPlayerId()} has been banned.
 Ban Reason: {keyValuePair.Key}
 Time Left: {(isIndefinite ? "Indefinite" : FormatTimeLeft(remaining))}
 Unban Date: {(isIndefinite ? "Never" : banEnd.ToString("MMMM dd, yyyy h:mm tt"))}";

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using GorillaNetworking.Store;
 using HarmonyLib;
@@ -33,7 +34,7 @@ namespace Qubit.Patches.Menu
         private static void Postfix()
         {
             CosmeticsInitialized = true;
-            CosmeticsOwned = CosmeticsController.instance.concatStringCosmeticsAllowed;
+            CosmeticsOwned = ManagerRegistry.CosmeticsController.concatStringCosmeticsAllowed;
         }
     }
 }
