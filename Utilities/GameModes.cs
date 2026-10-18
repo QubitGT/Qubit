@@ -39,7 +39,7 @@ namespace Qubit.Utilities
         {
             List<NetPlayer> infected = new List<NetPlayer>();
 
-            if (!References.InRoom || GorillaGameManager.instance == null)
+            if (!Networking.InRoom || GorillaGameManager.instance == null)
                 return infected;
 
             switch (GorillaGameManager.instance.GameType())
@@ -90,8 +90,8 @@ namespace Qubit.Utilities
                                 .Select(dummy => (NetPlayer)dummy)
                         );
 
-                        if (References.Network?.LocalPlayer != null && !infected.Contains(References.LocalPlayer))
-                            infected.Add(References.LocalPlayer);
+                        if (References.Network?.LocalPlayer != null && !infected.Contains(Networking.LocalPlayer))
+                            infected.Add(Networking.LocalPlayer);
                     }
                     break;
             }
@@ -101,7 +101,7 @@ namespace Qubit.Utilities
 
         public static void AddInfected(NetPlayer plr)
         {
-            if (!References.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!Networking.InRoom || GorillaGameManager.instance == null || plr == null)
                 return;
 
             switch (GorillaGameManager.instance.GameType())
@@ -141,7 +141,7 @@ namespace Qubit.Utilities
 
         public static void RemoveInfected(NetPlayer plr)
         {
-            if (!References.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!Networking.InRoom || GorillaGameManager.instance == null || plr == null)
                 return;
 
             switch (GorillaGameManager.instance.GameType())
@@ -191,7 +191,7 @@ namespace Qubit.Utilities
 
         public static void AddRock(NetPlayer plr)
         {
-            if (!References.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!Networking.InRoom || GorillaGameManager.instance == null || plr == null)
                 return;
 
             switch (GorillaGameManager.instance.GameType())
@@ -223,7 +223,7 @@ namespace Qubit.Utilities
 
         public static void RemoveRock(NetPlayer plr)
         {
-            if (!References.InRoom || GorillaGameManager.instance == null || plr == null)
+            if (!Networking.InRoom || GorillaGameManager.instance == null || plr == null)
                 return;
 
             switch (GorillaGameManager.instance.GameType())
@@ -262,7 +262,7 @@ namespace Qubit.Utilities
 
         public static void SetPaintbrawlHealth(NetPlayer target, int health)
         {
-            if (References.IsMasterClient)
+            if (Networking.IsMasterClient)
             {
                 SetPaintbrawlHealth(target.ActorNumber, health);
                 return;
@@ -291,7 +291,7 @@ namespace Qubit.Utilities
 
         public static void KillPaintbrawlPlayer(NetPlayer target)
         {
-            if (!References.IsMasterClient)
+            if (!Networking.IsMasterClient)
                 ReportPaintbrawlHit(target);
             else
                 SetPaintbrawlHealth(target.ActorNumber, 0);
@@ -318,7 +318,7 @@ namespace Qubit.Utilities
 
         public static void SetGuardian(NetPlayer target)
         {
-            if (!References.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
             if (IsGuardian(target))
                 return;
 
@@ -339,12 +339,12 @@ namespace Qubit.Utilities
         private static float guardianTapDelay;
         public static void BecomeGuardian()
         {
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 if (GorillaGameManager.instance.GameType() != GameModeType.Guardian)
                     return;
 
-                if (References.IsMasterClient)
+                if (Networking.IsMasterClient)
                 {
                     if (!References.LocalRig.enabled)
                         References.LocalRig.enabled = true;
@@ -358,7 +358,7 @@ namespace Qubit.Utilities
                         if (tgi.manager && tgi.manager.photonView && !tgi.isChangingPositions)
                         {
                             GorillaGuardianZoneManager zoneManager = tgi.zoneManager;
-                            if (!IsGuardian(References.LocalPlayer) && zoneManager.IsZoneValid() && tgi.manager)
+                            if (!IsGuardian(Networking.LocalPlayer) && zoneManager.IsZoneValid() && tgi.manager)
                             {
                                 References.LocalRig.enabled = false;
                                 References.LocalRig.transform.position = tgi.transform.position;
@@ -384,19 +384,19 @@ namespace Qubit.Utilities
         #region Prop Hunt
         public static void SetPropHuntHandDistance(float distance)
         {
-            if (References.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager.m_ph_hand_follow_distance = distance;
         }
 
         public static void SetPropHuntRoundStart(int millis)
         {
-            if (References.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager._ph_timeRoundStartedMillis = millis;
         }
 
         public static void RandomizePropHuntSeed()
         {
-            if (References.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+            if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
                 ManagerRegistry.GorillaPropHuntGameManager._ph_randomSeed = UnityEngine.Random.Range(1, int.MaxValue);
         }
         #endregion

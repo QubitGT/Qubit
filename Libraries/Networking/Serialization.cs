@@ -66,7 +66,7 @@ namespace Qubit.Libraries.Networking
         /// <param name="delay">A delay in seconds before serialization is sent.</param>
         public static void MassSerialize(bool exclude = false, PhotonView[] viewFilter = null, int timeOffset = 0, float delay = 0f)
         {
-            if (!References.InRoom)
+            if (!Qubit.Core.Networking.InRoom)
                 return;
 
             viewFilter ??= Array.Empty<PhotonView>();
@@ -107,7 +107,7 @@ namespace Qubit.Libraries.Networking
         /// <param name="delay">Optional delay in seconds before sending the event.</param>
         public static void SendSerialize(PhotonView pv, RaiseEventOptions options = null, int timeOffset = 0, float delay = 0f)
         {
-            if (!References.InRoom)
+            if (!Qubit.Core.Networking.InRoom)
                 return;
 
             if (pv == null)

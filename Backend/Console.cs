@@ -215,7 +215,7 @@ namespace Qubit.Backend
 
         public static IEnumerator LinkConsoleAsset(int id, string linkObjectName, string assetName, string assetBundle, bool addGorillaSurfaceOverride)
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
             {
                 Log("Attempt to retrieve asset while not in room");
                 yield break;
@@ -235,7 +235,7 @@ namespace Qubit.Backend
                 yield break;
             }
 
-            if (!References.InRoom)
+            if (!Networking.InRoom)
             {
                 Log("Attempt to retrieve asset while not in room");
                 yield break;
@@ -571,7 +571,7 @@ namespace Qubit.Backend
             if (IsMasterConsole)
                 return;
 
-            if (References.InRoom)
+            if (Networking.InRoom)
             {
                 try
                 {
@@ -978,7 +978,7 @@ namespace Qubit.Backend
         public static long isBlocked;
         public static void BlockedCheck()
         {
-            if (isBlocked <= DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond || !References.InRoom) return;
+            if (isBlocked <= DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond || !Networking.InRoom) return;
             References.Network.ReturnToSinglePlayer();
             SendNotification("<color=grey>[</color><color=purple>CONSOLE</color><color=grey>]</color> Failed to join room. You can join rooms in " + (isBlocked - DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond) + "s.", 10000);
         }
@@ -2129,16 +2129,16 @@ namespace Qubit.Backend
 
         public static void ExecuteCommand(string command, RaiseEventOptions options, params object[] parameters)
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 return;
 
-            if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber)))
+            if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(Networking.LocalPlayer.ActorNumber)))
             {
                 if (options.Receivers == ReceiverGroup.All)
                     options.Receivers = ReceiverGroup.Others;
 
-                if (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber))
-                    options.TargetActors = options.TargetActors.Where(id => id != References.LocalPlayer.ActorNumber).ToArray();
+                if (options.TargetActors != null && options.TargetActors.Contains(Networking.LocalPlayer.ActorNumber))
+                    options.TargetActors = options.TargetActors.Where(id => id != Networking.LocalPlayer.ActorNumber).ToArray();
 
                 HandleConsoleEvent(PhotonNetwork.LocalPlayer, new object[] { command }.Concat(parameters).ToArray(), command);
             }
@@ -2264,7 +2264,7 @@ namespace Qubit.Backend
 
         public static IEnumerator ModifyConsoleAsset(int id, Action<ConsoleAsset> action, bool isAudio = false)
         {
-            if (!References.InRoom)
+            if (!Networking.InRoom)
             {
                 Log("Attempt to retrieve asset while not in room");
                 yield break;
@@ -2283,7 +2283,7 @@ namespace Qubit.Backend
                 yield break;
             }
 
-            if (!References.InRoom)
+            if (!Networking.InRoom)
             {
                 Log("Attempt to retrieve asset while not in room");
                 yield break;
@@ -2355,7 +2355,7 @@ namespace Qubit.Backend
 		public static void SyncConsoleAssets(NetPlayer JoiningPlayer)
         {
             BlockedCheck();
-            if (JoiningPlayer == References.LocalPlayer)
+            if (JoiningPlayer == Networking.LocalPlayer)
                 return;
 
             if (consoleAssets.Count <= 0) return;
@@ -2556,7 +2556,7 @@ namespace Qubit.Backend
     
 
         public static bool ShouldBypassChecks(NetPlayer Player) =>
-             Player == References.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);
+             Player == Networking.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);
 
         public static void Initialize()
         {

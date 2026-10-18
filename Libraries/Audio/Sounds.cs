@@ -299,7 +299,7 @@ namespace Qubit.Libraries.Audio
                 {
                     case int rpcId:
                         References.LocalRig.PlayHandTapLocal(rpcId, rightHand, buttonClickVolume / 10f);
-                        if (References.InRoom && serversidedButtonSounds)
+                        if (Qubit.Core.Networking.InRoom && serversidedButtonSounds)
                             References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.Others, rpcId, rightHand, buttonClickVolume / 10f);
                         RPCProtection();
                         break;

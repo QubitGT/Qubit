@@ -331,7 +331,7 @@ namespace Qubit.Frontend
         {
             if (Time.unscaledTime < nextRefresh) return;
             nextRefresh = Time.unscaledTime + (Frontend.Settings.advancedArraylist ? .1f : .5f);
-            bool inRoom = References.Network != null && References.InRoom;
+            bool inRoom = References.Network != null && Networking.InRoom;
             roomStatus.text = inRoom ? "Connected  /  " + (PhotonNetwork.CurrentRoom?.Name ?? "Room") : "Not connected to a room";
             disconnect.interactable = inRoom;
             join.interactable = PhotonNetworkController.Instance != null;

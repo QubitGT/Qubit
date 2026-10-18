@@ -493,19 +493,19 @@ namespace Qubit.Libraries.Interface
 
         public static void MasterClientSwitched()
         {
-            if (References.IsMasterClient)
+            if (Qubit.Core.Networking.IsMasterClient)
                 SendNotification("<color=grey>[</color><color=purple>MASTER</color><color=grey>]</color> You are now master client.");
         }
 
         public static void PlayerJoined(NetPlayer player)
         {
-            if (player != References.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
+            if (player != Qubit.Core.Networking.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
                 SendNotification($"<color=grey>[</color><color=green>JOIN</color><color=grey>]</color> Name: {Extensions.Players.CleanPlayerName(player.NickName)}");
         }
 
         public static void PlayerLeft(NetPlayer player)
         {
-            if (player != References.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
+            if (player != Qubit.Core.Networking.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
                 SendNotification($"<color=grey>[</color><color=red>LEAVE</color><color=grey>]</color> Name: {Extensions.Players.CleanPlayerName(player.NickName)}");
         }
     }

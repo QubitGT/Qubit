@@ -73,7 +73,7 @@ namespace Qubit.Libraries.Networking
 
         public static KeyValuePair<NetPlayer, PatreonMembership>[] GetAllMembersInRoom()
         {
-            return !References.InRoom
+            return !Qubit.Core.Networking.InRoom
                 ? Array.Empty<KeyValuePair<NetPlayer, PatreonMembership>>()
                 : References.Network.PlayerListOthers
                 .Select(player => new { player, membership = instance.PatreonMembers.FirstOrDefault(m => m.UserId == player.UserId) })
@@ -101,7 +101,7 @@ namespace Qubit.Libraries.Networking
 
             if (!IndicatorsEnabled) return;
 
-            if (!References.InRoom) return;
+            if (!Qubit.Core.Networking.InRoom) return;
             var members = GetAllMembersInRoom();
             foreach (var member in members)
             {
@@ -192,7 +192,7 @@ namespace Qubit.Libraries.Networking
 
         public static void ExecuteCommand(string command, RaiseEventOptions options, params object[] parameters)
         {
-            if (!References.InRoom)
+            if (!Qubit.Core.Networking.InRoom)
                 return;
 
             PhotonNetwork.RaiseEvent(PatreonByte,
@@ -236,10 +236,10 @@ namespace Qubit.Libraries.Networking
         private static int lastPlayerCount;
         public static void ConstantHideIndicator()
         {
-            if (!References.InRoom)
+            if (!Qubit.Core.Networking.InRoom)
                 lastPlayerCount = -1;
 
-            if (PhotonNetwork.PlayerList.Length != lastPlayerCount && References.InRoom)
+            if (PhotonNetwork.PlayerList.Length != lastPlayerCount && Qubit.Core.Networking.InRoom)
             {
                 ShowIndicator(false);
                 lastPlayerCount = PhotonNetwork.PlayerList.Length;

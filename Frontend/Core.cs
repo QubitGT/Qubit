@@ -219,7 +219,7 @@ namespace Qubit.Frontend
                         potatoTime = 0f;
                 }
 
-                if (adminTime != null && References.InRoom)
+                if (adminTime != null && Networking.InRoom)
                 {
                     if (PhotonNetwork.PlayerListOthers.Any(player => ServerData.Administrators.ContainsKey(player.UserId) && !Console.excludedCones.Contains(player)))
                     {
@@ -410,7 +410,7 @@ namespace Qubit.Frontend
                 }
 
                 // Party kick code (to return back to the main lobby when you're done)
-                if (References.InRoom)
+                if (Networking.InRoom)
                 {
                     if (partyKickReconnecting)
                     {

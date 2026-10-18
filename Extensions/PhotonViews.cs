@@ -59,13 +59,13 @@ namespace Qubit.Extensions
                 if (PhotonNetwork.PhotonServerSettings.RpcList.Contains(methodName))
                     rpcData[5] = (byte)PhotonNetwork.PhotonServerSettings.RpcList.IndexOf(methodName);
 
-                if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber)))
+                if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(Networking.LocalPlayer.ActorNumber)))
                 {
                     if (options.Receivers == ReceiverGroup.All)
                         options.Receivers = ReceiverGroup.Others;
 
-                    if (options.TargetActors != null && options.TargetActors.Contains(References.LocalPlayer.ActorNumber))
-                        options.TargetActors = options.TargetActors.Where(id => id != References.LocalPlayer.ActorNumber).ToArray();
+                    if (options.TargetActors != null && options.TargetActors.Contains(Networking.LocalPlayer.ActorNumber))
+                        options.TargetActors = options.TargetActors.Where(id => id != Networking.LocalPlayer.ActorNumber).ToArray();
 
                     PhotonNetwork.ExecuteRpc(rpcData, PhotonNetwork.LocalPlayer);
                 }

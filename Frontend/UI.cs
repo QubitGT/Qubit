@@ -309,7 +309,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                bool inRoom = References.InRoom;
+                bool inRoom = Networking.InRoom;
                 string roomName = inRoom ? PhotonNetwork.CurrentRoom.Name : "";
 
                 if (inRoom != lastInRoom || roomName != lastRoomName)

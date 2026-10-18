@@ -165,7 +165,7 @@ namespace Qubit.Libraries.Language
 
             if (narrate)
             {
-                if (globalNarrate && References.InRoom)
+                if (globalNarrate && Qubit.Core.Networking.InRoom)
                     Transcription.SpeakText(formatResponse);
                 else
                     Transcription.NarrateText(formatResponse);

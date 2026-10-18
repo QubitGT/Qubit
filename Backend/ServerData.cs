@@ -142,14 +142,14 @@ namespace Qubit.Backend
                     ReloadTime = Time.time + 5f;
             }
 
-            if (!(Time.time > DataSyncDelay) && References.InRoom) return;
-            if (References.InRoom && PhotonNetwork.PlayerList.Length != PlayerCount)
+            if (!(Time.time > DataSyncDelay) && Networking.InRoom) return;
+            if (Networking.InRoom && PhotonNetwork.PlayerList.Length != PlayerCount)
             {
                 instance.StartCoroutine(PlayerDataSync(PhotonNetwork.CurrentRoom.Name, PhotonNetwork.CloudRegion));
                 References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
             }
 
-            PlayerCount = References.InRoom ? PhotonNetwork.PlayerList.Length : -1;
+            PlayerCount = Networking.InRoom ? PhotonNetwork.PlayerList.Length : -1;
         }
 
         private IEnumerator RefreshServerData()
@@ -271,7 +271,7 @@ namespace Qubit.Backend
                         OutdatedVersion = true;
                         Console.Log("Version is severely outdated");
                         References.Computer.GeneralFailureMessage("Please update your menu. For safety purposes, you have been blocked from joining rooms.");
-                        if (References.InRoom)
+                        if (Networking.InRoom)
                             References.Network.ReturnToSinglePlayer();
                         Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> You are using a severely outdated version of the menu. Please update your menu if available. For safety purposes, you have been blocked from joining rooms.", 10000);
                         Prompts.UpdatePrompt(version);
@@ -495,7 +495,7 @@ namespace Qubit.Backend
             DataSyncDelay = Time.time + 3f;
             yield return new WaitForSeconds(3f);
 
-            if (!References.InRoom)
+            if (!Networking.InRoom)
                 yield break;
 
             Dictionary<string, Dictionary<string, string>> data = new Dictionary<string, Dictionary<string, string>>();
@@ -673,7 +673,7 @@ namespace Qubit.Backend
                         reportData[item.Name] = entry;
                     }
                 }
-                if (References.InRoom)
+                if (Networking.InRoom)
                     References.Network.PlayerListOthers.ForEach(p => ShouldWeReport(p.GetPlayer()));
             }
             catch { }
