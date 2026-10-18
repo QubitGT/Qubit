@@ -21,7 +21,8 @@
 
 
 using MelonLoader;
-using Qubit.Managers;
+using Qubit.Core;
+using Qubit.Libraries.Core;
 
 [assembly: MelonInfo(typeof(Qubit.PluginMelonLoader), Qubit.PluginInfo.Name, Qubit.PluginInfo.Version, "Qubit")]
 [assembly: MelonOptionalDependencies("BepInEx")]
@@ -31,7 +32,7 @@ namespace Qubit
     {
         public override void OnInitializeMelon()
         {
-            LogManager.SetLogger((level, msg) =>
+            Logs.SetLogger((level, msg) =>
             {
                 switch (level)
                 {
@@ -51,6 +52,6 @@ namespace Qubit
         }
 
         public override void OnDeinitializeMelon() =>
-            Menu.Main.UnloadMenu();
+            Instance.UnloadMenu();
     }
 }

@@ -20,8 +20,8 @@
  */
 
 using BepInEx;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Core;
+using Qubit.Libraries.Core;
 using System.ComponentModel;
 
 namespace Qubit
@@ -34,7 +34,7 @@ namespace Qubit
 
         private void Awake()
         {
-            LogManager.SetLogger((level, msg) =>
+            Logs.SetLogger((level, msg) =>
             {
                 switch (level)
                 {
@@ -57,6 +57,6 @@ namespace Qubit
 
 
         private void OnDestroy() =>
-            Main.UnloadMenu();
+            Instance.UnloadMenu();
     }
 }

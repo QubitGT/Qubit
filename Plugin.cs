@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Core;
+using Qubit.Libraries.Core;
 using UnityEngine;
 
 namespace Qubit
@@ -46,7 +46,7 @@ namespace Qubit
         {
             private void Awake()
             {
-                LogManager.SetLogger((Level level, string msg) =>
+                Logs.SetLogger((Level level, string msg) =>
                 {
                     switch (level)
                     {
@@ -66,7 +66,7 @@ namespace Qubit
             }
 
             private void OnDestroy() =>
-                Main.UnloadMenu();
+                Instance.UnloadMenu();
         }
     }
 }
