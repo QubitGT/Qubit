@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using GorillaLocomotion;
 using Qubit.Libraries.Core;
 using Qubit.Modules.Categories;
 using System;

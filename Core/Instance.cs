@@ -18,14 +18,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-using Photon.Realtime;
 using Qubit.Backend;
-using Qubit.Frontend;
-using Qubit.Frontend.Resources;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
-using Qubit.Modules;
 using Qubit.Modules.Categories;
 using Qubit.Patches.Terms;
 using Qubit.Patches;

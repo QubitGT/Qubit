@@ -20,8 +20,6 @@
  */
 
 using Qubit.Core;
-using GorillaLocomotion;
-using GorillaNetworking;
 using Photon.Pun;
 using Qubit.Modules.Categories;
 using UnityEngine;

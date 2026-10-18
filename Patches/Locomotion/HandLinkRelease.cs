@@ -20,10 +20,8 @@
  */
 
 using Qubit.Core;
-using GorillaLocomotion;
 using HarmonyLib;
 using Qubit.Extensions;
-using Qubit.Patches.Safety.AntiCrash;
 using UnityEngine;
 
 namespace Qubit.Patches.Locomotion

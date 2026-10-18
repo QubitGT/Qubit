@@ -20,8 +20,6 @@
  */
 
 using GorillaGameModes;
-using GorillaLocomotion;
-using GorillaTagScripts;
 using Photon.Pun;
 using Photon.Realtime;
 using PlayFab;

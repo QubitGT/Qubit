@@ -21,7 +21,6 @@
 
 using GorillaTagScripts;
 using HarmonyLib;
-using Qubit.Modules.Categories;
 using Qubit.Libraries.Entities;
 
 namespace Qubit.Patches.Building

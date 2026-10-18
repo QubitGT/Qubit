@@ -20,7 +20,6 @@
  */
 
 using GorillaGameModes;
-using GorillaLocomotion;
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using Photon.Pun;
 using Photon.Realtime;

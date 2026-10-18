@@ -22,7 +22,6 @@
 using GameObjectScheduling;
 using GorillaExtensions;
 using GorillaGameModes;
-using GorillaLocomotion;
 using GorillaNetworking;
 using GorillaTag.Rendering;
 using GorillaTagScripts;

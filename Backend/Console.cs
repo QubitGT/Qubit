@@ -21,8 +21,6 @@
 
 using Qubit.Core;
 using ExitGames.Client.Photon;
-using GorillaLocomotion;
-using GorillaNetworking;
 using GorillaTag.Rendering;
 using HarmonyLib;
 using Photon.Pun;
@@ -31,7 +29,6 @@ using Photon.Voice.Unity;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
-using Qubit.Libraries.Networking;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
 using System;

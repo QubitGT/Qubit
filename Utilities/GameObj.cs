@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using GorillaLocomotion;
 using System;
 using System.Collections.Generic;
 using UnityEngine;

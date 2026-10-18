@@ -21,8 +21,6 @@
 
 using Qubit.Core;
 using ExitGames.Client.Photon;
-using GorillaLocomotion;
-using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
@@ -32,7 +30,6 @@ using Qubit.Libraries.Interface;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Safety.AntiBan;
 using Qubit.Patches.Safety.AntiCheat;
-using Qubit.Patches.Safety;
 using System;
 using System.Collections.Generic;
 using System.IO;

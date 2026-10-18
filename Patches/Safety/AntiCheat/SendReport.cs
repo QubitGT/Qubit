@@ -22,7 +22,6 @@
 using HarmonyLib;
 using Photon.Pun;
 using Qubit.Libraries.Interface;
-using UnityEngine;
 using static Qubit.Patches.PatchHandler;
 
 namespace Qubit.Patches.Safety.AntiCheat

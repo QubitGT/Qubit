@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using GorillaLocomotion;
 using Qubit.Extensions;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Core;

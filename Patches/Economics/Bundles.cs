@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using GorillaNetworking;
 using GorillaNetworking.Store;
 using HarmonyLib;
 using static Qubit.Frontend.Settings;

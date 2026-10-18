@@ -19,17 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using HarmonyLib;
 using Qubit.Libraries.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
-using System.Net;
 using System.Net.Http;
-using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine.Networking;
 using Valve.Newtonsoft.Json;
 
 namespace Qubit.Patches.Safety.Web

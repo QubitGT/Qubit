@@ -22,7 +22,6 @@
 using HarmonyLib;
 using PlayFab;
 using PlayFab.ClientModels;
-using PlayFab.Internal;
 using System;
 using System.Collections.Generic;
 using static Qubit.Extensions.Random;

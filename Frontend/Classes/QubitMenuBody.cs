@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using GorillaLocomotion;
 using Photon.Pun;
 using Qubit.Frontend.Resources;
 using Qubit.Libraries.Controls;
@@ -32,7 +31,6 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using UnityEngine.XR;
 using static Qubit.Frontend.Core;

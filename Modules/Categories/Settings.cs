@@ -21,7 +21,6 @@
 
 using Qubit.Core;
 using GorillaExtensions;
-using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Backend;

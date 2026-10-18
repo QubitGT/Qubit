@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using GorillaLocomotion;
 using UnityEngine;
 
 namespace Qubit.Frontend.Classes

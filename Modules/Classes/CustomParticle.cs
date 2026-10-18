@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using GorillaLocomotion;
 using UnityEngine;
 using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Settings;

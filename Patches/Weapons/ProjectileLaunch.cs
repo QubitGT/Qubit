@@ -22,7 +22,6 @@
 using Qubit.Libraries.Audio;
 using Qubit.Core;
 using HarmonyLib;
-using Qubit.Extensions;
 using static Qubit.Frontend.Settings;
 using static Qubit.Utilities.Assets;
 

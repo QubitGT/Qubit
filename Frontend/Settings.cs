@@ -20,56 +20,20 @@
  */
 
 using Qubit.Core;
-using GorillaExtensions;
-using GorillaLocomotion;
-using GorillaNetworking;
-using GorillaTagScripts;
-using HarmonyLib;
-using Photon.Pun;
-using Qubit.Backend;
 using Qubit.Extensions;
 using Qubit.Frontend.Colors;
-using Qubit.Libraries.Audio;
-using Qubit.Libraries.Controls;
-using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
-using Qubit.Modules.Categories;
-using Qubit.Modules.Classes;
-using Qubit.Patches.Voice;
 using Qubit.Utilities;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.Rendering;
-using UnityEngine.TextCore;
 using UnityEngine.UI;
 using UnityEngine.Video;
-using UnityEngine.XR;
-using static Qubit.Extensions.Colors;
-using static Qubit.Extensions.Random;
-using static Qubit.Extensions.Strings;
 using static Qubit.Frontend.Classes.QubitMenuBody;
-using static Qubit.Frontend.Keyboard;
-using static Qubit.Frontend.Prompts;
 using static Qubit.Frontend.Resources.Fonts;
-using static Qubit.Frontend.Settings;
-using static Qubit.Libraries.Audio.Sounds;
-using static Qubit.Libraries.Controls.Controllers;
-using static Qubit.Libraries.Networking.Serialization;
-using static Qubit.Modules.Categories.Overpowered;
-using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Modules.Manager;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
-using ButtonCollider = Qubit.Frontend.Classes.ButtonCollider;
-using Console = Qubit.Backend.Console;
-using JoinType = GorillaNetworking.JoinType;
-using Random = UnityEngine.Random;
 using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Frontend

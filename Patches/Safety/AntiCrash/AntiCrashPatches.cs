@@ -19,15 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
-using ExitGames.Client.Photon;
-using GorillaExtensions;
-using HarmonyLib;
-using Photon.Pun;
-using Photon.Realtime;
-using System.Collections.Generic;
-using UnityEngine;
-
 namespace Qubit.Patches.Safety.AntiCrash
 {
     public static class AntiCrashPatches

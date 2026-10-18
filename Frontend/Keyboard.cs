@@ -21,7 +21,6 @@
 
 using Qubit.Core;
 using GorillaExtensions;
-using GorillaLocomotion;
 using Qubit.Extensions;
 using Qubit.Frontend.Classes;
 using Qubit.Frontend.Colors;
@@ -32,7 +31,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;

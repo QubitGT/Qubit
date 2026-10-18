@@ -21,10 +21,6 @@
 
 using HarmonyLib;
 using JetBrains.Annotations;
-using Liv.Lck.Telemetry;
-using PlayFab;
-using PlayFab.EventsModels;
-using System.Collections.Generic;
 using static Qubit.Patches.PatchHandler;
 
 namespace Qubit.Patches.Safety.Telemetry

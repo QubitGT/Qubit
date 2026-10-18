@@ -19,16 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Photon.Pun;
-using Qubit.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using UnityEngine;
-using static Qubit.Extensions.Colors;
-using static Qubit.Libraries.Audio.Sounds;
-using static Qubit.Libraries.Networking.Serialization;
 
 namespace Qubit.Extensions
 {

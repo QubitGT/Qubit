@@ -20,7 +20,6 @@
  */
 
 using GorillaGameModes;
-using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Core;

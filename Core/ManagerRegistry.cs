@@ -24,7 +24,6 @@ using GorillaNetworking;
 using Photon.Voice.PUN;
 using GorillaTag.Rendering;
 using GorillaLocomotion.Gameplay;
-using GorillaLocomotion;
 using GorillaTagScripts;
 using Qubit.Utilities;
 

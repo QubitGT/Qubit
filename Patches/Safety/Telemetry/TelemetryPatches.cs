@@ -19,14 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using HarmonyLib;
-using JetBrains.Annotations;
-using Liv.Lck.Telemetry;
-using PlayFab;
-using PlayFab.EventsModels;
-using System.Collections.Generic;
-using static Qubit.Patches.PatchHandler;
-
 namespace Qubit.Patches.Safety.Telemetry
 {
     public static class TelemetryPatches

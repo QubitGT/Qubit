@@ -20,7 +20,6 @@
  */
 
 using HarmonyLib;
-using Photon.Pun;
 
 namespace Qubit.Patches.Safety.AntiCheat
 {

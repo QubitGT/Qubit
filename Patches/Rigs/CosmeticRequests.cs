@@ -25,7 +25,6 @@ using HarmonyLib;
 using Photon.Pun;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Networking;
-using Qubit.Modules.Categories;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
