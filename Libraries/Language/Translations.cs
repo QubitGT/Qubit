@@ -39,9 +39,9 @@ namespace Qubit.Libraries.Language
         public static readonly Dictionary<string, float> waitingForTranslate = new Dictionary<string, float>();
         public static readonly Dictionary<string, string> translateCache = new Dictionary<string, string>();
 
-        /// <summary>
-        /// Target language for translation. Format: "en", "fr", "de", "jp"
-        /// </summary>
+        
+
+
         public static string language;
 
         public static string TranslateText(string input, Action<string> onTranslated = null)

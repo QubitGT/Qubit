@@ -54,7 +54,7 @@ namespace Qubit.Libraries.Networking
 
             if (!ServerData.ServerDataEnabled)
             {
-                enabled = false; // stays attached with no functionality
+                enabled = false; 
                 return;
             }
 
@@ -139,7 +139,7 @@ namespace Qubit.Libraries.Networking
                     }
 
                     playerIndicator.GetComponent<Renderer>().material = iconMaterial;
-                    playerIndicator.GetComponent<Renderer>().material.mainTexture = LoadTextureFromURL(member.Value.IconURL, $"Images/Patreon/{member.Key.UserId}.{Files.GetFileExtension(member.Value.IconURL)}"); // errors?
+                    playerIndicator.GetComponent<Renderer>().material.mainTexture = LoadTextureFromURL(member.Value.IconURL, $"Images/Patreon/{member.Key.UserId}.{Files.GetFileExtension(member.Value.IconURL)}"); 
                     playerIndicator.GetComponent<Renderer>().material.color = Color.white;
 
                     GameObject go = new GameObject("Qubit_Nametag");

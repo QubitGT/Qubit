@@ -305,20 +305,20 @@ namespace Qubit.Frontend
 
         public static Material promptMaterial;
 
-        /// <summary>
-        /// Prompts the user with a message. They can choose to accept or deny it.
-        /// </summary>
-        /// <remarks>
-        /// Prompts stack. If multiple prompts are added before the user responds to the first one, they will be shown in order.
-        /// </remarks>
-        /// <remarks>
-        /// You may add images or videos to the prompt by encasing them in &lt;&gt; brackets. For example, "&lt;https://example.com/image.png&gt;" or "&lt;https://example.com/video.mp4&gt;"
-        /// </remarks>
-        /// <param name="Message">Title</param>
-        /// <param name="Accept">Accept Action</param>
-        /// <param name="Decline">Decline Action</param>
-        /// <param name="AcceptButton">Accept Text</param>
-        /// <param name="DeclineButton">Decline Text</param>
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
         public static void Prompt(string Message, Action Accept = null, Action Decline = null, string AcceptButton = "Yes", string DeclineButton = "No")
         {
             Modules.Categories.Settings.DestroyKeyboard();
@@ -329,18 +329,18 @@ namespace Qubit.Frontend
                 ReloadMenu();
         }
 
-        /// <summary>
-        /// Prompts the user with a message. They can choose to accept it.
-        /// </summary>
-        /// <remarks>
-        /// Prompts stack. If multiple prompts are added before the user responds to the first one, they will be shown in order.
-        /// </remarks>
-        /// <remarks>
-        /// You may add images or videos to the prompt by encasing them in &lt;&gt; brackets. For example, "&lt;https://example.com/image.png&gt;" or "&lt;https://example.com/video.mp4&gt;"
-        /// </remarks>
-        /// <param name="Message">Title</param>
-        /// <param name="Accept">Accept Action</param>
-        /// <param name="AcceptButton">Accept Text</param>
+        
+
+
+
+
+
+
+
+
+
+
+
 
         public static void PromptSingle(string Message, Action Accept = null, string AcceptButton = "Ok")
         {
@@ -352,20 +352,20 @@ namespace Qubit.Frontend
                 ReloadMenu();
         }
 
-        /// <summary>
-        /// Prompts the user with a message. This allows for keyboard input from the user. They may choose to accept or deny the prompt. To use the user's input, use the "keyboardInput" variable.
-        /// </summary>
-        /// <remarks>
-        /// Prompts stack. If multiple prompts are added before the user responds to the first one, they will be shown in order.
-        /// </remarks>
-        /// <remarks>
-        /// You may add images or videos to the prompt by encasing them in &lt;&gt; brackets. For example, "&lt;https://example.com/image.png&gt;" or "&lt;https://example.com/video.mp4&gt;"
-        /// </remarks>
-        /// <param name="Message">Title</param>
-        /// <param name="Accept">Accept Action</param>
-        /// <param name="Decline">Decline Action</param>
-        /// <param name="AcceptButton">Accept Text</param>
-        /// <param name="DeclineButton">Decline Text</param>
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
         public static void PromptText(string Message, Action Accept = null, Action Decline = null, string AcceptButton = "Yes", string DeclineButton = "No")
         {
             Modules.Categories.Settings.DestroyKeyboard();
@@ -376,18 +376,18 @@ namespace Qubit.Frontend
                 ReloadMenu();
         }
 
-        /// <summary>
-        /// Prompts the user with a message. This allows for keyboard input from the user. They may choose to accept the prompt. To use the user's input, use the "keyboardInput" variable.
-        /// </summary>
-        /// <remarks>
-        /// Prompts stack. If multiple prompts are added before the user responds to the first one, they will be shown in order.
-        /// </remarks>
-        /// <remarks>
-        /// You may add images or videos to the prompt by encasing them in &lt;&gt; brackets. For example, "&lt;https://example.com/image.png&gt;" or "&lt;https://example.com/video.mp4&gt;"
-        /// </remarks>
-        /// <param name="Message">Title</param>
-        /// <param name="Accept">Accept Action</param>
-        /// <param name="AcceptButton">Accept Text</param>
+        
+
+
+
+
+
+
+
+
+
+
+
         public static void PromptSingleText(string Message, Action Accept = null, string AcceptButton = "Ok")
         {
             Modules.Categories.Settings.DestroyKeyboard();

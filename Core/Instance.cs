@@ -39,7 +39,7 @@ using Console = Qubit.Backend.Console;
 
 namespace Qubit.Core
 {
-    /// <summary>Launch order for <see cref="RunOnLaunchAttribute"/>: members run top to bottom, so add new ones where they should run.</summary>
+    
     public enum LaunchPriority
     {
         Settings,
@@ -60,10 +60,10 @@ namespace Qubit.Core
         PatchReport,
     }
 
-    /// <summary>
-    /// Runs the static, parameterless method once when the menu launches.
-    /// Methods run in <see cref="LaunchPriority"/> order (first member first); methods without one run after all prioritised methods.
-    /// </summary>
+    
+
+
+
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     public sealed class RunOnLaunchAttribute : Attribute
     {
@@ -250,14 +250,14 @@ namespace Qubit.Core
             }
             catch (ReflectionTypeLoadException exception)
             {
-                types = exception.Types.Where(type => type != null).ToArray(); // a missing game type must not stop startup
+                types = exception.Types.Where(type => type != null).ToArray(); 
             }
 
             var launchMethods = types
                 .SelectMany(type => type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
                 .Select(method => (method, attribute: method.GetCustomAttribute<RunOnLaunchAttribute>()))
                 .Where(entry => entry.attribute != null)
-                .OrderBy(entry => (int?)entry.attribute.Priority ?? int.MaxValue); // OrderBy is stable, unprioritised methods run last
+                .OrderBy(entry => (int?)entry.attribute.Priority ?? int.MaxValue); 
 
             foreach (var (method, _) in launchMethods)
             {
@@ -273,7 +273,7 @@ namespace Qubit.Core
                 }
                 catch (TargetInvocationException exception)
                 {
-                    ExceptionDispatchInfo.Capture(exception.InnerException).Throw(); // keep the original stack trace
+                    ExceptionDispatchInfo.Capture(exception.InnerException).Throw(); 
                 }
             }
         }

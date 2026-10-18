@@ -27,6 +27,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using TMPro;
+using UnityEngine.TextCore.LowLevel;
 using UnityEngine;
 using UnityEngine.UI;
 using static Qubit.Modules.Categories.Settings;
@@ -36,98 +37,105 @@ namespace Qubit.Frontend.Resources
 {
  public static class Fonts
     {
-  private static readonly string[] bundled = { "Minecraft", "Starborn", "KOMIKAX_" };
-       private static readonly Dictionary<string,Font> cache = new Dictionary<string,Font>();
- private static List<string> options;
-            private static AssetBundle bundle;
-  private static Module setting;
-       private static string selected = "Minecraft";
+        private const string Default = "Inter";
+        private static readonly Dictionary<string, TMP_FontAsset> cache = new Dictionary<string, TMP_FontAsset>();
+        private static readonly HashSet<TMP_FontAsset> stereoFonts = new HashSet<TMP_FontAsset>();
 
- public static void Register()
+        private static void PrepareStereoFont(TMP_FontAsset font)
+        {
+            if (font == null || stereoFonts.Contains(font)) return;
+            var gameFont = LiberationSans ?? TMP_Settings.defaultFontAsset;
+            var shader = gameFont != null && gameFont.material != null ? gameFont.material.shader : null;
+            if (shader == null || !shader.isSupported)
+                throw new InvalidOperationException("The game's TMP shader is unavailable for stereo text.");
+            var material = new Material(font.material) { shader = shader, name = font.name + " Stereo Material" };
+            material.enableInstancing = true;
+            font.material = material;
+            stereoFonts.Add(font);
+            foreach (var weight in font.fontWeightTable)
             {
-  if(options != null)return;
-       options = bundled.Concat(new[] { "System Default" }).Concat(
- Font.GetOSInstalledFontNames().Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(name => name,StringComparer.OrdinalIgnoreCase).Select(name => "Windows: " + name)).ToList();
-            setting = new Module
-            {
-                buttonText = "Qubit Font",
-                overlapText = "Font: Minecraft",
-                isTogglable = false,
-                incremental = true,
-                isSetting = true,
-                value = "Minecraft",
-                legal = true,
-                toolTip = "Changes the menu and keyboard font. Includes imported fonts and installed Windows fonts.",
-                cycleValue = forward => Cycle(forward),
-                method = () => Cycle(true),
-                onValueChanged = Restore
-            };
-            Manager.AddModule("Menu Settings",setting,1);
-       Restore();
- }
-
-            private static void Cycle(bool forward)
-  {
-       int index = Math.Max(0,options.IndexOf(selected));
- setting.value = options[(index+(forward?1:options.Count-1))%options.Count];
-            Restore();
-  Preferences.SaveButton(setting);
-       }
- private static void Restore()
-            {
-  string name = setting.GetValue<string>();
-       selected = options.Contains(name) ? name : "Minecraft";
- setting.value = selected;
-            setting.overlapText = "Font: " + selected;
-  if(Frontend.Settings.menu != null)Apply(Frontend.Settings.menu);
-       if(Keyboard.VRKeyboard != null)Apply(Keyboard.VRKeyboard);
- }
-
- public static void Apply(GameObject root)
-            {
-  Font font = Resolve();
-       foreach(Text text in root.GetComponentsInChildren<Text>(true))
- {
-            text.font = font;
-  text.SetAllDirty();
-       }
- }
- private static Font Resolve()
-            => Resolve(selected);
-
- public static IReadOnlyList<string> Options => options;
- public static string Selected => selected;
- public static void Select(string name)
- {
-     if (!options.Contains(name)) return;
-     setting.value = name;
-     Restore();
-     Preferences.SaveButton(setting);
- }
- public static Font Resolve(string name)
-            {
-  if(cache.TryGetValue(name,out var found))return found;
-       Font font;
- if(name == "System Default")font = UnityEngine.Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
-            else if(name.StartsWith("Windows: ",StringComparison.Ordinal))font = Font.CreateDynamicFontFromOSFont(name.Substring(9),28);
-  else
-       {
- if(bundle == null)
-            {
-  using(Stream stream = typeof(Fonts).Assembly.GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.qubitfonts"))
-       using(var memory = new MemoryStream())
- {
-            stream.CopyTo(memory);
-  bundle = AssetBundle.LoadFromMemory(memory.ToArray());
-       }
- }
-            font = bundle.LoadAsset<Font>(name);
-  }
-       cache.Add(name,font);
- return font;
+                PrepareStereoFont(weight.regularTypeface);
+                PrepareStereoFont(weight.italicTypeface);
             }
+        }
+        private static List<string> options;
+        private static Module setting;
+        private static string selected = Default;
 
+        public static IReadOnlyList<string> Options => options;
+        public static string Selected => selected;
+
+        public static void Register()
+        {
+            if (options != null) return;
+            options = new[] { Default }.Concat(Font.GetOSInstalledFontNames()
+                .Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).Select(name => "Windows: " + name)).ToList();
+            setting = new Module {
+                buttonText = "Qubit Font", overlapText = "Font: " + Default, isTogglable = false,
+                incremental = true, isSetting = true, value = Default, legal = true,
+                toolTip = "Changes the menu and keyboard font. Uses Qubit's clean default or an installed Windows font."
+            };
+            setting.cycleValue = Cycle;
+            setting.method = () => Cycle(true);
+            setting.onValueChanged = Restore;
+            Manager.AddModule("Menu Settings", setting, 1);
+            Restore();
+        }
+
+        private static void Cycle(bool forward)
+        {
+            int index = Math.Max(0, options.IndexOf(selected));
+            Select(options[(index + (forward ? 1 : options.Count - 1)) % options.Count]);
+        }
+
+        private static void Restore()
+        {
+            string name = setting.GetValue<string>();
+            selected = options.Contains(name) ? name : Default;
+            setting.value = selected;
+            setting.overlapText = "Font: " + selected;
+            if (Frontend.Settings.menu != null) Apply(Frontend.Settings.menu);
+            if (Keyboard.VRKeyboard != null) Apply(Keyboard.VRKeyboard);
+        }
+
+        public static void Apply(GameObject root)
+        {
+            var font = Resolve(selected);
+            foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
+            {
+                text.font = text.name == "Indicator" || text.transform.parent.name == "Search"
+                    ? Resolve(Default) : font;
+                text.fontSharedMaterial = text.font.material;
+                text.extraPadding = true;
+                text.UpdateMeshPadding();
+                text.SetAllDirty();
+            }
+        }
+
+        public static void Select(string name)
+        {
+            if (!options.Contains(name)) return;
+            setting.value = name;
+            Restore();
+            Preferences.SaveButton(setting);
+        }
+
+        public static TMP_FontAsset Resolve(string name)
+        {
+            if (cache.TryGetValue(name, out var font) && font != null) return font;
+            if (name.StartsWith("Windows: ", StringComparison.Ordinal))
+            {
+                var source = Font.CreateDynamicFontFromOSFont(name.Substring(9), 96);
+                font = TMP_FontAsset.CreateFontAsset(source, 96, 12, GlyphRenderMode.SDFAA,
+                    2048, 2048, AtlasPopulationMode.Dynamic, true);
+            }
+            else font = QubitAssets.Load<TMP_FontAsset>("Qubit Inter Regular SDF");
+            if (font == null) font = QubitAssets.Load<TMP_FontAsset>("Qubit Inter Regular SDF");
+            PrepareStereoFont(font);
+            cache[name] = font;
+            return font;
+        }
         public static void InitializeFonts()
         {
             AgencyFB ??= LoadAsset<TMP_FontAsset>("Agency");
@@ -151,7 +159,7 @@ namespace Qubit.Frontend.Resources
                 font.fallbackFontAssetTable.Add(LiberationSans);
         }
 
-        // ReSharper disable once StaticMemberInitializerReferesToMemberBelow
+        
         public static TMP_FontAsset activeFont = LiberationSans;
         public static FontStyles activeFontStyle = FontStyles.Normal;
 

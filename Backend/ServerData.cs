@@ -58,10 +58,10 @@ namespace Qubit.Backend
 
         public static readonly Dictionary<string, string> LocalAdmins = new Dictionary<string, string>()
         {
-            // { "Placeholder Admin UserID", "Placeholder Admin Name" },
+            
         };
 
-        public static void SetupAdminPanel(string playername) // Method used to spawn admin panel
+        public static void SetupAdminPanel(string playername) 
         {
             if (Frontend.Settings.dynamicSounds)
                 Utilities.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/admin.ogg", "Audio/Menu/admin.ogg", clip => clip.Play(Frontend.Settings.buttonClickVolume / 10f));
@@ -102,7 +102,7 @@ namespace Qubit.Backend
 
             if (!ServerDataEnabled)
             {
-                enabled = false; // stays attached with no functionality
+                enabled = false; 
                 return;
             }
 
@@ -224,7 +224,7 @@ namespace Qubit.Backend
         {
             string[] parts = version.Split('.');
             if (parts.Length != 3)
-                return -1; // Version must be in 'major.minor.patch' format
+                return -1; 
 
             return int.Parse(parts[0]) * 100 + int.Parse(parts[1]) * 10 + int.Parse(parts[2]);
         }
@@ -258,7 +258,7 @@ namespace Qubit.Backend
                     CustomBoards.motdTemplate = (string)data["motd"];
                 }
 
-                // Version Check
+                
                 string minimumVersion = (string)data["min-version"];
                 string version = (string)data["menu-version"];
                 bool shownPrompt = false;
@@ -300,7 +300,7 @@ namespace Qubit.Backend
                 string minConsoleVersion = (string)data["min-console-version"];
                 if (VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
                 {
-                    // Admin dictionary
+                    
                     Administrators.Clear();
 
                     JArray admins = (JArray)data["admins"];
@@ -319,7 +319,7 @@ namespace Qubit.Backend
                     foreach (var superAdmin in superAdmins)
                         SuperAdministrators.Add(superAdmin.ToString());
 
-                    // Give admin panel if on list
+                    
                     if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null && Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out var administrator))
                     {
                         GivenAdminMods = true;
@@ -333,7 +333,7 @@ namespace Qubit.Backend
                 foreach (var owner in owners)
                     Owners.Add(owner.ToString());
 
-                // Patreon members
+                
                 if (Patreon.instance != null)
                 {
                     Patreon.instance.PatreonMembers.Clear();
@@ -363,7 +363,7 @@ namespace Qubit.Backend
                     }
                 }
 
-                // Polls
+                
                 CurrentPoll = (string)data["poll"];
                 OptionA = (string)data["option-a"];
                 OptionB = (string)data["option-b"];
@@ -380,7 +380,7 @@ namespace Qubit.Backend
                     File.WriteAllText($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt", CurrentPoll);
                 }
 
-                // Detected mod labels   
+                
                 JArray detectedMods = (JArray)data["detected-mods"];
                 foreach (var detectedMod in detectedMods)
                 {
@@ -405,7 +405,7 @@ namespace Qubit.Backend
                     DetectedModsLabelled.Add(detectedModName);
                 }
 
-                // April Fools
+                
                 JObject aprilFools = (JObject)data["april_fools"];
                 foreach (var prop in aprilFools.Properties())
                 {

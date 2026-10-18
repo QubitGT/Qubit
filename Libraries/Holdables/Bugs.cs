@@ -154,7 +154,7 @@ namespace Qubit.Libraries.Holdables
 
                 getOwnershipDelay = Time.time + 0.5f;
 
-                NetworkingState guardState = guard.currentState; // Thanks C# 8.0
+                NetworkingState guardState = guard.currentState; 
                 Action failureAction = null;
                 if ((int)guardState < 3)
                     failureAction = () => guard.currentState = guardState;

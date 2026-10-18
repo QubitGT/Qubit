@@ -53,18 +53,18 @@ namespace Qubit.Extensions
         public static string ToTitleCase(this string text) =>
             CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
 
-        /// <summary>
-        /// Applies configured menu text transformations to the specified input string, including optional translation
-        /// and case adjustments.
-        /// </summary>
-        /// <remarks>The transformations applied depend on the current values of the menu settings, such
-        /// as translation, lowercase, and uppercase modes. If both lowercase and uppercase modes are enabled, the
-        /// uppercase transformation takes precedence.</remarks>
-        /// <param name="input">The input string to be processed and transformed according to the current menu settings.</param>
-        /// <param name="translateText">true to translate the input string before applying case transformations; otherwise, false. The default is
-        /// true.</param>
-        /// <returns>A string containing the transformed input, with translation and case modifications applied as specified by
-        /// the current settings.</returns>
+        
+
+
+
+
+
+
+
+
+
+
+
         public static string FollowMenuSettings(string input, bool translateText = true, bool reloadOnTranslate = false)
         {
             Action<string> onTranslate = null;
@@ -148,11 +148,11 @@ namespace Qubit.Extensions
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Hashes the input string using SHA256 and returns the hexadecimal representation.
-        /// </summary>
-        /// <param name="input">Input string to be hashed.</param>
-        /// <returns>Output hashed string.</returns>
+        
+
+
+
+
         public static string GetSHA256(string input)
         {
             using SHA256 sha256 = SHA256.Create();
@@ -165,19 +165,19 @@ namespace Qubit.Extensions
             return stringBuilder.ToString();
         }
 
-        /// <summary>
-        /// Wraps the text in the standard grey brackets with a colored tag, for example "[SUCCESS]".
-        /// </summary>
-        /// <param name="tag">The tag text.</param>
-        /// <param name="color">The color of the tag text.</param>
+        
+
+
+
+
         public static string FormatTag(this string tag, string color) =>
             Bracket(color, tag);
 
-        /// <summary>
-        /// Builds the grey-bracketed colored text used in button labels and notifications, for example "[G]" with a green G.
-        /// </summary>
-        /// <param name="color">The color of the text between the brackets.</param>
-        /// <param name="text">The text between the brackets.</param>
+        
+
+
+
+
         public static string Bracket(string color, string text) =>
             $"<color=grey>[</color><color={color}>{text}</color><color=grey>]</color>";
     }

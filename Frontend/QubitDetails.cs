@@ -30,6 +30,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
+using TMPro;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
@@ -39,14 +40,14 @@ namespace Qubit.Frontend
     
     public sealed class QubitDetails : MonoBehaviour
     {
-        private static AssetBundle bundle;
+        
         private static QubitDetails current;
         private static string selectedMod;
         private static int mode, candidate, descriptionPage;
-        private static Module dotVisible, lineVisible, dotSize, dotOpacity, lineWidth, lineOpacity, pointerColor, themeEnabled, purpleButtonText;
+        private static Module showDetails, dotVisible, lineVisible, dotSize, dotOpacity, lineWidth, lineOpacity, pointerColor, themeEnabled, purpleButtonText;
         private static readonly Color Purple = new Color32(178, 112, 251, 255);
-        public static readonly Color EnabledButtonColor = new Color32(81, 24, 128, 255);
-        private static readonly Color SelectedButtonColor = new Color32(112, 36, 174, 255);
+        public static readonly Color EnabledButtonColor = new Color32(167, 126, 244, 255);
+        private static readonly Color SelectedButtonColor = new Color32(207, 183, 255, 255);
         public static Color ButtonTextColor => purpleButtonText != null && purpleButtonText.enabled ? Purple : Color.white;
         private Transform face;
         private Transform panelBody;
@@ -55,9 +56,10 @@ namespace Qubit.Frontend
         private Transform dot;
         private LineRenderer line;
         private Material dotMaterial, lineMaterial;
-        private Renderer touchRenderer;
-        private bool touchWasVisible;
+
+
         private ButtonCollider[] targets;
+        private Collider[] panelColliders;
         private bool wasPressed = true;
         private UnityEngine.UI.Outline hoverOutline;
         private readonly System.Collections.Generic.Dictionary<Image, UnityEngine.UI.Outline> hoverOutlines = new System.Collections.Generic.Dictionary<Image, UnityEngine.UI.Outline>();
@@ -69,6 +71,7 @@ namespace Qubit.Frontend
         [RunOnLaunch(LaunchPriority.Details)]
         public static void Register()
         {
+            showDetails = Setting("Show Qubit Details", "Shows the side panel with descriptions and style previews.", false);
             dotVisible = Setting("Qubit Pointer Dot", "Shows the small dot at the pointer hit position.", true);
             lineVisible = Setting("Qubit Pointer Line", "Shows a faint line from your controller to the menu.", true);
             dotSize = Number("Qubit Dot Size", new[] { 2f, 3f, 4f, 6f, 8f }, 4f, "mm");
@@ -110,13 +113,7 @@ namespace Qubit.Frontend
         {
             try
             {
-                if (bundle == null)
-                {
-                    using (var stream = typeof(QubitDetails).Assembly.GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.qubitdetails"))
-                    using (var memory = new MemoryStream())
-                    { stream.CopyTo(memory); bundle = AssetBundle.LoadFromMemory(memory.ToArray()); }
-                }
-                var panel = Instantiate(bundle.LoadAsset<GameObject>("QubitDetails"), art, false);
+                var panel = Instantiate(QubitAssets.Load<GameObject>("QubitDetails"), art, false);
                 panel.transform.localRotation = Quaternion.identity;
                 var body = QubitMenuBody.AttachDetails(art, panel.transform);
                 current = panel.AddComponent<QubitDetails>();
@@ -125,7 +122,7 @@ namespace Qubit.Frontend
                 current.face = front;
                 current.canvas = panel.GetComponent<Canvas>();
                 current.canvas.renderMode = RenderMode.WorldSpace;
-                foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) g.material = null;
+                foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) if (g is Image) g.material = null;
                 Fonts.Apply(panel);
                 current.Bind("Info", () => { mode = 0; current.Refresh(); });
                 current.Bind("Fonts", () => current.Open(1));
@@ -134,7 +131,7 @@ namespace Qubit.Frontend
                 current.Bind("Next", () => current.Browse(1));
                 current.Bind("Apply", () => current.Apply());
                 current.Bind("Cancel", () => { current.Open(mode); mode = 0; current.Refresh(); });
-                current.pointer = Instantiate(bundle.LoadAsset<GameObject>("QubitPointer"), panel.transform, false);
+                current.pointer = Instantiate(QubitAssets.Load<GameObject>("QubitPointer"), panel.transform, false);
                 current.dot = current.pointer.transform.Find("Dot");
                 current.line = current.pointer.GetComponent<LineRenderer>();
                 current.lineMaterial = new Material(current.line.sharedMaterial)
@@ -148,6 +145,8 @@ namespace Qubit.Frontend
                 };
                 current.dot.GetComponent<Renderer>().sharedMaterial = current.dotMaterial;
                 current.targets = Frontend.Settings.menu.GetComponentsInChildren<ButtonCollider>();
+                current.panelColliders = panel.GetComponentsInChildren<Collider>(true);
+                current.SetPanelVisible(Prompts.CurrentPrompt == null && (showDetails.enabled || mode != 0));
                 foreach (var graphic in front.GetComponentsInChildren<Graphic>(true)) current.originalColors[graphic] = graphic.color;
                 foreach (var image in front.GetComponentsInChildren<Image>(true)) { current.originalSprites[image] = image.sprite; current.originalTypes[image] = image.type; }
                 ApplyTheme(Frontend.Settings.menu);
@@ -205,13 +204,13 @@ namespace Qubit.Frontend
             }
             Refresh();
         }
-        private Text Label(string name) => transform.Find(name).GetComponent<Text>();
+        private TMP_Text Label(string name) => transform.Find(name).GetComponent<TMP_Text>();
         private void Refresh()
         {
             if (canvas == null) return;
             var info = selectedMod == null ? null : Manager.GetIndex(selectedMod);
             Label("Title").text = mode == 1 ? "Font preview" : mode == 2 ? "Theme preview" : info?.overlapText ?? info?.buttonText ?? "Select a mod";
-            Label("Title").resizeTextForBestFit = true; Label("Title").resizeTextMinSize = 13; Label("Title").resizeTextMaxSize = 25;
+            Label("Title").enableAutoSizing = true; Label("Title").fontSizeMin = 13; Label("Title").fontSizeMax = 25;
             Label("Status").text = mode != 0 ? "Preview only / Apply to save" : info == null ? "Point at a row to inspect it" : info.isTogglable ? (info.enabled ? "ENABLED" : "DISABLED") : "ACTION / SETTING";
             string description = info?.toolTip ?? "Point at a mod to read its pop-up description. Use Fonts or Themes to try a style before applying it. Pointer controls are in Menu Settings.";
             description = Regex.Replace(description, "<[^>]+>", "");
@@ -223,25 +222,25 @@ namespace Qubit.Frontend
             }
             pages.Add(description); descriptionPage = Mathf.Clamp(descriptionPage, 0, pages.Count - 1);
             Label("Description").text = mode == 1 ? Fonts.Options[candidate] + "\n\nThe quick brown fox jumps over the lazy dog." : mode == 2 ? Modules.Categories.Settings.Themes[candidate].Name + "\n\nPreview of the menu background, button and text colors." : pages[descriptionPage];
-            Label("Description").resizeTextForBestFit = true; Label("Description").resizeTextMinSize = 12; Label("Description").resizeTextMaxSize = 19;
+            Label("Description").enableAutoSizing = true; Label("Description").fontSizeMin = 12; Label("Description").fontSizeMax = 19;
             Label("Hint").text = mode == 0 ? "Description " + (descriptionPage + 1) + "/" + pages.Count + " / < > to browse" : "Preview only - choose Apply to save";
             transform.Find("Apply").gameObject.SetActive(mode != 0);
             transform.Find("Cancel").gameObject.SetActive(mode != 0);
             var font = Fonts.Resolve(mode == 1 ? Fonts.Options[candidate] : Fonts.Selected);
             Label("PreviewText").font = Label("PreviewSample").font = font;
             Label("PreviewText").text = "Favorite Mods";
-            Label("PreviewText").resizeTextForBestFit = Label("PreviewSample").resizeTextForBestFit = true;
-            Label("PreviewText").resizeTextMinSize = Label("PreviewSample").resizeTextMinSize = 12;
-            Label("PreviewText").resizeTextMaxSize = Label("PreviewSample").resizeTextMaxSize = 21;
+            Label("PreviewText").enableAutoSizing = Label("PreviewSample").enableAutoSizing = true;
+            Label("PreviewText").fontSizeMin = Label("PreviewSample").fontSizeMin = 12;
+            Label("PreviewText").fontSizeMax = Label("PreviewSample").fontSizeMax = 21;
             PreviewColors();
         }
         private void PreviewColors()
         {
             var theme = mode == 2 ? Modules.Categories.Settings.Themes[candidate] : null;
-            transform.Find("Preview").GetComponent<Image>().color = theme == null ? Purple : theme.Background().GetCurrentColor();
-            transform.Find("PreviewRow").GetComponent<Image>().color = theme == null ? Color.black : theme.ButtonColors()[0].GetCurrentColor();
+            transform.Find("Preview").GetComponent<Image>().color = theme == null ? (Color)new Color32(38, 42, 70, 255) : theme.Background().GetCurrentColor();
+            transform.Find("PreviewRow").GetComponent<Image>().color = theme == null ? Color.white : theme.ButtonColors()[0].GetCurrentColor();
             Label("PreviewText").color = ButtonTextColor;
-            Label("PreviewSample").color = Label("PreviewHeading").color = theme == null ? Color.black : theme.TextColors()[0].GetCurrentColor();
+            Label("PreviewSample").color = Label("PreviewHeading").color = theme == null ? Color.white : theme.TextColors()[0].GetCurrentColor();
         }
         public static void ApplyTheme(GameObject root)
         {
@@ -269,7 +268,7 @@ namespace Qubit.Frontend
                     image.color = Frontend.Settings.backgroundColor.GetCurrentColor();
                 }
             }
-            foreach (var text in front.GetComponentsInChildren<Text>(true))
+            foreach (var text in front.GetComponentsInChildren<TMP_Text>(true))
             {
                 var action = text.transform.parent.GetComponentInChildren<ButtonCollider>();
                 bool enabled = action != null && Manager.GetIndex(action.relatedText)?.enabled == true;
@@ -279,6 +278,7 @@ namespace Qubit.Frontend
         }
         public static void ApplyButtonColors(Transform front)
         {
+            if (front == null) return;
             bool themed = themeEnabled != null && themeEnabled.enabled;
             foreach (Transform row in front)
             {
@@ -290,9 +290,17 @@ namespace Qubit.Frontend
                 if (image != null)
                     image.color = selected ? SelectedButtonColor : themed
                         ? Frontend.Settings.buttonColors[enabled ? 1 : 0].GetCurrentColor()
-                        : enabled ? EnabledButtonColor : Color.black;
-                var label = row.Find("Label")?.GetComponent<Text>();
+                        : enabled ? EnabledButtonColor : Color.white;
+                var label = row.Find("Label")?.GetComponent<TMP_Text>();
                 if (label != null) label.color = ButtonTextColor;
+                var indicator = row.Find("Indicator")?.GetComponent<TMP_Text>();
+                var info = action == null ? null : Manager.GetIndex(action.relatedText);
+                if (indicator != null)
+                {
+                    indicator.text = info == null || info.label ? "" : info.isTogglable ? (enabled ? "ON" : "OFF") : "›";
+                    indicator.fontSize = info != null && info.isTogglable ? 11 : 28;
+                    indicator.color = enabled ? new Color32(215, 196, 255, 255) : new Color32(173, 176, 209, 255);
+                }
             }
         }
         private void UpdatePanelSide()
@@ -330,19 +338,12 @@ namespace Qubit.Frontend
         {
             if (Frontend.Settings.menu == null || !transform.IsChildOf(Frontend.Settings.menu.transform)) { SetHover(null); pointer.SetActive(false); return; }
             UpdatePanelSide();
-            var touch = Frontend.Settings.reference == null ? null : Frontend.Settings.reference.GetComponent<Renderer>();
-            if (touch != touchRenderer)
-            {
-                RestoreTouchPointer();
-                touchRenderer = touch;
-                if (touchRenderer != null) touchWasVisible = touchRenderer.enabled;
-            }
-            if (touchRenderer != null) touchRenderer.enabled = false;
             bool pc = Frontend.Settings.isOnPC && Frontend.Settings.TPC != null;
             var viewer = pc ? Frontend.Settings.TPC.transform.position : References.HeadCollider.transform.position;
-            canvas.enabled = Vector3.Dot(viewer - face.position, -face.forward) >= 0;
-            pointer.SetActive(canvas.enabled);
-            if (!canvas.enabled) { SetHover(null); return; }
+            bool frontVisible = Vector3.Dot(viewer - face.position, -face.forward) >= 0;
+            SetPanelVisible(frontVisible && Prompts.CurrentPrompt == null && (showDetails.enabled || mode != 0));
+            pointer.SetActive(frontVisible);
+            if (!frontVisible) { SetHover(null); return; }
             if (Time.unscaledTime >= refreshAt) { PreviewColors(); if (themeEnabled.enabled) ApplyTheme(Frontend.Settings.menu); refreshAt = Time.unscaledTime + .1f; }
             if (Frontend.Settings.joystickMenu)
             {
@@ -359,6 +360,7 @@ namespace Qubit.Frontend
             foreach (var item in targets)
             {
                 if (item == null || !item.gameObject.activeInHierarchy || item.qubitRoot != Frontend.Settings.menu) continue;
+                if (!canvas.enabled && item.transform.IsChildOf(transform)) continue;
                 var collider = item.GetComponent<Collider>();
                 if (collider != null && collider.Raycast(ray, out var hit, distance)) { distance = hit.distance; closest = hit; target = item; }
             }
@@ -382,6 +384,12 @@ namespace Qubit.Frontend
             }
             wasPressed = pressed;
         }
+        private void SetPanelVisible(bool visible)
+        {
+            canvas.enabled = visible;
+            panelBody.gameObject.SetActive(visible);
+            foreach (var collider in panelColliders) collider.enabled = visible;
+        }
         private void OnDestroy()
         {
             if (current == this) current = null;
@@ -390,11 +398,6 @@ namespace Qubit.Frontend
             if (dotMaterial != null) Object.Destroy(dotMaterial);
             if (lineMaterial != null) Object.Destroy(lineMaterial);
         }
-        private void RestoreTouchPointer()
-        {
-            if (touchRenderer != null) touchRenderer.enabled = touchWasVisible;
-            touchRenderer = null;
-        }
-        private void OnDisable() { SetHover(null); RestoreTouchPointer(); wasPressed = true; }
+        private void OnDisable() { SetHover(null); wasPressed = true; }
     }
 }

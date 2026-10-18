@@ -57,31 +57,31 @@ namespace Qubit.Extensions
             return vec;
         }
 
-        /// <summary>
-        /// Converts a position from world coordinates to the player's local coordinate space.
-        /// </summary>
-        /// <remarks>This method is useful for determining the position of an object or point in relation
-        /// to the player's current location and orientation within the game world.</remarks>
-        /// <param name="world">The position in world coordinates to convert.</param>
-        /// <returns>A <see cref="Vector3"/> representing the input position relative to the player's local coordinate system.</returns>
+        
+
+
+
+
+
+
         public static Vector3 World2Player(Vector3 world) =>
             world - References.BodyCollider.transform.position + References.Tagger.transform.position;
 
-        /// <summary>
-        /// Sets the world-scale of a GameObject to a specified value,
-        /// taking into account the scale of its parent.
-        /// </summary>
-        /// <param name="obj">The GameObject whose scale will be adjusted.</param>
-        /// <param name="targetWorldScale">
-        /// The desired scale of the GameObject in world space.
-        /// Each component (x, y, z) represents the target size along that axis.
-        /// </param>
-        /// <remarks>
-        /// This method adjusts the localScale of the GameObject so that its
-        /// effective world scale matches the targetWorldScale, regardless of
-        /// the parent's scale. It uses the parent's lossyScale to calculate
-        /// the required localScale.
-        /// </remarks>
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         public static void WorldScale(GameObject obj, Vector3 targetWorldScale)
         {
             Vector3 parentScale = obj.transform.parent.lossyScale;

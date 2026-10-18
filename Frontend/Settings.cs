@@ -57,13 +57,13 @@ namespace Qubit.Frontend
         };
 
         public static ExtGradient[] buttonColors = {
-            new ExtGradient // Released
+            new ExtGradient 
             {
                 colors = ExtGradient.GetSolidGradient(
                     new Color32(118, 6, 252, 255)
                 )
             },
-            new ExtGradient // Pressed
+            new ExtGradient 
             {
                 colors = ExtGradient.GetSolidGradient(
                     new Color32(88, 6, 186, 255)
@@ -72,15 +72,15 @@ namespace Qubit.Frontend
         };
 
         public static ExtGradient[] textColors = {
-            new ExtGradient // Title
+            new ExtGradient 
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             },
-            new ExtGradient // Button Released
+            new ExtGradient 
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             },
-            new ExtGradient // Button Clicked
+            new ExtGradient 
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             }
@@ -154,7 +154,7 @@ namespace Qubit.Frontend
 
         #region State
 
-        // The variable warehouse
+        
 
         public static bool isOnPC;
         public static bool IsSteam = true;
@@ -271,7 +271,7 @@ namespace Qubit.Frontend
         public static bool slowDynamicAnimations;
         public static string lastClickedName = "";
 
-        public static Key KeyboardBind => // the PC key held to use the keyboard (Q by default)
+        public static Key KeyboardBind => 
             Modules.Categories.Settings.pcBindings.TryGetValue(Modules.Categories.Settings.ControllerBinding.Keyboard, out Key key) ? key : Key.Q;
 
         public static bool isMenuButtonHeld;

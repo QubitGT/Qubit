@@ -89,7 +89,7 @@ namespace Qubit.Patches.Safety.Web
 
                     string name = asm.GetName().Name;
 
-                    // this is ugly
+                    
                     if (name.StartsWith("Unity") ||
                         name.StartsWith("System") ||
                         name.StartsWith("Mono") ||

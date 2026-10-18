@@ -145,7 +145,7 @@ namespace Qubit.Libraries.Core
 
         public static void DownloadPlugin(string name, string url)
         {
-            // just in case
+            
             if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri) || uri.Scheme != Uri.UriSchemeHttps)
             {
                 Logs.Log($"Refused to download plugin '{name}': URL is not a valid HTTPS address ({url}).");

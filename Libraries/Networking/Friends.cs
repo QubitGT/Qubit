@@ -103,7 +103,7 @@ namespace Qubit.Libraries.Networking
 
             if (!ServerData.ServerDataEnabled)
             {
-                enabled = false; // stays attached with no functionality
+                enabled = false; 
                 return;
             }
 

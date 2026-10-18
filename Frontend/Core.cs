@@ -255,20 +255,20 @@ namespace Qubit.Frontend
                 #endregion
 
                 #region Menu Features
-                // Update watches
+                
                 Watches.ForEach(watch => watch.Update());
 
-                // Load projectiles
+                
                 Projectiles.LoadProjectileCache();
 
-                // Fix for disorganized menu
+                
                 if (disorganized && Manager.CurrentCategoryName != "Main")
                 {
                     Manager.CurrentCategoryName = "Main";
                     ReloadMenu();
                 }
 
-                // Fix for long menu
+                
                 if (longMenu && pageNumber != 0)
                 {
                     pageNumber = 0;
@@ -277,7 +277,7 @@ namespace Qubit.Frontend
 
                 VR.UpdatePhysicalReference();
 
-                // Bad apple theme
+                
                 if (themeType == 61)
                 {
                     if (menu != null)
@@ -304,7 +304,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                // Gun sounds
+                
                 try
                 {
                     if (GunSounds)
@@ -361,7 +361,7 @@ namespace Qubit.Frontend
                 }
                 catch { }
 
-                // Gun Vibrations
+                
                 try
                 {
                     if (GunVibrations)
@@ -401,7 +401,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                // Party kick code (to return back to the main lobby when you're done)
+                
                 if (Networking.InRoom)
                 {
                     if (partyKickReconnecting)
@@ -443,7 +443,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                // Recover from playing sound on soundboard code
+                
                 try
                 {
                     if (!VoiceRecorder.enabled)
@@ -670,7 +670,7 @@ namespace Qubit.Frontend
                 #region Mod Bindings
                 try
                 {
-                    // Custom mod binds
+                    
                     Inputs["A"] = rightPrimary;
                     Inputs["B"] = rightSecondary;
                     Inputs["X"] = leftPrimary;
@@ -816,7 +816,7 @@ namespace Qubit.Frontend
                 };
 
                 buttonSpriteSheet.spriteInfoList = new List<TMP_Sprite>();
-                Traverse.Create(buttonSpriteSheet).Field("m_Version").SetValue("1.1.0"); // TextMeshPro kills itself unless this is set.
+                Traverse.Create(buttonSpriteSheet).Field("m_Version").SetValue("1.1.0"); 
 
                 buttonSpriteSheet.spriteGlyphTable.Clear();
                 for (int i = 0; i < spriteDataList.Count; i++)
@@ -974,7 +974,7 @@ result = result.Where(b => b.legal || b.label);
             if (dynamicSounds)
                 Sounds.Play(Sounds.DefaultSounds["Open"], global: true);
 
-            CreateMenu();
+            if (CreateMenu() == null) return;
 
             if (dynamicAnimations)
                 Coroutines.instance.StartCoroutine(GrowCoroutine());
@@ -1158,18 +1158,18 @@ result = result.Where(b => b.legal || b.label);
             }
         }
 
-        /// <summary>
-        /// Applies or removes an outline effect to the specified menu object, adjusting its appearance based on the
-        /// provided state.
-        /// </summary>
-        /// <remarks>If the specified object is not a direct child of the menu, the outline effect is
-        /// applied using a general method. For menu child objects, a new primitive is created and styled to visually
-        /// represent the outline. The appearance of the outline may vary depending on the value of shouldBeEnabled and
-        /// the configuration of the menu. This method does not modify the original object's geometry or
-        /// components.</remarks>
-        /// <param name="toOut">The GameObject to which the outline effect will be applied or removed. Must not be null.</param>
-        /// <param name="shouldBeEnabled">A value indicating whether the outline effect should be enabled (<see langword="true"/>) or removed (<see
-        /// langword="false"/>).</param>
+        
+
+
+
+
+
+
+
+
+
+
+
         public static void OutlineMenuObject(GameObject toOut, bool shouldBeEnabled)
         {
             if (toOut.transform.parent != menu?.transform)
@@ -1193,16 +1193,16 @@ result = result.Where(b => b.legal || b.label);
                 RoundMenuObject(gameObject, 0.024f);
         }
 
-        /// <summary>
-        /// Creates an outline effect around the specified GameObject to visually indicate its enabled or disabled
-        /// state.
-        /// </summary>
-        /// <remarks>The outline is created as a separate GameObject, matching the position, rotation, and
-        /// scale of the target object. The outline color reflects the enabled or disabled state as determined by the
-        /// application's color settings. This method does not modify the original GameObject.</remarks>
-        /// <param name="toOut">The GameObject to outline. Cannot be null.</param>
-        /// <param name="shouldBeEnabled">A value indicating whether the outline should represent the enabled (<see langword="true"/>) or disabled
-        /// (<see langword="false"/>) state.</param>
+        
+
+
+
+
+
+
+
+
+
         public static void OutlineObject(GameObject toOut, bool shouldBeEnabled)
         {
             GameObject gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -1218,35 +1218,35 @@ result = result.Where(b => b.legal || b.label);
             colorChanger.colors = buttonColors[shouldBeEnabled ? 1 : 0];
         }
 
-        /// <summary>
-        /// Adds a black outline effect to the specified UI canvas object.
-        /// </summary>
-        /// <remarks>This method adds a Unity UI Outline component to the target object's GameObject,
-        /// configuring it with a thin black outline. If the object already has an Outline component, an additional one
-        /// will be added, which may result in multiple outlines. The outline uses the graphic's alpha
-        /// channel.</remarks>
-        /// <param name="canvasObject">The UI element to which the outline effect will be applied. Must not be null.</param>
+        
+
+
+
+
+
+
+
         public static void OutlineCanvasObject(MaskableGraphic canvasObject)
         {
-            // Creds: libyyyreal for optimization tech
+            
             Outline outline = canvasObject.gameObject.AddComponent<Outline>();
             outline.effectColor = Color.black;
             outline.effectDistance = new Vector2(0.001f, 0.001f);
             outline.useGraphicAlpha = true;
         }
 
-        /// <summary>
-        /// Replaces a menu object's appearance with a rounded version by constructing beveled edges and rounded corners
-        /// around the specified GameObject.
-        /// </summary>
-        /// <remarks>If the specified GameObject is not a direct child of the menu, only a basic rounding
-        /// operation is performed. When applied to a menu child, the method disables the original renderer and
-        /// constructs new primitives to visually represent a rounded, beveled menu item. The method also ensures that
-        /// color and transparency settings are preserved by copying relevant components.</remarks>
-        /// <param name="toRound">The GameObject to be visually rounded. Must be a child of the menu GameObject to receive the full rounded
-        /// treatment; otherwise, a standard rounding is applied.</param>
-        /// <param name="Bevel">The width of the bevel applied to the edges and corners, in Unity units. Must be a positive value. The
-        /// default is 0.02.</param>
+        
+
+
+
+
+
+
+
+
+
+
+
         public static void RoundMenuObject(GameObject toRound, float Bevel = 0.02f)
         {
             if (toRound.transform.parent != menu?.transform)
@@ -1336,17 +1336,17 @@ result = result.Where(b => b.legal || b.label);
                 colorChanger.overrideTransparency = false;
         }
 
-        /// <summary>
-        /// Replaces the specified GameObject with a visually rounded version by constructing a composite of primitive
-        /// shapes with beveled edges.
-        /// </summary>
-        /// <remarks>This method disables the original object's Renderer and creates new child primitives
-        /// to approximate a rounded appearance. The original object's ColorChanger component, if present, will have its
-        /// overrideTransparency property set to false. The method does not modify the original object's collider or
-        /// mesh, and is intended for visual effects only.</remarks>
-        /// <param name="toRound">The GameObject to be visually rounded. Must have a Renderer component attached.</param>
-        /// <param name="bevel">The width, in world units, of the bevel applied to the object's edges. Must be non-negative. The default
-        /// value is 0.02.</param>
+        
+
+
+
+
+
+
+
+
+
+
         public static void RoundObject(GameObject toRound, float bevel = 0.02f)
         {
             static GameObject CreatePrimitive(PrimitiveType type, Transform parent, bool rendererEnabled)
@@ -1485,13 +1485,13 @@ result = result.Where(b => b.legal || b.label);
             colorChanger.colors = gradient;
         }
 
-        /// <summary>
-        /// Applies menu appearance settings to the specified game object, such as outlining and rounding, based on
-        /// current configuration.
-        /// </summary>
-        /// <param name="gameObject">The game object to which the menu appearance settings will be applied.</param>
-        /// <param name="shouldBeEnabled">A value indicating whether outlining should be enabled for the game object. The default is <see
-        /// langword="true"/>.</param>
+        
+
+
+
+
+
+
         public static void FollowMenuSettings(GameObject gameObject, bool shouldBeEnabled = true)
         {
             if (outlineMenu)
@@ -1501,11 +1501,11 @@ result = result.Where(b => b.legal || b.label);
                 RoundMenuObject(gameObject);
         }
 
-        /// <summary>
-        /// Applies menu appearance settings to the specified canvas object, such as outlining, based on
-        /// current configuration.
-        /// </summary>
-        /// <param name="tmp">The canvas object to which the menu appearance settings will be applied.</param>
+        
+
+
+
+
         public static void FollowMenuSettings(TMP_Text tmp, float? overlapTargetSpacing = null)
         {
             if (tmp == null)
@@ -1551,11 +1551,11 @@ result = result.Where(b => b.legal || b.label);
                 tmp.fontStyle = targetStyle;
         }
 
-        /// <summary>
-        /// Applies menu appearance settings to the specified canvas object, such as outlining, based on
-        /// current configuration.
-        /// </summary>
-        /// <param name="canvasObject">The canvas object to which the menu appearance settings will be applied.</param>
+        
+
+
+
+
         public static void FollowMenuSettings(MaskableGraphic canvasObject)
         {
             if (outlineText)
@@ -1573,7 +1573,7 @@ result = result.Where(b => b.legal || b.label);
                 if (CurrentPrompt != null && CurrentPrompt.IsText && !inTextInput)
                     Modules.Categories.Settings.SpawnKeyboard();
 
-                CreateMenu();
+                if (CreateMenu() == null) return;
             }
 
             if (reference == null) return;
@@ -1714,7 +1714,7 @@ result = result.Where(b => b.legal || b.label);
         public static GameObject legacyGhostViewRight;
         public static Material GhostMaterial;
 
-        public static bool toggleDebugEchoMode; // Build with this enabled for a surprise
+        public static bool toggleDebugEchoMode; 
         public static readonly string[] facts = {
             "The honeybee is the only insect that produces food eaten by humans.",
             "Bananas are berries, but strawberries aren't.",

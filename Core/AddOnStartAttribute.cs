@@ -26,11 +26,11 @@ using UnityEngine;
 
 namespace Qubit.Core
 {
-    /// <summary>
-    /// Attaches the MonoBehaviour to the menu object on startup.
-    /// <paramref name="condition"/> must be a compile-time constant, e.g. [AddOnStart(ServerData.ServerDataEnabled)].
-    /// Set <see cref="AttachTo"/> to add it to the GameObject of an existing component instead of the menu object.
-    /// </summary>
+    
+
+
+
+
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class AddOnStartAttribute : Attribute
     {
@@ -40,10 +40,10 @@ namespace Qubit.Core
         public AddOnStartAttribute(bool condition = true) =>
             Condition = condition;
 
-        /// <summary>
-        /// Adds every marked component. Run with <paramref name="attached"/> false first for the menu object ones,
-        /// then true once the components named by <see cref="AttachTo"/> exist.
-        /// </summary>
+        
+
+
+
         public static void Apply(GameObject host, bool attached)
         {
             Type[] types;
@@ -53,7 +53,7 @@ namespace Qubit.Core
             }
             catch (ReflectionTypeLoadException exception)
             {
-                types = exception.Types.Where(type => type != null).ToArray(); // a missing game type must not stop startup
+                types = exception.Types.Where(type => type != null).ToArray(); 
             }
 
             foreach (Type type in types)

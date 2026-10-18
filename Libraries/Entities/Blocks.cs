@@ -576,7 +576,7 @@ namespace Qubit.Libraries.Entities
             PieceCreation.enabled = false;
             PieceCreation.pieceTypeSearch = 0;
 
-            onComplete?.Invoke(ManagerRegistry.BuilderTable.GetPiece(pieceId)); // so bad
+            onComplete?.Invoke(ManagerRegistry.BuilderTable.GetPiece(pieceId)); 
         }
 
         public static IEnumerator CreateShotgun()

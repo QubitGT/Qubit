@@ -36,27 +36,27 @@ namespace Qubit.Modules.Classes
 {
     public static class GunLibrary
     {
-        /// <summary>
-        /// Optional behavior for the gun methods in <see cref="GunLibrary"/>.
-        /// </summary>
+        
+
+
         public sealed class GunSettings
         {
-            /// <summary>Locks onto the rig that was shot and keeps running the action while the grip is held.</summary>
+            
             public bool locks;
 
-            /// <summary>Extra condition that must be true before the trigger is allowed to fire (delays, cooldowns).</summary>
+            
             public Func<bool> when;
 
-            /// <summary>Runs every frame the grip is not held.</summary>
+            
             public Action onIdle;
 
-            /// <summary>Overrides the layer mask the gun ray is cast with.</summary>
+            
             public int? layerMask;
         }
 
-        /// <summary>
-        /// Runs the action with the raw gun ray and pointer while the grip is held.
-        /// </summary>
+        
+
+
         public static void Aim(Action<(RaycastHit Ray, GameObject NewPointer)> action, GunSettings settings = null)
         {
             if (GetGunInput(false))
@@ -65,10 +65,10 @@ namespace Qubit.Modules.Classes
                 settings?.onIdle?.Invoke();
         }
 
-        /// <summary>
-        /// Runs the action on the rig the gun points at when the trigger is pressed.
-        /// With <see cref="GunSettings.locks"/> the rig is locked on and the action runs every frame while the grip is held.
-        /// </summary>
+        
+
+
+
         public static void Target(Action<VRRig> action, GunSettings settings = null)
         {
             bool locks = settings != null && settings.locks;
@@ -106,9 +106,9 @@ namespace Qubit.Modules.Classes
                 }, layerMask = settings?.layerMask });
         }
 
-        /// <summary>
-        /// Runs the action with the pointer when the trigger is pressed.
-        /// </summary>
+        
+
+
         public static void Point(Action<GameObject> action, GunSettings settings = null)
         {
             GunLibrary.Aim(gunData =>
@@ -125,11 +125,11 @@ namespace Qubit.Modules.Classes
         public static GameObject GunPointer;
         public static LineRenderer GunLine;
 
-        /// <summary>
-        /// Renders a gun pointer and line from the player's target gun position.
-        /// </summary>
-        /// <param name="overrideLayerMask">Layer Mask</param>
-        /// <returns>RaycastHit and Pointer GameObject</returns>
+        
+
+
+
+
         internal static (RaycastHit Ray, GameObject NewPointer) RenderGun(int? overrideLayerMask = null)
         {
             GunSpawned = true;
@@ -253,7 +253,7 @@ namespace Qubit.Modules.Classes
             int Step = GunLineQuality;
             switch (gunVariation)
             {
-                case 1: // Lightning
+                case 1: 
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -268,7 +268,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 2: // Wavy
+                case 2: 
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -285,7 +285,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 3: // Blocky
+                case 3: 
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -300,7 +300,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 4: // Sinewave
+                case 4: 
                     Step = GunLineQuality / 2;
 
                     if (GetGunInput(true) || gunLocked)
@@ -317,7 +317,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 5: // Spring
+                case 5: 
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -334,7 +334,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 6: // Bouncy
+                case 6: 
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -349,7 +349,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 7: // Audio
+                case 7: 
                     if (GetGunInput(true) || gunLocked)
                     {
                         float audioSize = 0f;
@@ -380,7 +380,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 8: // Bezier, credits to Crisp / Kman / Steal / Untitled One of those 4 I don't really know who
+                case 8: 
                     Vector3 BaseMid = Vector3.Lerp(StartPosition, EndPosition, 0.5f);
 
                     float angle = Time.time * 3f;
@@ -409,7 +409,7 @@ namespace Qubit.Modules.Classes
                     GunLine.positionCount = Step;
                     GunLine.SetPositions(points);
                     break;
-                case 9: // Rope
+                case 9: 
                     GunLine.positionCount = Step;
 
                     RopePhysics physics = GunLine.gameObject.GetComponent<RopePhysics>();
@@ -446,11 +446,11 @@ namespace Qubit.Modules.Classes
             set => _giveGunTarget = value;
         }
 
-        /// <summary>
-        /// Returns the gun input state.
-        /// </summary>
-        /// <param name="isShooting">Trigger</param>
-        /// <returns>Holding Button</returns>
+        
+
+
+
+
         public static bool GetGunInput(bool isShooting)
         {
             return GiveGunTarget != null
@@ -462,11 +462,11 @@ namespace Qubit.Modules.Classes
                 : GriplessGuns || (SwapGunHand ? leftGrab : rightGrab) || (HardGunLocks && gunLocked && !rightSecondary) || UI.IsMouseGripping();
         }
 
-        /// <summary>
-        /// Returns the gun direction vector based on the specified transform and the current GunDirection setting.
-        /// </summary>
-        /// <param name="transform">The transform used to determine the gun's orientation.</param>
-        /// <returns>A Vector3 representing the selected gun direction.</returns>
+        
+
+
+
+
         public static Vector3 GetGunDirection(Transform transform)
         {
             return GunDirection switch

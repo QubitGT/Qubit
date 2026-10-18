@@ -37,14 +37,14 @@ namespace Qubit.Patches.Building
         public static int _attachIndex;
         public static int _parentAttachIndex;
 
-        private static void Postfix(BuilderPiece piece, BuilderPiece attachPiece, sbyte bumpOffsetX, sbyte bumpOffsetZ, byte twist, BuilderPiece parentPiece, int attachIndex, int parentAttachIndex)
+        private static void Postfix(BuilderTable __instance, int pieceId, sbyte bumpOffsetX, sbyte bumpOffsetZ, byte twist, int parentPieceId, int attachIndex, int parentAttachIndex)
         {
-            _piece = piece;
+            _piece = __instance.GetPiece(pieceId);
 
             _bumpOffsetX = bumpOffsetX;
             _bumpOffsetZ = bumpOffsetZ;
             _twist = twist;
-            _parentPiece = parentPiece;
+            _parentPiece = parentPieceId < 0 ? null : __instance.GetPiece(parentPieceId);
 
             _attachIndex = attachIndex;
             _parentAttachIndex = parentAttachIndex;

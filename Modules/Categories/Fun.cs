@@ -1973,7 +1973,7 @@ namespace Qubit.Modules.Categories
                         {
                             VoiceSpeaker.enabled = true;
                             VoiceSpeaker.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
-                            if (!Voices.Get().PostProcessors.ContainsKey("CopyVoice"))  // this is so shit but i need to account for channels > 1
+                            if (!Voices.Get().PostProcessors.ContainsKey("CopyVoice"))  
                             {
                                 float readPos = 0f;
 
@@ -2733,7 +2733,7 @@ namespace Qubit.Modules.Categories
 
         public static void RandomNameCycle() =>
             NameCycle(new[] { RandomString(8) });
-        public static void EnableCustomNameCycle() // Thanks to xynz_ for some fixes
+        public static void EnableCustomNameCycle() 
         {
             var path = $"{PluginInfo.BaseDirectory}/Qubit_CustomNameCycle.txt";
             if (File.Exists(path))
@@ -4025,8 +4025,8 @@ namespace Qubit.Modules.Categories
                     ToRig = (rig.transform.position - head.position).normalized,
                     Distance = Vector3.Distance(head.position, rig.transform.position)
                 })
-                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig)) // only angle matters
-                .ThenBy(x => x.Distance) // tiebreaker if multiple at same angle
+                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig)) 
+                .ThenBy(x => x.Distance) 
                 .Select(x => x.Rig)
                 .FirstOrDefault();
 
@@ -4595,11 +4595,11 @@ namespace Qubit.Modules.Categories
             RankedRooms.targetTier = tier;
         }
 
-        /// <summary>
-        /// Spoofs your platform for the Ranked gamemode.
-        /// </summary>
-        /// <param name="enabled">Spoof Enabled</param>
-        /// <param name="target">Target Platform</param>
+        
+
+
+
+
         public static void SpoofPlatform(bool enabled, string target = null)
         {
             RankedRooms.enabled = enabled;

@@ -2530,7 +2530,7 @@ namespace Qubit.Modules.Categories
         #endregion
 
         #region Methods
-        public static void Search() // This took me like 4 hours
+        public static void Search() 
         {
             isSearching = !isSearching;
 
@@ -3241,7 +3241,7 @@ namespace Qubit.Modules.Categories
             Notifications.SendFormat("green", "SUCCESS", "Removed all rebinds.");
         }
 
-        // The code below is fully safe. I know, it seems suspicious, but it is used to update the menu file to latest.
+        
         public static void UpdateMenu()
         {
             switch (SystemInfo.operatingSystemFamily)
@@ -3790,7 +3790,7 @@ exit 0";
         public static void CustomMenuBackground()
         {
             if (!File.Exists($"{PluginInfo.BaseDirectory}/CustomBackground.png"))
-                LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomBackground.png", "CustomBackground.png"); // Do not move outside of its path
+                LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomBackground.png", "CustomBackground.png"); 
 
             textureFileDirectory.Remove("CustomBackground.png");
 
@@ -3810,7 +3810,7 @@ exit 0";
             if (enabled)
             {
                 if (!File.Exists($"{PluginInfo.BaseDirectory}/CustomWatermark.png"))
-                    LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomWatermark.png", "CustomWatermark.png"); // Do not move outside of its path
+                    LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomWatermark.png", "CustomWatermark.png"); 
 
                 textureFileDirectory.Remove("CustomWatermark.png");
                 customWatermark = LoadTextureFromFile("CustomWatermark.png");
@@ -3836,7 +3836,7 @@ exit 0";
         public static void CustomWatermark()
         {
             if (!File.Exists($"{PluginInfo.BaseDirectory}/CustomWatermark.png"))
-                LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomWatermark.png", "CustomWatermark.png"); // Do not move outside of its path
+                LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomWatermark.png", "CustomWatermark.png"); 
 
             textureFileDirectory.Remove("CustomWatermark.png");
             customWatermark = LoadTextureFromFile("CustomWatermark.png");
@@ -5046,7 +5046,7 @@ exit 0";
             Color backgroundColor = Color.white;
             Fun.HueShift(Color.white);
 
-            var main = particleSystem.main; // ????
+            var main = particleSystem.main; 
             main.startColor = new ParticleSystem.MinMaxGradient(
                 Frontend.Settings.backgroundColor.GetColor(0)
             );
@@ -5154,7 +5154,7 @@ exit 0";
                 arrowType.ToString(),
                 pcBackgroundIndex.ToString(),
                 Important.reconnectDelay.ToString(),
-                "0",//Safety.fpsSpoofValue.ToString(),
+                "0",
                 Sounds.DefaultSounds["Button"],
                 buttonClickVolume.ToString(),
                 Safety.antiReportRangeIndex.ToString(),
@@ -5202,12 +5202,12 @@ exit 0";
                 Fun.targetFOV.ToString(),
                 Projectiles.targetProjectileIndex.ToString(),
                 Movement.fakeLagDelayIndex.ToString(),
-                "0",//Projectiles.snowballIndex.ToString(),
+                "0",
                 characterDistance.ToString(),
                 Overpowered.lagTypeIndex.ToString(),
                 Overpowered.masterVisualizationType.ToString(),
                 Movement.targetHz.ToString(),
-                "0",//Safety.pingSpoofValue.ToString(),
+                "0",
                 Fun.soundboardVolumeIndex.ToString(),
                 Fun.soundboardSpeedIndex.ToString(),
                 Sounds.DefaultSoundpack,
@@ -5351,8 +5351,8 @@ exit 0";
                 Important.reconnectDelay = int.Parse(data[14]);
                 RestoreCycle("Change Reconnect Time", Important.reconnectDelay);
 
-                //Safety.fpsSpoofValue = string.IsNullOrWhiteSpace(data[15]) ? 85 : int.Parse(data[15]);
-                //RestoreCycle("Change FPS Spoof Value", Safety.fpsSpoofValue);
+                
+                
 
                 Sounds.DefaultSounds["Button"] = data[16];
                 RestoreNamedCycle("Change Button Sound", data[16]);
@@ -5490,8 +5490,8 @@ exit 0";
                 Movement.fakeLagDelayIndex = int.Parse(data[62]);
                 RestoreCycle("Change Fake Lag Strength", Movement.fakeLagDelayIndex);
 
-                //Projectiles.snowballIndex = int.Parse(data[63]);
-                //Projectiles.ChangeGrowingProjectile();
+                
+                
 
                 characterDistance = int.Parse(data[64]);
                 RestoreCycle("Change Character Distance", characterDistance);
@@ -5505,8 +5505,8 @@ exit 0";
                 Movement.targetHz = int.Parse(data[67]);
                 RestoreCycle("Change Tinnitus Hertz", Movement.targetHz);
 
-                //Safety.pingSpoofValue = int.Parse(data[68]);
-                //RestoreCycle("Change Ping Spoof Value", Safety.pingSpoofValue);
+                
+                
 
                 Fun.soundboardVolumeIndex = float.Parse(data[69]);
                 RestoreCycle("Change Soundboard Volume", (int)Fun.soundboardVolumeIndex);
@@ -5632,7 +5632,7 @@ exit 0";
                         pcBindings[binding] = key;
                 }
 
-                bool addedDefaults = false; // files saved before a binding existed would otherwise lose it
+                bool addedDefaults = false; 
                 foreach (var pair in defaults)
                 {
                     if (pcBindings.ContainsKey(pair.Key)) continue;

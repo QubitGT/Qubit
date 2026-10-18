@@ -137,7 +137,7 @@ namespace Qubit.Extensions
                 return;
             }
 
-            PlayFabClientAPI.GetAccountInfo(new GetAccountInfoRequest { PlayFabId = userId }, delegate (GetAccountInfoResult result) // Who designed this
+            PlayFabClientAPI.GetAccountInfo(new GetAccountInfoRequest { PlayFabId = userId }, delegate (GetAccountInfoResult result) 
             {
                 string creationDate = result.AccountInfo.Created.ToString(format);
                 creationDateCache[userId] = creationDate;
@@ -387,7 +387,7 @@ namespace Qubit.Extensions
 
         private static readonly List<VRRig> _rigs = new List<VRRig>();
         private static int _lastFrame = -1;
-        private static readonly object _lock = new object(); // just in case we aren't on unity's thread
+        private static readonly object _lock = new object(); 
         public static List<VRRig> ActiveRigs
         {
             get

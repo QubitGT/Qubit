@@ -38,7 +38,7 @@ namespace Qubit.Libraries.Networking
             set => PhotonNetwork.LocalPlayer.NickName = value;
         }
 
-        public static void TeleportPlayer(Vector3 pos, bool keepVelocity = false) // Prevents your hands from getting stuck on trees
+        public static void TeleportPlayer(Vector3 pos, bool keepVelocity = false) 
         {
             References.Player.TeleportTo(World2Player(pos), References.Player.transform.rotation, keepVelocity);
             References.LocalRig.transform.position = pos;

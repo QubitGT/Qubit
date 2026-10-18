@@ -49,13 +49,13 @@ namespace Qubit.Libraries.Interface
 
         public GameObject canvas;
         private GameObject mainCamera;
-        //private Material textMaterial;
+        
 
         public static string PreviousNotifi;
-        /// <summary>
-        /// Elements in this dictionary are displayed on the user's
-        /// screen as an overlay in the top left or right corner of the view.
-        /// </summary>
+        
+
+
+
         public static readonly Dictionary<string, string> information = new Dictionary<string, string>();
 
         public static TextMeshProUGUI notificationText;
@@ -114,7 +114,7 @@ namespace Qubit.Libraries.Interface
             rotation.y = -270f;
             canvasRect.rotation = Quaternion.Euler(rotation);
 
-            //textMaterial = new Material(Shader.Find("GUI/Text Shader"));
+            
 
             notificationText = CreateText(canvas.transform, new Vector3(-1f, -1f, -0.5f),
                 new Vector2(450f, 210f), 30, TextAlignmentOptions.BottomLeft);
@@ -141,7 +141,7 @@ namespace Qubit.Libraries.Interface
             text.overflowMode = anchor == TextAlignmentOptions.BottomLeft ? TextOverflowModes.Overflow : TextOverflowModes.Truncate;
             text.rectTransform.localScale = new Vector3(0.00333333333f, 0.00333333333f, 0.33333333f);
             text.rectTransform.localPosition = localPos;
-            //text.material = textMaterial;
+            
             text.characterSpacing = -9f;
 
             return text;
@@ -299,19 +299,19 @@ namespace Qubit.Libraries.Interface
             catch (Exception e) { Logs.Log(e); }
         }
 
-        /// <summary>
-        /// Displays a notification message to the user, with optional customization for display duration and
-        /// formatting.
-        /// </summary>
-        /// <remarks>If the notification text matches the previous notification and notification stacking
-        /// is enabled, the notification count is incremented instead of displaying a new message. The method applies
-        /// various formatting and translation options based on current settings, and may play a notification sound or
-        /// narrate the message if those features are enabled. Rich text support and text casing are also configurable.
-        /// This method is thread-unsafe and should be called from the main UI thread.</remarks>
-        /// <param name="notificationText">The text of the notification to display. May include rich text formatting tags. If translation is enabled,
-        /// the text will be translated before display.</param>
-        /// <param name="clearTime">The time, in milliseconds, before the notification is cleared. Specify -1 to use the default notification
-        /// decay time.</param>
+        
+
+
+
+
+
+
+
+
+
+
+
+
         public static void Send(string notificationText, int clearTime = -1)
         {
             if (clearTime < 0)
@@ -384,37 +384,37 @@ namespace Qubit.Libraries.Interface
             }
         }
 
-        /// <summary>
-        /// Sends a notification with the standard bracketed tag in front of the message.
-        /// </summary>
-        /// <param name="color">The color of the tag text, for example "green".</param>
-        /// <param name="tag">The tag text, for example "SUCCESS".</param>
-        /// <param name="message">The text shown after the tag.</param>
-        /// <param name="clearTime">The time, in milliseconds, before the notification is cleared. Specify -1 to use the default notification
-        /// decay time.</param>
+        
+
+
+
+
+
+
+
         public static void SendFormat(string color, string tag, string message, int clearTime = -1) =>
             Send($"{tag.FormatTag(color)} {message}", clearTime);
 
         public static void PlayNotificationSound() =>
             Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, buttonClickVolume / 10f));
 
-        /// <summary>
-        /// Clears all active notifications and stops any ongoing notification clearing operations.
-        /// </summary>
-        /// <remarks>Call this method to immediately remove all notification text and halt any scheduled
-        /// notification clearing. This method is typically used to reset the notification system or when notifications
-        /// are no longer relevant.</remarks>
+        
+
+
+
+
+
         public static void Clear()
         {
             activeNotifications.Clear();
             notificationText.SafeSetText("");
         }
 
-        /// <summary>
-        /// Removes a specified number of past notification entries from the notification text.
-        /// </summary>
-        /// <param name="amount">The number of past notification lines to remove. Must be zero or greater. If the value is greater than or
-        /// equal to the total number of notification lines, all notifications are cleared.</param>
+        
+
+
+
+
         public static void ClearPastNotifications(int amount)
         {
             if (activeNotifications.Count == 0)
@@ -425,10 +425,10 @@ namespace Qubit.Libraries.Interface
             RebuildNotificationText();
         }
 
-        /// <summary>
-        /// Removes any notification entries whose individual expiry time has passed, then
-        /// refreshes the on-screen text if anything changed. Called once per FixedUpdate.
-        /// </summary>
+        
+
+
+
         private static void UpdateNotificationExpiry()
         {
             if (activeNotifications.Count == 0)
@@ -448,9 +448,9 @@ namespace Qubit.Libraries.Interface
                 RebuildNotificationText();
         }
 
-        /// <summary>
-        /// Rebuilds the visible notification text from the current list of active entries.
-        /// </summary>
+        
+
+
         private static void RebuildNotificationText()
         {
             List<string> lines = new List<string>(activeNotifications.Count);
