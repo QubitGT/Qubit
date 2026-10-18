@@ -87,7 +87,7 @@ namespace Qubit.Modules.Categories.CustomMaps
             CustomGameMode.LuaScript = string.Join(Environment.NewLine, lines);
 
             if (Networking.InRoom)
-                LuauHud.Instance.RestartLuauScript();
+                ManagerRegistry.LuauHud.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();
         }
@@ -106,7 +106,7 @@ namespace Qubit.Modules.Categories.CustomMaps
 
                 File.WriteAllText(DirectoryTarget, script);
             }
-            Process.Start(DirectoryTarget);
+            Files.Start(DirectoryTarget);
         }
 
         public static void DeleteUserScript()
@@ -123,7 +123,7 @@ namespace Qubit.Modules.Categories.CustomMaps
                 CustomGameMode.LuaScript = File.ReadAllText(DirectoryTarget);
 
             if (Networking.InRoom)
-                LuauHud.Instance.RestartLuauScript();
+                ManagerRegistry.LuauHud.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();
         }
@@ -133,7 +133,7 @@ namespace Qubit.Modules.Categories.CustomMaps
             CustomGameMode.LuaScript = mapScriptArchives[CustomMapManager.currentRoomMapModId];
 
             if (Networking.InRoom)
-                LuauHud.Instance.RestartLuauScript();
+                ManagerRegistry.LuauHud.RestartLuauScript();
 
             CustomMapManager.ReturnToVirtualStump();
         }

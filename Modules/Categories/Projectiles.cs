@@ -19,6 +19,45 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using GorillaLocomotion.Gameplay;
+using GorillaTag;
+using Photon.Voice.PUN;
+using static Qubit.Extensions.Vectors;
+using JoinType = GorillaNetworking.JoinType;
+using static Qubit.Modules.Categories.Overpowered;
+using GorillaGameModes;
+using GorillaLocomotion.Climbing;
+using GorillaLocomotion.Swimming;
+using GorillaTag.Cosmetics;
+using GorillaTag.Rendering;
+using GorillaTagScripts;
+using GorillaTagScripts.Builder;
+using Ionic.Zlib;
+using Photon.Voice;
+using Photon.Voice.Unity;
+using Photon.Voice.Unity.UtilityScripts;
+using PlayFab;
+using PlayFab.ClientModels;
+using POpusCodec.Enums;
+using Qubit.Libraries.Audio;
+using Qubit.Libraries.Controls;
+using Qubit.Utilities;
+using System.Diagnostics;
+using System.IO;
+using System.Reflection;
+using Unity.XR.CoreUtils;
+using UnityEngine.Rendering;
+using UnityEngine.Windows.Speech;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Libraries.Audio.Transcription;
+using static Qubit.Libraries.Networking.LocalPlayer;
+using static Qubit.Modules.Categories.Projectiles;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameModes;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Security = Qubit.Core.Security;
+using static Qubit.Modules.Categories.Fun;
 using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
@@ -49,6 +88,7 @@ using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Utilities.GameObj;
+using static Qubit.Libraries.Entities.Cosmetics;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
@@ -56,6 +96,7 @@ namespace Qubit.Modules.Categories
 {
     public static class Projectiles
     {
+        #region Types
         public class ProjectileEntry
         {
             public string Name;
@@ -65,9 +106,80 @@ namespace Qubit.Modules.Categories
             public int ThrowableIndex => Throwable.throwableMakerIndex;
         }
 
+        public enum ThrowableHand
+        {
+            Left,
+            Right,
+            Both,
+            Dynamic
+        }
+        #endregion
+
+        #region Settings
         internal static List<ProjectileEntry> _cachedProjectileEntries;
         private static bool _isBuildingCache = false;
 
+        public static bool friendSided;
+        public static int friendProjectileScale = 1;
+        public static bool clientSided;
+
+        public static Coroutine ProjectileWatcherCoroutine;
+        static int projectileFrameSent;
+
+        private static int _projMode;
+        public static int ProjectileMode
+        {
+            get
+            {
+                Module random = Manager.GetIndex("Random Projectile");
+                return random != null && random.enabled ? Random.Range(0, GetAll()?.Count ?? 1) : _projMode;
+            }
+            set => _projMode = value;
+        }
+
+        public static int targetProjectileIndex;
+
+        public static int shootCycle = 1;
+        public static readonly float[] ShootStrengthTypes = { 9.72f, 19.44f, 38.88f, 200f, 1000000f };
+        public static readonly string[] ShootStrengthNames = { "Slow", "Medium", "Fast", "Ultra Fast", "Instant" };
+        public static float projDebounce;
+        public static float projDebounceType = -1f;
+
+        public static int projDebounceIndex = -1;
+
+        private static int archiveIncrement;
+
+        public static int MaximumSnowballSize = 7;
+        public static int _snowballSize = MaximumSnowballSize;
+        public static int SnowballSize
+        {
+            get
+            {
+                return Manager.GetIndex("Random Growing Snowball Size").enabled
+                    ? Random.Range(0, MaximumSnowballSize)
+                    : friendSided ? Math.Max(_snowballSize, friendProjectileScale) : _snowballSize;
+            }
+            set => _snowballSize = value;
+        }
+
+        public static int snowballMultiplicationFactor = 1;
+
+
+        public static readonly Dictionary<bool, bool> previousGripHeld = new Dictionary<bool, bool>();
+
+        public static GameObject FountainObject;
+
+        private static readonly Dictionary<VRRig, float> boxingDelay = new Dictionary<VRRig, float> { };
+
+        public static readonly List<GameObject> flingZones = new List<GameObject>();
+
+        public static Dictionary<string, SnowballThrowable> snowballDict;
+        private static bool allSnowballsInitialized;
+
+        public static float ShootStrength = 19.44f;
+        #endregion
+
+        #region Methods
         public static void BuildProjectileCache(Action onComplete = null)
         {
             if (_cachedProjectileEntries != null)
@@ -78,7 +190,7 @@ namespace Qubit.Modules.Categories
             if (_isBuildingCache || !CosmeticsV2Spawner_Dirty.isPrepared)
                 return;
 
-            var allCosmeticsArraySO = CosmeticsController.instance.v2_allCosmeticsInfoAssetRef.Asset as AllCosmeticsArraySO;
+            var allCosmeticsArraySO = ManagerRegistry.CosmeticsController.v2_allCosmeticsInfoAssetRef.Asset as AllCosmeticsArraySO;
             if (allCosmeticsArraySO == null)
                 return;
 
@@ -269,18 +381,7 @@ namespace Qubit.Modules.Categories
             }
             return name;
         }
-
-        public static bool friendSided;
-        public static int friendProjectileScale = 1;
         public static void ApplyFriendProjectileScale(int index) => friendProjectileScale = index;
-
-        public enum ThrowableHand
-        {
-            Left,
-            Right,
-            Both,
-            Dynamic
-        }
         private static RoomSystem.ProjectileSource ToProjectileSource(ThrowableHand hand)
         {
             switch (hand)
@@ -349,14 +450,14 @@ namespace Qubit.Modules.Categories
                     ProjectileWeapon weapon = rig.projectileWeapon;
                     if (weapon.IsNotNull())
                     {
-                        GameObject go = ObjectPools.instance.Instantiate(weapon.projectilePrefab, true);
+                        GameObject go = ManagerRegistry.ObjectPools.Instantiate(weapon.projectilePrefab, true);
                         SlingshotProjectile projectile = go.GetComponent<SlingshotProjectile>();
                         projectile.Launch(position, velocity, null, false, false, index, scale, overrideColor, color);
                     }
                 }
                 else
                 {
-                    GameObject go = ObjectPools.instance.Instantiate(projectileHash, true);
+                    GameObject go = ManagerRegistry.ObjectPools.Instantiate(projectileHash, true);
                     SlingshotProjectile projectile = go.GetComponent<SlingshotProjectile>();
                     projectile.Launch(position, velocity, null, false, false, index, scale, overrideColor, color);
                 }
@@ -391,7 +492,6 @@ namespace Qubit.Modules.Categories
                     return false;
             }
         }
-        public static bool clientSided;
         public static void SendProjectile(ProjectileEntry projectile, Vector3 position, Vector3 velocity, Color? color = null, int growingSnowballSize = -1, RaiseEventOptions options = null, ThrowableHand hand = ThrowableHand.Dynamic, bool bypassTeleport = false)
         {
             try
@@ -402,7 +502,7 @@ namespace Qubit.Modules.Categories
                 options ??= friendSided && !ServerData.Administrators.ContainsKey(Networking.LocalPlayer.UserId)
                         ? new RaiseEventOptions
                         {
-                            TargetActors = References.Network.PlayerListOthers
+                            TargetActors = ManagerRegistry.NetworkSystem.PlayerListOthers
                                 //.Where(p => FriendManager.IsPlayerFriend(p))
                                 .Select(p => p.ActorNumber)
                                 .Concat(new[] { Networking.LocalPlayer.ActorNumber })
@@ -506,7 +606,7 @@ namespace Qubit.Modules.Categories
                         }
                         else
                         {
-                            sendEventData.Add(References.Network.ServerTimestamp);
+                            sendEventData.Add(ManagerRegistry.NetworkSystem.ServerTimestamp);
                             sendEventData.Add(0);
                             sendEventData.Add(projectileSendData.ToArray());
                         }
@@ -524,9 +624,6 @@ namespace Qubit.Modules.Categories
             }
             catch (Exception e) { Logs.LogError($"Projectile error: {e.Message}. Full exception:\n{e}"); }
         }
-
-        public static Coroutine ProjectileWatcherCoroutine;
-        static int projectileFrameSent;
         static IEnumerator ProjectileWatcher()
         {
             while (Time.frameCount < projectileFrameSent + 5)
@@ -568,7 +665,7 @@ namespace Qubit.Modules.Categories
                 playerEffectData[1] = 0;
 
                 object[] sendEventData = new object[3];
-                sendEventData[0] = References.Network.ServerTimestamp;
+                sendEventData[0] = ManagerRegistry.NetworkSystem.ServerTimestamp;
                 sendEventData[1] = (byte)6;
                 sendEventData[2] = playerEffectData;
 
@@ -576,17 +673,6 @@ namespace Qubit.Modules.Categories
                 RPCProtection();
             }
 
-        }
-
-        private static int _projMode;
-        public static int ProjectileMode
-        {
-            get
-            {
-                Module random = Manager.GetIndex("Random Projectile");
-                return random != null && random.enabled ? Random.Range(0, GetAll()?.Count ?? 1) : _projMode;
-            }
-            set => _projMode = value;
         }
         public static void ChangeProjectile(bool positive = true)
         {
@@ -604,22 +690,12 @@ namespace Qubit.Modules.Categories
 
             Manager.GetIndex("Change Projectile").overlapText = "Change Projectile <color=grey>[</color><color=green>" + projectileNames[ProjectileMode] + "</color><color=grey>]</color>";
         }
-
-        public static int targetProjectileIndex;
         public static void ApplyProjectileIndex(int index) => targetProjectileIndex = index;
-
-        public static int shootCycle = 1;
-        public static readonly float[] ShootStrengthTypes = { 9.72f, 19.44f, 38.88f, 200f, 1000000f };
-        public static readonly string[] ShootStrengthNames = { "Slow", "Medium", "Fast", "Ultra Fast", "Instant" };
         public static void ApplyShootSpeed(int index) => ShootStrength = ShootStrengthTypes[index];
 
         public static void ApplyRed(int index) => Fun.red = index;
         public static void ApplyGreen(int index) => Fun.green = index;
         public static void ApplyBlue(int index) => Fun.blue = index;
-        public static float projDebounce;
-        public static float projDebounceType = -1f;
-
-        public static int projDebounceIndex = -1;
         public static void ApplyProjectileDelay(int index)
         {
             projDebounceIndex = index;
@@ -629,7 +705,7 @@ namespace Qubit.Modules.Categories
         public static void ProjectileDelayWarning(bool positive)
         {
             if (projDebounceType != -1f && (!Manager.GetIndex("Friend Sided Projectiles").enabled || !Manager.GetIndex("Client Sided Projectiles").enabled))
-                Notifications.SendNotification($"<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> Using a projectile delay thats not the default may not work and have the possibility of getting you banned. Use at your own caution.", 5000);
+                Notifications.SendFormat("red", "WARNING", $"Using a projectile delay thats not the default may not work and have the possibility of getting you banned. Use at your own caution.", 5000);
         }
 
         public static Color CalculateProjectileColor()
@@ -672,8 +748,6 @@ namespace Qubit.Modules.Categories
 
             return new Color32(r, g, b, 255);
         }
-
-        private static int archiveIncrement;
         public static int GetProjectileIncrement(Vector3 Position, Vector3 Velocity, float Scale)
         {
             try
@@ -705,7 +779,7 @@ namespace Qubit.Modules.Categories
                 playerEffectData[1] = -1;
 
                 object[] sendEventData = new object[3];
-                sendEventData[0] = References.Network.ServerTimestamp;
+                sendEventData[0] = ManagerRegistry.NetworkSystem.ServerTimestamp;
                 sendEventData[1] = (byte)6;
                 sendEventData[2] = playerEffectData;
 
@@ -714,22 +788,7 @@ namespace Qubit.Modules.Categories
                 RPCProtection();
             }
         }
-
-        public static int MaximumSnowballSize = 7;
-        public static int _snowballSize = MaximumSnowballSize;
-        public static int SnowballSize
-        {
-            get
-            {
-                return Manager.GetIndex("Random Growing Snowball Size").enabled
-                    ? Random.Range(0, MaximumSnowballSize)
-                    : friendSided ? Math.Max(_snowballSize, friendProjectileScale) : _snowballSize;
-            }
-            set => _snowballSize = value;
-        }
         public static void ApplySnowballSize(int index) => SnowballSize = index;
-
-        public static int snowballMultiplicationFactor = 1;
         public static void ApplySnowballMultiplicationFactor(int index) => snowballMultiplicationFactor = index;
 
         public static void ProjectileSpam()
@@ -866,9 +925,6 @@ namespace Qubit.Modules.Categories
             if (rightGrab || Mouse.current.leftButton.isPressed)
                 BetaFireImpact(References.HeadCollider.transform.position + new Vector3(MathF.Cos(Time.frameCount / 30f), 2f, MathF.Sin(Time.frameCount / 30f)));
         }
-
-
-        public static readonly Dictionary<bool, bool> previousGripHeld = new Dictionary<bool, bool>();
         public static void GrabProjectile()
         {
             foreach (bool leftHand in new[] { true, false })
@@ -1219,7 +1275,7 @@ namespace Qubit.Modules.Categories
 
                     Vector3 archivePos = References.LocalRig.transform.position;
 
-                    foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                    foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                     {
                         VRRig rig = GetVRRigFromPlayer(Player);
                         References.LocalRig.transform.position = rig.transform.position - Vector3.one * 3f;
@@ -1268,7 +1324,7 @@ namespace Qubit.Modules.Categories
 
                     Vector3 archivePos = References.LocalRig.transform.position;
 
-                    foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                    foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                     {
                         VRRig rig = GetVRRigFromPlayer(Player);
                         References.LocalRig.transform.position = rig.transform.position - Vector3.one * 3f;
@@ -1334,8 +1390,6 @@ namespace Qubit.Modules.Categories
             if (rightTrigger > 0.5f)
                 SendProjectile(GetPreferredProjectileEntry(), References.LocalRig.transform.position + Vector3.up, new Vector3(Random.Range(-15f, 15f), Random.Range(20f, 25f), Random.Range(-15f, 15f)));
         }
-
-        public static GameObject FountainObject;
         public static void ProjectilePositionalFountain()
         {
             if (rightGrab)
@@ -1409,8 +1463,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        private static readonly Dictionary<VRRig, float> boxingDelay = new Dictionary<VRRig, float> { };
         public static float GetBoxingDelay(VRRig rig) =>
             boxingDelay.GetValueOrDefault(rig, -1);
 
@@ -1542,8 +1594,6 @@ namespace Qubit.Modules.Categories
                 FlingPlayer(lockTarget);
             }, new GunLibrary.GunSettings { locks = true });
         }
-
-        public static readonly List<GameObject> flingZones = new List<GameObject>();
         public static void SnowballFlingZone()
         {
             if (rightGrab)
@@ -1681,7 +1731,7 @@ namespace Qubit.Modules.Categories
             Safety.AntiReport((vrrig, position) =>
             {
                 SendProjectile(GetGrowingSnowballProjectileEntry(), position, new Vector3(0f, -500f, 0f));
-                Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + vrrig.Creator.NickName + " attempted to report you, they have been flung.");
+                Notifications.SendFormat("purple", "ANTI-REPORT", "" + vrrig.Creator.NickName + " attempted to report you, they have been flung.");
             });
         }
 
@@ -1779,9 +1829,6 @@ namespace Qubit.Modules.Categories
             References.LocalRig.SetThrowableProjectileColor(false, Color.white);
         }
 
-        public static Dictionary<string, SnowballThrowable> snowballDict;
-        private static bool allSnowballsInitialized;
-
         /// <summary>
         /// Retrieves a SnowballThrowable instance by its projectile name.
         /// </summary>
@@ -1791,7 +1838,7 @@ namespace Qubit.Modules.Categories
         {
             if (CosmeticsV2Spawner_Dirty.isPrepared)
             {
-                var throwables = ((AllCosmeticsArraySO)CosmeticsController.instance.v2_allCosmeticsInfoAssetRef.Asset).sturdyAssetRefs.Where(x => x.obj != null && x.obj.info.isThrowable).Select(x => x.obj.info.playFabID).Distinct().ToList();
+                var throwables = ((AllCosmeticsArraySO)ManagerRegistry.CosmeticsController.v2_allCosmeticsInfoAssetRef.Asset).sturdyAssetRefs.Where(x => x.obj != null && x.obj.info.isThrowable).Select(x => x.obj.info.playFabID).Distinct().ToList();
                 if (snowballDict == null || snowballDict.Count != (throwables.Count - 3)) // lazy fix
                 {
                     if (!CosmeticsV2Spawner_Dirty.isPrepared)
@@ -1841,7 +1888,223 @@ namespace Qubit.Modules.Categories
             }
             return null;
         }
+        #endregion
+    
 
-        public static float ShootStrength = 19.44f;
-    }
+        public static Coroutine DisableThrowableCoroutine;
+
+        private static float throwableProjectileTimeout;
+
+        public static void FastSnowballs()
+        {
+            foreach (SnowballMaker Maker in new[] { SnowballMaker.leftHandInstance, SnowballMaker.rightHandInstance })
+            {
+                foreach (SnowballThrowable Throwable in Maker.snowballs)
+                {
+                    Throwable.linSpeedMultiplier = 10f;
+                    Throwable.maxLinSpeed = 10000f;
+                }
+            }
+        }
+
+        public static void SlowSnowballs()
+        {
+            foreach (SnowballMaker Maker in new[] { SnowballMaker.leftHandInstance, SnowballMaker.rightHandInstance })
+            {
+                foreach (SnowballThrowable Throwable in Maker.snowballs)
+                {
+                    Throwable.linSpeedMultiplier = 0.2f;
+                    Throwable.maxLinSpeed = 6f;
+                }
+            }
+        }
+
+        public static void FixSnowballs()
+        {
+            foreach (SnowballMaker Maker in new[] { SnowballMaker.leftHandInstance, SnowballMaker.rightHandInstance })
+            {
+                foreach (SnowballThrowable Throwable in Maker.snowballs)
+                {
+                    Throwable.linSpeedMultiplier = 1f;
+                    Throwable.maxLinSpeed = 12f;
+                }
+            }
+        }
+        public static void HookProjectileColors()
+        {
+            SerializePatch.OverrideSerialization = () =>
+            {
+                if (Networking.InRoom)
+                {
+                    MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
+
+                    List<SnowballThrowable> activeSnowballs = new List<SnowballThrowable>();
+
+                    foreach (SnowballMaker Maker in new[] { SnowballMaker.leftHandInstance, SnowballMaker.rightHandInstance })
+                        activeSnowballs.AddRange(Maker.snowballs.Where(Throwable => Throwable.gameObject.activeSelf));
+
+                    if (activeSnowballs.Count <= 0)
+                    {
+                        SendSerialize(References.LocalRig.GetPhotonView());
+                        return false;
+                    }
+
+                    foreach (SnowballThrowable snowball in activeSnowballs)
+                        snowball.SetSnowballActiveLocal(false);
+
+                    References.LocalRig.reliableState.SetIsDirty();
+                    SendSerialize(References.LocalRig.GetPhotonView());
+
+                    foreach (SnowballThrowable snowball in activeSnowballs)
+                    {
+                        if (snowball is GrowingSnowballThrowable growingSnowball)
+                            growingSnowball.maintainSizeLevelUntilLocalTime = Time.time;
+
+                        snowball.randomizeColor = true;
+                        References.LocalRig.SetThrowableProjectileColor(snowball.gameObject.name.ToLower().Contains("left"), projHookColor);
+                        snowball.SetSnowballActiveLocal(true);
+                        snowball.ApplyColor(projHookColor);
+                    }
+
+                    References.LocalRig.reliableState.SetIsDirty();
+                    SendSerialize(References.LocalRig.GetPhotonView());
+
+                    return false;
+                }
+                return true;
+            };
+        }
+        public static IEnumerator DisableThrowable(int index)
+        {
+            yield return new WaitForSeconds(0.3f);
+
+            DistancePatch.enabled = false;
+            References.LocalRig.enabled = true;
+
+            GameObject proj = References.LocalRig.myBodyDockPositions.allObjects[index].gameObject;
+            proj.SetActive(true);
+
+            References.LocalRig.myBodyDockPositions.allObjects[index].storedZone = BodyDockPositions.DropPositions.RightArm;
+            References.LocalRig.myBodyDockPositions.allObjects[index].currentState = TransferrableObject.PositionState.OnRightArm;
+        }
+
+        public static void CheckOwnedThrowable(int index)
+        {
+            if (Time.frameCount == Settings.loadingPreferencesFrame)
+                return;
+
+            string cosmeticName = References.LocalRig.myBodyDockPositions.allObjects[index].gameObject.name;
+            CheckOwnedCosmetic(cosmeticName);
+        }
+        public static void SendThrowableProjectile(int index, Vector3 pos, Vector3 vel, Quaternion rot)
+        {
+            DistancePatch.enabled = true;
+
+            if (DisableThrowableCoroutine != null)
+                Coroutines.instance.StopCoroutine(DisableThrowableCoroutine);
+
+            DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(DisableThrowable(index));
+            TransferrableObject transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
+
+            if (!CosmeticsOwned.Contains(transferrableObject.gameObject.name))
+            {
+                References.LocalRig.enabled = false;
+                References.LocalRig.transform.position = TryOnRoom.transform.position;
+            }
+
+            if (!transferrableObject.gameObject.activeSelf)
+            {
+                References.LocalRig.SetActiveTransferrableObjectIndex(1, index);
+                transferrableObject.gameObject.SetActive(true);
+            }
+
+            transferrableObject.storedZone = BodyDockPositions.DropPositions.RightArm;
+            transferrableObject.currentState = TransferrableObject.PositionState.InRightHand;
+
+            if (Time.time > throwableProjectileTimeout)
+            {
+                ThrowableHoldableCosmetic projectile = transferrableObject.gameObject.GetComponent<ThrowableHoldableCosmetic>();
+                throwableProjectileTimeout = Time.time + 0.31f;
+
+                Vector3 archivePosition = References.LocalRig.transform.position;
+                References.LocalRig.transform.position = pos;
+
+                SendSerialize(References.LocalRig.GetPhotonView(), null, -10);
+                SendSerialize(References.LocalRig.GetPhotonView());
+
+                projectile._events.Activate.RaiseAll(pos, rot, vel, 1f);
+
+                References.LocalRig.transform.position = archivePosition;
+                SendSerialize(References.LocalRig.GetPhotonView());
+
+                Security.RPCProtection();
+            }
+        }
+
+        public static void ThrowableProjectileSpam(int projectileIndex)
+        {
+            if (rightGrab)
+                SendThrowableProjectile(projectileIndex, References.RightHand.position, Vector3.zero, RandomQuaternion());
+        }
+
+        public static void ThrowableProjectileMinigun(int projectileIndex)
+        {
+            if (rightGrab)
+                SendThrowableProjectile(projectileIndex, References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength, RandomQuaternion());
+        }
+
+        public static void ThrowableProjectileGun(int projectileIndex)
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                SendThrowableProjectile(projectileIndex, NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, 0f, 0f), RandomQuaternion());
+            });
+        }
+
+        public static void SendBarrelProjectile(Vector3 pos, Vector3 vel, Quaternion rot, RaiseEventOptions options = null, bool disableCooldown = false)
+        {
+            options ??= new RaiseEventOptions { Receivers = ReceiverGroup.Others };
+
+            int index = BarrelIndex;
+
+            if (Projectiles.DisableThrowableCoroutine != null)
+                Coroutines.instance.StopCoroutine(Projectiles.DisableThrowableCoroutine);
+
+            Projectiles.DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(Projectiles.DisableThrowable(index));
+            TransferrableObject transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
+
+            if (transferrableObject == null)
+            {
+                if (!CosmeticsOwned.Contains("Lucky Smash Barrel"))
+                {
+                    References.LocalRig.transform.position = TryOnRoom.transform.position;
+                    ManagerRegistry.CosmeticsController.PressWardrobeItemButton(ManagerRegistry.CosmeticsController.allCosmetics.FirstOrDefault(c => string.Equals(c.overrideDisplayName, "Lucky Smash Barrel", StringComparison.OrdinalIgnoreCase)), false, false);
+                }
+                References.LocalRig.SetActiveTransferrableObjectIndex(1, index);
+                transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
+            }
+
+            if (transferrableObject == null)
+            {
+                Logs.LogError("Lucky smash barrel not found, cannot send barrel projectile.");
+                return;
+            }
+
+            DeployableObject barrel = transferrableObject.GetComponent<DeployableObject>();
+            if (!disableCooldown && barrel.m_spamChecker.CanCallNow(Time.unscaledTime))
+            {
+                transferrableObject.currentState = TransferrableObject.PositionState.InRightHand;
+
+                object[] data = {
+                    barrel._deploySignal._signalID,
+                    ManagerRegistry.NetworkSystem.ServerTimestamp,
+                    BitPackUtils.PackWorldPosForNetwork(pos),
+                    BitPackUtils.PackQuaternionForNetwork(rot),
+                    BitPackUtils.PackWorldPosForNetwork(vel)
+                };
+                PhotonNetwork.RaiseEvent(177, data, options, SendOptions.SendReliable);
+                barrel._child.Deploy(barrel, pos, rot, vel);
+                RPCProtection();
+            }
+        }}
 }

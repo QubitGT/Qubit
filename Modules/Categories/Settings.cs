@@ -71,199 +71,17 @@ using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
 using static Qubit.Utilities.Assets;
 using static Qubit.Utilities.GameObj;
+using Qubit.Libraries.Entities;
 using Console = Qubit.Backend.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules.Categories
 {
     public static class Settings
     {
-        public static void Search() // This took me like 4 hours
-        {
-            isSearching = !isSearching;
-
-            pageNumber = 0;
-            keyboardInput = "";
-
-            if (isSearching)
-                SpawnKeyboard();
-            else
-                DestroyKeyboard();
-        }
-
-        public static void SpawnKeyboard()
-        {
-            isKeyboardPc = isOnPC || toggleButtonActive && keyboardWithToggleButton;
-            inTextInput = true;
-            keyboardInput = "";
-
-            shift = false;
-            lockShift = false;
-
-            if (isKeyboardPc)
-                lastPressedKeys.Add(Key.Q);
-
-            if (!isKeyboardPc && VRKeyboard == null)
-                VRKeyboard = Qubit.Frontend.Keyboard.View.Create();
-
-            if (lKeyReference == null)
-            {
-                lKeyReference = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                lKeyReference.transform.parent = References.LeftHand;
-                lKeyReference.GetComponent<Renderer>().material.color = backgroundColor.GetColor(0);
-                lKeyReference.transform.localPosition = pointerOffset;
-                lKeyReference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-                lKeyCollider = lKeyReference.GetComponent<SphereCollider>();
-
-                ObjectColors colorChanger = lKeyReference.AddComponent<ObjectColors>();
-                colorChanger.colors = backgroundColor;
-            }
-
-            if (rKeyReference == null)
-            {
-                rKeyReference = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                rKeyReference.transform.parent = References.RightHand;
-                rKeyReference.GetComponent<Renderer>().material.color = backgroundColor.GetColor(0);
-                rKeyReference.transform.localPosition = pointerOffset;
-                rKeyReference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
-                rKeyCollider = rKeyReference.GetComponent<SphereCollider>();
-
-                ObjectColors colorChanger = rKeyReference.AddComponent<ObjectColors>();
-                colorChanger.colors = backgroundColor;
-            }
-        }
-
-        public static void DestroyKeyboard()
-        {
-            inTextInput = false;
-            isKeyboardPc = false;
-
-            if (lKeyReference != null)
-            {
-                Object.Destroy(lKeyReference);
-                lKeyReference = null;
-            }
-
-            if (rKeyReference != null)
-            {
-                Object.Destroy(rKeyReference);
-                rKeyReference = null;
-            }
-
-            if (VRKeyboard != null)
-            {
-                VRKeyboard.SetActive(false);
-                Object.Destroy(VRKeyboard);
-                VRKeyboard = null;
-            }
-
-            if (TPC != null && TPC.transform.parent.gameObject.name.Contains("CameraTablet") && isOnPC)
-            {
-                isOnPC = false;
-                TPC.transform.position = TPC.transform.parent.position;
-                TPC.transform.rotation = TPC.transform.parent.rotation;
-            }
-        }
-
-        public static void GlobalReturn()
-        {
-            Notifications.ClearAllNotifications();
-            Toggle(Manager.modules[Manager.CurrentCategoryName][0].buttonText, true);
-            Sounds.Play("Return");
-
-            if (prompts.Count > 0)
-                StopCurrentPrompt();
-        }
-
-        public static void StopCurrentPrompt() =>
-            prompts.RemoveAt(0);
-
-        public static GameObject TutorialObject;
-        public static LineRenderer TutorialSelector;
-        public static void ShowTutorial()
-        {
-            if (TutorialObject != null)
-                Object.Destroy(TutorialObject);
-
-            TutorialObject = LoadObject<GameObject>("Tutorial");
-
-            TutorialObject.transform.position = References.BodyCollider.transform.position + References.BodyCollider.transform.forward * 1f + Vector3.up * 0.25f;
-            TutorialObject.transform.rotation = References.BodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
-
-            string videoName = "q2";
-            switch (Controllers.GetLeftControllerType())
-            {
-                case Controllers.ControllerType.Unknown:
-                case Controllers.ControllerType.Quest2:
-                    videoName = "q2";
-                    break;
-                case Controllers.ControllerType.Quest3:
-                    videoName = "q3";
-                    break;
-                case Controllers.ControllerType.ValveIndex:
-                    videoName = "index";
-                    break;
-                case Controllers.ControllerType.VIVE:
-                    videoName = "vive";
-                    break;
-            }
-
-            VideoPlayer videoPlayer = TutorialObject.transform.Find("Video").GetComponent<VideoPlayer>();
-            videoPlayer.url = $"{PluginInfo.ServerResourcePath}/Videos/Tutorial/tutorial-{videoName}.mp4";
-            videoPlayer.isLooping = true;
-
-            videoPlayer.AddComponent<TutorialButton>().buttonType = TutorialButton.ButtonType.Pause;
-
-            TutorialObject.transform.Find("Close").AddComponent<TutorialButton>().buttonType = TutorialButton.ButtonType.Close;
-        }
-
-        private static bool lastTrigger;
-        public static void UpdateTutorial()
-        {
-            if (Vector3.Distance(TutorialObject.transform.position, References.BodyCollider.transform.position) > 2f)
-            {
-                TutorialObject.transform.position = References.BodyCollider.transform.position + References.BodyCollider.transform.forward * 1f + Vector3.up * 0.25f;
-                TutorialObject.transform.rotation = References.BodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
-            }
-
-            if (TutorialSelector == null)
-            {
-                TutorialSelector = new GameObject("Qubit_TutorialSelector").AddComponent<LineRenderer>();
-                TutorialSelector.material.shader = Shader.Find("Sprites/Default");
-
-                TutorialSelector.startWidth = 0.01f;
-                TutorialSelector.endWidth = 0.01f;
-
-                TutorialSelector.positionCount = 2;
-
-                TutorialSelector.useWorldSpace = true;
-            }
-
-            TutorialSelector.startColor = BrightenColor(new Color32(255, 128, 0, 128));
-            TutorialSelector.endColor = BrightenColor(new Color32(255, 102, 0, 128));
-
-            Vector3 Direction = Controllers.GetTrueRightHand().forward;
-            Physics.Raycast(References.RightHand.position + Direction / 4f, Direction, out var Ray, 512f, NoInvisLayerMask());
-            if (!XRSettings.isDeviceActive)
-            {
-                Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
-                Physics.Raycast(ray, out Ray, 512f, NoInvisLayerMask());
-            }
-
-            TutorialSelector.SetPosition(0, References.RightHand.position);
-            TutorialSelector.SetPosition(1, Ray.point == Vector3.zero ? References.RightHand.position : Ray.point);
-
-            if ((rightTrigger > 0.5f || Mouse.current.leftButton.isPressed) && !lastTrigger)
-            {
-                TutorialButton gunTarget = Ray.collider.GetComponentInParent<TutorialButton>();
-                if (gunTarget)
-                    gunTarget.ClickButton();
-            }
-
-            lastTrigger = rightTrigger > 0.5f || Mouse.current.leftButton.isPressed;
-        }
-
+        #region Types
         public class TutorialButton : MonoBehaviour
         {
             public enum ButtonType
@@ -293,734 +111,43 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void ShowDebug()
+        public class ThemeDefinition
         {
-            string category = "Temporary Category";
-
-            string version = PluginInfo.Version;
-            if (PluginInfo.BetaBuild) version = "<color=blue>Beta</color> " + version;
-            Manager.AddModule(category, new Module { buttonText = "Exit Info Screen", method = () => Toggle("Info Screen"), isTogglable = false, toolTip = "Returns you back to the main page." });
-            Manager.AddModule(category, new Module { buttonText = "DebugMenuName", overlapText = "<color=grey><b>Qubit Menu </b></color>" + version, label = true });
-            Manager.AddModule(category, new Module { buttonText = "DebugColor", overlapText = "Loading...", label = true });
-            Manager.AddModule(category, new Module { buttonText = "DebugName", overlapText = "Loading...", label = true });
-            Manager.AddModule(category, new Module { buttonText = "DebugId", overlapText = "Loading...", label = true });
-            Manager.AddModule(category, new Module { buttonText = "DebugClip", overlapText = "Loading...", label = true });
-            Manager.AddModule(category, new Module { buttonText = "DebugFps", overlapText = "Loading...", label = true });
-            Manager.AddModule(category, new Module { buttonText = "DebugRoomA", overlapText = "Loading...", label = true });
-            Manager.AddModule(category, new Module { buttonText = "DebugRoomB", overlapText = "Loading...", label = true });
-
-            Debug();
-            Manager.CurrentCategoryName = "Temporary Category";
+            public string Name;
+            public Func<ExtGradient> Background;
+            public Func<ExtGradient> MenuBackground;
+            public Func<ExtGradient[]> ButtonColors;
+            public Func<ExtGradient[]> TextColors;
         }
+
+        public enum ControllerBinding
+        {
+            None,
+            LeftTrigger,
+            RightTrigger,
+            LeftGrip,
+            RightGrip,
+            LeftPrimaryButton,
+            RightPrimaryButton,
+            LeftSecondaryButton,
+            RightSecondaryButton,
+            JoystickClick,
+            LeftOverride
+        }
+        #endregion
+
+        #region Settings
+        public static GameObject TutorialObject;
+        public static LineRenderer TutorialSelector;
+
+        private static bool lastTrigger;
 
         public static bool hideId;
-        public static void Debug()
-        {
-            string red = "<color=red>" + MathF.Floor(PlayerPrefs.GetFloat("redValue") * 255f) + "</color>";
-            string green = ", <color=green>" + MathF.Floor(PlayerPrefs.GetFloat("greenValue") * 255f) + "</color>";
-            string blue = ", <color=blue>" + MathF.Floor(PlayerPrefs.GetFloat("blueValue") * 255f) + "</color>";
-            Manager.GetIndex("DebugColor").overlapText = "Color: " + red + green + blue;
-
-            string master = Networking.InRoom && PhotonNetwork.IsMasterClient ? "<color=red> [Master]</color>" : "";
-            Manager.GetIndex("DebugName").overlapText = PhotonNetwork.LocalPlayer.NickName + master;
-
-            Manager.GetIndex("DebugId").overlapText = "<color=green>ID: </color>" + (hideId ? "Hidden" : PhotonNetwork.LocalPlayer.UserId);
-            Manager.GetIndex("DebugClip").overlapText = "<color=green>Clip: </color>" + (GUIUtility.systemCopyBuffer.Length > 25 ? GUIUtility.systemCopyBuffer[..25] : GUIUtility.systemCopyBuffer);
-            Manager.GetIndex("DebugFps").overlapText = "<b>" + lastDeltaTime + "</b> FPS <b>" + PhotonNetwork.GetPing() + "</b> Ping";
-            Manager.GetIndex("DebugRoomA").overlapText = "<color=blue>" + References.Network.regionNames[References.Network.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " Players";
-
-            string priv = Networking.InRoom ? References.Network.SessionIsPrivate ? "Private" : "Public" : "";
-            Manager.GetIndex("DebugRoomB").overlapText = "<color=blue>" + priv + "</color> " + (Networking.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room");
-        }
-        public static void HideDebug()
-        {
-            string category = "Temporary Category";
-
-            Manager.RemoveModule(category, "DebugMenuName");
-            Manager.RemoveModule(category, "DebugColor");
-            Manager.RemoveModule(category, "DebugName");
-            Manager.RemoveModule(category, "DebugId");
-            Manager.RemoveModule(category, "DebugClip");
-            Manager.RemoveModule(category, "DebugFps");
-            Manager.RemoveModule(category, "DebugRoomA");
-            Manager.RemoveModule(category, "DebugRoomB");
-            Manager.CurrentCategoryName = "Main";
-        }
-
-        public static void PlayersTab()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module {
-                    buttonText = "Exit Players",
-                    method =() => Manager.CurrentCategoryName = "Main",
-                    isTogglable = false,
-                    toolTip = "Returns you back to the main page.",
-                    legal = true,
-                }
-            };
-
-            if (!Networking.InRoom)
-                buttons.Add(new Module { buttonText = "Not in a Room", label = true, legal = true });
-            else
-            {
-                for (int i = 0; i < References.Network.PlayerListOthers.Length; i++)
-                {
-                    NetPlayer player = References.Network.PlayerListOthers[i];
-                    string playerColor = "#ffffff";
-                    try
-                    {
-                        playerColor = $"#{ColorToHex(GetVRRigFromPlayer(player).playerColor)}";
-                    }
-                    catch { }
-
-                    buttons.Add(new Module
-                    {
-                        buttonText = $"PlayerButton{i}",
-                        overlapText = $"<color={playerColor}>" + player.NickName + "</color>",
-                        method = () => NavigatePlayer(player),
-                        isTogglable = false,
-                        toolTip = $"See information on the player {player.NickName}.",
-                        legal = true
-                    });
-                }
-            }
-
-            Manager.modules["Players"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Players";
-        }
-
-        public static void NavigatePlayer(NetPlayer player)
-        {
-            string targetName = player.NickName;
-
-            VRRig playerRig = GetVRRigFromPlayer(player) ?? null;
-
-            List<Module> buttons = new List<Module> {
-                new Module {
-                    buttonText = "Exit PlayerInspect",
-                    overlapText = $"Exit {targetName}",
-                    method =() => PlayersTab(),
-                    isTogglable = false,
-                    toolTip = "Returns you back to the players tab.",
-                    legal = true
-                },
-
-                new Module {
-                    buttonText = "Spectate Player",
-                    overlapText = $"Spectate {targetName}",
-                    method =() => SpectatePlayer(playerRig),
-                    isTogglable = false,
-                    toolTip = $"Shows you what {targetName} sees.",
-                    legal = true
-                },
-                new Module {
-                    buttonText = "Block Player",
-                    overlapText = $"Block {targetName}",
-                    enableMethod = () => BlockPlayer(playerRig),
-                    method = HandleBlockedPlayers,
-                    disableMethod = () => UnblockPlayer(playerRig),
-                    isTogglable = true,
-                    toolTip = $"Blocks {targetName}.",
-                    legal = true
-                },
-                new Module {
-                    buttonText = "Teleport to Player",
-                    overlapText = $"Teleport to {targetName}",
-                    method =() => Movement.TeleportToPlayer(player),
-                    isTogglable = false,
-                    toolTip = $"Teleports you to {targetName}."
-                },
-                new Module {
-                    buttonText = "Give Player Guns",
-                    overlapText = $"Give {targetName} Guns",
-                    method =() => GiveGunTarget = playerRig,
-                    disableMethod =() => GiveGunTarget = null,
-                    toolTip = $"Gives {targetName} every gun on the menu."
-                },
-                new Module {
-                    buttonText = "Copy Movement",
-                    overlapText = $"Copy Movement {targetName}",
-                    method =() => Movement.CopyMovementPlayer(player),
-                    disableMethod = Movement.EnableRig,
-                    toolTip = $"Copies the movement of {targetName}."
-                },
-                new Module {
-                    buttonText = "Follow Player",
-                    overlapText = $"Follow {targetName}",
-                    method =() => Movement.FollowPlayer(player),
-                    disableMethod = Movement.EnableRig,
-                    toolTip = $"Follows {targetName}."
-                },
-                new Module {
-                    buttonText = "Tag Player",
-                    overlapText = $"Tag {targetName}",
-                    method =() => Advantages.TagPlayer(player),
-                    disableMethod = Movement.EnableRig,
-                    toolTip = $"Tags {targetName}."
-                },
-                new Module {
-                    buttonText = "Snowball Fling Player",
-                    overlapText = $"Snowball Fling {targetName}",
-                    method =() => Projectiles.FlingPlayer(player.VRRig()),
-                    toolTip = $"Flings {targetName} with snowballs."
-                },
-                new Module {
-                    buttonText = "Projectile Blind Player",
-                    overlapText = $"Projectile Blind {targetName}",
-                    method =() => Projectiles.ProjectileBlindPlayer(player),
-                    toolTip = $"Blinds {targetName} using the egg projectiles."
-                },
-                new Module {
-                    buttonText = "Projectile Lag Player",
-                    overlapText = $"Projectile Lag {targetName}",
-                    method =() => Projectiles.ProjectileLagPlayer(player),
-                    toolTip = $"Lags {targetName} using the firework projectiles."
-                },
-                new Module {
-                    buttonText = "Lag Player",
-                    overlapText = $"Lag {targetName}",
-                    method =() => Overpowered.LagPlayer(player),
-                    toolTip = $"Lags {targetName}."
-                },
-                new Module {
-                    buttonText = "Destroy Player",
-                    overlapText = $"Destroy {targetName}",
-                    method =() => Overpowered.DestroyPlayer(player),
-                    toolTip = $"Stops all new players from seeing {targetName}."
-                },
-                new Module {
-                    buttonText = "Guardian Bring Player",
-                    overlapText = $"Guardian Bring {targetName}",
-                    method =() => Overpowered.GuardianBringPlayer(player),
-                    toolTip = $"Brings {targetName} to you."
-                },
-                new Module {
-                    buttonText = "Guardian Bring Player Gun",
-                    overlapText = $"Guardian Bring {targetName} Gun",
-                    method =() => Overpowered.GuardianBringPlayerGun(player),
-                    toolTip = $"Brings {targetName} to wherever your hand desires."
-                },
-                new Module {
-                    buttonText = "Guardian Kick Player",
-                    overlapText = $"Guardian Kick {targetName}",
-                    method =() => Overpowered.GuardianKickTarget(player),
-                    toolTip = $"Kicks {targetName}."
-                },
-                new Module {
-                    buttonText = "Guardian Obliterate Player",
-                    overlapText = $"Guardian Obliterate {targetName}",
-                    method =() => Overpowered.GuardianObliteratePlayer(player),
-                    toolTip = $"Obliterates {targetName}."
-                },
-                new Module {
-                    buttonText = "Guardian Crash Player",
-                    overlapText = $"Guardian Crash {targetName}",
-                    method =() => Overpowered.GuardianCrashPlayer(player),
-                    toolTip = $"Crashes {targetName}."
-                }
-            };
-
-            if (PhotonNetwork.IsMasterClient)
-            {
-                buttons.AddRange(
-                    new[]
-                    {
-                        new Module {
-                            buttonText = "Vibrate Player",
-                            overlapText = $"Vibrate {targetName}",
-                            method =() => Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } }),
-                            toolTip = $"Vibrates {targetName}'s controllers."
-                        },
-                        new Module {
-                            buttonText = "Slow Player",
-                            overlapText = $"Slow {targetName}",
-                            method =() => Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } } ),
-                            toolTip = $"Gives {targetName} tag freeze."
-                        }
-                    }
-                );
-            }
-
-            if (ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
-            {
-                buttons.AddRange(
-                    new[]
-                    {
-                        new Module {
-                            buttonText = "Admin Kick Player",
-                            overlapText = $"Admin Kick {targetName}",
-                            method =() => Console.ExecuteCommand("kick", ReceiverGroup.All, player.UserId),
-                            isTogglable = false,
-                            toolTip = $"Kicks {targetName} if they're using the menu.",
-                            legal = true
-                        },
-                        new Module {
-                            buttonText = "Admin Bring Player",
-                            overlapText = $"Admin Bring {targetName}",
-                            method =() => Console.ExecuteCommand("tp", player.ActorNumber, References.HeadCollider.transform.position),
-                            isTogglable = false,
-                            toolTip = $"Brings {targetName} to you if they're using the menu.",
-                            legal = true
-                        },
-                        new Module {
-                            buttonText = "Admin Crash Player",
-                            overlapText = $"Admin Crash {targetName}",
-                            method =() => Console.ExecuteCommand("crash", player.ActorNumber),
-                            isTogglable = false,
-                            toolTip = $"Crashes {targetName} if they're using the menu.",
-                            legal = true
-                        },
-                    }
-                );
-            }
-
-            Color playerColor = playerRig?.playerColor ?? Color.black;
-            if (playerRig)
-                buttons.AddRange(
-                    new[]
-                    {
-                        new Module
-                        {
-                            buttonText = $"Check {player.NickName}'s Mods",
-                            method = () => ModChecker(player),
-                            isTogglable = false,
-                            toolTip = $"View all of \"{player.NickName}\"'s mods."
-                        },
-                        new Module
-                        {
-                            buttonText = "Player Name",
-                            overlapText = $"Name: {player.NickName}",
-                            method = () => ChangeName(player.NickName),
-                            isTogglable = false,
-                            toolTip = $"Sets your name to \"{player.NickName}\".",
-                            legal = true
-                        },
-                        new Module
-                        {
-                            buttonText = "Player Color",
-                            overlapText =
-                                $"Color: {playerColor.ToRichRGBString()}",
-                            method = () => ChangeColor(playerColor),
-                            isTogglable = false,
-                            toolTip = $"Sets your color to the same as {targetName}.",
-                            legal = true
-                        },
-                        new Module
-                        {
-                            buttonText = "Player User ID",
-                            overlapText = $"User ID: {player.UserId}",
-                            method = () =>
-                            {
-                                Notifications.SendNotification(
-                                    $"<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully copied {player.UserId} to the clipboard!",
-                                    5000);
-                                GUIUtility.systemCopyBuffer = player.UserId;
-                            },
-                            isTogglable = false,
-                            toolTip = $"Copies {player.UserId} to your clipboard."
-                        },
-                        new Module
-                        {
-                            buttonText = "Player Creation Date",
-                            overlapText =
-                                $"Creation Date: {GetCreationDate(player.UserId, creationDate => { Manager.GetIndex("Player Creation Date").overlapText = $"Creation Date: {creationDate}"; ReloadMenu(); })}",
-                            label = true
-                        },
-                        new Module
-                        {
-                            buttonText = "Player Platform",
-                            overlapText =
-                                $"Platform: {playerRig.GetPlatform()}",
-                            label = true
-                        },
-                        new Module
-                        {
-                            buttonText = "Player FPS",
-                            overlapText = $"FPS: {playerRig.GetFPS()}",
-                            label = true,
-                            legal = true
-                        },
-                        new Module
-                        {
-                            buttonText = "Player Target FPS",
-                            overlapText = $"Target FPS: {playerRig.GetTargetFPS()}",
-                            label = true,
-                            legal = true
-                        }
-                    }
-                );
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
 
         private static RenderTexture spectateRenderTexture;
         private static GameObject spectateCameraObject;
 
-        public static void SpectatePlayer(VRRig rig)
-        {
-            CleanupSpectateCamera();
-
-            spectateCameraObject = new GameObject("Qubit_SpectateCamera");
-            spectateRenderTexture = new RenderTexture(512, 512, 16);
-            spectateCameraObject.AddComponent<Camera>().targetTexture = spectateRenderTexture;
-            spectateCameraObject.transform.SetParent(rig.headMesh.transform, false);
-            spectateCameraObject.transform.localPosition = new Vector3(0f, 0.25f, 0.25f);
-
-            if (promptMaterial != null)
-                Object.Destroy(promptMaterial);
-
-            promptMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
-            {
-                mainTexture = spectateRenderTexture
-            };
-
-            PromptSingle("<https://.mat>", CleanupSpectateCamera, "Done");
-        }
-
-        private static void CleanupSpectateCamera()
-        {
-            if (spectateCameraObject != null)
-            {
-                Object.Destroy(spectateCameraObject);
-                spectateCameraObject = null;
-            }
-
-            if (spectateRenderTexture != null)
-            {
-                spectateRenderTexture.Release();
-                Object.Destroy(spectateRenderTexture);
-                spectateRenderTexture = null;
-            }
-        }
-
         public static HashSet<VRRig> Blocked = new HashSet<VRRig>();
-        public static void BlockPlayer(VRRig rig)
-        {
-            Blocked.Add(rig);
-            rig.DeactivateAllRenderers();
-            rig.voiceAudio.volume = 0f;
-        }
-        public static void UnblockPlayer(VRRig rig)
-        {
-            Blocked.Remove(rig);
-            rig.ReactivateAllRenderers();
-            rig.voiceAudio.volume = 1f;
-        }
-
-        public static void HandleBlockedPlayers()
-        {
-            foreach (VRRig rig in Blocked)
-                rig.BreakHandLinks();
-            SerializePatch.OverrideSerialization = () =>
-            {
-                if (Blocked.Count == 0)
-                    return true;
-
-                int[] blockedArs = Blocked.Select(rig => rig.Creator.ActorNumber).ToArray();
-                int[] normalArs = Players.ActiveRigs
-                    .Where(rig => !Blocked.Contains(rig))
-                    .Select(rig => rig.Creator.ActorNumber)
-                    .ToArray();
-
-                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
-
-                Vector3 positionArchive = References.LocalRig.transform.position;
-                SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = normalArs });
-
-                References.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
-                SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = blockedArs });
-
-                RPCProtection();
-                References.LocalRig.transform.position = positionArchive;
-
-                return false;
-            };
-        }
-        public static void CategorySettings()
-        {
-            List<Module> buttons = new List<Module> { new Module { buttonText = "Exit Menu Settings", method = () => { Manager.CurrentCategoryName = "Settings"; Manager.modules["Temporary Category"] = Array.Empty<Module>(); }, isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true } };
-
-            foreach (var button in Manager.modules["Main"])
-            {
-#if LEGAL || LEGAL_DEBUG
-                if (!button.legal)
-                    continue;
-#endif
-                buttons.Add(new Module
-                {
-                    buttonText = $"Category{button.buttonText.Hash()}",
-                    overlapText = button.buttonText,
-                    enabled = !skipButtons.Contains(button.buttonText),
-                    enableMethod = () => skipButtons.Remove(button.buttonText),
-                    disableMethod = () => skipButtons.Add(button.buttonText),
-                    toolTip = "Toggles the visibility of the category " + button.buttonText + ".",
-                    hideFromArraylist = true,
-                    legal = true
-                });
-            }
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
-
-        public static void RightHand()
-        {
-            rightHand = true;
-            if (watchMenu)
-            {
-                Toggle("Watch Menu");
-                Toggle("Watch Menu");
-                Notifications.ClearAllNotifications();
-            }
-
-            if (!Manager.GetIndex("Info Watch").enabled) return;
-            Toggle("Info Watch");
-            Toggle("Info Watch");
-            Notifications.ClearAllNotifications();
-        }
-
-        public static void LeftHand()
-        {
-            rightHand = false;
-            if (watchMenu)
-            {
-                Toggle("Watch Menu");
-                Toggle("Watch Menu");
-                Notifications.ClearAllNotifications();
-            }
-
-            if (!Manager.GetIndex("Info Watch").enabled) return;
-            Toggle("Info Watch");
-            Toggle("Info Watch");
-            Notifications.ClearAllNotifications();
-        }
-
-        public static void ClearAllKeybinds()
-        {
-            foreach (KeyValuePair<string, List<string>> bind in ModBindings)
-            {
-                foreach (string modName in bind.Value)
-                    Manager.GetIndex(modName).customBind = null;
-
-                bind.Value.Clear();
-            }
-        }
-
-        public static void StartBind(string bind)
-        {
-            if (IsRebinding)
-                return;
-            IsBinding = true;
-            BindInput = bind;
-        }
-        public static void StartRebind(string bind)
-        {
-            if (IsBinding)
-                return;
-            IsRebinding = true;
-            BindInput = bind;
-        }
-
-        public static void RemoveRebinds()
-        {
-            foreach (Module[] buttonlist in Manager.modules.Values)
-            {
-                foreach (Module v in buttonlist)
-                    v.rebindKey = null;
-            }
-            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Removed all rebinds.");
-        }
-
-        // The code below is fully safe. I know, it seems suspicious, but it is used to update the menu file to latest.
-        public static void UpdateMenu()
-        {
-            switch (SystemInfo.operatingSystemFamily)
-            {
-                case OperatingSystemFamily.Windows:
-                    {
-                        string logoLines = "";
-                        foreach (string line in PluginInfo.Logo.Split(@"
-"))
-                            logoLines += Environment.NewLine + @" ""    " + line + @" """;
-
-                        string updateScript = @"@echo off
-title Qubit Menu Updater
-color 5
-setlocal
-
-cls
-echo." + logoLines + @"
-echo.
-
-echo Your menu is updating, please wait...
-echo.
-
-for %%I in (""%~dp0.."") do set ""BASE_DIR=%%~fI\""
-set ""PLUGIN_PATH=%BASE_DIR%BepInEx\plugins""
-set ""MODS_PATH=%BASE_DIR%Mods""
-
-set ""MENU_FILE=""
-
-for %%F in (""%PLUGIN_PATH%\*Qubit*Menu*.dll"" ""%MODS_PATH%\*Qubit*Menu*.dll"") do (
-    if exist ""%%~fF"" (
-        set ""MENU_FILE=%%~fF""
-        goto update
-    )
-)
-
-echo No menu file found, skipping update.
-goto restart
-
-:update
-echo Found menu file: ""%MENU_FILE%""
-
-set ""DOWNLOAD_NAME=Qubit-Menu""
-echo %MENU_FILE% | find /I ""Legal"" >nul
-if %ERRORLEVEL%==0 set ""DOWNLOAD_NAME=Qubit-Menu-Legal""
-
-echo Downloading latest release of %DOWNLOAD_NAME%...
-
-curl -L -o ""%MENU_FILE%"" ^
-""https://github.com/QubitGT/Qubit/releases/latest/download/%DOWNLOAD_NAME%.dll""
-
-:WAIT_LOOP
-tasklist /FI ""IMAGENAME eq Gorilla Tag.exe"" | find /I ""Gorilla Tag.exe"" >nul
-if %ERRORLEVEL%==0 (
-    timeout /t 1 >nul
-    goto WAIT_LOOP
-)
-
-:restart
-echo Launching Gorilla Tag...
-start steam://run/1533390
-pause
-exit";
-
-                        string fileName = $"{PluginInfo.BaseDirectory}/UpdateScript.bat";
-                        File.WriteAllText(fileName, updateScript);
-
-                        string filePath = Files.GetGamePath() + "/" + fileName;
-                        Process.Start(filePath);
-                        Application.Quit();
-                        break;
-                    }
-                case OperatingSystemFamily.Linux:
-                    {
-                        string logoLines = "";
-                        foreach (string line in PluginInfo.Logo.Split(@"
-"))
-                            logoLines += Environment.NewLine + @" ""    " + line + @" """;
-
-                        string updateScript = @"#!/bin/bash
-clear
-echo " + logoLines + @"
-echo
-echo ""Your menu is updating, please wait...""
-echo
-
-BASE_DIR=""$(cd ""$(dirname ""$0"")/.."" && pwd)/""
-PLUGIN_PATH=""$BASE_DIR/BepInEx/plugins""
-MODS_PATH=""$BASE_DIR/Mods""
-
-MENU_FILE=""""
-
-for f in ""$PLUGIN_PATH""/*Qubit*Menu*.dll ""$MODS_PATH""/*Qubit*Menu*.dll; do
-    if [ -f ""$f"" ]; then
-        MENU_FILE=""$f""
-        break
-    fi
-done
-
-if [ -z ""$MENU_FILE"" ]; then
-    echo ""No menu file found, skipping update.""
-else
-    echo ""Found menu file: $MENU_FILE""
-
-    DOWNLOAD_NAME=""Qubit-Menu""
-    if echo ""$MENU_FILE"" | grep -qi ""Legal""; then
-        DOWNLOAD_NAME=""Qubit-Menu-Legal""
-    fi
-
-    echo ""Downloading latest release of $DOWNLOAD_NAME...""
-    curl -L -o ""$MENU_FILE"" \
-    ""https://github.com/QubitGT/Qubit/releases/latest/download/${DOWNLOAD_NAME}.dll""
-fi
-
-while pgrep -f ""GorillaTag.exe"" > /dev/null; do
-    sleep 1
-done
-
-echo ""Launching Gorilla Tag...""
-xdg-open ""steam://run/1533390""
-read -n 1 -s -r -p ""Press any key to continue . . .""
-exit 0";
-
-                        string fileName = $"{PluginInfo.BaseDirectory}/UpdateScript.sh";
-                        File.WriteAllText(fileName, updateScript);
-                        Process.Start("chmod", $"+x \"{fileName}\"");
-                        Process.Start(new ProcessStartInfo
-                        {
-                            FileName = "/bin/bash",
-                            Arguments = $"\"{fileName}\"",
-                            UseShellExecute = false
-                        });
-                        Application.Quit();
-                        break;
-                    }
-            }
-        }
-
-        public static void JoystickMenuOff()
-        {
-            joystickMenu = false;
-            joystickOpen = false;
-        }
-
-        public static void PhysicalMenuOn()
-        {
-            physicalMenu = true;
-            physicalOpenPosition = Vector3.zero;
-        }
-
-        public static void PhysicalMenuOff()
-        {
-            physicalMenu = false;
-            physicalOpenPosition = Vector3.zero;
-        }
-
-        public static void WatchMenuOn()
-        {
-            isSearching = false;
-            watchMenu = true;
-            Watches[0].gameObject.SetActive(true);
-            Watches[0].indicator.gameObject.SetActive(true);
-        }
-        public static void CheckWatchMenu()
-        {
-            if (watchTimer == 0)
-                watchTimer = Time.time + 7f;
-
-            if (leftJoystick.sqrMagnitude > 0.1f * 0.1f)
-            {
-                watchTimer = 0;
-                watchUsed = true;
-                return;
-            }
-
-            if (!watchUsed && Time.time >= watchTimer)
-            {
-                Notifications.SendNotification("<color=grey>[</color><color=purple>WATCH</color><color=grey>]</color> Seems that you got stuck using Watch Menu, automatically disabling..");
-                Toggle("Watch Menu");
-            }
-        }
-        public static void WatchMenuOff()
-        {
-            watchMenu = false;
-            watchUsed = false;
-            watchTimer = 0;
-            Watches[0].gameObject.SetActive(false);
-        }
 
         public static int langInd;
         public static readonly string[] LanguageNames = {
@@ -1032,26 +159,7 @@ exit 0";
             "en", "es", "fr", "de", "ja", "it", "pt", "nl", "ru", "pl"
         };
 
-        public static void ApplyMenuLanguage(int index)
-        {
-            langInd = index;
-            Translations.translateCache.Clear();
-            Translations.language = LanguageCodes[index];
-            translate = index != 0;
-        }
-
         public static readonly string[] MenuButtonNames = { "Primary", "Secondary", "Grip", "Trigger", "Joystick" };
-
-        public static void ApplyMenuButton(int index) => menuButtonIndex = index;
-
-        public class ThemeDefinition
-        {
-            public string Name;
-            public Func<ExtGradient> Background;
-            public Func<ExtGradient> MenuBackground;
-            public Func<ExtGradient[]> ButtonColors;
-            public Func<ExtGradient[]> TextColors;
-        }
 
         public static readonly List<ThemeDefinition> Themes = new List<ThemeDefinition>
         {
@@ -3312,6 +2420,1026 @@ exit 0";
 
         public static int ThemeCount => Themes.Count;
 
+        private static int menuScaleIndex = 10;
+
+        private static int notificationScaleIndex = 6;
+
+        private static int arraylistScaleIndex = 4;
+
+        private static int overlayScaleIndex = 6;
+
+        private static int previousPage;
+
+        private static TMP_FontAsset chosenFont;
+
+        public static float fontTime;
+
+        public static int fontStyleType = 2;
+
+
+        public static readonly string[] InputColorNames = {
+            "Red", "Orange", "Yellow", "Green", "Blue", "Cyan",
+            "Purple", "Pink", "White", "Grey", "Black", "Rose"
+        };
+        public static readonly string[] RealInputColors = {
+            "red", "#ff8000", "yellow", "green", "blue", "#00FFFF",
+            "purple", "#FF00FF", "white", "grey", "black", "#ff005d"
+        };
+        public static int inputTextColorInt = 3;
+
+        public static readonly string[] NarratorNames = {
+            "Default", "Kimberly", "Brian", "Matthew", "Joey", "Justin", "Cristiano",
+            "Giorgio", "Ewa", "TikTok", "Grandma", "Trickster", "Elf", "Ghostface",
+            "Zombie", "Narrator", "Pirate", "Song", "TikTok Joey", "Gingerbread Man",
+            "Chris", "Thanksgiving", "Santa", "Google US", "Google UK", "Dog",
+            "Jerkface", "Robot", "Vlad", "Obama"/*, "Mommy ASMR"*/
+        };
+        public static readonly Vector3[] PointerPositions = {
+            new Vector3(0f, -0.1f, 0f),
+            new Vector3(0f, -0.1f, -0.15f),
+            new Vector3(0f, 0.1f, -0.05f),
+            new Vector3(0f, 0.0666f, 0.1f)
+        };
+
+
+        public static readonly string[] GunVariationNames = {
+            "Default", "Lightning", "Wavy", "Blocky", "Zigzag", "Spring", "Bouncy", "Audio", "Bezier", "Rope"
+        };
+
+        public static readonly string[] GunDirectionNames = { "Default", "Legacy", "Laser", "Finger", "Face" };
+
+        private static int gunLineQualityIndex = 2;
+        public static readonly string[] GunQualityNames = { "Potato", "Low", "Normal", "High", "Extreme" };
+        public static readonly int[] GunQualityValues = { 10, 25, 50, 100, 250 };
+
+        public static bool currentmentalstate;
+
+        private static bool lastFocused;
+
+        private static KeywordRecognizer mainPhrases;
+        private static KeywordRecognizer modPhrases;
+        private static string[] keyWords = { "jarvis", "Qubit", "seralith", "sarolith", "siri", "google", "alexa", "dummy", "computer", "stinky", "silly", "stupid", "console", "go go gadget", "monika", "wikipedia", "gideon", "a i", "ai", "a.i", "chat gpt", "chatgpt", "grok", "grock", "groq", "garmin" };
+        private static readonly string[] cancelKeywords = { "nevermind", "cancel", "never mind", "stop", "i hate you", "die" };
+
+        private static Coroutine timeoutCoroutine;
+
+        public static DictationRecognizer drec;
+        public static KeywordRecognizer krec;
+        public static bool debugDictation;
+        public static bool restartOnFocus;
+        public static float dRestartTime;
+
+        private static LineRenderer clickGuiLine;
+        private static bool lastTriggerClick;
+
+        private static EventSystem eventSystem;
+        private static PointerEventData pointerData;
+        private static readonly List<RaycastResult> uiResults = new List<RaycastResult>();
+        private static GameObject currentUI;
+
+        private static GameObject pressedUI;
+        private static GameObject draggedUI;
+        private static Vector2 lastPointerPos;
+        private static Canvas canvas;
+
+        private static bool isDragging;
+
+        public static GameObject selectObject;
+        public static VRRig lastTarget;
+        public static bool lastTriggerSelect;
+
+        public static int loadingPreferencesFrame;
+
+        public static readonly Dictionary<ControllerBinding, Key> pcBindings = new Dictionary<ControllerBinding, Key>
+        {
+            { ControllerBinding.RightPrimaryButton, Key.E },
+            { ControllerBinding.RightSecondaryButton, Key.R },
+            { ControllerBinding.LeftPrimaryButton, Key.F },
+            { ControllerBinding.LeftSecondaryButton, Key.G },
+            { ControllerBinding.LeftGrip, Key.LeftBracket },
+            { ControllerBinding.RightGrip, Key.RightBracket },
+            { ControllerBinding.LeftTrigger, Key.Minus },
+            { ControllerBinding.RightTrigger, Key.Equals },
+            { ControllerBinding.JoystickClick, Key.Enter },
+            { ControllerBinding.LeftOverride, Key.LeftAlt }
+        };
+        public static bool watchUsed;
+        public static float watchTimer;
+        public static int pointerIndex;
+        #endregion
+
+        #region Methods
+        public static void Search() // This took me like 4 hours
+        {
+            isSearching = !isSearching;
+
+            pageNumber = 0;
+            keyboardInput = "";
+
+            if (isSearching)
+                SpawnKeyboard();
+            else
+                DestroyKeyboard();
+        }
+
+        public static void SpawnKeyboard()
+        {
+            isKeyboardPc = isOnPC || toggleButtonActive && keyboardWithToggleButton;
+            inTextInput = true;
+            keyboardInput = "";
+
+            shift = false;
+            lockShift = false;
+
+            if (isKeyboardPc)
+                lastPressedKeys.Add(Key.Q);
+
+            if (!isKeyboardPc && VRKeyboard == null)
+                VRKeyboard = Qubit.Frontend.Keyboard.View.Create();
+
+            if (lKeyReference == null)
+            {
+                lKeyReference = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                lKeyReference.transform.parent = References.LeftHand;
+                lKeyReference.GetComponent<Renderer>().material.color = backgroundColor.GetColor(0);
+                lKeyReference.transform.localPosition = pointerOffset;
+                lKeyReference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+                lKeyCollider = lKeyReference.GetComponent<SphereCollider>();
+
+                ObjectColors colorChanger = lKeyReference.AddComponent<ObjectColors>();
+                colorChanger.colors = backgroundColor;
+            }
+
+            if (rKeyReference == null)
+            {
+                rKeyReference = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                rKeyReference.transform.parent = References.RightHand;
+                rKeyReference.GetComponent<Renderer>().material.color = backgroundColor.GetColor(0);
+                rKeyReference.transform.localPosition = pointerOffset;
+                rKeyReference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
+                rKeyCollider = rKeyReference.GetComponent<SphereCollider>();
+
+                ObjectColors colorChanger = rKeyReference.AddComponent<ObjectColors>();
+                colorChanger.colors = backgroundColor;
+            }
+        }
+
+        public static void DestroyKeyboard()
+        {
+            inTextInput = false;
+            isKeyboardPc = false;
+
+            if (lKeyReference != null)
+            {
+                Object.Destroy(lKeyReference);
+                lKeyReference = null;
+            }
+
+            if (rKeyReference != null)
+            {
+                Object.Destroy(rKeyReference);
+                rKeyReference = null;
+            }
+
+            if (VRKeyboard != null)
+            {
+                VRKeyboard.SetActive(false);
+                Object.Destroy(VRKeyboard);
+                VRKeyboard = null;
+            }
+
+            if (TPC != null && TPC.transform.parent.gameObject.name.Contains("CameraTablet") && isOnPC)
+            {
+                isOnPC = false;
+                TPC.transform.position = TPC.transform.parent.position;
+                TPC.transform.rotation = TPC.transform.parent.rotation;
+            }
+        }
+
+        public static void GlobalReturn()
+        {
+            Notifications.Clear();
+            Toggle(Manager.modules[Manager.CurrentCategoryName][0].buttonText, true);
+            Sounds.Play("Return");
+
+            if (prompts.Count > 0)
+                StopCurrentPrompt();
+        }
+
+        public static void StopCurrentPrompt() =>
+            prompts.RemoveAt(0);
+        public static void ShowTutorial()
+        {
+            if (TutorialObject != null)
+                Object.Destroy(TutorialObject);
+
+            TutorialObject = LoadObject<GameObject>("Tutorial");
+
+            TutorialObject.transform.position = References.BodyCollider.transform.position + References.BodyCollider.transform.forward * 1f + Vector3.up * 0.25f;
+            TutorialObject.transform.rotation = References.BodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
+
+            string videoName = "q2";
+            switch (Controllers.GetLeftControllerType())
+            {
+                case Controllers.ControllerType.Unknown:
+                case Controllers.ControllerType.Quest2:
+                    videoName = "q2";
+                    break;
+                case Controllers.ControllerType.Quest3:
+                    videoName = "q3";
+                    break;
+                case Controllers.ControllerType.ValveIndex:
+                    videoName = "index";
+                    break;
+                case Controllers.ControllerType.VIVE:
+                    videoName = "vive";
+                    break;
+            }
+
+            VideoPlayer videoPlayer = TutorialObject.transform.Find("Video").GetComponent<VideoPlayer>();
+            videoPlayer.url = $"{PluginInfo.ServerResourcePath}/Videos/Tutorial/tutorial-{videoName}.mp4";
+            videoPlayer.isLooping = true;
+
+            videoPlayer.AddComponent<TutorialButton>().buttonType = TutorialButton.ButtonType.Pause;
+
+            TutorialObject.transform.Find("Close").AddComponent<TutorialButton>().buttonType = TutorialButton.ButtonType.Close;
+        }
+        public static void UpdateTutorial()
+        {
+            if (Vector3.Distance(TutorialObject.transform.position, References.BodyCollider.transform.position) > 2f)
+            {
+                TutorialObject.transform.position = References.BodyCollider.transform.position + References.BodyCollider.transform.forward * 1f + Vector3.up * 0.25f;
+                TutorialObject.transform.rotation = References.BodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
+            }
+
+            if (TutorialSelector == null)
+            {
+                TutorialSelector = new GameObject("Qubit_TutorialSelector").AddComponent<LineRenderer>();
+                TutorialSelector.material.shader = Shader.Find("Sprites/Default");
+
+                TutorialSelector.startWidth = 0.01f;
+                TutorialSelector.endWidth = 0.01f;
+
+                TutorialSelector.positionCount = 2;
+
+                TutorialSelector.useWorldSpace = true;
+            }
+
+            TutorialSelector.startColor = BrightenColor(new Color32(255, 128, 0, 128));
+            TutorialSelector.endColor = BrightenColor(new Color32(255, 102, 0, 128));
+
+            Vector3 Direction = Controllers.GetTrueRightHand().forward;
+            Physics.Raycast(References.RightHand.position + Direction / 4f, Direction, out var Ray, 512f, NoInvisLayerMask());
+            if (!XRSettings.isDeviceActive)
+            {
+                Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
+                Physics.Raycast(ray, out Ray, 512f, NoInvisLayerMask());
+            }
+
+            TutorialSelector.SetPosition(0, References.RightHand.position);
+            TutorialSelector.SetPosition(1, Ray.point == Vector3.zero ? References.RightHand.position : Ray.point);
+
+            if ((rightTrigger > 0.5f || Mouse.current.leftButton.isPressed) && !lastTrigger)
+            {
+                TutorialButton gunTarget = Ray.collider.GetComponentInParent<TutorialButton>();
+                if (gunTarget)
+                    gunTarget.ClickButton();
+            }
+
+            lastTrigger = rightTrigger > 0.5f || Mouse.current.leftButton.isPressed;
+        }
+
+        public static void ShowDebug()
+        {
+            string category = "Temporary Category";
+
+            string version = PluginInfo.Version;
+            if (PluginInfo.BetaBuild) version = "<color=blue>Beta</color> " + version;
+            Manager.AddModule(category, new Module { buttonText = "Exit Info Screen", method = () => Toggle("Info Screen"), isTogglable = false, toolTip = "Returns you back to the main page." });
+            Manager.AddModule(category, new Module { buttonText = "DebugMenuName", overlapText = "<color=grey><b>Qubit Menu </b></color>" + version, label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugColor", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugName", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugId", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugClip", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugFps", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugRoomA", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugRoomB", overlapText = "Loading...", label = true });
+
+            Debug();
+            Manager.CurrentCategoryName = "Temporary Category";
+        }
+        public static void Debug()
+        {
+            string red = "<color=red>" + MathF.Floor(PlayerPrefs.GetFloat("redValue") * 255f) + "</color>";
+            string green = ", <color=green>" + MathF.Floor(PlayerPrefs.GetFloat("greenValue") * 255f) + "</color>";
+            string blue = ", <color=blue>" + MathF.Floor(PlayerPrefs.GetFloat("blueValue") * 255f) + "</color>";
+            Manager.GetIndex("DebugColor").overlapText = "Color: " + red + green + blue;
+
+            string master = Networking.InRoom && PhotonNetwork.IsMasterClient ? "<color=red> [Master]</color>" : "";
+            Manager.GetIndex("DebugName").overlapText = PhotonNetwork.LocalPlayer.NickName + master;
+
+            Manager.GetIndex("DebugId").overlapText = "<color=green>ID: </color>" + (hideId ? "Hidden" : PhotonNetwork.LocalPlayer.UserId);
+            Manager.GetIndex("DebugClip").overlapText = "<color=green>Clip: </color>" + (GUIUtility.systemCopyBuffer.Length > 25 ? GUIUtility.systemCopyBuffer[..25] : GUIUtility.systemCopyBuffer);
+            Manager.GetIndex("DebugFps").overlapText = "<b>" + lastDeltaTime + "</b> FPS <b>" + PhotonNetwork.GetPing() + "</b> Ping";
+            Manager.GetIndex("DebugRoomA").overlapText = "<color=blue>" + ManagerRegistry.NetworkSystem.regionNames[ManagerRegistry.NetworkSystem.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " Players";
+
+            string priv = Networking.InRoom ? ManagerRegistry.NetworkSystem.SessionIsPrivate ? "Private" : "Public" : "";
+            Manager.GetIndex("DebugRoomB").overlapText = "<color=blue>" + priv + "</color> " + (Networking.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room");
+        }
+        public static void HideDebug()
+        {
+            string category = "Temporary Category";
+
+            Manager.RemoveModule(category, "DebugMenuName");
+            Manager.RemoveModule(category, "DebugColor");
+            Manager.RemoveModule(category, "DebugName");
+            Manager.RemoveModule(category, "DebugId");
+            Manager.RemoveModule(category, "DebugClip");
+            Manager.RemoveModule(category, "DebugFps");
+            Manager.RemoveModule(category, "DebugRoomA");
+            Manager.RemoveModule(category, "DebugRoomB");
+            Manager.CurrentCategoryName = "Main";
+        }
+
+        public static void PlayersTab()
+        {
+            List<Module> buttons = new List<Module> {
+                new Module {
+                    buttonText = "Exit Players",
+                    method =() => Manager.CurrentCategoryName = "Main",
+                    isTogglable = false,
+                    toolTip = "Returns you back to the main page.",
+                    legal = true,
+                }
+            };
+
+            if (!Networking.InRoom)
+                buttons.Add(new Module { buttonText = "Not in a Room", label = true, legal = true });
+            else
+            {
+                for (int i = 0; i < ManagerRegistry.NetworkSystem.PlayerListOthers.Length; i++)
+                {
+                    NetPlayer player = ManagerRegistry.NetworkSystem.PlayerListOthers[i];
+                    string playerColor = "#ffffff";
+                    try
+                    {
+                        playerColor = $"#{ColorToHex(GetVRRigFromPlayer(player).playerColor)}";
+                    }
+                    catch { }
+
+                    buttons.Add(new Module
+                    {
+                        buttonText = $"PlayerButton{i}",
+                        overlapText = $"<color={playerColor}>" + player.NickName + "</color>",
+                        method = () => NavigatePlayer(player),
+                        isTogglable = false,
+                        toolTip = $"See information on the player {player.NickName}.",
+                        legal = true
+                    });
+                }
+            }
+
+            Manager.modules["Players"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Players";
+        }
+
+        public static void NavigatePlayer(NetPlayer player)
+        {
+            string targetName = player.NickName;
+
+            VRRig playerRig = GetVRRigFromPlayer(player) ?? null;
+
+            List<Module> buttons = new List<Module> {
+                new Module {
+                    buttonText = "Exit PlayerInspect",
+                    overlapText = $"Exit {targetName}",
+                    method =() => PlayersTab(),
+                    isTogglable = false,
+                    toolTip = "Returns you back to the players tab.",
+                    legal = true
+                },
+
+                new Module {
+                    buttonText = "Spectate Player",
+                    overlapText = $"Spectate {targetName}",
+                    method =() => SpectatePlayer(playerRig),
+                    isTogglable = false,
+                    toolTip = $"Shows you what {targetName} sees.",
+                    legal = true
+                },
+                new Module {
+                    buttonText = "Block Player",
+                    overlapText = $"Block {targetName}",
+                    enableMethod = () => BlockPlayer(playerRig),
+                    method = HandleBlockedPlayers,
+                    disableMethod = () => UnblockPlayer(playerRig),
+                    isTogglable = true,
+                    toolTip = $"Blocks {targetName}.",
+                    legal = true
+                },
+                new Module {
+                    buttonText = "Teleport to Player",
+                    overlapText = $"Teleport to {targetName}",
+                    method =() => Movement.TeleportToPlayer(player),
+                    isTogglable = false,
+                    toolTip = $"Teleports you to {targetName}."
+                },
+                new Module {
+                    buttonText = "Give Player Guns",
+                    overlapText = $"Give {targetName} Guns",
+                    method =() => GiveGunTarget = playerRig,
+                    disableMethod =() => GiveGunTarget = null,
+                    toolTip = $"Gives {targetName} every gun on the menu."
+                },
+                new Module {
+                    buttonText = "Copy Movement",
+                    overlapText = $"Copy Movement {targetName}",
+                    method =() => Movement.CopyMovementPlayer(player),
+                    disableMethod = Movement.EnableRig,
+                    toolTip = $"Copies the movement of {targetName}."
+                },
+                new Module {
+                    buttonText = "Follow Player",
+                    overlapText = $"Follow {targetName}",
+                    method =() => Movement.FollowPlayer(player),
+                    disableMethod = Movement.EnableRig,
+                    toolTip = $"Follows {targetName}."
+                },
+                new Module {
+                    buttonText = "Tag Player",
+                    overlapText = $"Tag {targetName}",
+                    method =() => Advantages.TagPlayer(player),
+                    disableMethod = Movement.EnableRig,
+                    toolTip = $"Tags {targetName}."
+                },
+                new Module {
+                    buttonText = "Snowball Fling Player",
+                    overlapText = $"Snowball Fling {targetName}",
+                    method =() => Projectiles.FlingPlayer(player.VRRig()),
+                    toolTip = $"Flings {targetName} with snowballs."
+                },
+                new Module {
+                    buttonText = "Projectile Blind Player",
+                    overlapText = $"Projectile Blind {targetName}",
+                    method =() => Projectiles.ProjectileBlindPlayer(player),
+                    toolTip = $"Blinds {targetName} using the egg projectiles."
+                },
+                new Module {
+                    buttonText = "Projectile Lag Player",
+                    overlapText = $"Projectile Lag {targetName}",
+                    method =() => Projectiles.ProjectileLagPlayer(player),
+                    toolTip = $"Lags {targetName} using the firework projectiles."
+                },
+                new Module {
+                    buttonText = "Lag Player",
+                    overlapText = $"Lag {targetName}",
+                    method =() => Overpowered.LagPlayer(player),
+                    toolTip = $"Lags {targetName}."
+                },
+                new Module {
+                    buttonText = "Destroy Player",
+                    overlapText = $"Destroy {targetName}",
+                    method =() => Overpowered.DestroyPlayer(player),
+                    toolTip = $"Stops all new players from seeing {targetName}."
+                },
+                new Module {
+                    buttonText = "Guardian Bring Player",
+                    overlapText = $"Guardian Bring {targetName}",
+                    method =() => Overpowered.GuardianBringPlayer(player),
+                    toolTip = $"Brings {targetName} to you."
+                },
+                new Module {
+                    buttonText = "Guardian Bring Player Gun",
+                    overlapText = $"Guardian Bring {targetName} Gun",
+                    method =() => Overpowered.GuardianBringPlayerGun(player),
+                    toolTip = $"Brings {targetName} to wherever your hand desires."
+                },
+                new Module {
+                    buttonText = "Guardian Kick Player",
+                    overlapText = $"Guardian Kick {targetName}",
+                    method =() => Overpowered.GuardianKickTarget(player),
+                    toolTip = $"Kicks {targetName}."
+                },
+                new Module {
+                    buttonText = "Guardian Obliterate Player",
+                    overlapText = $"Guardian Obliterate {targetName}",
+                    method =() => Overpowered.GuardianObliteratePlayer(player),
+                    toolTip = $"Obliterates {targetName}."
+                },
+                new Module {
+                    buttonText = "Guardian Crash Player",
+                    overlapText = $"Guardian Crash {targetName}",
+                    method =() => Overpowered.GuardianCrashPlayer(player),
+                    toolTip = $"Crashes {targetName}."
+                }
+            };
+
+            if (PhotonNetwork.IsMasterClient)
+            {
+                buttons.AddRange(
+                    new[]
+                    {
+                        new Module {
+                            buttonText = "Vibrate Player",
+                            overlapText = $"Vibrate {targetName}",
+                            method =() => Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } }),
+                            toolTip = $"Vibrates {targetName}'s controllers."
+                        },
+                        new Module {
+                            buttonText = "Slow Player",
+                            overlapText = $"Slow {targetName}",
+                            method =() => Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } } ),
+                            toolTip = $"Gives {targetName} tag freeze."
+                        }
+                    }
+                );
+            }
+
+            if (ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
+            {
+                buttons.AddRange(
+                    new[]
+                    {
+                        new Module {
+                            buttonText = "Admin Kick Player",
+                            overlapText = $"Admin Kick {targetName}",
+                            method =() => Console.ExecuteCommand("kick", ReceiverGroup.All, player.UserId),
+                            isTogglable = false,
+                            toolTip = $"Kicks {targetName} if they're using the menu.",
+                            legal = true
+                        },
+                        new Module {
+                            buttonText = "Admin Bring Player",
+                            overlapText = $"Admin Bring {targetName}",
+                            method =() => Console.ExecuteCommand("tp", player.ActorNumber, References.HeadCollider.transform.position),
+                            isTogglable = false,
+                            toolTip = $"Brings {targetName} to you if they're using the menu.",
+                            legal = true
+                        },
+                        new Module {
+                            buttonText = "Admin Crash Player",
+                            overlapText = $"Admin Crash {targetName}",
+                            method =() => Console.ExecuteCommand("crash", player.ActorNumber),
+                            isTogglable = false,
+                            toolTip = $"Crashes {targetName} if they're using the menu.",
+                            legal = true
+                        },
+                    }
+                );
+            }
+
+            Color playerColor = playerRig?.playerColor ?? Color.black;
+            if (playerRig)
+                buttons.AddRange(
+                    new[]
+                    {
+                        new Module
+                        {
+                            buttonText = $"Check {player.NickName}'s Mods",
+                            method = () => ModChecker(player),
+                            isTogglable = false,
+                            toolTip = $"View all of \"{player.NickName}\"'s mods."
+                        },
+                        new Module
+                        {
+                            buttonText = "Player Name",
+                            overlapText = $"Name: {player.NickName}",
+                            method = () => ChangeName(player.NickName),
+                            isTogglable = false,
+                            toolTip = $"Sets your name to \"{player.NickName}\".",
+                            legal = true
+                        },
+                        new Module
+                        {
+                            buttonText = "Player Color",
+                            overlapText =
+                                $"Color: {playerColor.ToRichRGBString()}",
+                            method = () => ChangeColor(playerColor),
+                            isTogglable = false,
+                            toolTip = $"Sets your color to the same as {targetName}.",
+                            legal = true
+                        },
+                        new Module
+                        {
+                            buttonText = "Player User ID",
+                            overlapText = $"User ID: {player.UserId}",
+                            method = () =>
+                            {
+                                Notifications.SendFormat("green", "SUCCESS", $"Successfully copied {player.UserId} to the clipboard!",
+                                    5000);
+                                GUIUtility.systemCopyBuffer = player.UserId;
+                            },
+                            isTogglable = false,
+                            toolTip = $"Copies {player.UserId} to your clipboard."
+                        },
+                        new Module
+                        {
+                            buttonText = "Player Creation Date",
+                            overlapText =
+                                $"Creation Date: {GetCreationDate(player.UserId, creationDate => { Manager.GetIndex("Player Creation Date").overlapText = $"Creation Date: {creationDate}"; ReloadMenu(); })}",
+                            label = true
+                        },
+                        new Module
+                        {
+                            buttonText = "Player Platform",
+                            overlapText =
+                                $"Platform: {playerRig.GetPlatform()}",
+                            label = true
+                        },
+                        new Module
+                        {
+                            buttonText = "Player FPS",
+                            overlapText = $"FPS: {playerRig.GetFPS()}",
+                            label = true,
+                            legal = true
+                        },
+                        new Module
+                        {
+                            buttonText = "Player Target FPS",
+                            overlapText = $"Target FPS: {playerRig.GetTargetFPS()}",
+                            label = true,
+                            legal = true
+                        }
+                    }
+                );
+
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
+        }
+
+        public static void SpectatePlayer(VRRig rig)
+        {
+            CleanupSpectateCamera();
+
+            spectateCameraObject = new GameObject("Qubit_SpectateCamera");
+            spectateRenderTexture = new RenderTexture(512, 512, 16);
+            spectateCameraObject.AddComponent<Camera>().targetTexture = spectateRenderTexture;
+            spectateCameraObject.transform.SetParent(rig.headMesh.transform, false);
+            spectateCameraObject.transform.localPosition = new Vector3(0f, 0.25f, 0.25f);
+
+            if (promptMaterial != null)
+                Object.Destroy(promptMaterial);
+
+            promptMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
+            {
+                mainTexture = spectateRenderTexture
+            };
+
+            PromptSingle("<https://.mat>", CleanupSpectateCamera, "Done");
+        }
+
+        private static void CleanupSpectateCamera()
+        {
+            if (spectateCameraObject != null)
+            {
+                Object.Destroy(spectateCameraObject);
+                spectateCameraObject = null;
+            }
+
+            if (spectateRenderTexture != null)
+            {
+                spectateRenderTexture.Release();
+                Object.Destroy(spectateRenderTexture);
+                spectateRenderTexture = null;
+            }
+        }
+        public static void BlockPlayer(VRRig rig)
+        {
+            Blocked.Add(rig);
+            rig.DeactivateAllRenderers();
+            rig.voiceAudio.volume = 0f;
+        }
+        public static void UnblockPlayer(VRRig rig)
+        {
+            Blocked.Remove(rig);
+            rig.ReactivateAllRenderers();
+            rig.voiceAudio.volume = 1f;
+        }
+
+        public static void HandleBlockedPlayers()
+        {
+            foreach (VRRig rig in Blocked)
+                rig.BreakHandLinks();
+            SerializePatch.OverrideSerialization = () =>
+            {
+                if (Blocked.Count == 0)
+                    return true;
+
+                int[] blockedArs = Blocked.Select(rig => rig.Creator.ActorNumber).ToArray();
+                int[] normalArs = Players.ActiveRigs
+                    .Where(rig => !Blocked.Contains(rig))
+                    .Select(rig => rig.Creator.ActorNumber)
+                    .ToArray();
+
+                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
+
+                Vector3 positionArchive = References.LocalRig.transform.position;
+                SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = normalArs });
+
+                References.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
+                SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = blockedArs });
+
+                RPCProtection();
+                References.LocalRig.transform.position = positionArchive;
+
+                return false;
+            };
+        }
+        public static void CategorySettings()
+        {
+            List<Module> buttons = new List<Module> { new Module { buttonText = "Exit Menu Settings", method = () => { Manager.CurrentCategoryName = "Settings"; Manager.modules["Temporary Category"] = Array.Empty<Module>(); }, isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true } };
+
+            foreach (var button in Manager.modules["Main"])
+            {
+#if LEGAL || LEGAL_DEBUG
+                if (!button.legal)
+                    continue;
+#endif
+                buttons.Add(new Module
+                {
+                    buttonText = $"Category{button.buttonText.Hash()}",
+                    overlapText = button.buttonText,
+                    enabled = !skipButtons.Contains(button.buttonText),
+                    enableMethod = () => skipButtons.Remove(button.buttonText),
+                    disableMethod = () => skipButtons.Add(button.buttonText),
+                    toolTip = "Toggles the visibility of the category " + button.buttonText + ".",
+                    hideFromArraylist = true,
+                    legal = true
+                });
+            }
+
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
+        }
+
+        public static void RightHand()
+        {
+            rightHand = true;
+            if (watchMenu)
+            {
+                Toggle("Watch Menu");
+                Toggle("Watch Menu");
+                Notifications.Clear();
+            }
+
+            if (!Manager.GetIndex("Info Watch").enabled) return;
+            Toggle("Info Watch");
+            Toggle("Info Watch");
+            Notifications.Clear();
+        }
+
+        public static void LeftHand()
+        {
+            rightHand = false;
+            if (watchMenu)
+            {
+                Toggle("Watch Menu");
+                Toggle("Watch Menu");
+                Notifications.Clear();
+            }
+
+            if (!Manager.GetIndex("Info Watch").enabled) return;
+            Toggle("Info Watch");
+            Toggle("Info Watch");
+            Notifications.Clear();
+        }
+
+        public static void ClearAllKeybinds()
+        {
+            foreach (KeyValuePair<string, List<string>> bind in ModBindings)
+            {
+                foreach (string modName in bind.Value)
+                    Manager.GetIndex(modName).customBind = null;
+
+                bind.Value.Clear();
+            }
+        }
+
+        public static void StartBind(string bind)
+        {
+            if (IsRebinding)
+                return;
+            IsBinding = true;
+            BindInput = bind;
+        }
+        public static void StartRebind(string bind)
+        {
+            if (IsBinding)
+                return;
+            IsRebinding = true;
+            BindInput = bind;
+        }
+
+        public static void RemoveRebinds()
+        {
+            foreach (Module[] buttonlist in Manager.modules.Values)
+            {
+                foreach (Module v in buttonlist)
+                    v.rebindKey = null;
+            }
+            Notifications.SendFormat("green", "SUCCESS", "Removed all rebinds.");
+        }
+
+        // The code below is fully safe. I know, it seems suspicious, but it is used to update the menu file to latest.
+        public static void UpdateMenu()
+        {
+            switch (SystemInfo.operatingSystemFamily)
+            {
+                case OperatingSystemFamily.Windows:
+                    {
+                        string logoLines = "";
+                        foreach (string line in PluginInfo.Logo.Split(@"
+"))
+                            logoLines += Environment.NewLine + @" ""    " + line + @" """;
+
+                        string updateScript = @"@echo off
+title Qubit Menu Updater
+color 5
+setlocal
+
+cls
+echo." + logoLines + @"
+echo.
+
+echo Your menu is updating, please wait...
+echo.
+
+for %%I in (""%~dp0.."") do set ""BASE_DIR=%%~fI\""
+set ""PLUGIN_PATH=%BASE_DIR%BepInEx\plugins""
+set ""MODS_PATH=%BASE_DIR%Mods""
+
+set ""MENU_FILE=""
+
+for %%F in (""%PLUGIN_PATH%\*Qubit*Menu*.dll"" ""%MODS_PATH%\*Qubit*Menu*.dll"") do (
+    if exist ""%%~fF"" (
+        set ""MENU_FILE=%%~fF""
+        goto update
+    )
+)
+
+echo No menu file found, skipping update.
+goto restart
+
+:update
+echo Found menu file: ""%MENU_FILE%""
+
+set ""DOWNLOAD_NAME=Qubit-Menu""
+echo %MENU_FILE% | find /I ""Legal"" >nul
+if %ERRORLEVEL%==0 set ""DOWNLOAD_NAME=Qubit-Menu-Legal""
+
+echo Downloading latest release of %DOWNLOAD_NAME%...
+
+curl -L -o ""%MENU_FILE%"" ^
+""" + PluginInfo.GitMaster + @"/releases/latest/download/%DOWNLOAD_NAME%.dll""
+
+:WAIT_LOOP
+tasklist /FI ""IMAGENAME eq Gorilla Tag.exe"" | find /I ""Gorilla Tag.exe"" >nul
+if %ERRORLEVEL%==0 (
+    timeout /t 1 >nul
+    goto WAIT_LOOP
+)
+
+:restart
+echo Launching Gorilla Tag...
+start steam://run/1533390
+pause
+exit";
+
+                        string fileName = $"{PluginInfo.BaseDirectory}/UpdateScript.bat";
+                        File.WriteAllText(fileName, updateScript);
+
+                        string filePath = Files.GetGamePath() + "/" + fileName;
+                        Files.Start(filePath);
+                        Application.Quit();
+                        break;
+                    }
+                case OperatingSystemFamily.Linux:
+                    {
+                        string logoLines = "";
+                        foreach (string line in PluginInfo.Logo.Split(@"
+"))
+                            logoLines += Environment.NewLine + @" ""    " + line + @" """;
+
+                        string updateScript = @"#!/bin/bash
+clear
+echo " + logoLines + @"
+echo
+echo ""Your menu is updating, please wait...""
+echo
+
+BASE_DIR=""$(cd ""$(dirname ""$0"")/.."" && pwd)/""
+PLUGIN_PATH=""$BASE_DIR/BepInEx/plugins""
+MODS_PATH=""$BASE_DIR/Mods""
+
+MENU_FILE=""""
+
+for f in ""$PLUGIN_PATH""/*Qubit*Menu*.dll ""$MODS_PATH""/*Qubit*Menu*.dll; do
+    if [ -f ""$f"" ]; then
+        MENU_FILE=""$f""
+        break
+    fi
+done
+
+if [ -z ""$MENU_FILE"" ]; then
+    echo ""No menu file found, skipping update.""
+else
+    echo ""Found menu file: $MENU_FILE""
+
+    DOWNLOAD_NAME=""Qubit-Menu""
+    if echo ""$MENU_FILE"" | grep -qi ""Legal""; then
+        DOWNLOAD_NAME=""Qubit-Menu-Legal""
+    fi
+
+    echo ""Downloading latest release of $DOWNLOAD_NAME...""
+    curl -L -o ""$MENU_FILE"" \
+    """ + PluginInfo.GitMaster + @"/releases/latest/download/${DOWNLOAD_NAME}.dll""
+fi
+
+while pgrep -f ""GorillaTag.exe"" > /dev/null; do
+    sleep 1
+done
+
+echo ""Launching Gorilla Tag...""
+xdg-open ""steam://run/1533390""
+read -n 1 -s -r -p ""Press any key to continue . . .""
+exit 0";
+
+                        string fileName = $"{PluginInfo.BaseDirectory}/UpdateScript.sh";
+                        File.WriteAllText(fileName, updateScript);
+                        Files.Start("chmod", $"+x \"{fileName}\"");
+                        Files.Start(new ProcessStartInfo
+                        {
+                            FileName = "/bin/bash",
+                            Arguments = $"\"{fileName}\"",
+                            UseShellExecute = false
+                        });
+                        Application.Quit();
+                        break;
+                    }
+            }
+        }
+
+        public static void JoystickMenuOff()
+        {
+            joystickMenu = false;
+            joystickOpen = false;
+        }
+
+        public static void PhysicalMenuOn()
+        {
+            physicalMenu = true;
+            physicalOpenPosition = Vector3.zero;
+        }
+
+        public static void PhysicalMenuOff()
+        {
+            physicalMenu = false;
+            physicalOpenPosition = Vector3.zero;
+        }
+
+        public static void WatchMenuOn()
+        {
+            isSearching = false;
+            watchMenu = true;
+            Watches[0].gameObject.SetActive(true);
+            Watches[0].indicator.gameObject.SetActive(true);
+        }
+        public static void CheckWatchMenu()
+        {
+            if (watchTimer == 0)
+                watchTimer = Time.time + 7f;
+
+            if (leftJoystick.sqrMagnitude > 0.1f * 0.1f)
+            {
+                watchTimer = 0;
+                watchUsed = true;
+                return;
+            }
+
+            if (!watchUsed && Time.time >= watchTimer)
+            {
+                Notifications.SendFormat("purple", "WATCH", "Seems that you got stuck using Watch Menu, automatically disabling..");
+                Toggle("Watch Menu");
+            }
+        }
+        public static void WatchMenuOff()
+        {
+            watchMenu = false;
+            watchUsed = false;
+            watchTimer = 0;
+            Watches[0].gameObject.SetActive(false);
+        }
+
+        public static void ApplyMenuLanguage(int index)
+        {
+            langInd = index;
+            Translations.translateCache.Clear();
+            Translations.language = LanguageCodes[index];
+            translate = index != 0;
+        }
+
+        public static void ApplyMenuButton(int index) => menuButtonIndex = index;
+
         public static void ApplyMenuTheme(int themeType)
         {
             Frontend.Settings.themeType = themeType;
@@ -3327,20 +3455,10 @@ exit 0";
             buttonColors = theme.ButtonColors();
             textColors = theme.TextColors();
         }
-
-        private static int menuScaleIndex = 10;
         public static void ApplyMenuScale(int index) { menuScaleIndex = index; menuScale = index / 10f; }
-
-        private static int notificationScaleIndex = 6;
         public static void ApplyNotificationScale(int index) { notificationScaleIndex = index; notificationScale = index * 5; }
-
-        private static int arraylistScaleIndex = 4;
         public static void ApplyArraylistScale(int index) { arraylistScaleIndex = index; arraylistScale = index * 5; }
-
-        private static int overlayScaleIndex = 6;
         public static void ApplyOverlayScale(int index) { overlayScaleIndex = index; overlayScale = index * 5; }
-
-        private static int previousPage;
 
         public static void ChangeCustomMenuTheme()
         {
@@ -3722,8 +3840,6 @@ exit 0";
             textureFileDirectory.Remove("CustomWatermark.png");
             customWatermark = LoadTextureFromFile("CustomWatermark.png");
         }
-
-        private static TMP_FontAsset chosenFont;
         public static void CustomFontType()
         {
             string filePath = $"{PluginInfo.BaseDirectory}/CustomFont.ttf";
@@ -3754,8 +3870,6 @@ exit 0";
         public static void ApplyPageSize(int index) => _pageSize = index;
         public static void ApplyCharacterDistance(int index) => characterDistance = index;
         public static void ApplyArrowType(int index) => arrowType = index;
-
-        public static float fontTime;
         public static void ChangeFontRapid()
         {
             if (Time.time > fontTime)
@@ -3766,19 +3880,6 @@ exit 0";
                 ReloadMenu();
             }
         }
-
-        public static int fontStyleType = 2;
-
-
-        public static readonly string[] InputColorNames = {
-            "Red", "Orange", "Yellow", "Green", "Blue", "Cyan",
-            "Purple", "Pink", "White", "Grey", "Black", "Rose"
-        };
-        public static readonly string[] RealInputColors = {
-            "red", "#ff8000", "yellow", "green", "blue", "#00FFFF",
-            "purple", "#FF00FF", "white", "grey", "black", "#ff005d"
-        };
-        public static int inputTextColorInt = 3;
         public static void ApplyInputTextColor(int index) { inputTextColorInt = index; inputTextColor = RealInputColors[index]; }
         public static void ApplyPCUI(int index) => pcbg = index;
         public static void ApplyJoystickMenuPosition(int index) => joystickMenuPosition = index;
@@ -3810,14 +3911,6 @@ exit 0";
 
             Sounds.Play(Sounds.DefaultSounds["Notification"]);
         }
-
-        public static readonly string[] NarratorNames = {
-            "Default", "Kimberly", "Brian", "Matthew", "Joey", "Justin", "Cristiano",
-            "Giorgio", "Ewa", "TikTok", "Grandma", "Trickster", "Elf", "Ghostface",
-            "Zombie", "Narrator", "Pirate", "Song", "TikTok Joey", "Gingerbread Man",
-            "Chris", "Thanksgiving", "Santa", "Google US", "Google UK", "Dog",
-            "Jerkface", "Robot", "Vlad", "Obama"/*, "Mommy ASMR"*/
-        };
         public static void ApplyNarrationVoice(int index)
         {
             narratorIndex = index;
@@ -3829,31 +3922,14 @@ exit 0";
                 dRestartTime = Time.time + 1f;
             }
         }
-        public static readonly Vector3[] PointerPositions = {
-            new Vector3(0f, -0.1f, 0f),
-            new Vector3(0f, -0.1f, -0.15f),
-            new Vector3(0f, 0.1f, -0.05f),
-            new Vector3(0f, 0.0666f, 0.1f)
-        };
         public static void ApplyPointerPosition(int index)
         {
             pointerIndex = index;
             pointerOffset = PointerPositions[index];
             try { reference.transform.localPosition = pointerOffset; } catch { }
         }
-
-
-        public static readonly string[] GunVariationNames = {
-            "Default", "Lightning", "Wavy", "Blocky", "Zigzag", "Spring", "Bouncy", "Audio", "Bezier", "Rope"
-        };
         public static void ApplyGunVariation(int index) => gunVariation = index;
-
-        public static readonly string[] GunDirectionNames = { "Default", "Legacy", "Laser", "Finger", "Face" };
         public static void ApplyGunDirection(int index) => GunDirection = index;
-
-        private static int gunLineQualityIndex = 2;
-        public static readonly string[] GunQualityNames = { "Potato", "Low", "Normal", "High", "Extreme" };
-        public static readonly int[] GunQualityValues = { 10, 25, 50, 100, 250 };
         public static void ApplyGunLineQuality(int index) { gunLineQualityIndex = index; GunLineQuality = GunQualityValues[index]; }
 
         public static void FreezePlayerInMenu()
@@ -3869,8 +3945,6 @@ exit 0";
             else
                 closePosition = Vector3.zero;
         }
-
-        public static bool currentmentalstate;
         public static void FreezeRigInMenu()
         {
             if (menu != null)
@@ -3908,7 +3982,7 @@ exit 0";
             {
                 Manager.GetIndex("Disable Page Buttons").SetEnabled(false);
                 ReloadMenu();
-                Notifications.SendNotification("<color=grey>[</color><color=red>DISABLE</color><color=grey>]</color> Disable Page Buttons can only be used when using Joystick Menu.");
+                Notifications.SendFormat("red", "DISABLE", "Disable Page Buttons can only be used when using Joystick Menu.");
             }
         }
 
@@ -3936,22 +4010,15 @@ exit 0";
                 Apply();
             }
         }
-
-        private static bool lastFocused;
         public static void CheckFocus()
         {
             if (!Application.isFocused && lastFocused && Time.time > timeMenuStarted + 5f)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not focused on Gorilla Tag. Voice transcription mods will not function. Please focus/click on the game.");
+                Notifications.SendFormat("red", "ERROR", "You are not focused on Gorilla Tag. Voice transcription mods will not function. Please focus/click on the game.");
 
             lastFocused = Application.isFocused;
             if (Application.isFocused && lastFocused)
                 DictationRestart();
         }
-
-        private static KeywordRecognizer mainPhrases;
-        private static KeywordRecognizer modPhrases;
-        private static string[] keyWords = { "jarvis", "Qubit", "seralith", "sarolith", "siri", "google", "alexa", "dummy", "computer", "stinky", "silly", "stupid", "console", "go go gadget", "monika", "wikipedia", "gideon", "a i", "ai", "a.i", "chat gpt", "chatgpt", "grok", "grock", "groq", "garmin" };
-        private static readonly string[] cancelKeywords = { "nevermind", "cancel", "never mind", "stop", "i hate you", "die" };
         public static void VoiceRecognitionOn()
         {
             if (!File.Exists($"{PluginInfo.BaseDirectory}/Qubit_Keywords.txt"))
@@ -3961,8 +4028,6 @@ exit 0";
             mainPhrases.OnPhraseRecognized += ModRecognition;
             mainPhrases.Start();
         }
-
-        private static Coroutine timeoutCoroutine;
         public static void ModRecognition(PhraseRecognizedEventArgs args)
         {
             mainPhrases.Stop();
@@ -3993,7 +4058,7 @@ exit 0";
             if (dynamicSounds)
                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/select.ogg", "Audio/Menu/select.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
 
-            Notifications.SendNotification("<color=grey>[</color><color=purple>VOICE</color><color=grey>]</color> Listening...", 3000);
+            Notifications.SendFormat("purple", "VOICE", "Listening...", 3000);
         }
 
         public static void ExecuteVoiceCommand(PhraseRecognizedEventArgs args)
@@ -4045,7 +4110,7 @@ exit 0";
             if (modTarget != null)
             {
                 Module mod = Manager.GetIndex(modTarget);
-                Notifications.SendNotification("<color=grey>[</color><color=" + (mod.enabled ? "red" : "green") + ">VOICE</color><color=grey>]</color> " + (mod.enabled ? "Disabling " : "Enabling ") + (mod.overlapText ?? mod.buttonText) + "...", 3000);
+                Notifications.SendFormat(mod.enabled ? "red" : "green", "VOICE", (mod.enabled ? "Disabling " : "Enabling ") + (mod.overlapText ?? mod.buttonText) + "...", 3000);
                 if (dynamicSounds)
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/confirm.ogg", "Audio/Menu/confirm.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
 
@@ -4057,7 +4122,7 @@ exit 0";
             }
             else
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>VOICE</color><color=grey>]</color> No command found (" + args.text + ").", 3000);
+                Notifications.SendFormat("red", "VOICE", "No command found (" + args.text + ").", 3000);
                 if (dynamicSounds)
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
             }
@@ -4079,7 +4144,7 @@ exit 0";
             }
             catch { }
 
-            Notifications.SendNotification($"<color=grey>[</color><color=red>VOICE</color><color=grey>]</color> {(text == "i hate you" ? "I hate you too." : "Cancelling...")}", 3000);
+            Notifications.SendFormat("red", "VOICE", $"{(text == "i hate you" ? "I hate you too." : "Cancelling...")}", 3000);
             if (dynamicSounds)
                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
         }
@@ -4094,12 +4159,6 @@ exit 0";
             modPhrases = null;
             PhraseRecognitionSystem.Shutdown();
         }
-
-        public static DictationRecognizer drec;
-        public static KeywordRecognizer krec;
-        public static bool debugDictation;
-        public static bool restartOnFocus;
-        public static float dRestartTime;
 
         public static IEnumerator DictationOn()
         {
@@ -4147,11 +4206,11 @@ exit 0";
             {
                 case "Mommy ASMR":
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/TTS/yes_sweetheart.ogg", "Audio/TTS/yes_sweetheart.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
-                    Notifications.SendNotification("<color=grey>[</color><color=#ffb6c1>MOMMY</color><color=grey>]</color> Yes, sweetheart?", 3000);
+                    Notifications.SendFormat("#ffb6c1", "MOMMY", "Yes, sweetheart?", 3000);
                     break;
                 default:
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/select.ogg", "Audio/Menu/select.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>VOICE</color><color=grey>]</color> Listening...", 3000);
+                    Notifications.SendFormat("purple", "VOICE", "Listening...", 3000);
                     break;
             }
 
@@ -4171,7 +4230,7 @@ exit 0";
                     if (dynamicSounds)
                         LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
 
-                    Notifications.SendNotification($"<color=grey>[</color><color=red>AI</color><color=grey>]</color> {(text.ToLower() == "i hate you" ? "I hate you too." : "Cancelling...")}", 3000);
+                    Notifications.SendFormat("red", "AI", $"{(text.ToLower() == "i hate you" ? "I hate you too." : "Cancelling...")}", 3000);
                     Coroutines.instance.StartCoroutine(DictationRestart());
                     return;
                 }
@@ -4179,10 +4238,10 @@ exit 0";
                 switch (narratorName)
                 {
                     case "Mommy ASMR":
-                        Notifications.SendNotification($"<color=grey>[</color><color=#ffb6c1>MOMMY</color><color=grey>]</color> Let me get that for you..");
+                        Notifications.SendFormat("#ffb6c1", "MOMMY", $"Let me get that for you..");
                         break;
                     default:
-                        Notifications.SendNotification($"<color=grey>[</color><color=blue>AI</color><color=grey>]</color> Generating response..");
+                        Notifications.SendFormat("blue", "AI", $"Generating response..");
                         break;
 
                 }
@@ -4203,7 +4262,7 @@ exit 0";
                 {
                     if (dynamicSounds)
                         LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
-                    Notifications.SendNotification($"<color=grey>[</color><color=red>AI</color><color=grey>]</color> Cancelling...", 3000);
+                    Notifications.SendFormat("red", "AI", $"Cancelling...", 3000);
                 }
             };
 
@@ -4215,8 +4274,8 @@ exit 0";
                 {
                     DictationOff();
 
-                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Online Speech Recognition is not enabled on this device. Either open the menu to enable it, or check your internet connection.", 3000);
-                    Prompt("Online Speech Recognition is not enabled on your device. Would you like to open the Settings page to enable it?", () => { Process.Start("ms-settings:privacy-speech"); PromptSingle("Once you enable Online Speech Recognition, turn this mod back on!", () => mod.SetEnabled(false), "Ok"); }, () => PromptSingle("You will not be able to use this mod until you enable Online Speech Recognition.", () => mod.SetEnabled(false), "Ok"));
+                    Notifications.SendFormat("red", "ERROR", $"Online Speech Recognition is not enabled on this device. Either open the menu to enable it, or check your internet connection.", 3000);
+                    Prompt("Online Speech Recognition is not enabled on your device. Would you like to open the Settings page to enable it?", () => { Files.Start("ms-settings:privacy-speech"); PromptSingle("Once you enable Online Speech Recognition, turn this mod back on!", () => mod.SetEnabled(false), "Ok"); }, () => PromptSingle("You will not be able to use this mod until you enable Online Speech Recognition.", () => mod.SetEnabled(false), "Ok"));
                 }
             };
 
@@ -4227,8 +4286,8 @@ exit 0";
                 if (debugDictation)
                     Logs.Log($"Hypothesis: {text}");
 
-                Notifications.ClearAllNotifications();
-                Notifications.SendNotification($"<color=grey>[</color><color=green>VOICE</color><color=grey>]</color> {text}");
+                Notifications.Clear();
+                Notifications.SendFormat("green", "VOICE", $"{text}");
             };
 
             drec?.Start();
@@ -4264,21 +4323,6 @@ exit 0";
                     break;
             }
         }
-
-        private static LineRenderer clickGuiLine;
-        private static bool lastTriggerClick;
-
-        private static EventSystem eventSystem;
-        private static PointerEventData pointerData;
-        private static readonly List<RaycastResult> uiResults = new List<RaycastResult>();
-        private static GameObject currentUI;
-
-        private static GameObject pressedUI;
-        private static GameObject draggedUI;
-        private static Vector2 lastPointerPos;
-        private static Canvas canvas;
-
-        private static bool isDragging;
 
         public static void ReloadOnCategoryChange() =>
             ReloadMenu();
@@ -4866,10 +4910,6 @@ exit 0";
                 lastTriggerClick = trigger;
             }
         }
-
-        public static GameObject selectObject;
-        public static VRRig lastTarget;
-        public static bool lastTriggerSelect;
         public static void PlayerSelect()
         {
             if (XRSettings.isDeviceActive)
@@ -4947,7 +4987,7 @@ exit 0";
                             NavigatePlayer(GetPlayerFromVRRig(rigTarget));
                             ReloadMenu();
 
-                            Notifications.SendNotification($"<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Selected player {GetPlayerFromVRRig(rigTarget).NickName}.");
+                            Notifications.SendFormat("green", "SUCCESS", $"Selected player {GetPlayerFromVRRig(rigTarget).NickName}.");
                         }
 
                         lastTriggerSelect = trigger;
@@ -5137,7 +5177,7 @@ exit 0";
                 Safety.rankIndex.ToString(),
                 Projectiles.SnowballSize.ToString(),
                 Overpowered.lagIndex.ToString(),
-                Fun.blockDebounceIndex.ToString(),
+                Blocks.blockDebounceIndex.ToString(),
                 Fun.nameCycleIndex.ToString(),
                 menuScaleIndex.ToString(),
                 Sound.soundId.ToString(),
@@ -5226,8 +5266,6 @@ exit 0";
         [Obsolete("Replaced by Preferences.Save()")]
         public static void SavePreferences() =>
             Preferences.Save();
-
-        public static int loadingPreferencesFrame;
 
         private static void Restore(string buttonName, object newValue)
         {
@@ -5381,8 +5419,8 @@ exit 0";
                 Overpowered.lagIndex = int.Parse(data[38]);
                 RestoreCycle("Change Lag Power", Overpowered.lagIndex);
 
-                Fun.blockDebounceIndex = int.Parse(data[39]);
-                RestoreCycle("Change Block Delay", Fun.blockDebounceIndex);
+                Blocks.blockDebounceIndex = int.Parse(data[39]);
+                RestoreCycle("Change Block Delay", Blocks.blockDebounceIndex);
 
                 Fun.nameCycleIndex = int.Parse(data[40]);
                 RestoreCycle("Change Cycle Delay", Fun.nameCycleIndex);
@@ -5569,35 +5607,6 @@ exit 0";
             }
         }
 
-        public enum ControllerBinding
-        {
-            None,
-            LeftTrigger,
-            RightTrigger,
-            LeftGrip,
-            RightGrip,
-            LeftPrimaryButton,
-            RightPrimaryButton,
-            LeftSecondaryButton,
-            RightSecondaryButton,
-            JoystickClick,
-            LeftOverride
-        }
-
-        public static readonly Dictionary<ControllerBinding, Key> pcBindings = new Dictionary<ControllerBinding, Key>
-        {
-            { ControllerBinding.RightPrimaryButton, Key.E },
-            { ControllerBinding.RightSecondaryButton, Key.R },
-            { ControllerBinding.LeftPrimaryButton, Key.F },
-            { ControllerBinding.LeftSecondaryButton, Key.G },
-            { ControllerBinding.LeftGrip, Key.LeftBracket },
-            { ControllerBinding.RightGrip, Key.RightBracket },
-            { ControllerBinding.LeftTrigger, Key.Minus },
-            { ControllerBinding.RightTrigger, Key.Equals },
-            { ControllerBinding.JoystickClick, Key.Enter },
-            { ControllerBinding.LeftOverride, Key.LeftAlt }
-        };
-
         public static void LoadPCControls()
         {
             string fileName = $"{PluginInfo.BaseDirectory}/Qubit_PCControls.txt";
@@ -5694,8 +5703,8 @@ exit 0";
             string clip = GUIUtility.systemCopyBuffer;
             text += "<color=green>Clip</color><color=grey>:</color> " + (clip?.Length > 35 ? clip[..35] : clip) + "\\n";
             text += lastDeltaTime + " <color=green>FPS</color> <color=grey>|</color> " + PhotonNetwork.GetPing() + " <color=green>Ping</color>\\n";
-            string room = Networking.InRoom ? References.Network.SessionIsPrivate ? "Private" : "Public" : "Not in room";
-            text += "<color=green>" + References.Network.regionNames[References.Network.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " <color=green>Players</color> <color=grey>|</color> " + room + "\\n \\n";
+            string room = Networking.InRoom ? ManagerRegistry.NetworkSystem.SessionIsPrivate ? "Private" : "Public" : "Not in room";
+            text += "<color=green>" + ManagerRegistry.NetworkSystem.regionNames[ManagerRegistry.NetworkSystem.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " <color=green>Players</color> <color=grey>|</color> " + room + "\\n \\n";
             string admin = "";
             if (Time.time > 5f)
             {
@@ -5706,9 +5715,6 @@ exit 0";
             text += "<color=green>Preferences Directory</color><color=grey>:</color> " + $"{Files.GetGamePath()}/{PluginInfo.BaseDirectory}";
             body.SafeSetText(text);
         }
-        public static bool watchUsed;
-        public static float watchTimer;
-        public static int pointerIndex;
 
         public static void InitializePCControls()
         {
@@ -5722,5 +5728,6 @@ exit 0";
                 $"Error with Settings.LoadPCControls() at {exc.StackTrace}: {exc.Message}");
             }
         }
+        #endregion
     }
 }

@@ -61,265 +61,116 @@ using static Qubit.Utilities.Assets;
 using static Qubit.Utilities.GameModes;
 using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules.Categories
 {
     public class Visuals
     {
-        public static readonly Dictionary<(long, float, PrimitiveType), GameObject> visualizePool = new Dictionary<(long, float, PrimitiveType), GameObject>();
-
-        public static void Visualize(PrimitiveType shape, Vector3 position, Quaternion rotation, Vector3 scale, Color color, long? indexId = null, float alpha = 0.25f, float rangeKeyComponent = 0f)
+        #region Types
+        public class SkinnedWireframeRenderer : MonoBehaviour
         {
-            long index = indexId ?? BitPackUtils.PackWorldPosForNetwork(position);
-            var key = (index, rangeKeyComponent, shape);
-
-            if (!visualizePool.TryGetValue(key, out GameObject visualizeGO))
+            public SkinnedMeshRenderer skinnedMeshRenderer;
+            public Mesh lineMesh;
+            public MeshFilter meshFilter;
+            public MeshRenderer meshRenderer;
+            public GameObject wireframeObj;
+            public Color Color
             {
-                visualizeGO = GameObject.CreatePrimitive(shape);
-                Object.Destroy(visualizeGO.GetComponent<Collider>());
-                visualizePool.Add(key, visualizeGO);
+                get => meshRenderer.sharedMaterial.color;
+                set => meshRenderer.material.color = value;
             }
 
-            visualizeGO.SetActive(true);
+            void Awake()
+            {
+                skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
 
-            visualizeGO.transform.position = position;
-            visualizeGO.transform.localScale = scale;
-            visualizeGO.transform.rotation = rotation;
+                wireframeObj = new GameObject("Wireframe");
+                wireframeObj.transform.SetParent(transform, false);
 
-            if (Manager.GetIndex("Hidden on Camera").enabled)
-                visualizeGO.layer = 19;
+                meshFilter = wireframeObj.AddComponent<MeshFilter>();
+                meshRenderer = wireframeObj.AddComponent<MeshRenderer>();
+                meshRenderer.material = new Material(Shader.Find("GUI/Text Shader"))
+                {
+                    color = Color.green
+                };
 
-            Renderer visualizeRenderer = visualizeGO.GetComponent<Renderer>();
-            Color clr = color;
-            clr.a = alpha;
-            visualizeRenderer.material.shader = Shader.Find("GUI/Text Shader");
-            visualizeRenderer.material.color = clr;
+                lineMesh = new Mesh();
+                meshFilter.mesh = lineMesh;
+            }
+
+            void Update()
+            {
+                if (Time.frameCount % 3 > 0)
+                    return;
+
+                Mesh bakedMesh = new Mesh();
+                skinnedMeshRenderer.BakeMesh(bakedMesh);
+
+                Vector3[] vertices = bakedMesh.vertices;
+                int[] triangles = bakedMesh.triangles;
+
+                List<Vector3> lineVertices = new List<Vector3>();
+                List<int> lineIndices = new List<int>();
+
+                for (int i = 0; i < triangles.Length; i += 3)
+                {
+                    int i0 = triangles[i];
+                    int i1 = triangles[i + 1];
+                    int i2 = triangles[i + 2];
+
+                    lineVertices.Add(vertices[i0]);
+                    lineVertices.Add(vertices[i1]);
+
+                    lineVertices.Add(vertices[i1]);
+                    lineVertices.Add(vertices[i2]);
+
+                    lineVertices.Add(vertices[i2]);
+                    lineVertices.Add(vertices[i0]);
+
+                    int baseIndex = lineVertices.Count - 6;
+                    for (int j = 0; j < 6; j++)
+                        lineIndices.Add(baseIndex + j);
+                }
+
+                lineMesh.Clear();
+                lineMesh.SetVertices(lineVertices);
+                lineMesh.SetIndices(lineIndices.ToArray(), MeshTopology.Lines, 0);
+            }
+
+            void OnDestroy()
+            {
+                if (lineMesh != null)
+                {
+                    Destroy(lineMesh);
+                    lineMesh = null;
+                }
+
+                if (wireframeObj != null)
+                {
+                    Destroy(wireframeObj);
+                    wireframeObj = null;
+                }
+
+                if (meshRenderer != null && meshRenderer.material != null)
+                {
+                    Destroy(meshRenderer.material);
+                    meshRenderer.material = null;
+                }
+            }
         }
+        #endregion
+
+        #region Settings
+        public static readonly Dictionary<(long, float, PrimitiveType), GameObject> visualizePool = new Dictionary<(long, float, PrimitiveType), GameObject>();
 
         public static float debugUpdateTimer;
 
-        public static void ToggleSnow(bool enable)
-        {
-            GameObject snowObject = GetObject("Environment Objects/LocalObjects_Prefab/Forest/Environment/WeatherDayNight").transform.Find("snow").gameObject;
-            snowObject.SetActive(enable);
-            snowObject.transform.position += Vector3.one * (enable ? 0.001f : -0.001f);
-            snowObject.GetComponent<TimeOfDayDependentAudio>().enabled = !enable;
-            snowObject.transform.Find("snow partic").gameObject.SetActive(enable);
-        }
-
-        public static void WeatherChange(bool rain)
-        {
-            for (int i = 0; i < BetterDayNightManager.instance.weatherCycle.Length; i++)
-                BetterDayNightManager.instance.weatherCycle[i] = rain ? BetterDayNightManager.WeatherType.Raining : BetterDayNightManager.WeatherType.None;
-        }
-
-        public static void DisableFog() =>
-            ZoneShaderSettings.activeInstance.SetGroundFogValue(Color.clear, 0f, 0f, 0f);
-
-        public static void EnableFog() =>
-            ZoneShaderSettings.activeInstance.SetGroundFogValue(new Color(0.9569f, 0.6941f, 0.502f, 0.1216f), 40f, 10f, 40f);
-
         private static readonly Dictionary<TimeOfDayDependentAudio, float> ambientObjects = new Dictionary<TimeOfDayDependentAudio, float>();
 
-        public static void DisableAmbience()
-        {
-            foreach (TimeOfDayDependentAudio ambientObject in GetAllType<TimeOfDayDependentAudio>())
-            {
-                if (ambientObject.currentVolume != 0 && !ambientObjects.ContainsKey(ambientObject))
-                {
-                    ambientObjects.Add(ambientObject, ambientObject.currentVolume);
-                    ambientObject.currentVolume = 0f;
-                }
-            }
-        }
-
-        public static void EnableAmbience()
-        {
-            foreach (KeyValuePair<TimeOfDayDependentAudio, float> pair in ambientObjects)
-                pair.Key.currentVolume = pair.Value;
-
-            ambientObjects.Clear();
-        }
-
-        public static void ResetFog() =>
-            ZoneShaderSettings.activeInstance.CopySettings(ZoneShaderSettings.defaultsInstance);
-
-        /*
-        public static void SpawnLightning() =>
-            ManagerRegistry.LightningManager.DoLightningStrike();
-
-        public static float GetTimeUntilNextLightningStrike()
-        {
-            if (ManagerRegistry.LightningManager.lightningTimestampsRealtime == null ||
-                ManagerRegistry.LightningManager.lightningTimestampsRealtime.Count == 0 ||
-                ManagerRegistry.LightningManager.nextLightningTimestampIndex < 0 ||
-                ManagerRegistry.LightningManager.nextLightningTimestampIndex >= ManagerRegistry.LightningManager.lightningTimestampsRealtime.Count)
-                return -1f; 
-
-            float nextStrikeTime = ManagerRegistry.LightningManager.lightningTimestampsRealtime[ManagerRegistry.LightningManager.nextLightningTimestampIndex];
-            float timeUntilStrike = nextStrikeTime - Time.realtimeSinceStartup;
-
-            return timeUntilStrike < 0f ? 0f : timeUntilStrike;
-        }
-
-        public static void StrikeTimeOverlay()
-        {
-            float timeUntilStrike = GetTimeUntilNextLightningStrike();
-            if (timeUntilStrike < 0f)
-            {
-                Notifications.information.Remove("Lightning");
-                return;
-            }
-            Notifications.information["Lightning"] = $"{timeUntilStrike:F1}s";
-        }
-        */
-
-        public static void CoreESP()
-        {
-            if (!Networking.InRoom)
-                return;
-
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
-
-            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : new Color(0.41f, 0.05f, 0.70f);
-            if (tt)
-                coreESPColor.a = 0.5f;
-
-            List<GameEntity> cores = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.typeId == Fun.ObjectByName["GhostReactorCollectibleCore"]).ToList();
-            if (cores.Count <= 0)
-                return;
-
-            for (int i = 0; i < cores.Count; i++)
-            {
-                Transform corePosition = cores[i].transform;
-                Visualize(PrimitiveType.Sphere, corePosition.position, corePosition.rotation, corePosition.lossyScale, coreESPColor, i + 29875, coreESPColor.a);
-            }
-        }
-
-        public static void CritterESP()
-        {
-            if (!Networking.InRoom)
-                return;
-
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
-
-            Color critterESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
-            if (tt)
-                critterESPColor.a = 0.5f;
-
-            List<CrittersPawn> actors = CrittersManager.instance.crittersPawns;
-            if (actors.Count <= 0)
-                return;
-
-            for (int i = 0; i < actors.Count; i++)
-            {
-                Transform transform = actors[i].transform;
-                Visualize(PrimitiveType.Sphere, transform.position, transform.rotation, transform.lossyScale, critterESPColor, i - 192398, critterESPColor.a);
-            }
-        }
-
-        public static void CreatureESP()
-        {
-            if (!Networking.InRoom)
-                return;
-
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
-
-            Color critterESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
-            if (tt)
-                critterESPColor.a = 0.5f;
-
-            ThrowableBug[] bugs = GetAllType<ThrowableBug>();
-            if (bugs.Length <= 0)
-                return;
-
-            for (int i = 0; i < bugs.Length; i++)
-            {
-                Transform transform = bugs[i].transform;
-                Visualize(PrimitiveType.Sphere, transform.position, transform.rotation, transform.lossyScale, critterESPColor, i - 201782, critterESPColor.a);
-            }
-        }
-
-        public static void EnemyESP()
-        {
-            if (!Networking.InRoom)
-                return;
-
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
-
-            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : new Color(0.41f, 0.05f, 0.70f);
-            if (tt)
-                coreESPColor.a = 0.5f;
-
-            List<GameEntity> enemies = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.gameObject.name.ToLower().Contains("enemy")).ToList();
-            if (enemies.Count <= 0)
-                return;
-
-            for (int i = 0; i < enemies.Count; i++)
-            {
-                Transform enemy = enemies[i].transform;
-                Visualize(PrimitiveType.Sphere, enemy.position, enemy.rotation, enemy.lossyScale, coreESPColor, i + 451980, coreESPColor.a);
-            }
-        }
-
-        public static void ResourceESP()
-        {
-            if (!Networking.InRoom)
-                return;
-
-            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Manager.GetIndex("Transparent Theme").enabled;
-
-            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
-            if (tt)
-                coreESPColor.a = 0.5f;
-
-            List<GameEntity> resources = ManagerRegistry.SuperInfection.GameEntityManager.entities.Where(entity => entity != null && entity.gameObject.name.Contains("Resource")).ToList();
-            if (resources.Count <= 0)
-                return;
-
-            for (int i = 0; i < resources.Count; i++)
-            {
-                Transform resource = resources[i].transform;
-                Visualize(PrimitiveType.Sphere, resource.position, resource.rotation, resource.lossyScale, coreESPColor, i + 451961280, coreESPColor.a);
-            }
-        }
-
         private static bool previousFullbrightStatus;
-        public static void SetFullbrightStatus(bool fullBright)
-        {
-            if (fullBright)
-            {
-                previousFullbrightStatus = GameLightingManager.instance.customVertexLightingEnabled;
-                GameLightingManager.instance.SetCustomDynamicLightingEnabled(false);
-            }
-            else
-            {
-                if (previousFullbrightStatus)
-                    GameLightingManager.instance.SetCustomDynamicLightingEnabled(true);
-            }
-        }
 
         private static float removeBlindfoldDelay;
-        public static void RemoveBlindfold()
-        {
-            if (Networking.InRoom && Time.time > removeBlindfoldDelay)
-            {
-                removeBlindfoldDelay = Time.time + 0.5f;
-                GameObject mainCamera = GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/Main Camera");
-                int childCount = mainCamera.transform.childCount;
-                for (int i = 0; i < childCount; i++)
-                {
-                    GameObject v = mainCamera.transform.GetChild(i).gameObject;
-                    if (v.name == "PropHunt_Blindfold_ForCameras_Prefab(Clone)")
-                        Object.Destroy(v);
-                }
-            }
-        }
 
         private static TMP_SpriteAsset _infoSpriteAsset;
         public static TMP_SpriteAsset InfoSprites
@@ -407,6 +258,642 @@ namespace Qubit.Modules.Categories
             }
         }
 
+        public static bool infoWatchMenuName;
+        public static bool infoWatchTime;
+        public static bool infoWatchClip;
+        public static bool infoWatchFPS;
+        public static bool infoWatchCode;
+
+        public static Material oldSkyMat;
+
+        public static TrailRenderer trailRenderer;
+
+        private static Material tapMat;
+        private static Texture2D tapTxt;
+        private static Texture2D warningTxt;
+
+        public static List<object[]> handTaps = new List<object[]>();
+        public static bool PerformanceVisuals;
+
+        public static float PerformanceModeStep = 0.2f;
+        public static int PerformanceModeStepIndex = 2;
+
+        public static float PerformanceVisualDelay;
+        public static int DelayChangeStep;
+
+        public static readonly Dictionary<string, GameObject> labelDictionary = new Dictionary<string, GameObject>();
+        public static readonly Dictionary<bool, List<int>> labelDistances = new Dictionary<bool, List<int>>();
+
+
+        public static string OverallPlaytime;
+        private static float playtime;
+
+        private static float startTime;
+        private static float endTime;
+        private static bool lastWasTagged;
+
+        private static GameObject visualizerObject;
+        private static GameObject visualizerOutline;
+
+        private static GameObject headPos;
+        private static GameObject leftHandPos;
+        private static GameObject rightHandPos;
+
+        private static readonly Dictionary<VRRig, LineRenderer> predictions = new Dictionary<VRRig, LineRenderer>();
+
+        private static readonly Dictionary<VRRig, GameObject> hitboxESP = new Dictionary<VRRig, GameObject>();
+
+        // TODO: Fix the other players' slingshot trajectory prediction.
+        // TODO: Fix gravity of slingshot prediction
+
+        public static readonly Dictionary<SlingshotProjectile, LineRenderer> trajectoryPool = new Dictionary<SlingshotProjectile, LineRenderer>();
+        public static LineRenderer localTrajectoryLine;
+
+        public static readonly Dictionary<VRRig, List<int>> ntDistanceList = new Dictionary<VRRig, List<int>>();
+
+        private static int optimizeChangeStep;
+        private static float optimizeDelay;
+
+        private static readonly Dictionary<VRRig, GameObject> nametags = new Dictionary<VRRig, GameObject>();
+        public static bool nameTagChams;
+        public static bool anchorNameTag;
+        public static bool selfNameTag;
+
+        private static readonly Dictionary<VRRig, GameObject> velnametags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> fpsNametags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> targetFPSNameTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> idNameTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> platformTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> kidNameTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> subNameTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> creationDateTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> pingNameTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> turnNameTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> taggedNameTags = new Dictionary<VRRig, GameObject>();
+
+        public static readonly Dictionary<string, string> modDictionary = new Dictionary<string, string> {
+            { "genesis", "Genesis" },
+            { "HP_Left", "Holdable Pad" },
+            { "GrateVersion", "Grate" },
+            { "void", "Void" },
+            { "BANANAOS", "Banana OS" },
+            { "GC", "Gorilla Craft" },
+            { "CarName", "Gorilla Vehicles" },
+            { "6p72ly3j85pau2g9mda6ib8px", "CCM V2" },
+            { "FPS-Nametags for Zlothy", "FPS Tags" },
+            { "cronos", "Cronos" },
+            { "ORBIT", "Orbit" },
+            { "Violet On Top", "Violet" },
+            { "MP25", "Monke Phone" },
+            { "GorillaWatch", "Gorilla Watch" },
+            { "InfoWatch", "Gorilla Info Watch" },
+            { "BananaPhone", "Banana Phone" },
+            { "Vivid", "Vivid" },
+            { "RGBA", "Custom Cosmetics" },
+            { "cheese is gouda", "Whos Icheating" },
+            { "shirtversion", "Gorilla Shirts" },
+            { "gpronouns", "Gorilla Pronouns" },
+            { "gfaces", "Gorilla Faces" },
+            { "monkephone", "Monke Phone" },
+            { "pmversion", "Player Models" },
+            { "gtrials", "Gorilla Trials" },
+            { "msp", "Monke Smartphone" },
+            { "gorillastats", "Gorilla Stats" },
+            { "using gorilladrift", "Gorilla Drift" },
+            { "monkehavocversion", "Monke Havoc" },
+            { "tictactoe", "Tic Tac Toe" },
+            { "ccolor", "Index" },
+            { "imposter", "Gorilla Among Us" },
+            { "spectapeversion", "Spec Tape" },
+            { "cats", "Cats" },
+            { "made by biotest05 :3", "Dogs" },
+            { "fys cool magic mod", "Fys Magic Mod" },
+            { "colour", "Custom Cosmetics" },
+            { "chainedtogether", "Chained Together" },
+            { "goofywalkversion", "Goofy Walk" },
+            { "void_menu_open", "Void" },
+            { "violetpaiduser", "Violet Paid" },
+            { "violetfree", "Violet Free" },
+            { "obsidianmc", "Obsidian.Lol" },
+            { "dark", "Shiba GT Dark" },
+            { "hidden menu", "Hidden" },
+            { "oblivionuser", "Oblivion" },
+            { "eyerock reborn", "Eye Rock" },
+            { "asteroidlite", "Asteroid Lite" },
+            { "elux", "Elux" },
+            { "cokecosmetics", "Coke Cosmetx" },
+            { "GFaces", "G Faces" },
+            { "github.com/maroon-shadow/SimpleBoards", "Simple Boards" },
+            { "ObsidianMC", "Obsidian" },
+            { "GTrials", "G Trials" },
+            { "github.com/ZlothY29IQ/GorillaMediaDisplay", "Gorilla Media Display" },
+            { "github.com/ZlothY29IQ/TooMuchInfo", "Too Much Info" },
+            { "github.com/ZlothY29IQ/RoomUtils-IW", "Room Utils IW" },
+            { "github.com/ZlothY29IQ/MonkeClick", "Monke Click" },
+            { "github.com/ZlothY29IQ/MonkeClick-CI", "Monke Click CI" },
+            { "github.com/ZlothY29IQ/MonkeRealism", "Monke Realism" },
+            { "MediaPad", "Media Pad" },
+            { "GorillaCinema", "Gorilla Cinema" },
+            { "ChainedTogetherActive", "Chained Together" },
+            { "GPronouns", "G Pronouns" },
+            { "CSVersion", "Custom Skin" },
+            { "github.com/ZlothY29IQ/Zloth-RecRoomRig", "Zloth Rec Room Rig" },
+            { "ShirtProperties", "Shirts Old" },
+            { "GorillaShirts", "Shirts" },
+            { "GS", "Old Shirts" },
+            { "6XpyykmrCthKhFeUfkYGxv7xnXpoe2", "CCM V2" },
+            { "Body Tracking", "Body Track Old" },
+            { "Body Estimation", "Han Body Est" },
+            { "Gorilla Track", "Body Track" },
+            { "CustomMaterial", "Custom Cosmetics" },
+            { "I like cheese", "Rec Room Rig" },
+            { "EmoteWheel", "Fortnite Emote Wheel" },
+            { "untitled", "Untitled" },
+            { "BoyDoILoveInformation Public", "BoyDoILoveInformation" },
+            { "DTAOI", "DTAOI" },
+            { "GorillaShop", "GorillaShop" },
+            { "Fusioned", "Fusioned" },
+            { "y u lookin in here weirdo", "Malachi Menu Reborn" },
+            { "ØƦƁƖƬ", "Orbit" },
+            { "Atlas", "Atlas" }
+        };
+
+        private static readonly Dictionary<VRRig, GameObject> modNameTags = new Dictionary<VRRig, GameObject>();
+
+        public static readonly Dictionary<string, string> specialCosmetics = new Dictionary<string, string>
+        {
+            { "LBAAD.", "Administrator" },
+            { "LBAAK.", "Forest Guide" },
+            { "LBADE.", "Finger Painter" },
+            { "LBAGS.", "Illustrator" },
+            { "LMAPY.", "Forest Guide" },
+            { "LBANI.", "AA Creator" }
+        };
+
+        private static readonly Dictionary<VRRig, GameObject> cosmeticNameTags = new Dictionary<VRRig, GameObject>();
+
+        public static readonly Dictionary<string, string> verifiedDictionary = new Dictionary<string, string>
+        {
+            { "9DBC90CF7449EF64", "StyledSnail" },
+            { "33FFCE29A8DB5BB", "Jmancurly?" },
+            { "6FE5FF4D5DF68843", "Pine" },
+            { "52529F0635BE0CDF", "PapaSmurf" },
+            { "BAC5807405123060", "britishmonke" },
+            { "A6FFC7318E1301AF", "jmancurly" },
+            { "3B9FD2EEF24ACB3", "VMT" },
+            { "33FFA45DBFD33B01", "will" },
+            { "D6971CA01F82A975", "Elliot" },
+            { "7FB16B1EDEB71A4C", "Elliot" },
+            { "636D8846E76C9B5A", "Clown" },
+            { "65CB0CCF1AED2BF", "Ethyb" },
+            { "48437FE432DE48BE", "Rose" },
+            { "61AD990FF3A423B7", "Boda 1" },
+            { "AAB44BFD0BA34829", "Boda 2" },
+            { "6713DA80D2E9BFB5", "AHauntedArmy" },
+            { "B4A3FF01312B55B1", "Pluto" },
+            { "339E0D392565DC39", "kishark" },
+            { "F08CE3118F9E793E", "TurboAlligator" },
+            { "5380BEF3DA4A857D", "Tuxedo" },
+            { "D6E20BE9655C798", "TTTPIG 1" },
+            { "71AA09D13C0F408D", "TTTPIG 2" },
+            { "1D6E20BE9655C798", "TTTPIG 3" },
+            { "22A7BCEFFD7A0BBA", "TTTPIG 4" },
+            { "C3878B068886F6C3", "ZZEN" },
+            { "6F79BE7CB34642AC", "CodyO'Quinn" },
+            { "5AA1231973BE8A62", "Apollo" },
+            { "7F31BEEC604AE189", "ElectronicWall 1" },
+            { "42C809327652ECDD", "ElectronicWall 2" },
+            { "ECDE8A2FF8510934", "Antoca" },
+            { "80279945E7D3B57D", "Jolyne" },
+            { "7E44E8337DF02CC1", "Nunya" },
+            { "DE601BC40DB68CE0", "Graic" },
+            { "F5B5C64914C13B83", "HatGirl" },
+            { "660814E013F31EFA", "HOLLOWZZGT" },
+            { "2E408ED946D55D51", "Haunted" },
+            { "D345FE394607F946", "Bzzz the 18th" },
+            { "498D4C2F23853B37", "POGTROLL" },
+            { "BC9764E1EADF8BE0", "Circuit" },
+            { "D0CB396539676DD8", "FrogIlla" },
+            { "A1A99D33645E4A94", "STEAMVRAVTS / YEAT" },
+            { "CBCCBBB6C28A94CF", "PTMstar" },
+            { "6DC06EEFFE9DBD39", "Lucio" },
+            { "4ACA3C76B334B17F", "Wihz" },
+            { "571776944B6162F1", "CubCub" },
+            { "FB5FCEBC4A0E0387", "PepsiDee" },
+            { "8ED59EACCDC6BA86", "PepsiDee?" },
+            { "645222265FB972B", "Chaotic Asriel" },
+            { "BC99FA914F506AB8", "Lemming 1" },
+            { "3A16560CA65A51DE", "Lemming 2" },
+            { "59F3FE769DE93AB9", "Lemming 3" },
+            { "EE9FB127CF7DBBD5", "NOTMARK" },
+            { "54DCB69545BE0800", "Biffbish" },
+            { "A04005517920EB0", "K9" },
+            { "ABD60175B46E45C5", "Saltwater" },
+            { "964C4A68F65A804C", "YottaBite" },
+            { "8FECBBC89D69575E", "KyleTheScientist" },
+            { "4D5EB238C8253D04", "Person" },
+            { "8B047CEF4F695F3A", "AlecVR" },
+            { "E5883BD27F60F99A", "AlecVR?" },
+            { "70EEBA9507E8381E", "H4KPY?" },
+            { "911691C9FEB63D9F", "H4KPY?" },
+            { "D322FC7F6A9875DB", "DecalFree" },
+            { "FBE1690495D63A05", "Azora" },
+            { "3509A9A428FCD55C", "Polar" },
+            { "3F179DCC75FECA1", "Polar" },
+            { "450EE31CA7FBDE4C", "ProximusVR" },
+            { "180E486699D14963", "Legion" },
+            { "AC67B4E838EFB5D3", "PartyMonkeyGT" },
+            { "4BB02313F55AA741", "Mosa?" },
+            { "E61FD8B23F3264C0", "Authority" },
+            { "36B456067A5E1453", "Lofiat" },
+            { "FC8CB7FED6EFDC81", "CJVR" },
+            { "6C85D07DC2586DC9", "Arctrie" },
+            { "22CDF30B107A9BDB", "Durag" },
+            { "1940CCB76316556F", "Genet1c" },
+            { "6B4FB3EF97A8BB71", "Crisp" },
+            { "17BCC7B56F88287A", "Vortex" },
+            { "2D35DBED9A3BE6A0", "Tortise" },
+            { "2D7D32651E93866", "Graze" },
+            { "B4E45E48C5CE0656", "ZBR" },
+            { "F7EE771EB6794ABE", "OfficialLemon" },
+            { "36FD11C9FB61E50B", "Cryptik" },
+            { "28579AFACDE1FB19", "Pepsi Dee" },
+            { "8A062E735BBC89ED", "GLTCH" },
+            { "A100E9E6C4D91E75", "Mycrafts 1" },
+            { "7952F9E08FEF8E83", "Mycrafts 2" },
+            { "10E12F25533C13F2", "Kirpi4" },
+            { "10621E029A675705", "AA_Mike" },
+            { "F8FF7B812B0B2F72", "Foggy" },
+            { "1E8298E1E1F40CB2", "Faaduu" },
+            { "289C8FAD58A09D6D", "Pixel" },
+            { "172E4982BEE4A8AD", "H4KPY" },
+            { "A339740A8ED97FC2", "Coffeeperson" },
+            { "502575B001FE6FCD", "Mikeyourman" },
+            { "7DC729B66A15F9DE", "TrumpGT" }
+        };
+
+        private static readonly Dictionary<VRRig, GameObject> verifiedNameTags = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> crashedNameTags = new Dictionary<VRRig, GameObject>();
+
+
+        private static readonly Dictionary<VRRig, GameObject> compactNameTags = new Dictionary<VRRig, GameObject>();
+        private static readonly Dictionary<VRRig, GameObject> compactTagBackgrounds = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> minecraftNameTags = new Dictionary<VRRig, GameObject>();
+        private static readonly Dictionary<VRRig, GameObject> minecraftTagBackgrounds = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> castingNameTags = new Dictionary<VRRig, GameObject>();
+
+        public static string _leavesName;
+
+        public static string LeavesName
+        {
+            get
+            {
+                if (_leavesName == null)
+                {
+                    var forest = GetObject("Environment Objects/LocalObjects_Prefab/Forest");
+
+                    _leavesName = forest
+                        .GetComponentsInChildren<Transform>(true)
+                        .Where(t =>
+                            t.name.StartsWith("UnityTempFile") &&
+                            t.parent != null &&
+                            t.parent == forest.transform)
+                        .GroupBy(t => t.name)
+                        .Where(g => g.Count() == 3)
+                        .OrderByDescending(g => g.First().GetSiblingIndex())
+                        .FirstOrDefault()?.Key ?? "UnityTempFile";
+                }
+                return _leavesName;
+            }
+        }
+
+        public static readonly List<GameObject> leaves = new List<GameObject>();
+
+        public static readonly List<GameObject> cosmetics = new List<GameObject>();
+
+        public static readonly List<Renderer> disabledRenderers = new List<Renderer>();
+
+        public static readonly Dictionary<VRRig, Coroutine> rigLerpCoroutines = new Dictionary<VRRig, Coroutine>();
+
+        private static readonly Dictionary<VRRig, GameObject> cosmeticIndicators = new Dictionary<VRRig, GameObject>();
+        private static readonly Dictionary<string, Texture2D> cosmeticTextures = new Dictionary<string, Texture2D>();
+        private static Material cosmeticMat;
+
+        private static Material platformMat;
+        private static Material platformEspMat;
+
+        private static readonly Dictionary<VRRig, GameObject> platformIndicators = new Dictionary<VRRig, GameObject>();
+
+        private static Material voiceMat;
+        private static Material voiceEspMat;
+        private static Texture2D voiceTxt;
+
+        private static readonly Dictionary<VRRig, GameObject> voiceIndicators = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> gripIndicators = new Dictionary<VRRig, GameObject>();
+        private static Material gripEspMat;
+        private static Texture2D gripTxt;
+
+        private static GameObject l;
+        private static GameObject r;
+
+        private static readonly Dictionary<VRRig, List<LineRenderer>> boneESP = new Dictionary<VRRig, List<LineRenderer>>();
+        public static readonly int[] bones = {
+            4, 3, 5, 4, 19, 18, 20, 19, 3, 18, 21, 20, 22, 21, 25, 21, 29, 21, 31, 29, 27, 25, 24, 22, 6, 5, 7, 6, 10, 6, 14, 6, 16, 14, 12, 10, 9, 7
+        };
+
+        private static readonly Dictionary<VRRig, SkinnedWireframeRenderer> wireframes = new Dictionary<VRRig, SkinnedWireframeRenderer>();
+
+        public static readonly List<VRRig> convertedRigs = new List<VRRig>();
+
+        public static Shader uberChams;
+
+        private static readonly Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
+
+        private static readonly Dictionary<VRRig, GameObject> boxESP = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, GameObject> hollowBoxESP = new Dictionary<VRRig, GameObject>();
+
+        private static readonly Dictionary<VRRig, TrailRenderer> breadcrumbs = new Dictionary<VRRig, TrailRenderer>();
+
+        static GameObject LeftSphere;
+        static GameObject RightSphere;
+
+        // Cache backend
+
+        private static readonly List<TextMeshPro> nameTagPool = new List<TextMeshPro>();
+
+        private static GameObject nameTagHolder;
+
+        public static bool isNameTagQueued;
+
+
+        private static readonly List<LineRenderer> linePool = new List<LineRenderer>();
+
+        private static GameObject lineRenderHolder;
+
+        public static bool isLineRenderQueued = false;
+        #endregion
+
+        #region Methods
+        public static void Visualize(PrimitiveType shape, Vector3 position, Quaternion rotation, Vector3 scale, Color color, long? indexId = null, float alpha = 0.25f, float rangeKeyComponent = 0f)
+        {
+            long index = indexId ?? BitPackUtils.PackWorldPosForNetwork(position);
+            var key = (index, rangeKeyComponent, shape);
+
+            if (!visualizePool.TryGetValue(key, out GameObject visualizeGO))
+            {
+                visualizeGO = GameObject.CreatePrimitive(shape);
+                Object.Destroy(visualizeGO.GetComponent<Collider>());
+                visualizePool.Add(key, visualizeGO);
+            }
+
+            visualizeGO.SetActive(true);
+
+            visualizeGO.transform.position = position;
+            visualizeGO.transform.localScale = scale;
+            visualizeGO.transform.rotation = rotation;
+
+            if (Manager.GetIndex("Hidden on Camera").enabled)
+                visualizeGO.layer = 19;
+
+            Renderer visualizeRenderer = visualizeGO.GetComponent<Renderer>();
+            Color clr = color;
+            clr.a = alpha;
+            visualizeRenderer.material.shader = Shader.Find("GUI/Text Shader");
+            visualizeRenderer.material.color = clr;
+        }
+
+        public static void ToggleSnow(bool enable)
+        {
+            GameObject snowObject = GetObject("Environment Objects/LocalObjects_Prefab/Forest/Environment/WeatherDayNight").transform.Find("snow").gameObject;
+            snowObject.SetActive(enable);
+            snowObject.transform.position += Vector3.one * (enable ? 0.001f : -0.001f);
+            snowObject.GetComponent<TimeOfDayDependentAudio>().enabled = !enable;
+            snowObject.transform.Find("snow partic").gameObject.SetActive(enable);
+        }
+
+        public static void WeatherChange(bool rain)
+        {
+            for (int i = 0; i < ManagerRegistry.BetterDayNightManager.weatherCycle.Length; i++)
+                ManagerRegistry.BetterDayNightManager.weatherCycle[i] = rain ? BetterDayNightManager.WeatherType.Raining : BetterDayNightManager.WeatherType.None;
+        }
+
+        public static void DisableFog() =>
+            ManagerRegistry.ZoneShaderSettings.SetGroundFogValue(Color.clear, 0f, 0f, 0f);
+
+        public static void EnableFog() =>
+            ManagerRegistry.ZoneShaderSettings.SetGroundFogValue(new Color(0.9569f, 0.6941f, 0.502f, 0.1216f), 40f, 10f, 40f);
+
+        public static void DisableAmbience()
+        {
+            foreach (TimeOfDayDependentAudio ambientObject in GetAllType<TimeOfDayDependentAudio>())
+            {
+                if (ambientObject.currentVolume != 0 && !ambientObjects.ContainsKey(ambientObject))
+                {
+                    ambientObjects.Add(ambientObject, ambientObject.currentVolume);
+                    ambientObject.currentVolume = 0f;
+                }
+            }
+        }
+
+        public static void EnableAmbience()
+        {
+            foreach (KeyValuePair<TimeOfDayDependentAudio, float> pair in ambientObjects)
+                pair.Key.currentVolume = pair.Value;
+
+            ambientObjects.Clear();
+        }
+
+        public static void ResetFog() =>
+            ManagerRegistry.ZoneShaderSettings.CopySettings(ZoneShaderSettings.defaultsInstance);
+
+        /*
+        public static void SpawnLightning() =>
+            ManagerRegistry.LightningManager.DoLightningStrike();
+
+        public static float GetTimeUntilNextLightningStrike()
+        {
+            if (ManagerRegistry.LightningManager.lightningTimestampsRealtime == null ||
+                ManagerRegistry.LightningManager.lightningTimestampsRealtime.Count == 0 ||
+                ManagerRegistry.LightningManager.nextLightningTimestampIndex < 0 ||
+                ManagerRegistry.LightningManager.nextLightningTimestampIndex >= ManagerRegistry.LightningManager.lightningTimestampsRealtime.Count)
+                return -1f; 
+
+            float nextStrikeTime = ManagerRegistry.LightningManager.lightningTimestampsRealtime[ManagerRegistry.LightningManager.nextLightningTimestampIndex];
+            float timeUntilStrike = nextStrikeTime - Time.realtimeSinceStartup;
+
+            return timeUntilStrike < 0f ? 0f : timeUntilStrike;
+        }
+
+        public static void StrikeTimeOverlay()
+        {
+            float timeUntilStrike = GetTimeUntilNextLightningStrike();
+            if (timeUntilStrike < 0f)
+            {
+                Notifications.information.Remove("Lightning");
+                return;
+            }
+            Notifications.information["Lightning"] = $"{timeUntilStrike:F1}s";
+        }
+        */
+
+        public static void CoreESP()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+
+            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : new Color(0.41f, 0.05f, 0.70f);
+            if (tt)
+                coreESPColor.a = 0.5f;
+
+            List<GameEntity> cores = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.typeId == Fun.ObjectByName["GhostReactorCollectibleCore"]).ToList();
+            if (cores.Count <= 0)
+                return;
+
+            for (int i = 0; i < cores.Count; i++)
+            {
+                Transform corePosition = cores[i].transform;
+                Visualize(PrimitiveType.Sphere, corePosition.position, corePosition.rotation, corePosition.lossyScale, coreESPColor, i + 29875, coreESPColor.a);
+            }
+        }
+
+        public static void CritterESP()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+
+            Color critterESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
+            if (tt)
+                critterESPColor.a = 0.5f;
+
+            List<CrittersPawn> actors = ManagerRegistry.CrittersManager.crittersPawns;
+            if (actors.Count <= 0)
+                return;
+
+            for (int i = 0; i < actors.Count; i++)
+            {
+                Transform transform = actors[i].transform;
+                Visualize(PrimitiveType.Sphere, transform.position, transform.rotation, transform.lossyScale, critterESPColor, i - 192398, critterESPColor.a);
+            }
+        }
+
+        public static void CreatureESP()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+
+            Color critterESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
+            if (tt)
+                critterESPColor.a = 0.5f;
+
+            ThrowableBug[] bugs = GetAllType<ThrowableBug>();
+            if (bugs.Length <= 0)
+                return;
+
+            for (int i = 0; i < bugs.Length; i++)
+            {
+                Transform transform = bugs[i].transform;
+                Visualize(PrimitiveType.Sphere, transform.position, transform.rotation, transform.lossyScale, critterESPColor, i - 201782, critterESPColor.a);
+            }
+        }
+
+        public static void EnemyESP()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+
+            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : new Color(0.41f, 0.05f, 0.70f);
+            if (tt)
+                coreESPColor.a = 0.5f;
+
+            List<GameEntity> enemies = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.gameObject.name.ToLower().Contains("enemy")).ToList();
+            if (enemies.Count <= 0)
+                return;
+
+            for (int i = 0; i < enemies.Count; i++)
+            {
+                Transform enemy = enemies[i].transform;
+                Visualize(PrimitiveType.Sphere, enemy.position, enemy.rotation, enemy.lossyScale, coreESPColor, i + 451980, coreESPColor.a);
+            }
+        }
+
+        public static void ResourceESP()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+
+            Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
+            if (tt)
+                coreESPColor.a = 0.5f;
+
+            List<GameEntity> resources = ManagerRegistry.SuperInfection.GameEntityManager.entities.Where(entity => entity != null && entity.gameObject.name.Contains("Resource")).ToList();
+            if (resources.Count <= 0)
+                return;
+
+            for (int i = 0; i < resources.Count; i++)
+            {
+                Transform resource = resources[i].transform;
+                Visualize(PrimitiveType.Sphere, resource.position, resource.rotation, resource.lossyScale, coreESPColor, i + 451961280, coreESPColor.a);
+            }
+        }
+        public static void SetFullbrightStatus(bool fullBright)
+        {
+            if (fullBright)
+            {
+                previousFullbrightStatus = ManagerRegistry.GameLightingManager.customVertexLightingEnabled;
+                ManagerRegistry.GameLightingManager.SetCustomDynamicLightingEnabled(false);
+            }
+            else
+            {
+                if (previousFullbrightStatus)
+                    ManagerRegistry.GameLightingManager.SetCustomDynamicLightingEnabled(true);
+            }
+        }
+        public static void RemoveBlindfold()
+        {
+            if (Networking.InRoom && Time.time > removeBlindfoldDelay)
+            {
+                removeBlindfoldDelay = Time.time + 0.5f;
+                GameObject mainCamera = GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/Main Camera");
+                int childCount = mainCamera.transform.childCount;
+                for (int i = 0; i < childCount; i++)
+                {
+                    GameObject v = mainCamera.transform.GetChild(i).gameObject;
+                    if (v.name == "PropHunt_Blindfold_ForCameras_Prefab(Clone)")
+                        Object.Destroy(v);
+                }
+            }
+        }
+
         public static void LeaderboardInfo()
         {
             foreach (GorillaScoreBoard scoreboard in GorillaScoreboardTotalUpdater.allScoreboards)
@@ -463,12 +950,6 @@ namespace Qubit.Modules.Categories
 
         public static void WatchOn() =>
             Watches[1].gameObject.SetActive(true);
-
-        public static bool infoWatchMenuName;
-        public static bool infoWatchTime;
-        public static bool infoWatchClip;
-        public static bool infoWatchFPS;
-        public static bool infoWatchCode;
         public static void WatchStep()
         {
             TextMeshProUGUI tmp = Watches[1].text;
@@ -511,8 +992,6 @@ namespace Qubit.Modules.Categories
 
         public static void WatchOff() =>
              Watches[1].gameObject.SetActive(false);
-
-        public static Material oldSkyMat;
         public static void DoCustomSkyboxColor()
         {
             GameObject sky = GetObject("Environment Objects/LocalObjects_Prefab/Standard Sky");
@@ -527,8 +1006,6 @@ namespace Qubit.Modules.Categories
             GameObject sky = GetObject("Environment Objects/LocalObjects_Prefab/Standard Sky");
             sky.GetComponent<Renderer>().material = oldSkyMat;
         }
-
-        public static TrailRenderer trailRenderer;
         public static void DrawGun()
         {
             GunLibrary.Aim(GunData =>
@@ -570,12 +1047,6 @@ namespace Qubit.Modules.Categories
 
             trailRenderer = null;
         }
-
-        private static Material tapMat;
-        private static Texture2D tapTxt;
-        private static Texture2D warningTxt;
-
-        public static List<object[]> handTaps = new List<object[]>();
 
         public static void OnHandTapGamesenseRing(VRRig rig, Vector3 position)
         {
@@ -666,21 +1137,11 @@ namespace Qubit.Modules.Categories
 
             HandTapPatch.OnHandTap -= OnHandTapGamesenseRing;
         }
-        public static bool PerformanceVisuals;
-
-        public static float PerformanceModeStep = 0.2f;
-        public static int PerformanceModeStepIndex = 2;
         public static void ApplyPerformanceModeVisualStep(int index)
         {
             PerformanceModeStepIndex = index;
             PerformanceModeStep = index / 10f;
         }
-
-        public static float PerformanceVisualDelay;
-        public static int DelayChangeStep;
-
-        public static readonly Dictionary<string, GameObject> labelDictionary = new Dictionary<string, GameObject>();
-        public static readonly Dictionary<bool, List<int>> labelDistances = new Dictionary<bool, List<int>>();
         public static float GetLabelDistance(bool leftHand)
         {
             if (!labelDistances.TryGetValue(leftHand, out List<int> frames))
@@ -741,10 +1202,6 @@ namespace Qubit.Modules.Categories
             go.transform.LookAt(Camera.main.transform.position);
             go.transform.Rotate(0f, 180f, 0f);
         }
-
-
-        public static string OverallPlaytime;
-        private static float playtime;
         public static void UpdatePlaytime()
         {
             Coroutines.instance.StartCoroutine(Updateplaytime());
@@ -762,9 +1219,9 @@ namespace Qubit.Modules.Categories
         {
             if (overlapInRoom ?? Networking.InRoom)
             {
-                References.Network.CurrentRoom.CustomProps.TryGetValue("platform", out var platform);
-                References.Network.CurrentRoom.CustomProps.TryGetValue("language", out var language);
-                References.Network.CurrentRoom.CustomProps.TryGetValue("mmrTier", out var mmrTier);
+                ManagerRegistry.NetworkSystem.CurrentRoom.CustomProps.TryGetValue("platform", out var platform);
+                ManagerRegistry.NetworkSystem.CurrentRoom.CustomProps.TryGetValue("language", out var language);
+                ManagerRegistry.NetworkSystem.CurrentRoom.CustomProps.TryGetValue("mmrTier", out var mmrTier);
 
                 Notifications.information["Language"] = language?.ToString() ?? "Unknown";
                 Notifications.information["Platform"] = platform?.ToString() ?? "Unknown";
@@ -801,10 +1258,6 @@ namespace Qubit.Modules.Categories
 
             return timeString;
         }
-
-        private static float startTime;
-        private static float endTime;
-        private static bool lastWasTagged;
         public static void TimeLabel()
         {
             if (DoPerformanceCheck())
@@ -1004,14 +1457,11 @@ namespace Qubit.Modules.Categories
 
         public static void FakeUnbanSelf()
         {
-            PhotonNetworkController.Instance.UpdateTriggerScreens();
-            GorillaScoreboardTotalUpdater.instance.ClearOfflineFailureText();
+            ManagerRegistry.PhotonNetworkController.UpdateTriggerScreens();
+            ManagerRegistry.GorillaScoreboardTotalUpdater.ClearOfflineFailureText();
             References.Computer.screenText.DisableFailedState();
             References.Computer.functionSelectText.DisableFailedState();
         }
-
-        private static GameObject visualizerObject;
-        private static GameObject visualizerOutline;
         public static void CreateAudioVisualizer()
         {
             visualizerObject = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -1050,10 +1500,6 @@ namespace Qubit.Modules.Categories
             Object.Destroy(visualizerObject);
             Object.Destroy(visualizerOutline);
         }
-
-        private static GameObject headPos;
-        private static GameObject leftHandPos;
-        private static GameObject rightHandPos;
         public static void ShowServerPosition()
         {
             if (headPos == null)
@@ -1106,8 +1552,6 @@ namespace Qubit.Modules.Categories
             if (rightHandPos != null)
                 Object.Destroy(rightHandPos);
         }
-
-        private static readonly Dictionary<VRRig, LineRenderer> predictions = new Dictionary<VRRig, LineRenderer>();
         public static void JumpPredictions()
         {
             List<VRRig> toRemove = new List<VRRig>();
@@ -1179,8 +1623,6 @@ namespace Qubit.Modules.Categories
 
             predictions.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> hitboxESP = new Dictionary<VRRig, GameObject>();
         public static void HitboxPredictions()
         {
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -1235,12 +1677,6 @@ namespace Qubit.Modules.Categories
 
             hitboxESP.Clear();
         }
-
-        // TODO: Fix the other players' slingshot trajectory prediction.
-        // TODO: Fix gravity of slingshot prediction
-
-        public static readonly Dictionary<SlingshotProjectile, LineRenderer> trajectoryPool = new Dictionary<SlingshotProjectile, LineRenderer>();
-        public static LineRenderer localTrajectoryLine;
 
         public static void PaintbrawlTrajectories()
         {
@@ -1542,8 +1978,6 @@ namespace Qubit.Modules.Categories
                 catch { }
             }
         }
-
-        public static readonly Dictionary<VRRig, List<int>> ntDistanceList = new Dictionary<VRRig, List<int>>();
         public static float GetTagDistance(VRRig rig)
         {
             if (ntDistanceList.ContainsKey(rig))
@@ -1562,9 +1996,6 @@ namespace Qubit.Modules.Categories
             ntDistanceList.Add(rig, new List<int> { Time.frameCount });
             return 0.4f * rig.scaleFactor;
         }
-
-        private static int optimizeChangeStep;
-        private static float optimizeDelay;
         public static bool NameTagOptimize()
         {
             if (Time.time < optimizeDelay)
@@ -1580,11 +2011,6 @@ namespace Qubit.Modules.Categories
 
             return true;
         }
-
-        private static readonly Dictionary<VRRig, GameObject> nametags = new Dictionary<VRRig, GameObject>();
-        public static bool nameTagChams;
-        public static bool anchorNameTag;
-        public static bool selfNameTag;
         public static Vector3 GetNameTagPosition(VRRig rig)
         {
             Transform anchor = anchorNameTag ? rig.transform : rig.headMesh.transform;
@@ -1645,8 +2071,6 @@ namespace Qubit.Modules.Categories
 
             nametags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> velnametags = new Dictionary<VRRig, GameObject>();
         public static void VelocityTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = velnametags.ToList();
@@ -1703,8 +2127,6 @@ namespace Qubit.Modules.Categories
 
             velnametags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> fpsNametags = new Dictionary<VRRig, GameObject>();
         public static void FPSTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = fpsNametags.ToList();
@@ -1760,8 +2182,6 @@ namespace Qubit.Modules.Categories
 
             fpsNametags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> targetFPSNameTags = new Dictionary<VRRig, GameObject>();
         public static void TargetFPSTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = targetFPSNameTags.ToList();
@@ -1818,8 +2238,6 @@ namespace Qubit.Modules.Categories
 
             targetFPSNameTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> idNameTags = new Dictionary<VRRig, GameObject>();
         public static void IDTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = idNameTags.ToList();
@@ -1876,8 +2294,6 @@ namespace Qubit.Modules.Categories
 
             idNameTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> platformTags = new Dictionary<VRRig, GameObject>();
         public static void PlatformTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = platformTags.ToList();
@@ -1934,8 +2350,6 @@ namespace Qubit.Modules.Categories
 
             platformTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> kidNameTags = new Dictionary<VRRig, GameObject>();
         public static void KIDNameTags()
         {
             List<KeyValuePair<VRRig, GameObject>> kidNameTagsCopy = kidNameTags.ToList();
@@ -2005,8 +2419,6 @@ namespace Qubit.Modules.Categories
 
             kidNameTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> subNameTags = new Dictionary<VRRig, GameObject>();
         public static void SubscriberNameTags()
         {
             List<KeyValuePair<VRRig, GameObject>> subNameTagsCopy = subNameTags.ToList();
@@ -2077,8 +2489,6 @@ namespace Qubit.Modules.Categories
 
             subNameTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> creationDateTags = new Dictionary<VRRig, GameObject>();
         public static void CreationDateTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = creationDateTags.ToList();
@@ -2135,8 +2545,6 @@ namespace Qubit.Modules.Categories
 
             creationDateTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> pingNameTags = new Dictionary<VRRig, GameObject>();
         public static void PingTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = pingNameTags.ToList();
@@ -2193,8 +2601,6 @@ namespace Qubit.Modules.Categories
 
             pingNameTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> turnNameTags = new Dictionary<VRRig, GameObject>();
         public static void TurnTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = turnNameTags.ToList();
@@ -2254,8 +2660,6 @@ namespace Qubit.Modules.Categories
 
             turnNameTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> taggedNameTags = new Dictionary<VRRig, GameObject>();
         public static void TaggedTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = taggedNameTags.ToList();
@@ -2323,95 +2727,6 @@ namespace Qubit.Modules.Categories
 
             taggedNameTags.Clear();
         }
-
-        public static readonly Dictionary<string, string> modDictionary = new Dictionary<string, string> {
-            { "genesis", "Genesis" },
-            { "HP_Left", "Holdable Pad" },
-            { "GrateVersion", "Grate" },
-            { "void", "Void" },
-            { "BANANAOS", "Banana OS" },
-            { "GC", "Gorilla Craft" },
-            { "CarName", "Gorilla Vehicles" },
-            { "6p72ly3j85pau2g9mda6ib8px", "CCM V2" },
-            { "FPS-Nametags for Zlothy", "FPS Tags" },
-            { "cronos", "Cronos" },
-            { "ORBIT", "Orbit" },
-            { "Violet On Top", "Violet" },
-            { "MP25", "Monke Phone" },
-            { "GorillaWatch", "Gorilla Watch" },
-            { "InfoWatch", "Gorilla Info Watch" },
-            { "BananaPhone", "Banana Phone" },
-            { "Vivid", "Vivid" },
-            { "RGBA", "Custom Cosmetics" },
-            { "cheese is gouda", "Whos Icheating" },
-            { "shirtversion", "Gorilla Shirts" },
-            { "gpronouns", "Gorilla Pronouns" },
-            { "gfaces", "Gorilla Faces" },
-            { "monkephone", "Monke Phone" },
-            { "pmversion", "Player Models" },
-            { "gtrials", "Gorilla Trials" },
-            { "msp", "Monke Smartphone" },
-            { "gorillastats", "Gorilla Stats" },
-            { "using gorilladrift", "Gorilla Drift" },
-            { "monkehavocversion", "Monke Havoc" },
-            { "tictactoe", "Tic Tac Toe" },
-            { "ccolor", "Index" },
-            { "imposter", "Gorilla Among Us" },
-            { "spectapeversion", "Spec Tape" },
-            { "cats", "Cats" },
-            { "made by biotest05 :3", "Dogs" },
-            { "fys cool magic mod", "Fys Magic Mod" },
-            { "colour", "Custom Cosmetics" },
-            { "chainedtogether", "Chained Together" },
-            { "goofywalkversion", "Goofy Walk" },
-            { "void_menu_open", "Void" },
-            { "violetpaiduser", "Violet Paid" },
-            { "violetfree", "Violet Free" },
-            { "obsidianmc", "Obsidian.Lol" },
-            { "dark", "Shiba GT Dark" },
-            { "hidden menu", "Hidden" },
-            { "oblivionuser", "Oblivion" },
-            { "eyerock reborn", "Eye Rock" },
-            { "asteroidlite", "Asteroid Lite" },
-            { "elux", "Elux" },
-            { "cokecosmetics", "Coke Cosmetx" },
-            { "GFaces", "G Faces" },
-            { "github.com/maroon-shadow/SimpleBoards", "Simple Boards" },
-            { "ObsidianMC", "Obsidian" },
-            { "GTrials", "G Trials" },
-            { "github.com/ZlothY29IQ/GorillaMediaDisplay", "Gorilla Media Display" },
-            { "github.com/ZlothY29IQ/TooMuchInfo", "Too Much Info" },
-            { "github.com/ZlothY29IQ/RoomUtils-IW", "Room Utils IW" },
-            { "github.com/ZlothY29IQ/MonkeClick", "Monke Click" },
-            { "github.com/ZlothY29IQ/MonkeClick-CI", "Monke Click CI" },
-            { "github.com/ZlothY29IQ/MonkeRealism", "Monke Realism" },
-            { "MediaPad", "Media Pad" },
-            { "GorillaCinema", "Gorilla Cinema" },
-            { "ChainedTogetherActive", "Chained Together" },
-            { "GPronouns", "G Pronouns" },
-            { "CSVersion", "Custom Skin" },
-            { "github.com/ZlothY29IQ/Zloth-RecRoomRig", "Zloth Rec Room Rig" },
-            { "ShirtProperties", "Shirts Old" },
-            { "GorillaShirts", "Shirts" },
-            { "GS", "Old Shirts" },
-            { "6XpyykmrCthKhFeUfkYGxv7xnXpoe2", "CCM V2" },
-            { "Body Tracking", "Body Track Old" },
-            { "Body Estimation", "Han Body Est" },
-            { "Gorilla Track", "Body Track" },
-            { "CustomMaterial", "Custom Cosmetics" },
-            { "I like cheese", "Rec Room Rig" },
-            { "EmoteWheel", "Fortnite Emote Wheel" },
-            { "untitled", "Untitled" },
-            { "BoyDoILoveInformation Public", "BoyDoILoveInformation" },
-            { "DTAOI", "DTAOI" },
-            { "GorillaShop", "GorillaShop" },
-            { "Fusioned", "Fusioned" },
-            { "y u lookin in here weirdo", "Malachi Menu Reborn" },
-            { "ØƦƁƖƬ", "Orbit" },
-            { "Atlas", "Atlas" }
-        };
-
-        private static readonly Dictionary<VRRig, GameObject> modNameTags = new Dictionary<VRRig, GameObject>();
         public static void ModTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = modNameTags.ToList();
@@ -2505,18 +2820,6 @@ namespace Qubit.Modules.Categories
 
             modNameTags.Clear();
         }
-
-        public static readonly Dictionary<string, string> specialCosmetics = new Dictionary<string, string>
-        {
-            { "LBAAD.", "Administrator" },
-            { "LBAAK.", "Forest Guide" },
-            { "LBADE.", "Finger Painter" },
-            { "LBAGS.", "Illustrator" },
-            { "LMAPY.", "Forest Guide" },
-            { "LBANI.", "AA Creator" }
-        };
-
-        private static readonly Dictionary<VRRig, GameObject> cosmeticNameTags = new Dictionary<VRRig, GameObject>();
         public static void CosmeticTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = cosmeticNameTags.ToList();
@@ -2587,108 +2890,6 @@ namespace Qubit.Modules.Categories
 
             cosmeticNameTags.Clear();
         }
-
-        public static readonly Dictionary<string, string> verifiedDictionary = new Dictionary<string, string>
-        {
-            { "9DBC90CF7449EF64", "StyledSnail" },
-            { "33FFCE29A8DB5BB", "Jmancurly?" },
-            { "6FE5FF4D5DF68843", "Pine" },
-            { "52529F0635BE0CDF", "PapaSmurf" },
-            { "BAC5807405123060", "britishmonke" },
-            { "A6FFC7318E1301AF", "jmancurly" },
-            { "3B9FD2EEF24ACB3", "VMT" },
-            { "33FFA45DBFD33B01", "will" },
-            { "D6971CA01F82A975", "Elliot" },
-            { "7FB16B1EDEB71A4C", "Elliot" },
-            { "636D8846E76C9B5A", "Clown" },
-            { "65CB0CCF1AED2BF", "Ethyb" },
-            { "48437FE432DE48BE", "Rose" },
-            { "61AD990FF3A423B7", "Boda 1" },
-            { "AAB44BFD0BA34829", "Boda 2" },
-            { "6713DA80D2E9BFB5", "AHauntedArmy" },
-            { "B4A3FF01312B55B1", "Pluto" },
-            { "339E0D392565DC39", "kishark" },
-            { "F08CE3118F9E793E", "TurboAlligator" },
-            { "5380BEF3DA4A857D", "Tuxedo" },
-            { "D6E20BE9655C798", "TTTPIG 1" },
-            { "71AA09D13C0F408D", "TTTPIG 2" },
-            { "1D6E20BE9655C798", "TTTPIG 3" },
-            { "22A7BCEFFD7A0BBA", "TTTPIG 4" },
-            { "C3878B068886F6C3", "ZZEN" },
-            { "6F79BE7CB34642AC", "CodyO'Quinn" },
-            { "5AA1231973BE8A62", "Apollo" },
-            { "7F31BEEC604AE189", "ElectronicWall 1" },
-            { "42C809327652ECDD", "ElectronicWall 2" },
-            { "ECDE8A2FF8510934", "Antoca" },
-            { "80279945E7D3B57D", "Jolyne" },
-            { "7E44E8337DF02CC1", "Nunya" },
-            { "DE601BC40DB68CE0", "Graic" },
-            { "F5B5C64914C13B83", "HatGirl" },
-            { "660814E013F31EFA", "HOLLOWZZGT" },
-            { "2E408ED946D55D51", "Haunted" },
-            { "D345FE394607F946", "Bzzz the 18th" },
-            { "498D4C2F23853B37", "POGTROLL" },
-            { "BC9764E1EADF8BE0", "Circuit" },
-            { "D0CB396539676DD8", "FrogIlla" },
-            { "A1A99D33645E4A94", "STEAMVRAVTS / YEAT" },
-            { "CBCCBBB6C28A94CF", "PTMstar" },
-            { "6DC06EEFFE9DBD39", "Lucio" },
-            { "4ACA3C76B334B17F", "Wihz" },
-            { "571776944B6162F1", "CubCub" },
-            { "FB5FCEBC4A0E0387", "PepsiDee" },
-            { "8ED59EACCDC6BA86", "PepsiDee?" },
-            { "645222265FB972B", "Chaotic Asriel" },
-            { "BC99FA914F506AB8", "Lemming 1" },
-            { "3A16560CA65A51DE", "Lemming 2" },
-            { "59F3FE769DE93AB9", "Lemming 3" },
-            { "EE9FB127CF7DBBD5", "NOTMARK" },
-            { "54DCB69545BE0800", "Biffbish" },
-            { "A04005517920EB0", "K9" },
-            { "ABD60175B46E45C5", "Saltwater" },
-            { "964C4A68F65A804C", "YottaBite" },
-            { "8FECBBC89D69575E", "KyleTheScientist" },
-            { "4D5EB238C8253D04", "Person" },
-            { "8B047CEF4F695F3A", "AlecVR" },
-            { "E5883BD27F60F99A", "AlecVR?" },
-            { "70EEBA9507E8381E", "H4KPY?" },
-            { "911691C9FEB63D9F", "H4KPY?" },
-            { "D322FC7F6A9875DB", "DecalFree" },
-            { "FBE1690495D63A05", "Azora" },
-            { "3509A9A428FCD55C", "Polar" },
-            { "3F179DCC75FECA1", "Polar" },
-            { "450EE31CA7FBDE4C", "ProximusVR" },
-            { "180E486699D14963", "Legion" },
-            { "AC67B4E838EFB5D3", "PartyMonkeyGT" },
-            { "4BB02313F55AA741", "Mosa?" },
-            { "E61FD8B23F3264C0", "Authority" },
-            { "36B456067A5E1453", "Lofiat" },
-            { "FC8CB7FED6EFDC81", "CJVR" },
-            { "6C85D07DC2586DC9", "Arctrie" },
-            { "22CDF30B107A9BDB", "Durag" },
-            { "1940CCB76316556F", "Genet1c" },
-            { "6B4FB3EF97A8BB71", "Crisp" },
-            { "17BCC7B56F88287A", "Vortex" },
-            { "2D35DBED9A3BE6A0", "Tortise" },
-            { "2D7D32651E93866", "Graze" },
-            { "B4E45E48C5CE0656", "ZBR" },
-            { "F7EE771EB6794ABE", "OfficialLemon" },
-            { "36FD11C9FB61E50B", "Cryptik" },
-            { "28579AFACDE1FB19", "Pepsi Dee" },
-            { "8A062E735BBC89ED", "GLTCH" },
-            { "A100E9E6C4D91E75", "Mycrafts 1" },
-            { "7952F9E08FEF8E83", "Mycrafts 2" },
-            { "10E12F25533C13F2", "Kirpi4" },
-            { "10621E029A675705", "AA_Mike" },
-            { "F8FF7B812B0B2F72", "Foggy" },
-            { "1E8298E1E1F40CB2", "Faaduu" },
-            { "289C8FAD58A09D6D", "Pixel" },
-            { "172E4982BEE4A8AD", "H4KPY" },
-            { "A339740A8ED97FC2", "Coffeeperson" },
-            { "502575B001FE6FCD", "Mikeyourman" },
-            { "7DC729B66A15F9DE", "TrumpGT" }
-        };
-
-        private static readonly Dictionary<VRRig, GameObject> verifiedNameTags = new Dictionary<VRRig, GameObject>();
         public static void VerifiedTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = verifiedNameTags.ToList();
@@ -2761,8 +2962,6 @@ namespace Qubit.Modules.Categories
 
             verifiedNameTags.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> crashedNameTags = new Dictionary<VRRig, GameObject>();
         public static void CrashedTags()
         {
             List<KeyValuePair<VRRig, GameObject>> crashedNameTagsCopy = crashedNameTags.ToList();
@@ -2853,10 +3052,6 @@ namespace Qubit.Modules.Categories
 
             crashedNameTags.Clear();
         }
-
-
-        private static readonly Dictionary<VRRig, GameObject> compactNameTags = new Dictionary<VRRig, GameObject>();
-        private static readonly Dictionary<VRRig, GameObject> compactTagBackgrounds = new Dictionary<VRRig, GameObject>();
 
         public static string GetPrettyPlatform(VRRig vrrig)
         {
@@ -3064,9 +3259,6 @@ namespace Qubit.Modules.Categories
             compactTagBackgrounds.Clear();
         }
 
-        private static readonly Dictionary<VRRig, GameObject> minecraftNameTags = new Dictionary<VRRig, GameObject>();
-        private static readonly Dictionary<VRRig, GameObject> minecraftTagBackgrounds = new Dictionary<VRRig, GameObject>();
-
         public static void MinecraftTags()
         {
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
@@ -3157,8 +3349,6 @@ namespace Qubit.Modules.Categories
             minecraftTagBackgrounds.Clear();
         }
 
-        private static readonly Dictionary<VRRig, GameObject> castingNameTags = new Dictionary<VRRig, GameObject>();
-
         public static void CastingTags()
         {
             bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
@@ -3235,33 +3425,6 @@ namespace Qubit.Modules.Categories
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => vrrig.mainSkin.sharedMaterial.name.Contains("gorilla_body") && vrrig.mainSkin.sharedMaterial.shader == Shader.Find("GorillaTag/UberShader")))
                 vrrig.mainSkin.material.color = vrrig.playerColor;
         }
-
-        public static string _leavesName;
-
-        public static string LeavesName
-        {
-            get
-            {
-                if (_leavesName == null)
-                {
-                    var forest = GetObject("Environment Objects/LocalObjects_Prefab/Forest");
-
-                    _leavesName = forest
-                        .GetComponentsInChildren<Transform>(true)
-                        .Where(t =>
-                            t.name.StartsWith("UnityTempFile") &&
-                            t.parent != null &&
-                            t.parent == forest.transform)
-                        .GroupBy(t => t.name)
-                        .Where(g => g.Count() == 3)
-                        .OrderByDescending(g => g.First().GetSiblingIndex())
-                        .FirstOrDefault()?.Key ?? "UnityTempFile";
-                }
-                return _leavesName;
-            }
-        }
-
-        public static readonly List<GameObject> leaves = new List<GameObject>();
         public static void EnableRemoveLeaves()
         {
             GameObject Forest = GetObject("Environment Objects/LocalObjects_Prefab/Forest");
@@ -3339,8 +3502,6 @@ namespace Qubit.Modules.Categories
 
             leaves.Clear();
         }
-
-        public static readonly List<GameObject> cosmetics = new List<GameObject>();
         public static void DisableCosmetics()
         {
             try
@@ -3366,8 +3527,6 @@ namespace Qubit.Modules.Categories
 
             cosmetics.Clear();
         }
-
-        public static readonly List<Renderer> disabledRenderers = new List<Renderer>();
         public static void Xray()
         {
             if (rightTrigger > 0.5f)
@@ -3410,8 +3569,6 @@ namespace Qubit.Modules.Categories
                 vrrig.lerpValueFingers = References.LocalRig.lerpValueFingers;
             }
         }
-
-        public static readonly Dictionary<VRRig, Coroutine> rigLerpCoroutines = new Dictionary<VRRig, Coroutine>();
         public static IEnumerator LerpRig(VRRig rig)
         {
             Quaternion headStartRot = rig.head.rigTarget.localRotation;
@@ -3456,10 +3613,6 @@ namespace Qubit.Modules.Categories
 
             rigLerpCoroutines[rig] = Coroutines.instance.StartCoroutine(LerpRig(rig));
         }
-
-        private static readonly Dictionary<VRRig, GameObject> cosmeticIndicators = new Dictionary<VRRig, GameObject>();
-        private static readonly Dictionary<string, Texture2D> cosmeticTextures = new Dictionary<string, Texture2D>();
-        private static Material cosmeticMat;
         public static void CosmeticIndicators()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = cosmeticIndicators.ToList();
@@ -3532,9 +3685,6 @@ namespace Qubit.Modules.Categories
             cosmeticIndicators.Clear();
         }
 
-        private static Material platformMat;
-        private static Material platformEspMat;
-
         private static Texture2D GetPlatformTexture(VRRig rig)
         {
             return rig.GetPlatform() switch
@@ -3546,8 +3696,6 @@ namespace Qubit.Modules.Categories
                 _ => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/unknown.png", "Images/Mods/Visuals/unknown.png"),
             };
         }
-
-        private static readonly Dictionary<VRRig, GameObject> platformIndicators = new Dictionary<VRRig, GameObject>();
 
         public static void PlatformIndicators()
         {
@@ -3631,12 +3779,6 @@ namespace Qubit.Modules.Categories
 
             platformIndicators.Clear();
         }
-
-        private static Material voiceMat;
-        private static Material voiceEspMat;
-        private static Texture2D voiceTxt;
-
-        private static readonly Dictionary<VRRig, GameObject> voiceIndicators = new Dictionary<VRRig, GameObject>();
         public static void VoiceIndicators()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = voiceIndicators.ToList();
@@ -3757,10 +3899,6 @@ namespace Qubit.Modules.Categories
 
             voiceIndicators.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> gripIndicators = new Dictionary<VRRig, GameObject>();
-        private static Material gripEspMat;
-        private static Texture2D gripTxt;
         public static void GripESP()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = gripIndicators.ToList();
@@ -3825,9 +3963,6 @@ namespace Qubit.Modules.Categories
             gripIndicators.Clear();
         }
 
-        private static GameObject l;
-        private static GameObject r;
-
         private static void UpdateLimbColor()
         {
             Color color = References.LocalRig.GetColor();
@@ -3868,11 +4003,6 @@ namespace Qubit.Modules.Categories
             References.LocalRig.mainSkin.material.shader = Shader.Find("GorillaTag/UberShader");
             References.LocalRig.mainSkin.material.color = new Color(References.LocalRig.mainSkin.sharedMaterial.color.r, References.LocalRig.mainSkin.sharedMaterial.color.g, References.LocalRig.mainSkin.sharedMaterial.color.b, 1f);
         }
-
-        private static readonly Dictionary<VRRig, List<LineRenderer>> boneESP = new Dictionary<VRRig, List<LineRenderer>>();
-        public static readonly int[] bones = {
-            4, 3, 5, 4, 19, 18, 20, 19, 3, 18, 21, 20, 22, 21, 25, 21, 29, 21, 31, 29, 27, 25, 24, 22, 6, 5, 7, 6, 10, 6, 14, 6, 16, 14, 12, 10, 9, 7
-        };
 
         public static void CasualBoneESP()
         {
@@ -4063,7 +4193,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntBoneESP()
         {
-            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -4243,7 +4373,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntSkeletonESP()
         {
-            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -4289,8 +4419,6 @@ namespace Qubit.Modules.Categories
                     vrrig.skeleton.renderer.material.color = vrrig.playerColor;
             }
         }
-
-        private static readonly Dictionary<VRRig, SkinnedWireframeRenderer> wireframes = new Dictionary<VRRig, SkinnedWireframeRenderer>();
         public static void CasualWireframeESP()
         {
             List<VRRig> toRemove = new List<VRRig>();
@@ -4420,7 +4548,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntWireframeESP()
         {
-            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             List<VRRig> toRemove = new List<VRRig>();
@@ -4500,100 +4628,6 @@ namespace Qubit.Modules.Categories
 
             wireframes.Clear();
         }
-
-        public class SkinnedWireframeRenderer : MonoBehaviour
-        {
-            public SkinnedMeshRenderer skinnedMeshRenderer;
-            public Mesh lineMesh;
-            public MeshFilter meshFilter;
-            public MeshRenderer meshRenderer;
-            public GameObject wireframeObj;
-            public Color Color
-            {
-                get => meshRenderer.sharedMaterial.color;
-                set => meshRenderer.material.color = value;
-            }
-
-            void Awake()
-            {
-                skinnedMeshRenderer = GetComponent<SkinnedMeshRenderer>();
-
-                wireframeObj = new GameObject("Wireframe");
-                wireframeObj.transform.SetParent(transform, false);
-
-                meshFilter = wireframeObj.AddComponent<MeshFilter>();
-                meshRenderer = wireframeObj.AddComponent<MeshRenderer>();
-                meshRenderer.material = new Material(Shader.Find("GUI/Text Shader"))
-                {
-                    color = Color.green
-                };
-
-                lineMesh = new Mesh();
-                meshFilter.mesh = lineMesh;
-            }
-
-            void Update()
-            {
-                if (Time.frameCount % 3 > 0)
-                    return;
-
-                Mesh bakedMesh = new Mesh();
-                skinnedMeshRenderer.BakeMesh(bakedMesh);
-
-                Vector3[] vertices = bakedMesh.vertices;
-                int[] triangles = bakedMesh.triangles;
-
-                List<Vector3> lineVertices = new List<Vector3>();
-                List<int> lineIndices = new List<int>();
-
-                for (int i = 0; i < triangles.Length; i += 3)
-                {
-                    int i0 = triangles[i];
-                    int i1 = triangles[i + 1];
-                    int i2 = triangles[i + 2];
-
-                    lineVertices.Add(vertices[i0]);
-                    lineVertices.Add(vertices[i1]);
-
-                    lineVertices.Add(vertices[i1]);
-                    lineVertices.Add(vertices[i2]);
-
-                    lineVertices.Add(vertices[i2]);
-                    lineVertices.Add(vertices[i0]);
-
-                    int baseIndex = lineVertices.Count - 6;
-                    for (int j = 0; j < 6; j++)
-                        lineIndices.Add(baseIndex + j);
-                }
-
-                lineMesh.Clear();
-                lineMesh.SetVertices(lineVertices);
-                lineMesh.SetIndices(lineIndices.ToArray(), MeshTopology.Lines, 0);
-            }
-
-            void OnDestroy()
-            {
-                if (lineMesh != null)
-                {
-                    Destroy(lineMesh);
-                    lineMesh = null;
-                }
-
-                if (wireframeObj != null)
-                {
-                    Destroy(wireframeObj);
-                    wireframeObj = null;
-                }
-
-                if (meshRenderer != null && meshRenderer.material != null)
-                {
-                    Destroy(meshRenderer.material);
-                    meshRenderer.material = null;
-                }
-            }
-        }
-
-        public static readonly List<VRRig> convertedRigs = new List<VRRig>();
         public static void FixRigMaterialESPColors(VRRig rig)
         {
             if (!convertedRigs.Contains(rig))
@@ -4604,10 +4638,6 @@ namespace Qubit.Modules.Categories
                 rig.mainSkin.sharedMesh.colors = Enumerable.Repeat(Color.white, rig.mainSkin.sharedMesh.colors.Length).ToArray();
             }
         }
-
-        public static Shader uberChams;
-
-        private static readonly Dictionary<Renderer, Material[]> originalMaterials = new Dictionary<Renderer, Material[]>();
 
         public static void Chams()
         {
@@ -4806,7 +4836,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntChams()
         {
-            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -4851,8 +4881,6 @@ namespace Qubit.Modules.Categories
                     vrrig.mainSkin.material.color = vrrig.playerColor;
             }
         }
-
-        private static readonly Dictionary<VRRig, GameObject> boxESP = new Dictionary<VRRig, GameObject>();
         public static void CasualBoxESP()
         {
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -4949,7 +4977,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntBoxESP()
         {
-            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5009,8 +5037,6 @@ namespace Qubit.Modules.Categories
 
             boxESP.Clear();
         }
-
-        private static readonly Dictionary<VRRig, GameObject> hollowBoxESP = new Dictionary<VRRig, GameObject>();
         public static void CasualHollowBoxESP()
         {
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5179,7 +5205,7 @@ namespace Qubit.Modules.Categories
 
         public static void HollowHuntBoxESP()
         {
-            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5274,8 +5300,6 @@ namespace Qubit.Modules.Categories
 
             hollowBoxESP.Clear();
         }
-
-        private static readonly Dictionary<VRRig, TrailRenderer> breadcrumbs = new Dictionary<VRRig, TrailRenderer>();
         public static void CasualBreadcrumbs()
         {
             List<VRRig> toRemove = new List<VRRig>();
@@ -5395,7 +5419,7 @@ namespace Qubit.Modules.Categories
 
         public static void HuntBreadcrumbs()
         {
-            if (!Networking.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (!Networking.InRoom || ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             List<VRRig> toRemove = new List<VRRig>();
@@ -5487,9 +5511,6 @@ namespace Qubit.Modules.Categories
 
             return false;
         }
-
-        static GameObject LeftSphere;
-        static GameObject RightSphere;
         public static void ShowButtonColliders()
         {
             if (LeftSphere == null || RightSphere == null)
@@ -5534,7 +5555,7 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom) return;
             try
             {
-                switch (GorillaGameManager.instance.GameType())
+                switch (ManagerRegistry.GorillaGameManager.GameType())
                 {
                     case GameModeType.Infection:
                     case GameModeType.InfectionCompetitive:
@@ -5561,7 +5582,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5599,7 +5620,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5642,7 +5663,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
@@ -5693,10 +5714,10 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
-            if (GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -5752,7 +5773,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5792,7 +5813,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5851,10 +5872,10 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
-            if (GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -5920,7 +5941,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -5969,7 +5990,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -6040,10 +6061,10 @@ namespace Qubit.Modules.Categories
 
             // Sanity checks, dont remove these
 
-            if (GorillaGameManager.instance == null)
+            if (ManagerRegistry.GorillaGameManager == null)
                 return;
 
-            if (GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
+            if (ManagerRegistry.GorillaGameManager.GameType() != GameModeType.HuntDown)
                 return;
 
             GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
@@ -6127,14 +6148,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        // Cache backend
-
-        private static readonly List<TextMeshPro> nameTagPool = new List<TextMeshPro>();
-
-        private static GameObject nameTagHolder;
-
-        public static bool isNameTagQueued;
-
         private static TextMeshPro GetNameTag(bool hideOnCamera)
         {
             if (nameTagHolder == null)
@@ -6215,13 +6228,6 @@ namespace Qubit.Modules.Categories
             isNameTagQueued = false;
         }
 
-
-        private static readonly List<LineRenderer> linePool = new List<LineRenderer>();
-
-        private static GameObject lineRenderHolder;
-
-        public static bool isLineRenderQueued = false;
-
         public static LineRenderer GetLineRender()
         {
             bool hideOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
@@ -6287,7 +6293,7 @@ namespace Qubit.Modules.Categories
 
             Color userColor = Color.red;
 
-            Notifications.SendNotification("<color=grey>[</color><color=purple>ADMIN</color><color=grey>]</color> " + sender.NickName + " is using " + menuName + " version " + version + ".", 3000);
+            Notifications.SendFormat("purple", "ADMIN", "" + sender.NickName + " is using " + menuName + " version " + version + ".", 3000);
             References.LocalRig.PlayHandTapLocal(29, false, 99999f);
             References.LocalRig.PlayHandTapLocal(29, true, 99999f);
             GameObject line = new GameObject("Line");
@@ -6356,5 +6362,6 @@ namespace Qubit.Modules.Categories
             for (int i = 0; i < 2; i++)
                 InstantiateWatch();
         }
+        #endregion
     }
 }

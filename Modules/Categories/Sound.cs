@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Utilities;
 using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaLocomotion;
@@ -50,9 +51,44 @@ namespace Qubit.Modules.Categories
 {
     public static class Sound
     {
+        #region Types
+        private class SoundData
+        {
+            public Voices.Clip Clip;
+            public AudioClip AudioClip;
+        }
+        #endregion
+
+        #region Settings
         public static int BindMode;
         public static string Subdirectory = "";
 
+        public static bool AudioIsPlaying;
+        public static float RecoverTime = -1f;
+
+        public static GameObject soundboardAudioManager;
+
+        private static readonly Dictionary<string, SoundData> activeSounds = new Dictionary<string, SoundData>();
+
+        private static bool lastBindPressed;
+
+        public static readonly string[] BindModeNames = {
+            "None", "A", "B", "X", "Y", "Left Grip", "Right Grip",
+            "Left Trigger", "Right Trigger", "Left Joystick", "Right Joystick"
+        };
+
+        public static float sendEffectDelay;
+
+        private static float soundSpamDelay;
+
+        private static bool squeakToggle;
+
+        private static bool sirenToggle;
+
+        public static int soundId;
+        #endregion
+
+        #region Methods
         public static void LoadSoundboard(bool openCategory = true)
         {
             string key = Subdirectory ?? "";
@@ -116,7 +152,7 @@ namespace Qubit.Modules.Categories
                 });
 
             if (!RecorderPatch.enabled)
-                Notifications.SendNotification($"<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> You are using the legacy microphone system. Modern soundboard features will not be implemented.");
+                Notifications.SendFormat("red", "WARNING", $"You are using the legacy microphone system. Modern soundboard features will not be implemented.");
 
             foreach (string file in files)
             {
@@ -477,21 +513,8 @@ namespace Qubit.Modules.Categories
 
             Soundboard.CachedButtons.Remove(Subdirectory ?? "");
 
-            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully downloaded " + name + " to the soundboard.");
+            Notifications.SendFormat("green", "SUCCESS", "Successfully downloaded " + name + " to the soundboard.");
         }
-
-        public static bool AudioIsPlaying;
-        public static float RecoverTime = -1f;
-
-        public static GameObject soundboardAudioManager;
-
-        private class SoundData
-        {
-            public Voices.Clip Clip;
-            public AudioClip AudioClip;
-        }
-
-        private static readonly Dictionary<string, SoundData> activeSounds = new Dictionary<string, SoundData>();
 
         public static void PlaySoundboardSound(object file, string hash, bool loopAudio, bool bind)
         {
@@ -594,14 +617,14 @@ namespace Qubit.Modules.Categories
                     }
                     Voices.Get().StopAudioClips();
 
-                    References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
+                    ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
                 }
                 else
                 {
-                    References.Network.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
-                    References.Network.VoiceConnection.PrimaryRecorder.AudioClip = null;
-                    References.Network.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-                    References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
+                    ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
+                    ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.AudioClip = null;
+                    ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+                    ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
                 }
             }
 
@@ -636,13 +659,11 @@ namespace Qubit.Modules.Categories
             {
 
             }
-            References.Network.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
-            References.Network.VoiceConnection.PrimaryRecorder.AudioClip = null;
-            References.Network.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-            References.Network.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.AudioClip = null;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
         }
-
-        private static bool lastBindPressed;
         public static void PrepareBindAudio(string file)
         {
             bool[] bindings = {
@@ -661,7 +682,7 @@ namespace Qubit.Modules.Categories
             bool bindPressed = bindings[BindMode - 1];
             if (bindPressed && !lastBindPressed)
             {
-                if (References.Network.VoiceConnection.PrimaryRecorder.SourceType == Recorder.InputSourceType.AudioClip)
+                if (ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.SourceType == Recorder.InputSourceType.AudioClip)
                     FixMicrophone();
                 else
                     Fun.PlayAudio(file);
@@ -672,20 +693,13 @@ namespace Qubit.Modules.Categories
         public static void OpenSoundFolder()
         {
             string filePath = GetGamePath() + $"/{PluginInfo.BaseDirectory}/Sounds";
-            Process.Start(filePath);
+            Files.Start(filePath);
         }
-
-        public static readonly string[] BindModeNames = {
-            "None", "A", "B", "X", "Y", "Left Grip", "Right Grip",
-            "Left Trigger", "Right Trigger", "Left Joystick", "Right Joystick"
-        };
         public static void ApplySoundBindings(int index) => BindMode = index;
-
-        public static float sendEffectDelay;
         public static void BetaPlayTag(int id, float volume)
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 if (Time.time > sendEffectDelay)
@@ -704,8 +718,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        private static float soundSpamDelay;
         public static void SoundSpam(int soundId, bool constant = false)
         {
             if (rightGrab || constant)
@@ -739,8 +751,6 @@ namespace Qubit.Modules.Categories
             };
             SoundSpam(sounds[Random.Range(0, 1)]);
         }
-
-        private static bool squeakToggle;
         public static void SqueakSoundSpam()
         {
             if (Time.time > soundSpamDelay)
@@ -748,8 +758,6 @@ namespace Qubit.Modules.Categories
 
             SoundSpam(squeakToggle ? 75 : 76);
         }
-
-        private static bool sirenToggle;
         public static void SirenSoundSpam()
         {
             if (Time.time > soundSpamDelay)
@@ -757,8 +765,6 @@ namespace Qubit.Modules.Categories
 
             SoundSpam(sirenToggle ? 48 : 50);
         }
-
-        public static int soundId;
 
         public static void CustomSoundSpam() => SoundSpam(soundId);
 
@@ -774,5 +780,6 @@ namespace Qubit.Modules.Categories
                 $"Error with Sound.LoadSoundboard() at {exc.StackTrace}: {exc.Message}");
             }
         }
+        #endregion
     }
 }

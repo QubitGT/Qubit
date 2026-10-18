@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Libraries.Networking;
 using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
@@ -69,21 +70,504 @@ using static Qubit.Utilities.Assets;
 using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules.Categories
 {
     public static class Movement
     {
+        #region Types
+        public struct PlayerPosition
+        {
+            public Vector3 position;
+            public Vector3 velocity;
+
+            public (Vector3 position, Quaternion rotation) leftHand;
+            public (Vector3 position, Quaternion rotation) rightHand;
+
+            public bool leftGrip;
+            public bool rightGrip;
+
+            public bool leftTrigger;
+            public bool rightTrigger;
+
+            public readonly void MoveTo()
+            {
+                TeleportPlayer(position);
+                References.Rigidbody.linearVelocity = velocity;
+
+                References.LeftHand.position = leftHand.position;
+                References.LeftHand.rotation = leftHand.rotation;
+
+                References.RightHand.position = rightHand.position;
+                References.RightHand.rotation = rightHand.rotation;
+
+                References.InputPoller.leftControllerGripFloat = leftGrip ? 1f : 0f;
+                References.InputPoller.rightControllerGripFloat = rightGrip ? 1f : 0f;
+
+                References.InputPoller.leftControllerIndexFloat = leftTrigger ? 1f : 0f;
+                References.InputPoller.rightControllerIndexFloat = rightTrigger ? 1f : 0f;
+            }
+
+            public static PlayerPosition CurrentPosition() =>
+                new PlayerPosition
+                {
+                    position = References.BodyCollider.transform.position,
+                    velocity = References.Rigidbody.linearVelocity,
+
+                    leftHand = (References.LeftHand.position, References.LeftHand.rotation),
+                    rightHand = (References.RightHand.position, References.RightHand.rotation),
+
+                    leftGrip = leftGrab,
+                    rightGrip = rightGrab,
+
+                    leftTrigger = false, // ControllerInput.leftTrigger > 0.5f, Disable due to being macro button
+                    rightTrigger = Controllers.rightTrigger > 0.5f
+                };
+
+            public readonly JObject ToJObject() => new JObject
+            {
+                ["position"] = Vec3ToJObject(position),
+                ["velocity"] = Vec3ToJObject(velocity),
+
+                ["leftHand"] = new JObject
+                {
+                    ["position"] = Vec3ToJObject(leftHand.position),
+                    ["rotation"] = QuatToJObject(leftHand.rotation)
+                },
+                ["rightHand"] = new JObject
+                {
+                    ["position"] = Vec3ToJObject(rightHand.position),
+                    ["rotation"] = QuatToJObject(rightHand.rotation)
+                },
+                ["leftGrip"] = leftGrip,
+                ["rightGrip"] = rightGrip,
+                ["leftTrigger"] = leftTrigger,
+                ["rightTrigger"] = rightTrigger
+            };
+
+            public static PlayerPosition FromJObject(JObject obj)
+            {
+                var position = new PlayerPosition
+                {
+                    position = JObjectToVec3((JObject)obj["position"]),
+                    velocity = JObjectToVec3((JObject)obj["velocity"]),
+
+                    leftHand = (
+                        JObjectToVec3((JObject)obj["leftHand"]["position"]),
+                        JObjectToQuat((JObject)obj["leftHand"]["rotation"])
+                    ),
+                    rightHand = (
+                        JObjectToVec3((JObject)obj["rightHand"]["position"]),
+                        JObjectToQuat((JObject)obj["rightHand"]["rotation"])
+                    )
+                };
+
+                if (obj["leftGrip"] != null)
+                    position.leftGrip = (bool)obj["leftGrip"];
+
+                if (obj["rightGrip"] != null)
+                    position.rightGrip = (bool)obj["rightGrip"];
+
+                if (obj["leftTrigger"] != null)
+                    position.leftTrigger = (bool)obj["leftTrigger"];
+
+                if (obj["rightTrigger"] != null)
+                    position.rightTrigger = (bool)obj["rightTrigger"];
+
+                return position;
+            }
+
+            private static JObject Vec3ToJObject(Vector3 v) =>
+                new JObject { ["x"] = v.x, ["y"] = v.y, ["z"] = v.z };
+
+            private static Vector3 JObjectToVec3(JObject obj) =>
+                new Vector3((float)obj["x"], (float)obj["y"], (float)obj["z"]);
+
+            private static JObject QuatToJObject(Quaternion q) =>
+                new JObject { ["x"] = q.x, ["y"] = q.y, ["z"] = q.z, ["w"] = q.w };
+
+            private static Quaternion JObjectToQuat(JObject obj) =>
+                new Quaternion((float)obj["x"], (float)obj["y"], (float)obj["z"], (float)obj["w"]);
+        }
+
+        public class Macro
+        {
+            public List<PlayerPosition> positions;
+            public float macroStepDuration;
+            public string name;
+            public bool enabled;
+
+            public string DumpJSON()
+            {
+                var obj = new JObject
+                {
+                    ["name"] = name,
+                    ["enabled"] = enabled,
+                    ["positions"] = new JArray(positions.ConvertAll(p => p.ToJObject())),
+                    ["step-time"] = macroStepDuration
+                };
+                return obj.ToString();
+            }
+
+            public static Macro LoadJSON(string json)
+            {
+                var obj = JObject.Parse(json);
+
+                var macro = new Macro
+                {
+                    name = (string)obj["name"],
+                    enabled = (bool)obj["enabled"],
+                    positions = new List<PlayerPosition>()
+                };
+
+                foreach (var token in (JArray)obj["positions"])
+                    macro.positions.Add(PlayerPosition.FromJObject((JObject)token));
+
+                macro.macroStepDuration = obj.TryGetValue("step-time", out JToken stepTimeToken) ? (float)stepTimeToken : 0.1f;
+
+                return macro;
+            }
+        }
+        #endregion
+
+        #region Settings
         public static int platformMode;
         public static readonly string[] PlatformTypeNames = {
             "Normal", "Invisible", "Rainbow", "Random Color", "Noclip", "Glass", "Projectile"
         };
-        public static void ApplyPlatformType(int index) => platformMode = index;
 
         public static int platformShape;
         public static readonly string[] PlatformShapeNames = {
             "Sphere", "Cube", "Cylinder", "Legacy", "Small", "Long", "1x1", "Massive"
         };
+
+        public static int flySpeedCycle = 1;
+        public static float _flySpeed = 10f;
+
+        public static float FlySpeed
+        {
+            get => _flySpeed * (scaleWithPlayer ? References.Player.scale : 1f);
+            set => _flySpeed = value;
+        }
+
+        public static int speedboostCycle = 1;
+        public static float jspeed = 7.5f;
+        public static float jmulti = 1.1f;
+
+        public static int longarmCycle = 2;
+        public static float armlength = 1.25f;
+
+        public static GameObject leftplat;
+        public static GameObject rightplat;
+
+        private static readonly Dictionary<bool, List<GameObject>> frozonicPlatforms = new Dictionary<bool, List<GameObject>>();
+        private static readonly Dictionary<bool, int> platformIndex = new Dictionary<bool, int>();
+
+        public static readonly float[] SpeedBoostAmounts = { 2f, 7.5f, 8f, 9f, 200f };
+        public static readonly float[] SpeedBoostMultipliers = { 0.5f, 1.1f, 1.5f, 2f, 10f };
+        public static readonly string[] SpeedBoostNames = { "Slow", "Normal", "Middle", "Fast", "Ultra Fast" };
+
+        public static readonly float[] FlySpeedAmounts = { 5f, 10f, 30f, 60f, 0.5f };
+        public static readonly string[] FlySpeedNames = { "Slow", "Normal", "Fast", "Extra Fast", "Extra Slow" };
+
+        public static int playspaceAbuseIndex;
+        public static readonly float[] PlayspaceAbuseAmounts = { 0.004f, 0.01f, 0.1f, 0.001f, 0.002f };
+        public static readonly string[] PlayspaceAbuseNames = { "Normal", "Fast", "Extra Fast", "Extra Slow", "Slow" };
+
+        public static readonly float[] ArmLengthAmounts = { 0.75f, 1.1f, 1.25f, 1.5f, 2f };
+        public static readonly string[] ArmLengthNames = { "Shorter", "Unnoticable", "Normal", "Long", "Extreme" };
+
+        public static bool noclip;
+
+        public static float startX = -1f;
+        public static float startY = -1f;
+
+        public static float subThingy;
+        public static float subThingyZ;
+
+        public static Vector3 lastPosition = Vector3.zero;
+
+
+        private static float driveSpeed;
+        public static int driveInt;
+        public static readonly float[] DriveSpeedAmounts = { 10f, 30f, 50f, 100f, 3f };
+        public static readonly string[] DriveSpeedNames = { "Normal", "Fast", "Ultra Fast", "The Flash", "Slow" };
+
+        public static int fastRopesInt;
+        public static readonly float[] FastRopesSpeedAmounts = { 5f, 10f, 30f };
+        public static readonly string[] FastRopesSpeedNames = { "Normal", "Fast", "Ultra Fast" };
+
+
+
+        public static Vector2 driveLerpDirection = Vector2.zero;
+
+        private static bool previousDash;
+
+        private static readonly float revCooldown = 0.5f;
+        private static float nextrevTime = 0f;
+
+        private static float flapTime;
+
+
+        private static float loaoalsode;
+
+        public static Vector3 rightgrapplePoint;
+        public static Vector3 leftgrapplePoint;
+        public static SpringJoint rightjoint;
+        public static SpringJoint leftjoint;
+        public static bool isLeftGrappling;
+        public static bool isRightGrappling;
+
+        // We present to you: *misery*
+        // -- iiDk & kingofnetflix
+
+        // TODO: Add parallax to cameras to simulate 3D views
+        // TODO: Calculate proper velocity, rotation, and position when going through portals instead of cheating and just giving some basic stuff
+
+        public static GameObject portalGun;
+        public static GameObject bluePortal;
+        public static GameObject orangePortal;
+        public static GameObject crosshair;
+
+        public static bool playedOpen;
+        public static bool flipped;
+        public static bool inPortal;
+
+        public static float portalDelay;
+        public static float flipDelay;
+
+        private static List<Vector3> posArchive;
+
+        public static Vector3 leftPos = Vector3.zero;
+        public static Vector3 rightPos = Vector3.zero;
+        public static bool lastOnBranch;
+
+        private static readonly List<object[]> playerPositions = new List<object[]>();
+
+        public static float macroPlaybackRange = 1f;
+        public static int macroPlaybackRangeIndex = 1;
+        public static readonly float[] MacroPlaybackRangeAmounts = { 0.5f, 1f, 2f, 3f, 0.25f };
+        public static readonly string[] MacroPlaybackRangeNames = { "Small", "Normal", "Large", "Extra Large", "Extra Small" };
+
+        public static Dictionary<string, Macro> macros = new Dictionary<string, Macro>();
+
+        public static bool recordingMacro;
+        public static float positionDelay;
+        public const float defaultMacroStep = 0.05f;
+        public static List<PlayerPosition> recordingData = new List<PlayerPosition>();
+
+        public static Coroutine activeMacro;
+
+        public static bool frameStepper;
+        public static bool midpointMacros;
+        public static bool didMacro;
+        public static bool directionBased;
+
+        private static bool frameCompleted;
+        private static bool frameStepperNotified;
+
+        private static Vector3 walkPos;
+        private static Vector3 walkNormal;
+
+        public static int wallWalkStrengthIndex = 2;
+        private static float wallWalkStrength = 9.81f;
+
+        public static bool leftWallWalk;
+        public static bool bothWallWalk;
+
+        public static readonly float[] WallWalkStrengthAmounts = { 2f, 5f, 9.81f, 15f, 50f };
+        public static readonly string[] WallWalkStrengthNames = { "Very Weak", "Weak", "Normal", "Strong", "Very Strong" };
+
+
+        static Quaternion spiderRot;
+        static Quaternion tappedRot;
+
+        private static int rememberPageNumber;
+        public static readonly Dictionary<string, GTZone> mapData = new Dictionary<string, GTZone>()
+        {
+            { "Forest", GTZone.forest },
+            { "Ranked Forest", GTZone.ranked },
+            { "City", GTZone.city },
+            { "Canyons", GTZone.canyon },
+            { "Clouds", GTZone.skyJungle },
+            { "Caves", GTZone.cave },
+            { "Beach", GTZone.beach },
+            { "Mountains", GTZone.mountain },
+            { "Basement", GTZone.basement },
+            { "Metropolis", GTZone.Metropolis },
+            { "Arcade", GTZone.arcade },
+            { "Critters", GTZone.critters },
+            { "Skate Park", GTZone.hoverboard },
+            { "Monke Blocks", GTZone.monkeBlocks },
+            { "Ghost Reactor", GTZone.ghostReactor },
+            { "Rotating", GTZone.rotating },
+            { "Bayou", GTZone.bayou },
+            { "Virtual Stump", GTZone.customMaps },
+            { "GTFC", GTZone.GTFC },
+            { "Lava Forest", GTZone.VIMExperience1 },
+            { "Space Map", GTZone.spaceMap },
+        };
+
+        public static bool previousTeleportTrigger;
+
+        public static GameObject CheckPoint;
+
+        public static int selectedCheckpoint = -1;
+        public static float selectedCheckpointDelay;
+        public static readonly List<GameObject> checkpoints = new List<GameObject>();
+
+        public static GameObject BombObject;
+
+        private static GameObject pearl;
+        private static Texture2D pearltxt;
+        private static Material pearlmat;
+        private static bool isrighthandedpearl;
+
+        public static Playspace playspace;
+
+        public static readonly List<GameObject> forestColliders = new List<GameObject>();
+
+        public static bool wasDisabledAlready;
+        public static bool invisMonke;
+
+        public static bool lastHit;
+        public static bool lastHit2;
+
+        private static bool ghostMonke;
+
+        public static Vector3 offsetLH = Vector3.zero;
+        public static Vector3 offsetRH = Vector3.zero;
+        public static Vector3 offsetH = Vector3.zero;
+
+        public static Vector3? startPosition;
+
+        public static GameObject recBodyRotary;
+
+        public static Vector3 stillBeybladeStartPos = Vector3.zero;
+
+        private static Vector3 headPos = Vector3.zero;
+        private static Vector3 headRot = Vector3.zero;
+
+        private static Vector3 handPos_L = Vector3.zero;
+        private static Vector3 handRot_L = Vector3.zero;
+
+        private static Vector3 handPos_R = Vector3.zero;
+        private static Vector3 handRot_R = Vector3.zero;
+
+        private static bool hasAdded;
+
+        public static float beesDelay;
+
+        public static float sizeScale = 1f;
+
+        private static Quaternion? vrrigJoystickRot;
+
+
+        private static Quaternion? bodyJoystickRot;
+
+        static bool flipping;
+        static float flipStart;
+        static Quaternion flipFrom;
+        static Vector3 flipAxis;
+        const float flipDuration = 1f;
+
+        private static readonly Dictionary<GorillaSurfaceOverride, float> velocityArchive = new Dictionary<GorillaSurfaceOverride, float>();
+
+        public static GameObject stickpart;
+
+        private static bool leftisclimbing;
+        private static bool rightisclimbing;
+        private static GameObject climb;
+
+        public static float oldSlide;
+
+        public static readonly Vector3[] lastLeft = { Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
+        public static readonly Vector3[] lastRight = { Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
+
+        private static VRRig sithlord;
+        private static bool sithright;
+        private static float sithdist = 1f;
+
+        public static readonly Dictionary<VRRig, List<GameObject>> RigColliders = new Dictionary<VRRig, List<GameObject>>();
+
+        public static int pullPowerInt;
+        public static readonly float[] PullModPowers = { 0.05f, 0.1f, 0.2f, 0.4f };
+        public static readonly string[] PullModPowerNames = { "Normal", "Medium", "Strong", "Powerful" };
+
+        private static float pullPower = 0.05f;
+        private static readonly Dictionary<bool, bool> previousTouchingGround = new Dictionary<bool, bool>();
+
+        public static GameObject leftThrow;
+        public static GameObject rightThrow;
+
+        public static GameObject flickLeft;
+        public static GameObject flickRight;
+
+        private static Quaternion initialRotationLeft = Quaternion.identity;
+        private static Quaternion initialRotationRight = Quaternion.identity;
+
+        public static bool passWorldScaleCheck;
+        private static Vector3? lastFramePosition;
+        private static bool wasHandsNearHead;
+
+        public static float extendingTime;
+
+        public static GameObject lvT;
+        public static GameObject rvT;
+
+        public static float predCount = 0.0125f;
+        public static int predInt = 1;
+        public static readonly float[] PredictionAmounts = { 0.00625f, 0.0125f, 0.025f, 0.05f };
+        public static readonly string[] PredictionAmountNames = { "Low", "Normal", "High", "Extreme" };
+
+        public static int fakeLagDelayIndex = 10;
+        public static float fakeLagDelay = 1f;
+
+        public static bool isBlinking;
+
+        public static int timerPowerIndex = 15;
+
+        private static float timerPower = 1.5f;
+
+        public static Vector3? longJumpPower;
+        public static float? keepVelocityUntil;
+        public static Vector3? velocity;
+
+        public static float playspaceAbusePower = 0.004f;
+
+        private static float preBounciness;
+        private static PhysicsMaterialCombine whateverthisis = PhysicsMaterialCombine.Maximum;
+        private static float preFrictiness;
+
+        public static GameObject airSwimPart;
+
+        private static List<float> waterSurfaceJumpAmount;
+        private static List<float> waterSurfaceJumpMaxSpeed;
+
+        public static readonly Dictionary<VRRig, Vector3> followPositions = new Dictionary<VRRig, Vector3>();
+
+        public static int targetHz = 4000;
+
+        public static Dictionary<Guid, Voices.Clip> tinnitus = new Dictionary<Guid, Voices.Clip>();
+        public static float soundSpamDelay;
+
+        public static float headspazDelay;
+        public static bool headspazType;
+
+        private static Vector3 headoffs = Vector3.zero;
+
+        public static float laggyRigDelay;
+
+        public static bool wasRightPrimaryPressed;
+
+        public static int multiplicationAmount = 15;
+
+        public static Material glass;
+        #endregion
+
+        #region Methods
+        public static void ApplyPlatformType(int index) => platformMode = index;
         public static void ApplyPlatformShape(int index) => platformShape = index;
 
         public static PrimitiveType GetPlatformPrimitiveType()
@@ -178,27 +662,8 @@ namespace Qubit.Modules.Categories
             if (Manager.GetIndex("Non-Sticky Platforms").enabled)
                 platform.transform.position += right * ((left ? 1f : -1f) * ((0.025f + platform.transform.localScale.x / 2f) * (scaleWithPlayer ? References.Player.scale : 1f)));
 
-            //FriendManager.PlatformSpawned(true, platform.transform.position, platform.transform.rotation, platform.transform.localScale, GetPlatformPrimitiveType());
+            Friends.PlatformSpawned(true, platform.transform.position, platform.transform.rotation, platform.transform.localScale, GetPlatformPrimitiveType());
         }
-
-        public static int flySpeedCycle = 1;
-        public static float _flySpeed = 10f;
-
-        public static float FlySpeed
-        {
-            get => _flySpeed * (scaleWithPlayer ? References.Player.scale : 1f);
-            set => _flySpeed = value;
-        }
-
-        public static int speedboostCycle = 1;
-        public static float jspeed = 7.5f;
-        public static float jmulti = 1.1f;
-
-        public static int longarmCycle = 2;
-        public static float armlength = 1.25f;
-
-        public static GameObject leftplat;
-        public static GameObject rightplat;
         public static void ProcessPlatform(bool left, bool value)
         {
             GameObject platform = left ? leftplat : rightplat;
@@ -233,7 +698,7 @@ namespace Qubit.Modules.Categories
                         if (platformMode == 4 && rightplat == null)
                             UpdateClipColliders(true);
 
-                        //FriendManager.PlatformDespawned(true);
+                        Friends.PlatformDespawned(true);
                         break;
                     }
             }
@@ -247,9 +712,6 @@ namespace Qubit.Modules.Categories
             ProcessPlatform(true, left ?? leftGrab);
             ProcessPlatform(false, right ?? rightGrab);
         }
-
-        private static readonly Dictionary<bool, List<GameObject>> frozonicPlatforms = new Dictionary<bool, List<GameObject>>();
-        private static readonly Dictionary<bool, int> platformIndex = new Dictionary<bool, int>();
         public static void HandleFrozone(bool left)
         {
             bool grip = left ? leftGrab : rightGrab;
@@ -303,10 +765,6 @@ namespace Qubit.Modules.Categories
 
             References.BodyCollider.enabled = !(leftGrab || rightGrab);
         }
-
-        public static readonly float[] SpeedBoostAmounts = { 2f, 7.5f, 8f, 9f, 200f };
-        public static readonly float[] SpeedBoostMultipliers = { 0.5f, 1.1f, 1.5f, 2f, 10f };
-        public static readonly string[] SpeedBoostNames = { "Slow", "Normal", "Middle", "Fast", "Ultra Fast" };
         public static void ApplySpeedBoostAmount(int index) { jspeed = SpeedBoostAmounts[index]; jmulti = SpeedBoostMultipliers[index]; }
 
         public static void PlatformSpam()
@@ -340,18 +798,8 @@ namespace Qubit.Modules.Categories
                 PhotonNetwork.RaiseEvent(69, new object[] { platform.transform.position, platform.transform.rotation }, new RaiseEventOptions { Receivers = ReceiverGroup.Others }, SendOptions.SendReliable);
             });
         }
-
-        public static readonly float[] FlySpeedAmounts = { 5f, 10f, 30f, 60f, 0.5f };
-        public static readonly string[] FlySpeedNames = { "Slow", "Normal", "Fast", "Extra Fast", "Extra Slow" };
         public static void ApplyFlySpeed(int index) => FlySpeed = FlySpeedAmounts[index];
-
-        public static int playspaceAbuseIndex;
-        public static readonly float[] PlayspaceAbuseAmounts = { 0.004f, 0.01f, 0.1f, 0.001f, 0.002f };
-        public static readonly string[] PlayspaceAbuseNames = { "Normal", "Fast", "Extra Fast", "Extra Slow", "Slow" };
         public static void ApplyPlayspaceAbuseSpeed(int index) => playspaceAbusePower = PlayspaceAbuseAmounts[index];
-
-        public static readonly float[] ArmLengthAmounts = { 0.75f, 1.1f, 1.25f, 1.5f, 2f };
-        public static readonly string[] ArmLengthNames = { "Shorter", "Unnoticable", "Normal", "Long", "Extreme" };
         public static void ApplyArmLength(int index) => armlength = ArmLengthAmounts[index];
 
         public static void Fly()
@@ -371,8 +819,6 @@ namespace Qubit.Modules.Categories
                 References.Rigidbody.linearVelocity = Vector3.zero;
             }
         }
-
-        public static bool noclip;
         public static void NoclipFly()
         {
             if (rightPrimary)
@@ -459,14 +905,6 @@ namespace Qubit.Modules.Categories
                 References.Rigidbody.linearVelocity += References.Player.headCollider.transform.forward * (Time.deltaTime * FlySpeed);
             }
         }
-
-        public static float startX = -1f;
-        public static float startY = -1f;
-
-        public static float subThingy;
-        public static float subThingyZ;
-
-        public static Vector3 lastPosition = Vector3.zero;
         public static void EnableWASDFly()
         {
             lastPosition = References.Rigidbody.transform.position;
@@ -572,24 +1010,10 @@ namespace Qubit.Modules.Categories
             else
                 lastPosition = References.Rigidbody.transform.position;
         }
-
-
-        private static float driveSpeed;
-        public static int driveInt;
-        public static readonly float[] DriveSpeedAmounts = { 10f, 30f, 50f, 100f, 3f };
-        public static readonly string[] DriveSpeedNames = { "Normal", "Fast", "Ultra Fast", "The Flash", "Slow" };
         public static void ApplyDriveSpeed(int index) => driveSpeed = DriveSpeedAmounts[index];
-
-        public static int fastRopesInt;
-        public static readonly float[] FastRopesSpeedAmounts = { 5f, 10f, 30f };
-        public static readonly string[] FastRopesSpeedNames = { "Normal", "Fast", "Ultra Fast" };
         // Fixed: previously read speedamounts[driveInt]/speedNames[driveInt] here instead of
         // the fastRopesInt index it had just cycled - a pre-existing copy-paste bug.
         public static void ApplyFastRopesSpeed(int index) => RopePatch.amplifier = FastRopesSpeedAmounts[index];
-
-
-
-        public static Vector2 driveLerpDirection = Vector2.zero;
         public static void Drive()
         {
             Vector2 joy = leftJoystick;
@@ -622,8 +1046,6 @@ namespace Qubit.Modules.Categories
                 References.Rigidbody.linearVelocity = Vector3.zero;
             }
         }
-
-        private static bool previousDash;
         public static void Dash()
         {
             if (rightPrimary && !previousDash)
@@ -631,9 +1053,6 @@ namespace Qubit.Modules.Categories
 
             previousDash = rightPrimary;
         }
-
-        private static readonly float revCooldown = 0.5f;
-        private static float nextrevTime = 0f;
         public static void ReverseVelocity()
         {
             if (Time.time < nextrevTime)
@@ -646,8 +1065,6 @@ namespace Qubit.Modules.Categories
                 nextrevTime = Time.time + revCooldown;
             }
         }
-
-        private static float flapTime;
         public static void BirdFly()
         {
             if (Vector3.Distance(References.LeftHand.position, References.HeadCollider.transform.position) < 0.63f || Vector3.Distance(References.RightHand.position, References.HeadCollider.transform.position) < 0.63f)
@@ -697,9 +1114,6 @@ namespace Qubit.Modules.Categories
                 References.Tagger.StartVibration(false, hapticStrength, References.Tagger.tapHapticDuration);
             }
         }
-
-
-        private static float loaoalsode;
         private static BalloonHoldable GetTargetBalloon()
         {
             foreach (BalloonHoldable balloo in GetAllType<BalloonHoldable>())
@@ -709,18 +1123,11 @@ namespace Qubit.Modules.Categories
             }
             if (Time.time > loaoalsode)
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must equip a balloon.");
+                Notifications.SendFormat("red", "ERROR", "You must equip a balloon.");
                 loaoalsode = Time.time + 1f;
             }
             return null;
         }
-
-        public static Vector3 rightgrapplePoint;
-        public static Vector3 leftgrapplePoint;
-        public static SpringJoint rightjoint;
-        public static SpringJoint leftjoint;
-        public static bool isLeftGrappling;
-        public static bool isRightGrappling;
 
         public static void SpiderMan()
         {
@@ -1052,24 +1459,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        // We present to you: *misery*
-        // -- iiDk & kingofnetflix
-
-        // TODO: Add parallax to cameras to simulate 3D views
-        // TODO: Calculate proper velocity, rotation, and position when going through portals instead of cheating and just giving some basic stuff
-
-        public static GameObject portalGun;
-        public static GameObject bluePortal;
-        public static GameObject orangePortal;
-        public static GameObject crosshair;
-
-        public static bool playedOpen;
-        public static bool flipped;
-        public static bool inPortal;
-
-        public static float portalDelay;
-        public static float flipDelay;
 
         public static bool IsOverlapping(Collider collider, Vector3 center, float radius)
         {
@@ -1443,8 +1832,6 @@ namespace Qubit.Modules.Categories
                 References.RightHand.position = References.HeadCollider.transform.position + References.HeadCollider.transform.right * (0.4f + MathF.Cos(time) * 0.4f) + References.HeadCollider.transform.up * (MathF.Sin(time) * 0.6f) + References.HeadCollider.transform.forward * 0.75f;
             }
         }
-
-        private static List<Vector3> posArchive;
         public static Vector3[] GetAllTreeBranchPositions()
         {
             if (posArchive != null)
@@ -1493,10 +1880,6 @@ namespace Qubit.Modules.Categories
 
             return posArchive.ToArray();
         }
-
-        public static Vector3 leftPos = Vector3.zero;
-        public static Vector3 rightPos = Vector3.zero;
-        public static bool lastOnBranch;
         public static void AutoBranch()
         {
             bool isOnBranch = false;
@@ -1623,8 +2006,6 @@ namespace Qubit.Modules.Categories
             GTPlayerTransform.ApplyRotationOverride(Quaternion.identity, Time.frameCount);
 
         }
-
-        private static readonly List<object[]> playerPositions = new List<object[]>();
         public static void Rewind()
         {
             if (rightTrigger > 0.5f)
@@ -1666,165 +2047,7 @@ namespace Qubit.Modules.Categories
         }
 
         public static void ClearRewind() => playerPositions.Clear();
-
-        public static float macroPlaybackRange = 1f;
-        public static int macroPlaybackRangeIndex = 1;
-        public static readonly float[] MacroPlaybackRangeAmounts = { 0.5f, 1f, 2f, 3f, 0.25f };
-        public static readonly string[] MacroPlaybackRangeNames = { "Small", "Normal", "Large", "Extra Large", "Extra Small" };
         public static void ApplyMacroPlaybackRange(int index) => macroPlaybackRange = MacroPlaybackRangeAmounts[index];
-
-        public struct PlayerPosition
-        {
-            public Vector3 position;
-            public Vector3 velocity;
-
-            public (Vector3 position, Quaternion rotation) leftHand;
-            public (Vector3 position, Quaternion rotation) rightHand;
-
-            public bool leftGrip;
-            public bool rightGrip;
-
-            public bool leftTrigger;
-            public bool rightTrigger;
-
-            public readonly void MoveTo()
-            {
-                TeleportPlayer(position);
-                References.Rigidbody.linearVelocity = velocity;
-
-                References.LeftHand.position = leftHand.position;
-                References.LeftHand.rotation = leftHand.rotation;
-
-                References.RightHand.position = rightHand.position;
-                References.RightHand.rotation = rightHand.rotation;
-
-                References.InputPoller.leftControllerGripFloat = leftGrip ? 1f : 0f;
-                References.InputPoller.rightControllerGripFloat = rightGrip ? 1f : 0f;
-
-                References.InputPoller.leftControllerIndexFloat = leftTrigger ? 1f : 0f;
-                References.InputPoller.rightControllerIndexFloat = rightTrigger ? 1f : 0f;
-            }
-
-            public static PlayerPosition CurrentPosition() =>
-                new PlayerPosition
-                {
-                    position = References.BodyCollider.transform.position,
-                    velocity = References.Rigidbody.linearVelocity,
-
-                    leftHand = (References.LeftHand.position, References.LeftHand.rotation),
-                    rightHand = (References.RightHand.position, References.RightHand.rotation),
-
-                    leftGrip = leftGrab,
-                    rightGrip = rightGrab,
-
-                    leftTrigger = false, // ControllerInput.leftTrigger > 0.5f, Disable due to being macro button
-                    rightTrigger = Controllers.rightTrigger > 0.5f
-                };
-
-            public readonly JObject ToJObject() => new JObject
-            {
-                ["position"] = Vec3ToJObject(position),
-                ["velocity"] = Vec3ToJObject(velocity),
-
-                ["leftHand"] = new JObject
-                {
-                    ["position"] = Vec3ToJObject(leftHand.position),
-                    ["rotation"] = QuatToJObject(leftHand.rotation)
-                },
-                ["rightHand"] = new JObject
-                {
-                    ["position"] = Vec3ToJObject(rightHand.position),
-                    ["rotation"] = QuatToJObject(rightHand.rotation)
-                },
-                ["leftGrip"] = leftGrip,
-                ["rightGrip"] = rightGrip,
-                ["leftTrigger"] = leftTrigger,
-                ["rightTrigger"] = rightTrigger
-            };
-
-            public static PlayerPosition FromJObject(JObject obj)
-            {
-                var position = new PlayerPosition
-                {
-                    position = JObjectToVec3((JObject)obj["position"]),
-                    velocity = JObjectToVec3((JObject)obj["velocity"]),
-
-                    leftHand = (
-                        JObjectToVec3((JObject)obj["leftHand"]["position"]),
-                        JObjectToQuat((JObject)obj["leftHand"]["rotation"])
-                    ),
-                    rightHand = (
-                        JObjectToVec3((JObject)obj["rightHand"]["position"]),
-                        JObjectToQuat((JObject)obj["rightHand"]["rotation"])
-                    )
-                };
-
-                if (obj["leftGrip"] != null)
-                    position.leftGrip = (bool)obj["leftGrip"];
-
-                if (obj["rightGrip"] != null)
-                    position.rightGrip = (bool)obj["rightGrip"];
-
-                if (obj["leftTrigger"] != null)
-                    position.leftTrigger = (bool)obj["leftTrigger"];
-
-                if (obj["rightTrigger"] != null)
-                    position.rightTrigger = (bool)obj["rightTrigger"];
-
-                return position;
-            }
-
-            private static JObject Vec3ToJObject(Vector3 v) =>
-                new JObject { ["x"] = v.x, ["y"] = v.y, ["z"] = v.z };
-
-            private static Vector3 JObjectToVec3(JObject obj) =>
-                new Vector3((float)obj["x"], (float)obj["y"], (float)obj["z"]);
-
-            private static JObject QuatToJObject(Quaternion q) =>
-                new JObject { ["x"] = q.x, ["y"] = q.y, ["z"] = q.z, ["w"] = q.w };
-
-            private static Quaternion JObjectToQuat(JObject obj) =>
-                new Quaternion((float)obj["x"], (float)obj["y"], (float)obj["z"], (float)obj["w"]);
-        }
-
-        public class Macro
-        {
-            public List<PlayerPosition> positions;
-            public float macroStepDuration;
-            public string name;
-            public bool enabled;
-
-            public string DumpJSON()
-            {
-                var obj = new JObject
-                {
-                    ["name"] = name,
-                    ["enabled"] = enabled,
-                    ["positions"] = new JArray(positions.ConvertAll(p => p.ToJObject())),
-                    ["step-time"] = macroStepDuration
-                };
-                return obj.ToString();
-            }
-
-            public static Macro LoadJSON(string json)
-            {
-                var obj = JObject.Parse(json);
-
-                var macro = new Macro
-                {
-                    name = (string)obj["name"],
-                    enabled = (bool)obj["enabled"],
-                    positions = new List<PlayerPosition>()
-                };
-
-                foreach (var token in (JArray)obj["positions"])
-                    macro.positions.Add(PlayerPosition.FromJObject((JObject)token));
-
-                macro.macroStepDuration = obj.TryGetValue("step-time", out JToken stepTimeToken) ? (float)stepTimeToken : 0.1f;
-
-                return macro;
-            }
-        }
 
         public static string FormatMacroName(string input)
         {
@@ -1837,8 +2060,6 @@ namespace Qubit.Modules.Categories
 
             return result.ToString();
         }
-
-        public static Dictionary<string, Macro> macros = new Dictionary<string, Macro>();
         public static void LoadMacros()
         {
             macros.Clear();
@@ -1918,7 +2139,7 @@ namespace Qubit.Modules.Categories
         public static void OpenMacrosFolder()
         {
             string filePath = Files.GetGamePath() + $"/{PluginInfo.BaseDirectory}/Macros";
-            Process.Start(filePath);
+            Files.Start(filePath);
         }
 
         public static void ToggleMacro(string macroName, bool enabled)
@@ -1933,11 +2154,6 @@ namespace Qubit.Modules.Categories
             File.WriteAllText(filePath, macro.DumpJSON());
         }
 
-        public static bool recordingMacro;
-        public static float positionDelay;
-        public const float defaultMacroStep = 0.05f;
-        public static List<PlayerPosition> recordingData = new List<PlayerPosition>();
-
         public static void RecordMacro()
         {
             if (leftTrigger > 0.5f)
@@ -1947,7 +2163,7 @@ namespace Qubit.Modules.Categories
                     recordingData.Clear();
                     recordingMacro = true;
 
-                    Notifications.SendNotification("<color=grey>[</color><color=green>RECORDING</color><color=grey>]</color> Started recording...");
+                    Notifications.SendFormat("green", "RECORDING", "Started recording...");
                 }
 
                 References.InputPoller.leftControllerIndexFloat = 0f;
@@ -1967,7 +2183,7 @@ namespace Qubit.Modules.Categories
                 {
                     recordingMacro = false;
 
-                    Notifications.SendNotification("<color=grey>[</color><color=green>RECORDING</color><color=grey>]</color> Stopped recording.");
+                    Notifications.SendFormat("green", "RECORDING", "Stopped recording.");
                     FinalizeRecording();
                 }
             }
@@ -1999,8 +2215,6 @@ namespace Qubit.Modules.Categories
                 }, null, "Done", "Cancel");
             });
         }
-
-        public static Coroutine activeMacro;
         public static IEnumerator PlayMacro(Macro macro, int startFromPosition = 0)
         {
             List<PlayerPosition> positions = macro.positions;
@@ -2045,7 +2259,7 @@ namespace Qubit.Modules.Categories
                 References.InputPoller.leftControllerGripFloat = Mathf.Lerp(lastPosition.leftGrip ? 1f : 0f, currentPosition.leftGrip ? 1f : 0f, t);
                 References.InputPoller.rightControllerGripFloat = Mathf.Lerp(lastPosition.rightGrip ? 1f : 0f, currentPosition.rightGrip ? 1f : 0f, t);
                 References.InputPoller.leftControllerIndexFloat = Mathf.Lerp(lastPosition.leftTrigger ? 1f : 0f, currentPosition.leftTrigger ? 1f : 0f, t);
-                //ControllerInputPoller.instance.rightControllerIndexFloat = Mathf.Lerp(lastPosition.rightTrigger ? 1f : 0f, currentPosition.rightTrigger ? 1f : 0f, t);
+                //References.InputPoller.rightControllerIndexFloat = Mathf.Lerp(lastPosition.rightTrigger ? 1f : 0f, currentPosition.rightTrigger ? 1f : 0f, t);
 
                 Notifications.information["Macro Time"] = $"{macroEndTime - elapsed:F1}s";
                 Notifications.information["Macro Name"] = macro.name;
@@ -2084,14 +2298,6 @@ namespace Qubit.Modules.Categories
             Visuals.Visualize(PrimitiveType.Sphere, position.leftHand.position, Quaternion.identity, new Vector3(0.15f, 0.15f, 0.15f), color, -58692092 + indexIdOffset, alpha);
             Visuals.Visualize(PrimitiveType.Sphere, position.rightHand.position, Quaternion.identity, new Vector3(0.15f, 0.15f, 0.15f), color, -65843922 + indexIdOffset, alpha);
         }
-
-        public static bool frameStepper;
-        public static bool midpointMacros;
-        public static bool didMacro;
-        public static bool directionBased;
-
-        private static bool frameCompleted;
-        private static bool frameStepperNotified;
         public static void ExecuteMacroButton(Macro macro)
         {
             didMacro = midpointMacros && (didMacro
@@ -2117,7 +2323,7 @@ namespace Qubit.Modules.Categories
             {
                 if (rightTriggerPressed && !frameStepperNotified)
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=green>MACRO</color><color=grey>]</color> Frame Stepper is on. Hit the A button to progress instead.");
+                    Notifications.SendFormat("green", "MACRO", "Frame Stepper is on. Hit the A button to progress instead.");
                     frameStepperNotified = true;
                 }
                 if (!frameCompleted && rightPrimary)
@@ -2143,18 +2349,6 @@ namespace Qubit.Modules.Categories
             if (Vector3.Distance(References.BodyCollider.transform.position, startPosition.position) < 1f)
                 activeMacro = Coroutines.instance.StartCoroutine(PlayMacro(macro, position));
         }
-
-        private static Vector3 walkPos;
-        private static Vector3 walkNormal;
-
-        public static int wallWalkStrengthIndex = 2;
-        private static float wallWalkStrength = 9.81f;
-
-        public static bool leftWallWalk;
-        public static bool bothWallWalk;
-
-        public static readonly float[] WallWalkStrengthAmounts = { 2f, 5f, 9.81f, 15f, 50f };
-        public static readonly string[] WallWalkStrengthNames = { "Very Weak", "Weak", "Normal", "Strong", "Very Strong" };
         public static void ApplyWallWalkStrength(int index) => wallWalkStrength = WallWalkStrengthAmounts[index];
 
         public static void WallWalk()
@@ -2199,10 +2393,6 @@ namespace Qubit.Modules.Categories
                     References.Rigidbody.AddForce(Ray.normal * power, ForceMode.Acceleration);
             }
         }
-
-
-        static Quaternion spiderRot;
-        static Quaternion tappedRot;
         public static void SpiderWalk()
         {
             if (References.Player.IsHandTouching(true) || References.Player.IsHandTouching(false))
@@ -2233,32 +2423,6 @@ namespace Qubit.Modules.Categories
             Manager.CurrentCategoryName = "Movement Mods";
             pageNumber = rememberPageNumber;
         }
-
-        private static int rememberPageNumber;
-        public static readonly Dictionary<string, GTZone> mapData = new Dictionary<string, GTZone>()
-        {
-            { "Forest", GTZone.forest },
-            { "Ranked Forest", GTZone.ranked },
-            { "City", GTZone.city },
-            { "Canyons", GTZone.canyon },
-            { "Clouds", GTZone.skyJungle },
-            { "Caves", GTZone.cave },
-            { "Beach", GTZone.beach },
-            { "Mountains", GTZone.mountain },
-            { "Basement", GTZone.basement },
-            { "Metropolis", GTZone.Metropolis },
-            { "Arcade", GTZone.arcade },
-            { "Critters", GTZone.critters },
-            { "Skate Park", GTZone.hoverboard },
-            { "Monke Blocks", GTZone.monkeBlocks },
-            { "Ghost Reactor", GTZone.ghostReactor },
-            { "Rotating", GTZone.rotating },
-            { "Bayou", GTZone.bayou },
-            { "Virtual Stump", GTZone.customMaps },
-            { "GTFC", GTZone.GTFC },
-            { "Lava Forest", GTZone.VIMExperience1 },
-            { "Space Map", GTZone.spaceMap },
-        };
 
         public static void EnterTeleportToMap()
         {
@@ -2292,13 +2456,11 @@ namespace Qubit.Modules.Categories
 
         public static void TeleportToMap(GTZone zone)
         {
-            GorillaNetworkJoinTrigger trigger = PhotonNetworkController.Instance.allJoinTriggers.FirstOrDefault(t => t.zone == zone);
+            GorillaNetworkJoinTrigger trigger = ManagerRegistry.PhotonNetworkController.allJoinTriggers.FirstOrDefault(t => t.zone == zone);
             ZoneManagement.SetActiveZone(zone);
             trigger?.OnBoxTriggered();
             TeleportPlayer(trigger?.transform.position ?? References.LocalRig.transform.position);
         }
-
-        public static bool previousTeleportTrigger;
         public static void TeleportGun()
         {
             GunLibrary.Point(NewPointer =>
@@ -2326,8 +2488,6 @@ namespace Qubit.Modules.Categories
                 previousTeleportTrigger = GetGunInput(true);
             }, new GunLibrary.GunSettings { when = () => !previousTeleportTrigger });
         }
-
-        public static GameObject CheckPoint;
         public static void Checkpoint()
         {
             if (rightGrab)
@@ -2361,10 +2521,6 @@ namespace Qubit.Modules.Categories
                 CheckPoint = null;
             }
         }
-
-        public static int selectedCheckpoint = -1;
-        public static float selectedCheckpointDelay;
-        public static readonly List<GameObject> checkpoints = new List<GameObject>();
         public static void AdvancedCheckpoints()
         {
             if (rightGrab)
@@ -2454,8 +2610,6 @@ namespace Qubit.Modules.Categories
 
             checkpoints.Clear();
         }
-
-        public static GameObject BombObject;
         public static void Bomb()
         {
             if (rightGrab)
@@ -2491,11 +2645,6 @@ namespace Qubit.Modules.Categories
                 BombObject = null;
             }
         }
-
-        private static GameObject pearl;
-        private static Texture2D pearltxt;
-        private static Material pearlmat;
-        private static bool isrighthandedpearl;
         public static void EnderPearl()
         {
             if (rightGrab || leftGrab)
@@ -2634,8 +2783,6 @@ namespace Qubit.Modules.Categories
             else
                 References.Player.jumpMultiplier = 99999f;
         }
-
-        public static Playspace playspace;
         public static void DisableVelocityCap()
         {
             playspace = GetAllType<Playspace>().FirstOrDefault();
@@ -2668,8 +2815,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        public static readonly List<GameObject> forestColliders = new List<GameObject>();
         public static void RemoveForestColliders()
         {
             Transform ForestCollisions = GetObject("Environment Objects/LocalObjects_Prefab/ForestToHoverboard/TurnOnInForestAndHoverboard/ForestDome_CollisionOnly").transform;
@@ -2693,12 +2838,6 @@ namespace Qubit.Modules.Categories
             forestColliders.Clear();
         }
 
-        public static bool wasDisabledAlready;
-        public static bool invisMonke;
-
-        public static bool lastHit;
-        public static bool lastHit2;
-
         public static void Invisible()
         {
             bool hit = rightSecondary;
@@ -2719,8 +2858,6 @@ namespace Qubit.Modules.Categories
             }
             lastHit2 = hit;
         }
-
-        private static bool ghostMonke;
         public static void Ghost()
         {
             bool hit = rightPrimary;
@@ -2770,10 +2907,6 @@ namespace Qubit.Modules.Categories
                 References.LocalRig.enabled = true;
             }
         }
-
-        public static Vector3 offsetLH = Vector3.zero;
-        public static Vector3 offsetRH = Vector3.zero;
-        public static Vector3 offsetH = Vector3.zero;
         public static void EnableSpazRig()
         {
             ghostException = true;
@@ -2875,8 +3008,6 @@ namespace Qubit.Modules.Categories
 
             References.LocalRig.head.rigTarget.transform.rotation = References.HeadCollider.transform.rotation;
         }
-
-        public static Vector3? startPosition;
         public static void FreezeRig()
         {
             if (startPosition == null)
@@ -2941,8 +3072,6 @@ namespace Qubit.Modules.Categories
             if (!enabled && recBodyRotary != null)
                 Object.Destroy(recBodyRotary);
         }
-
-        public static GameObject recBodyRotary;
         public static void RecRoomBody()
         {
             SetBodyPatch(true, 3);
@@ -3077,8 +3206,6 @@ namespace Qubit.Modules.Categories
             else
                 References.LocalRig.enabled = true;
         }
-
-        public static Vector3 stillBeybladeStartPos = Vector3.zero;
         public static void StillBeyblade()
         {
             if (rightPrimary)
@@ -3133,15 +3260,6 @@ namespace Qubit.Modules.Categories
             else
                 References.LocalRig.enabled = true;
         }
-
-        private static Vector3 headPos = Vector3.zero;
-        private static Vector3 headRot = Vector3.zero;
-
-        private static Vector3 handPos_L = Vector3.zero;
-        private static Vector3 handRot_L = Vector3.zero;
-
-        private static Vector3 handPos_R = Vector3.zero;
-        private static Vector3 handRot_R = Vector3.zero;
 
         public static void GhostAnimations()
         {
@@ -3265,8 +3383,6 @@ namespace Qubit.Modules.Categories
 
         public static void StareAtTarget() =>
             References.LocalRig.head.rigTarget.LookAt(lockTarget.headMesh.transform.position);
-
-        private static bool hasAdded;
         public static void StareAtGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -3300,7 +3416,7 @@ namespace Qubit.Modules.Categories
                 MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
 
                 Quaternion headRotArchive = References.LocalRig.head.rigTarget.transform.rotation;
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     References.LocalRig.head.rigTarget.transform.rotation = Quaternion.LookRotation(Vector3.Normalize(GetVRRigFromPlayer(Player).headMesh.transform.position));
                     SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
@@ -3333,8 +3449,6 @@ namespace Qubit.Modules.Categories
 
         public static void DisableFloatingRig() =>
             References.LocalRig.head.trackingPositionOffset = offsetH;
-
-        public static float beesDelay;
         public static void Bees()
         {
             References.LocalRig.enabled = false;
@@ -3350,8 +3464,6 @@ namespace Qubit.Modules.Categories
                 beesDelay = Time.time + 0.777f;
             }
         }
-
-        public static float sizeScale = 1f;
         public static void SizeChanger()
         {
             float increment = 0.05f;
@@ -3426,8 +3538,6 @@ namespace Qubit.Modules.Categories
             References.LocalRig.rightHand.MapMine(References.LocalRig.lastScaleFactor, References.LocalRig.playerOffsetTransform);
         }
 
-        private static Quaternion? vrrigJoystickRot;
-
         public static void VRRigLateUpdate_Control()
         {
             if (rightJoystickClick || leftJoystickClick || UnityInput.GetKeyDown(Key.Enter))
@@ -3469,9 +3579,6 @@ namespace Qubit.Modules.Categories
             if (vrrigJoystickRot != null)
                 References.LocalRig.transform.rotation = vrrigJoystickRot.Value;
         }
-
-
-        private static Quaternion? bodyJoystickRot;
 
         public static void ControlBodyRotation()
         {
@@ -3518,12 +3625,6 @@ namespace Qubit.Modules.Categories
                 References.LocalRig.transform.rotation = bodyJoystickRot.Value;
         }
 
-        static bool flipping;
-        static float flipStart;
-        static Quaternion flipFrom;
-        static Vector3 flipAxis;
-        const float flipDuration = 1f;
-
         public static void Flip()
         {
             bool silentFlip = Manager.GetIndex("Silent Flip").enabled;
@@ -3563,8 +3664,6 @@ namespace Qubit.Modules.Categories
 
         public static void UpwardsBody() =>
              References.HeadCollider.transform.rotation = Quaternion.Euler(-180, References.HeadCollider.transform.rotation.eulerAngles.y, References.HeadCollider.transform.rotation.eulerAngles.z);
-
-        private static readonly Dictionary<GorillaSurfaceOverride, float> velocityArchive = new Dictionary<GorillaSurfaceOverride, float>();
         public static void SlipSlap()
         {
             foreach (var surface in GetAllType<GorillaSurfaceOverride>())
@@ -3585,8 +3684,6 @@ namespace Qubit.Modules.Categories
 
             velocityArchive.Clear();
         }
-
-        public static GameObject stickpart;
         public static void StickyHands()
         {
             if (stickpart == null)
@@ -3614,10 +3711,6 @@ namespace Qubit.Modules.Categories
                 stickpart = null;
             }
         }
-
-        private static bool leftisclimbing;
-        private static bool rightisclimbing;
-        private static GameObject climb;
         public static void ClimbyHands()
         {
 
@@ -3665,8 +3758,6 @@ namespace Qubit.Modules.Categories
             References.Player.leftHand.isHolding = !value;
             References.Player.rightHand.isHolding = !value;
         }
-
-        public static float oldSlide;
         public static void EnableSlideControl()
         {
             oldSlide = References.Player.slideControl;
@@ -3681,9 +3772,6 @@ namespace Qubit.Modules.Categories
 
         public static void DisableSlideControl() =>
             References.Player.slideControl = oldSlide;
-
-        public static readonly Vector3[] lastLeft = { Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
-        public static readonly Vector3[] lastRight = { Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero, Vector3.zero };
 
         public static void PunchMod()
         {
@@ -3720,10 +3808,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        private static VRRig sithlord;
-        private static bool sithright;
-        private static float sithdist = 1f;
         public static void Telekinesis()
         {
             if (sithlord == null)
@@ -3798,8 +3882,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        public static readonly Dictionary<VRRig, List<GameObject>> RigColliders = new Dictionary<VRRig, List<GameObject>>();
         public static void SolidPlayers()
         {
             List<VRRig> toRemove = new List<VRRig>();
@@ -3862,14 +3944,7 @@ namespace Qubit.Modules.Categories
 
             RigColliders.Clear();
         }
-
-        public static int pullPowerInt;
-        public static readonly float[] PullModPowers = { 0.05f, 0.1f, 0.2f, 0.4f };
-        public static readonly string[] PullModPowerNames = { "Normal", "Medium", "Strong", "Powerful" };
         public static void ApplyPullModPower(int index) => pullPower = PullModPowers[index];
-
-        private static float pullPower = 0.05f;
-        private static readonly Dictionary<bool, bool> previousTouchingGround = new Dictionary<bool, bool>();
         public static void ProcessPullHand(bool left)
         {
             if ((left ? !leftGrab : !rightGrab))
@@ -3893,9 +3968,6 @@ namespace Qubit.Modules.Categories
             ProcessPullHand(false);
             ProcessPullHand(true);
         }
-
-        public static GameObject leftThrow;
-        public static GameObject rightThrow;
         public static void ThrowControllers()
         {
             if (leftPrimary)
@@ -3970,9 +4042,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        public static GameObject flickLeft;
-        public static GameObject flickRight;
         public static void EnableControllerFlick()
         {
             flickLeft = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -3997,9 +4066,6 @@ namespace Qubit.Modules.Categories
             Object.Destroy(flickLeft);
             Object.Destroy(flickRight);
         }
-
-        private static Quaternion initialRotationLeft = Quaternion.identity;
-        private static Quaternion initialRotationRight = Quaternion.identity;
         public static void ControllerFlick()
         {
             if (leftPrimary)
@@ -4054,10 +4120,6 @@ namespace Qubit.Modules.Categories
             References.Player.GetControllerTransform(true).transform.position = References.LeftHand.position + References.LeftHand.forward * ((armlength - 0.917f) * References.Player.scale);
             References.Player.GetControllerTransform(false).transform.position = References.RightHand.position + References.RightHand.forward * ((armlength - 0.917f) * References.Player.scale);
         }
-
-        public static bool passWorldScaleCheck;
-        private static Vector3? lastFramePosition;
-        private static bool wasHandsNearHead;
         public static void EnableSteamLongArms()
         {
             if (passWorldScaleCheck)
@@ -4098,8 +4160,6 @@ namespace Qubit.Modules.Categories
 
         public static void DisableSteamLongArms() =>
             References.Player.transform.localScale = Vector3.one * References.LocalRig.NativeScale;
-
-        public static float extendingTime;
         public static void Extenders()
         {
             extendingTime += rightJoystickClick ? 0 - Time.unscaledDeltaTime : Time.unscaledDeltaTime;
@@ -4137,9 +4197,6 @@ namespace Qubit.Modules.Categories
             References.Player.GetControllerTransform(true).position = References.HeadCollider.transform.position - lefty;
             References.Player.GetControllerTransform(false).position = References.HeadCollider.transform.position - righty;
         }
-
-        public static GameObject lvT;
-        public static GameObject rvT;
         public static void CreateVelocityTrackers()
         {
             lvT = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -4158,11 +4215,6 @@ namespace Qubit.Modules.Categories
             Object.Destroy(lvT);
             Object.Destroy(rvT);
         }
-
-        public static float predCount = 0.0125f;
-        public static int predInt = 1;
-        public static readonly float[] PredictionAmounts = { 0.00625f, 0.0125f, 0.025f, 0.05f };
-        public static readonly string[] PredictionAmountNames = { "Low", "Normal", "High", "Extreme" };
         public static void ApplyPredictionAmount(int index) => predCount = PredictionAmounts[index];
         public static void VelocityLongArms()
         {
@@ -4172,17 +4224,8 @@ namespace Qubit.Modules.Categories
             References.Player.GetControllerTransform(false).transform.position -= rvT.GetComponent<GorillaVelocityTracker>().GetAverageVelocity(true, 0) * predCount;
         }
 
-        public static int fakeLagDelayIndex = 10;
-        public static float fakeLagDelay = 1f;
-
         public static void ApplyFakeLagStrength(int index) => fakeLagDelay = index / 10f;
-
-        public static bool isBlinking;
-
-        public static int timerPowerIndex = 15;
         public static void ApplyTimerSpeed(int index) => timerPower = index / 10f;
-
-        private static float timerPower = 1.5f;
         public static void Timer()
         {
             References.Player.debugMovement = true;
@@ -4194,12 +4237,6 @@ namespace Qubit.Modules.Categories
             if (rightPrimary)
                 References.Player.GetControllerTransform(false).transform.position = References.RightHand.position + new Vector3(0f, -1.5f, 0f);
         }
-
-        public static Vector3? longJumpPower;
-        public static float? keepVelocityUntil;
-        public static Vector3? velocity;
-
-        public static float playspaceAbusePower = 0.004f;
         public static void PlayspaceAbuse()
         {
             if (rightPrimary)
@@ -4268,10 +4305,6 @@ namespace Qubit.Modules.Categories
             References.Player.InitializeValues();
         }
 
-        private static float preBounciness;
-        private static PhysicsMaterialCombine whateverthisis = PhysicsMaterialCombine.Maximum;
-        private static float preFrictiness;
-
         public static void PreBouncy()
         {
             preBounciness = References.BodyCollider.material.bounciness;
@@ -4319,8 +4352,6 @@ namespace Qubit.Modules.Categories
                 v.layer = LayerMask.NameToLayer("Water");
             }
         }
-
-        public static GameObject airSwimPart;
         public static void AirSwim()
         {
             if (airSwimPart == null)
@@ -4344,9 +4375,6 @@ namespace Qubit.Modules.Categories
 
         public static void SetSwimSpeed(float speed = 3f) =>
             References.Player.swimmingParamsList.ForEach(s => s.swimmingVelocityOutOfWaterDrainRate = speed);
-
-        private static List<float> waterSurfaceJumpAmount;
-        private static List<float> waterSurfaceJumpMaxSpeed;
         public static void LiquidRunHelper(bool enable)
         {
             if (enable)
@@ -4387,7 +4415,7 @@ namespace Qubit.Modules.Categories
 
                 Vector3 archivePos = References.LocalRig.transform.position;
 
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     References.LocalRig.transform.position = GetVRRigFromPlayer(Player).headMesh.transform.position;
                     SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
@@ -4482,7 +4510,7 @@ namespace Qubit.Modules.Categories
 
                 Quaternion archiveHeadRot = References.LocalRig.head.rigTarget.transform.rotation;
 
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     CopyMovementPlayer(Player, false);
                     SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
@@ -4576,8 +4604,6 @@ namespace Qubit.Modules.Categories
                     }
                 } });
         }
-
-        public static readonly Dictionary<VRRig, Vector3> followPositions = new Dictionary<VRRig, Vector3>();
         public static void FollowAllPlayers()
         {
             SerializePatch.OverrideSerialization = () =>
@@ -4595,7 +4621,7 @@ namespace Qubit.Modules.Categories
 
                 Quaternion archiveHeadRot = References.LocalRig.head.rigTarget.transform.rotation;
 
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     VRRig targetRig = GetVRRigFromPlayer(Player);
 
@@ -4716,7 +4742,7 @@ namespace Qubit.Modules.Categories
 
                 Quaternion archiveHeadRot = References.LocalRig.head.rigTarget.transform.rotation;
 
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     VRRig targetRig = GetVRRigFromPlayer(Player);
 
@@ -4828,7 +4854,7 @@ namespace Qubit.Modules.Categories
 
                 Quaternion archiveHeadRot = References.LocalRig.head.rigTarget.transform.rotation;
 
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     VRRig targetRig = GetVRRigFromPlayer(Player);
 
@@ -4942,7 +4968,7 @@ namespace Qubit.Modules.Categories
 
                 Quaternion archiveHeadRot = References.LocalRig.head.rigTarget.transform.rotation;
 
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     VRRig targetRig = GetVRRigFromPlayer(Player);
 
@@ -4977,8 +5003,6 @@ namespace Qubit.Modules.Categories
                 return false;
             };
         }
-
-        public static int targetHz = 4000;
         public static void ApplyTinnitusHz(int index) => targetHz = 4000 + index * 500;
         public static AudioClip CreateTinnitusSound(int targetHz, float seconds = 180f)
         {
@@ -4999,11 +5023,6 @@ namespace Qubit.Modules.Categories
             clip.SetData(data, 0);
             return clip;
         }
-
-        public static Dictionary<Guid, Voices.Clip> tinnitus = new Dictionary<Guid, Voices.Clip>();
-
-        public static float hoverboardSpawnDelay;
-        public static float soundSpamDelay;
 
         public static void IntercourseGun()
         {
@@ -5115,7 +5134,7 @@ namespace Qubit.Modules.Categories
 
                 Quaternion archiveHeadRot = References.LocalRig.head.rigTarget.transform.rotation;
 
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     VRRig targetRig = GetVRRigFromPlayer(Player);
 
@@ -5170,9 +5189,9 @@ namespace Qubit.Modules.Categories
         {
             Prompt("You have to be age verified to use this mod. Would you like to proceed to the age verification process?", () =>
             {
-                Notifications.SendNotification($"<color=grey>[</color><color=red>SEX</color><color=grey>]</color> A browser tab has been opened on your computer.");
+                Notifications.SendFormat("red", "SEX", $"A browser tab has been opened on your computer.");
                 PromptSingle("A browser tab has been opened on your computer. Please go and verify your age.", null, "Ok frick off buddy");
-                Application.OpenURL("https://Qubit.software/age_verification");
+                Files.OpenURL("https://Qubit.software/age_verification");
 
                 Coroutines.instance.StartCoroutine(Sex());
             });
@@ -5352,7 +5371,7 @@ namespace Qubit.Modules.Categories
 
                 Quaternion archiveHeadRot = References.LocalRig.head.rigTarget.transform.rotation;
 
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     VRRig targetRig = GetVRRigFromPlayer(Player);
 
@@ -5424,9 +5443,6 @@ namespace Qubit.Modules.Categories
                 References.LocalRig.head.rigTarget.transform.rotation = RandomQuaternion();
         }
 
-        public static float headspazDelay;
-        public static bool headspazType;
-
         public static void RandomSpazHead()
         {
             if (headspazType)
@@ -5448,8 +5464,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        private static Vector3 headoffs = Vector3.zero;
         public static void EnableSpazHead() =>
             headoffs = References.LocalRig.head.trackingPositionOffset;
 
@@ -5480,8 +5494,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        public static float laggyRigDelay;
         public static void LaggyRig()
         {
             References.LocalRig.enabled = false;
@@ -5495,8 +5507,6 @@ namespace Qubit.Modules.Categories
                 laggyRigDelay = Time.time + 0.5f;
             }
         }
-
-        public static bool wasRightPrimaryPressed;
         public static void UpdateRig()
         {
             References.LocalRig.enabled = false;
@@ -5510,8 +5520,6 @@ namespace Qubit.Modules.Categories
 
             wasRightPrimaryPressed = rightPrimary;
         }
-
-        public static int multiplicationAmount = 15;
         public static void ApplyMultiplicationAmount(int index) => multiplicationAmount = index;
         public static void SpinHead(string axis)
         {
@@ -5551,8 +5559,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static Material glass;
-
         public static void Initialize()
         {
             try
@@ -5565,5 +5571,6 @@ namespace Qubit.Modules.Categories
                 $"Error with Movement.LoadMacros() at {exc.StackTrace}: {exc.Message}");
             }
         }
+        #endregion
     }
 }

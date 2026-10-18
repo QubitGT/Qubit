@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Utilities;
 using GorillaLocomotion;
 using GorillaNetworking;
 using GorillaTagScripts;
@@ -70,14 +71,19 @@ using static Qubit.Libraries.Networking.Rooms;
 using static Qubit.Modules.Categories.Settings;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Utilities.GameObj;
+using Qubit.Libraries.Holdables;
+using Qubit.Libraries.Entities;
 using Console = Qubit.Backend.Console;
 using JoinType = GorillaNetworking.JoinType;
 using Random = UnityEngine.Random;
 using Room = Qubit.Modules.Categories.Room;
 using Security = Qubit.Core.Security;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules
 {
+    using Critters = Qubit.Libraries.Entities.Critters;
+    using Cosmetics = Qubit.Libraries.Entities.Cosmetics;
     [HarmonyPatch(typeof(GTPlayer), nameof(GTPlayer.LateUpdate))]
     public static class Manager
     {
@@ -88,6 +94,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Join Discord", method = Important.JoinDiscord, isTogglable = false, toolTip = "Invites you to join the <b>Qubit</b> Discord server.", legal = true},
 
                 new Module { buttonText = "Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Opens the settings tab.", legal = true},
+                new Module { buttonText = "Friends", method =() => CurrentCategoryName = "Friends", isTogglable = false, toolTip = "Opens the friends tab.", legal = true},
                 new Module { buttonText = "Players", method = Modules.Categories.Settings.PlayersTab, isTogglable = false, toolTip = "Opens the players tab.", legal = true},
                 new Module { buttonText = "Favorite Mods", method =() => CurrentCategoryName = "Favorite Mods", isTogglable = false, toolTip = "Opens your favorite mods. Favorite mods with right grip.", legal = true},
                 new Module { buttonText = "Enabled Mods", method =() => CurrentCategoryName = "Enabled Mods", isTogglable = false, toolTip = "Shows all mods you have enabled.", legal = true},
@@ -118,6 +125,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Keybind Settings", method =() => CurrentCategoryName = "Keybind Settings", isTogglable = false, toolTip = "Opens the settings for the keybinds.", legal = true},
                 new Module { buttonText = "Rebind Settings", method =() => CurrentCategoryName = "Rebind Settings", isTogglable = false, toolTip = "Opens the settings for rebinds.", legal = true},
+                new Module { buttonText = "Friend Settings", method =() => CurrentCategoryName = "Friend Settings", isTogglable = false, toolTip = "Opens the settings for the friend system.", legal = true},
                 new Module { buttonText = "Plugin Settings", method =() => CurrentCategoryName = "Plugin Settings", isTogglable = false, toolTip = "Opens the settings for the plugins.", legal = true},
 
                 new Module { buttonText = "Soundboard Settings", method =() => CurrentCategoryName = "Soundboard Settings", isTogglable = false, toolTip = "Opens the settings for the soundboard."},
@@ -464,19 +472,19 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Room Creator", method = Room.RoomCreator, isTogglable = false, toolTip = "Create your own custom room!"},
 
-                new Module { buttonText = "Disconnect", method =() => References.Network.ReturnToSinglePlayer(), isTogglable = false, toolTip = "Disconnects you from the the room.", legal = true}, // I'm keeping this legal because Developer9998's InfoWatch mod has it.
+                new Module { buttonText = "Disconnect", method =() => ManagerRegistry.NetworkSystem.ReturnToSinglePlayer(), isTogglable = false, toolTip = "Disconnects you from the the room.", legal = true}, // I'm keeping this legal because Developer9998's InfoWatch mod has it.
                 new Module { buttonText = "Reconnect", aliases = new[] { "Rejoin" }, method = Room.Reconnect, isTogglable = false, toolTip = "Reconnects you from and to the the room.", legal = true},
 
                 new Module { buttonText = "Cancel Reconnect", method = Room.CancelReconnect, isTogglable = false, toolTip = "Cancels the reconnection loop.", legal = true},
 
-                new Module { buttonText = "Join Last Room", method =() => PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(lastRoom, JoinType.Solo), isTogglable = false, toolTip = "Joins the last room you left.", legal = true},
+                new Module { buttonText = "Join Last Room", method =() => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(lastRoom, JoinType.Solo), isTogglable = false, toolTip = "Joins the last room you left.", legal = true},
                 new Module { buttonText = "Join Random", method = Room.JoinRandom, isTogglable = false, toolTip = "Joins a random public room.", legal = true},
 
                 new Module { buttonText = "Create Public", method =() => Room.CreateRoom(Room.RandomRoomName(), true), isTogglable = false, toolTip = "Creates a public room."},
                 new Module { buttonText = "Create Private", method =() => Room.CreateRoom(Room.RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
 
                 new Module { buttonText = "Fast Disconnect", method =() => SinglePlayerPatch.enabled = true, disableMethod =() =>  SinglePlayerPatch.enabled = false, toolTip = "Uses the fastest method of disconnecting possible.", legal = true},
-                new Module { buttonText = "Join Menu Room", method =() => PhotonNetworkController.Instance.AttemptToJoinSpecificRoom($"<$Qubit_{PluginInfo.Version}>", JoinType.Solo), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Qubit Menu</b> users.", legal = true},
+                new Module { buttonText = "Join Menu Room", method =() => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom($"<$Qubit_{PluginInfo.Version}>", JoinType.Solo), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Qubit Menu</b> users.", legal = true},
 
                 new Module { buttonText = "Bypass Join Room Type", enableMethod =() => JoinedRoomPatch.enabled = true, disableMethod =() => JoinedRoomPatch.enabled = false, toolTip = "Bypasses the immediate disconnection when trying to join a room that is in another map."},
 
@@ -533,16 +541,16 @@ namespace Qubit.Modules
                 new Module { buttonText = "First Person Camera", enableMethod = Important.EnableFPC, postMethod = Important.MoveFPC, disableMethod = Important.DisableFPC, toolTip = "Makes your camera output what you see in VR.", legal = true},
                 new Module { buttonText = "Force Enable Hands", enableMethod =() => Important.ForceEnableHands(), disableMethod =() => Important.ForceEnableHands(false), toolTip = "Prevents your hands from disconnecting.", legal = true},
 
-                new Module { buttonText = "Oculus Report Menu <color=grey>[</color><color=green>X</color><color=grey>]</color>", method = Important.OculusReportMenu, toolTip = "Opens the Oculus report menu when holding <color=green>X</color>."},
+                new Module { buttonText = $"Oculus Report Menu {Bracket("green", "X")}", method = Important.OculusReportMenu, toolTip = "Opens the Oculus report menu when holding <color=green>X</color>."},
 
                 new Module { buttonText = "Accept TOS", enableMethod =() => TOSPatches.enabled = true, method = Important.AcceptTOS, disableMethod =() => TOSPatches.enabled = false, toolTip = "Accepts the Terms of Service for you."},
                 new Module { buttonText = "Bypass K-ID Restrictions", overlapText = "Bypass k-ID Restrictions", method =() => PermissionPatch.enabled = true, disableMethod =() => PermissionPatch.enabled = false, toolTip = "Bypasses the permission restrictions held by k-ID for underage users."},
 
                 new Module { buttonText = "Copy Player Position", method = Important.CopyPlayerPosition, isTogglable = false, toolTip = "Copies the current player position to the clipboard.", legal = true },
 
-                new Module { buttonText = "Clear Notifications", method = Notifications.ClearAllNotifications, isTogglable = false, toolTip = "Clears your notifications.", legal = true},
+                new Module { buttonText = "Clear Notifications", method = Notifications.Clear, isTogglable = false, toolTip = "Clears your notifications.", legal = true},
 
-                new Module { buttonText = "Anti AFK", enableMethod =() => PhotonNetworkController.Instance.disableAFKKick = true, disableMethod =() => PhotonNetworkController.Instance.disableAFKKick = false, toolTip = "Doesn't let you get kicked for being AFK."},
+                new Module { buttonText = "Anti AFK", enableMethod =() => ManagerRegistry.PhotonNetworkController.disableAFKKick = true, disableMethod =() => ManagerRegistry.PhotonNetworkController.disableAFKKick = false, toolTip = "Doesn't let you get kicked for being AFK."},
                 new Module { buttonText = "Disable Network Triggers", enableMethod =() => NetworkTriggerPatch.enabled = true, disableMethod =() => NetworkTriggerPatch.enabled = false, toolTip = "Disables the network triggers, so you can change maps without disconnecting."},
                 new Module { buttonText = "Disable Map Triggers", enableMethod =() => GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab").SetActive(false), disableMethod =() => GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab").SetActive(true), toolTip = "Disables the map triggers, so you can change maps without loading them."},
                 new Module { buttonText = "Disable Quit Box", enableMethod =() => QuitBoxPatch.enabled = false, disableMethod =() => QuitBoxPatch.enabled = true, toolTip = "Disables the box under the map that closes your game."},
@@ -565,30 +573,30 @@ namespace Qubit.Modules
                 new Module { buttonText = "PC Button Click", aliases = new[] { "PC Click" }, method = Important.PCButtonClick, disableMethod = Important.DisablePCButtonClick, toolTip = "Lets you click in-game buttons with your mouse."},
                 new Module { buttonText = "PC Controller Emulation", method = Important.PCControllerEmulation, toolTip = "Allows you to press buttons on your in-game controllers using your keyboard."},
                 new Module { buttonText = "Unlock Competitive Queue", method =() => References.Computer.CompQueueUnlockButtonPress(), isTogglable = false, toolTip = "Permanently unlocks the competitive queue."},
-                new Module { buttonText = "Change Queue to Default", overlapText = "Change Queue <color=grey>[</color><color=green>Default</color><color=grey>]</color>", method =() => References.Computer.currentQueue = "DEFAULT", isTogglable = false, toolTip = "Changes your queue to default."},
-                new Module { buttonText = "Change Queue to Minigames", overlapText = "Change Queue <color=grey>[</color><color=green>Minigames</color><color=grey>]</color>", method =() => References.Computer.currentQueue = "MINIGAMES", isTogglable = false, toolTip = "Changes your queue to minigames."},
-                new Module { buttonText = "Change Queue to Competitive", overlapText = "Change Queue <color=grey>[</color><color=green>Competitive</color><color=grey>]</color>", method =() => References.Computer.currentQueue = "COMPETITIVE", isTogglable = false, toolTip = "Changes your queue to competitive."},
+                new Module { buttonText = "Change Queue to Default", overlapText = $"Change Queue {Bracket("green", "Default")}", method =() => References.Computer.currentQueue = "DEFAULT", isTogglable = false, toolTip = "Changes your queue to default."},
+                new Module { buttonText = "Change Queue to Minigames", overlapText = $"Change Queue {Bracket("green", "Minigames")}", method =() => References.Computer.currentQueue = "MINIGAMES", isTogglable = false, toolTip = "Changes your queue to minigames."},
+                new Module { buttonText = "Change Queue to Competitive", overlapText = $"Change Queue {Bracket("green", "Competitive")}", method =() => References.Computer.currentQueue = "COMPETITIVE", isTogglable = false, toolTip = "Changes your queue to competitive."},
 
                 new Module { buttonText = "Disable April Fools FX", enableMethod = Important.DisableAprilFoolsFX, disableMethod = Important.EnableAprilFoolsFX, toolTip = "Disables the April Fools effect in Gorilla Tag 2026."},
 
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Casual</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("Casual"), isTogglable = false, toolTip = "Changes your target gamemode to casual."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Infection</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("Infection"), isTogglable = false, toolTip = "Changes your target gamemode to infection."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Hunt</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("HuntDown"), isTogglable = false, toolTip = "Changes your target gamemode to hunt."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Paintbrawl</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("Paintbrawl"), isTogglable = false, toolTip = "Changes your target gamemode to paintbrawl."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Ambush</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("Ambush"), isTogglable = false, toolTip = "Changes your target gamemode to ambush."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Freeze Tag</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("FreezeTag"), isTogglable = false, toolTip = "Changes your target gamemode to freeze tag."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Ghost Tag</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("Ghost"), isTogglable = false, toolTip = "Changes your target gamemode to ghost tag."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Custom</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("Custom"), isTogglable = false, toolTip = "Changes your target gamemode to custom."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Guardian</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("Guardian"), isTogglable = false, toolTip = "Changes your target gamemode to guardian."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Prop Hunt</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("PropHunt"), isTogglable = false, toolTip = "Changes your target gamemode to prop hunt."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Super Infection</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("SuperInfect"), isTogglable = false, toolTip = "Changes your target gamemode to super infection."},
-                new Module { buttonText = "Change Target Gamemode <color=grey>[</color><color=green>Error</color><color=grey>]</color>", method =() => References.Computer.SetGameModeWithoutButton("None"), isTogglable = false, toolTip = "Changes your target gamemode to none."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Casual")}", method =() => References.Computer.SetGameModeWithoutButton("Casual"), isTogglable = false, toolTip = "Changes your target gamemode to casual."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Infection")}", method =() => References.Computer.SetGameModeWithoutButton("Infection"), isTogglable = false, toolTip = "Changes your target gamemode to infection."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Hunt")}", method =() => References.Computer.SetGameModeWithoutButton("HuntDown"), isTogglable = false, toolTip = "Changes your target gamemode to hunt."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Paintbrawl")}", method =() => References.Computer.SetGameModeWithoutButton("Paintbrawl"), isTogglable = false, toolTip = "Changes your target gamemode to paintbrawl."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Ambush")}", method =() => References.Computer.SetGameModeWithoutButton("Ambush"), isTogglable = false, toolTip = "Changes your target gamemode to ambush."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Freeze Tag")}", method =() => References.Computer.SetGameModeWithoutButton("FreezeTag"), isTogglable = false, toolTip = "Changes your target gamemode to freeze tag."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Ghost Tag")}", method =() => References.Computer.SetGameModeWithoutButton("Ghost"), isTogglable = false, toolTip = "Changes your target gamemode to ghost tag."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Custom")}", method =() => References.Computer.SetGameModeWithoutButton("Custom"), isTogglable = false, toolTip = "Changes your target gamemode to custom."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Guardian")}", method =() => References.Computer.SetGameModeWithoutButton("Guardian"), isTogglable = false, toolTip = "Changes your target gamemode to guardian."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Prop Hunt")}", method =() => References.Computer.SetGameModeWithoutButton("PropHunt"), isTogglable = false, toolTip = "Changes your target gamemode to prop hunt."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Super Infection")}", method =() => References.Computer.SetGameModeWithoutButton("SuperInfect"), isTogglable = false, toolTip = "Changes your target gamemode to super infection."},
+                new Module { buttonText = $"Change Target Gamemode {Bracket("green", "Error")}", method =() => References.Computer.SetGameModeWithoutButton("None"), isTogglable = false, toolTip = "Changes your target gamemode to none."},
 
                 new Module { buttonText = "Connect to US", aliases = new[] { "US VPN", "Connect to United States", "United States VPN" }, method =() => Important.ConnectToRegion("us"), toolTip = "Connects you to the United States servers."},
                 new Module { buttonText = "Connect to US West", aliases = new[] { "Connect to USW", "USW VPN", "US West VPN", "Connect to United States West", "United States West VPN" }, method =() => Important.ConnectToRegion("usw"), toolTip = "Connects you to the western United States servers."},
                 new Module { buttonText = "Connect to EU", aliases = new[] { "EU VPN", "Connect to Europe", "Europe VPN" }, method =() => Important.ConnectToRegion("eu"), toolTip = "Connects you to the Europe servers."},
 
-                new Module { buttonText = "Reauthenticate", method = MothershipAuthenticator.Instance.BeginLoginFlow, isTogglable = false, toolTip = "Restarts the login flow that happens at the beginning of the game.", legal = true},
+                new Module { buttonText = "Reauthenticate", method = ManagerRegistry.MothershipAuthenticator.BeginLoginFlow, isTogglable = false, toolTip = "Restarts the login flow that happens at the beginning of the game.", legal = true},
             },
 
             ["Safety Mods"] = new[]
@@ -597,11 +605,11 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "No Finger Movement", aliases = new[] { "Disable Fingers" }, postMethod = Safety.NoFinger, toolTip = "Makes your fingers not move, so you can use wall walk without getting called out." },
 
-                new Module { buttonText = "Fake Oculus Menu <color=grey>[</color><color=green>X</color><color=grey>]</color>", method = Safety.FakeOculusMenu, toolTip = "Imitates opening your Oculus menu when holding <color=green>X</color>."},
-                new Module { buttonText = "Fake Report Menu <color=grey>[</color><color=green>Y</color><color=grey>]</color>", method = Safety.FakeReportMenu, toolTip = "Imitates opening the report menu when holding <color=green>Y</color>."},
-                new Module { buttonText = "Fake Broken Controller <color=grey>[</color><color=green>X</color><color=grey>]</color>", enableMethod =() => GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/LeftHandTriggerCollider").GetComponent<Collider>().enabled = false, method = Safety.FakeBrokenController, disableMethod =() => GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/LeftHandTriggerCollider").GetComponent<Collider>().enabled = true, toolTip = "Makes you look like your left controller is broken, hold <color=green>X</color> to move your right hand with your left hand."},
-                new Module { buttonText = "Fake Power Off <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Safety.FakePowerOff, toolTip = "Imitates turning off your headset when holding down your <color=green>joystick</color>."},
-                new Module { buttonText = "Fake Valve Tracking <color=grey>[</color><color=green>J</color><color=grey>]</color>", enableMethod =() => TorsoPatch.VRRigLateUpdate += Safety.FakeValveTracking, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Safety.FakeValveTracking, toolTip = "Imitates what happens when your headset disconnects on a Valve Index when holding your <color=green>right joystick</color>."},
+                new Module { buttonText = $"Fake Oculus Menu {Bracket("green", "X")}", method = Safety.FakeOculusMenu, toolTip = "Imitates opening your Oculus menu when holding <color=green>X</color>."},
+                new Module { buttonText = $"Fake Report Menu {Bracket("green", "Y")}", method = Safety.FakeReportMenu, toolTip = "Imitates opening the report menu when holding <color=green>Y</color>."},
+                new Module { buttonText = $"Fake Broken Controller {Bracket("green", "X")}", enableMethod =() => GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/LeftHandTriggerCollider").GetComponent<Collider>().enabled = false, method = Safety.FakeBrokenController, disableMethod =() => GetObject("Player Objects/Player VR Controller/GorillaPlayer/TurnParent/LeftHandTriggerCollider").GetComponent<Collider>().enabled = true, toolTip = "Makes you look like your left controller is broken, hold <color=green>X</color> to move your right hand with your left hand."},
+                new Module { buttonText = $"Fake Power Off {Bracket("green", "J")}", method = Safety.FakePowerOff, toolTip = "Imitates turning off your headset when holding down your <color=green>joystick</color>."},
+                new Module { buttonText = $"Fake Valve Tracking {Bracket("green", "J")}", enableMethod =() => TorsoPatch.VRRigLateUpdate += Safety.FakeValveTracking, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Safety.FakeValveTracking, toolTip = "Imitates what happens when your headset disconnects on a Valve Index when holding your <color=green>right joystick</color>."},
 
                 new Module { buttonText = "Disable Gamemode Buttons", enableMethod =() => Safety.SetGamemodeButtonActive(false), disableMethod =() => Safety.SetGamemodeButtonActive(), toolTip = "Disables the gamemode buttons."},
                 new Module { buttonText = "Support Page Spoof", method = Safety.SpoofSupportPage, toolTip = "Makes the support page appear as if you are on Oculus."},
@@ -625,25 +633,25 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Anti Predictions", enableMethod = Safety.AntiPredictions, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Prevents people from checking if your predictions are too high."},
 
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Disconnect</color><color=grey>]</color>", method = Safety.AntiReportDisconnect, toolTip = "Disconnects you from the room when anyone comes near your report button."},
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Reconnect</color><color=grey>]</color>", method = Safety.AntiReportReconnect, toolTip = "Disconnects and reconnects you from the room when anyone comes near your report button."},
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Join Random</color><color=grey>]</color>", method = Safety.AntiReportJoinRandom, toolTip = "Connects you to a random the room when anyone comes near your report button."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Disconnect")}", method = Safety.AntiReportDisconnect, toolTip = "Disconnects you from the room when anyone comes near your report button."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Reconnect")}", method = Safety.AntiReportReconnect, toolTip = "Disconnects and reconnects you from the room when anyone comes near your report button."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Join Random")}", method = Safety.AntiReportJoinRandom, toolTip = "Connects you to a random the room when anyone comes near your report button."},
 
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>", enableMethod = Safety.EnableAntiOculusReport, disableMethod = Safety.DisableAntiOculusReport, toolTip = "Disconnects you from the room when you get reported with the Oculus report menu."},
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiACReport = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiACReport = false, toolTip = "Disconnects you from the room when you get reported by the anti cheat."},
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Notify</color><color=grey>]</color>", method = Safety.AntiReportNotify, toolTip = "Tells you when people come near your report button, but doesn't do anything."},
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Overlay</color><color=grey>]</color>", method = Safety.AntiReportOverlay, toolTip = "Shows you an overlay when people come near your report button, but doesn't do anything."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Oculus")}", enableMethod = Safety.EnableAntiOculusReport, disableMethod = Safety.DisableAntiOculusReport, toolTip = "Disconnects you from the room when you get reported with the Oculus report menu."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Anti Cheat")}", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiACReport = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiACReport = false, toolTip = "Disconnects you from the room when you get reported by the anti cheat."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Notify")}", method = Safety.AntiReportNotify, toolTip = "Tells you when people come near your report button, but doesn't do anything."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Overlay")}", method = Safety.AntiReportOverlay, toolTip = "Shows you an overlay when people come near your report button, but doesn't do anything."},
 
-                new Module { buttonText = "Show Anti Cheat Reports <color=grey>[</color><color=green>Self</color><color=grey>]</color>", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatSelf = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatSelf = false, toolTip = "Gives you a notification every time you have been reported by the anti cheat."},
-                new Module { buttonText = "Show Anti Cheat Reports <color=grey>[</color><color=green>All</color><color=grey>]</color>", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatAll = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatAll = false, toolTip = "Gives you a notification every time anyone has been reported by the anti cheat."},
+                new Module { buttonText = $"Show Anti Cheat Reports {Bracket("green", "Self")}", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatSelf = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatSelf = false, toolTip = "Gives you a notification every time you have been reported by the anti cheat."},
+                new Module { buttonText = $"Show Anti Cheat Reports {Bracket("green", "All")}", enableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatAll = true, disableMethod =() => AntiCheatPatches.SendReportPatch.AntiCheatAll = false, toolTip = "Gives you a notification every time anyone has been reported by the anti cheat."},
 
                 new Module { buttonText = "Change Identity", method = Safety.ChangeIdentity, isTogglable = false, toolTip = "Changes your name and color to something a new player would have."},
-                new Module { buttonText = "Change Identity <color=grey>[</color><color=green>Normal</color><color=grey>]</color>", method = Safety.ChangeIdentityRegular, isTogglable = false, toolTip = "Changes your name and color to something a regular player would have."},
-                new Module { buttonText = "Change Identity <color=grey>[</color><color=green>Custom</color><color=grey>]</color>", method = Safety.ChangeIdentityCustom, isTogglable = false, toolTip = "Changes your name and color to whatever you desire."},
+                new Module { buttonText = $"Change Identity {Bracket("green", "Normal")}", method = Safety.ChangeIdentityRegular, isTogglable = false, toolTip = "Changes your name and color to something a regular player would have."},
+                new Module { buttonText = $"Change Identity {Bracket("green", "Custom")}", method = Safety.ChangeIdentityCustom, isTogglable = false, toolTip = "Changes your name and color to whatever you desire."},
 
                 new Module { buttonText = "Change Identity on Disconnect", method =() => Safety.ChangeIdentityOnDisconnect(Safety.ChangeIdentity), toolTip = "When you leave, your name and color will be set to something a new player would have."},
-                new Module { buttonText = "Change Identity on Disconnect <color=grey>[</color><color=green>Normal</color><color=grey>]</color>", method =() => Safety.ChangeIdentityOnDisconnect(Safety.ChangeIdentityRegular), toolTip = "When you leave, your name and color will be set to something a regular player would have."},
-                new Module { buttonText = "Change Identity on Disconnect <color=grey>[</color><color=green>Child</color><color=grey>]</color>", method =() => Safety.ChangeIdentityOnDisconnect(Safety.ChangeIdentityCustom), toolTip = "When you leave, your name and color will be set to whatever you desire."},
+                new Module { buttonText = $"Change Identity on Disconnect {Bracket("green", "Normal")}", method =() => Safety.ChangeIdentityOnDisconnect(Safety.ChangeIdentityRegular), toolTip = "When you leave, your name and color will be set to something a regular player would have."},
+                new Module { buttonText = $"Change Identity on Disconnect {Bracket("green", "Child")}", method =() => Safety.ChangeIdentityOnDisconnect(Safety.ChangeIdentityCustom), toolTip = "When you leave, your name and color will be set to whatever you desire."},
 
                 new Module { buttonText = "FPS Spoof", enableMethod =() => GTPlayerStatsPatch.SpoofFPS = true, disableMethod =() => GTPlayerStatsPatch.SpoofFPS = false, toolTip = "Makes your FPS appear different for other players."},
                 new Module { buttonText = "Target FPS Spoof", enableMethod =() => GTPlayerStatsPatch.SpoofTargetFPS = true, disableMethod =() => GTPlayerStatsPatch.SpoofTargetFPS = false, toolTip = "Makes your FPS appear different for other players."},
@@ -660,47 +668,47 @@ namespace Qubit.Modules
             {
                 new Module { buttonText = "Exit Movement Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { buttonText = "Platforms", overlapText = "Platforms <color=grey>[</color><color=green>G</color><color=grey>]</color>", postMethod =() => Movement.Platforms(), toolTip = "Spawns platforms on your hands when holding <color=green>grip</color>."},
-                new Module { buttonText = "Trigger Platforms", overlapText = "Trigger Platforms <color=grey>[</color><color=green>T</color><color=grey>]</color>", postMethod =() => Movement.Platforms(leftTrigger > 0.5f, rightTrigger > 0.5f), toolTip = "Spawns platforms on your hands when holding <color=green>trigger</color>."},
-                new Module { buttonText = "Frozone", overlapText = "Frozone <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.Frozone, toolTip = "Spawns slippery blocks under your hands using <color=green>grip</color>."},
-                new Module { buttonText = "Platform Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.PlatformSpam, toolTip = "Spawns legacy platforms rapidly at your hand for those who have networked platforms."},
+                new Module { buttonText = "Platforms", overlapText = $"Platforms {Bracket("green", "G")}", postMethod =() => Movement.Platforms(), toolTip = "Spawns platforms on your hands when holding <color=green>grip</color>."},
+                new Module { buttonText = "Trigger Platforms", overlapText = $"Trigger Platforms {Bracket("green", "T")}", postMethod =() => Movement.Platforms(leftTrigger > 0.5f, rightTrigger > 0.5f), toolTip = "Spawns platforms on your hands when holding <color=green>trigger</color>."},
+                new Module { buttonText = "Frozone", overlapText = $"Frozone {Bracket("green", "G")}", method = Movement.Frozone, toolTip = "Spawns slippery blocks under your hands using <color=green>grip</color>."},
+                new Module { buttonText = $"Platform Spam {Bracket("green", "G")}", method = Movement.PlatformSpam, toolTip = "Spawns legacy platforms rapidly at your hand for those who have networked platforms."},
                 new Module { buttonText = "Platform Gun", method = Movement.PlatformGun, toolTip = "Spawns legacy platforms rapidly wherever your hand desires for those who have networked platforms."},
 
-                new Module { buttonText = "Fly <color=grey>[</color><color=green>A</color><color=grey>]</color>", aliases = new[] { "Super Monke" }, method = Movement.Fly, toolTip = "Sends your character forwards when holding <color=green>A</color>."},
-                new Module { buttonText = "Trigger Fly <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Movement.TriggerFly, toolTip = "Sends your character forwards when holding <color=green>trigger</color>."},
-                new Module { buttonText = "Noclip Fly <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.NoclipFly, toolTip = "Sends your character forwards and makes you go through objects when holding <color=green>A</color>."},
-                new Module { buttonText = "Joystick Fly <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Movement.JoystickFly, toolTip = "Sends your character in whatever direction you are pointing your <color=green>joystick</color> in."},
-                new Module { buttonText = "Bark Fly <color=grey>[</color><color=green>J</color><color=grey>]</color>", postMethod = Movement.BarkFly, toolTip = "Acts like the fly that Bark has. Credits to KyleTheScientist."},
-                new Module { buttonText = "Hand Fly <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.HandFly, toolTip = "Sends your character in your hand's direction when holding <color=green>A</color>."},
+                new Module { buttonText = $"Fly {Bracket("green", "A")}", aliases = new[] { "Super Monke" }, method = Movement.Fly, toolTip = "Sends your character forwards when holding <color=green>A</color>."},
+                new Module { buttonText = $"Trigger Fly {Bracket("green", "T")}", method = Movement.TriggerFly, toolTip = "Sends your character forwards when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Noclip Fly {Bracket("green", "A")}", method = Movement.NoclipFly, toolTip = "Sends your character forwards and makes you go through objects when holding <color=green>A</color>."},
+                new Module { buttonText = $"Joystick Fly {Bracket("green", "J")}", method = Movement.JoystickFly, toolTip = "Sends your character in whatever direction you are pointing your <color=green>joystick</color> in."},
+                new Module { buttonText = $"Bark Fly {Bracket("green", "J")}", postMethod = Movement.BarkFly, toolTip = "Acts like the fly that Bark has. Credits to KyleTheScientist."},
+                new Module { buttonText = $"Hand Fly {Bracket("green", "A")}", method = Movement.HandFly, toolTip = "Sends your character in your hand's direction when holding <color=green>A</color>."},
                 new Module { buttonText = "Fly Towards Gun", method = Movement.FlyTowardsGun, toolTip = "Sends your character towards whoever your hand desires."},
-                new Module { buttonText = "Slingshot Fly <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.SlingshotFly, toolTip = "Sends your character forwards, in a more elastic manner, when holding <color=green>A</color>."},
-                new Module { buttonText = "Zero Gravity Slingshot Fly <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.ZeroGravitySlingshotFly, toolTip = "Sends your character forwards, in a more elastic manner without gravity, when holding <color=green>A</color>."},
-                new Module { buttonText = "Slingshot Bark Fly <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Movement.VelocityBarkFly, toolTip = "Acts like the fly that Bark has, mixed with slingshot fly. Credits to KyleTheScientist."},
+                new Module { buttonText = $"Slingshot Fly {Bracket("green", "A")}", method = Movement.SlingshotFly, toolTip = "Sends your character forwards, in a more elastic manner, when holding <color=green>A</color>."},
+                new Module { buttonText = $"Zero Gravity Slingshot Fly {Bracket("green", "A")}", method = Movement.ZeroGravitySlingshotFly, toolTip = "Sends your character forwards, in a more elastic manner without gravity, when holding <color=green>A</color>."},
+                new Module { buttonText = $"Slingshot Bark Fly {Bracket("green", "J")}", method = Movement.VelocityBarkFly, toolTip = "Acts like the fly that Bark has, mixed with slingshot fly. Credits to KyleTheScientist."},
                 new Module { buttonText = "WASD Fly", aliases = new[] { "PC Fly" }, enableMethod = Movement.EnableWASDFly, method = Movement.WASDFly, disableMethod =() => References.Player.GetControllerTransform(false).parent.rotation = Quaternion.Euler(0, 0, 0), toolTip = "Moves your rig with <color=green>WASD</color>."},
 
-                new Module { buttonText = "Dash <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.Dash, toolTip = "Flings your character forwards when pressing <color=green>A</color>."},
-                new Module { buttonText = "Reverse Velocity <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.ReverseVelocity, toolTip = "Reverses your current velocity when you press <color=green>A</color>."},
+                new Module { buttonText = $"Dash {Bracket("green", "A")}", method = Movement.Dash, toolTip = "Flings your character forwards when pressing <color=green>A</color>."},
+                new Module { buttonText = $"Reverse Velocity {Bracket("green", "A")}", method = Movement.ReverseVelocity, toolTip = "Reverses your current velocity when you press <color=green>A</color>."},
                 new Module { buttonText = "Bird Fly", method = Movement.BirdFly, toolTip = "Makes you fly like a bird when you flap your wings."},
                 new Module { buttonText = "Iron Man", aliases = new[] { "Iron Monke" }, method = Movement.IronMan, toolTip = "Turns you into iron man, rotate your hands around to change direction."},
                 new Module { buttonText = "Spider Man", aliases = new[] { "Spider Monke" }, method = Movement.SpiderMan, disableMethod = Movement.DisableSpiderMan, toolTip = "Turns you into spider man, use your <color=green>grips</color> to shoot webs."},
                 new Module { buttonText = "Grappling Hooks", method = Movement.GrapplingHooks, disableMethod = Movement.DisableSpiderMan, toolTip = "Gives you grappling hooks, use your <color=green>grips</color> to shoot them."},
                 new Module { buttonText = "Portal Gun", aliases = new[] { "Portals" }, method = Movement.PortalGun, disableMethod = Movement.DisablePortalGun, toolTip = "Gives you a gun to spawn portals that can be seen and walked through."},
 
-                new Module { buttonText = "Drive <color=grey>[</color><color=green>J</color><color=grey>]</color>", aliases = new[] { "Car Monke" }, method = Movement.Drive, toolTip = "Lets you drive around in your invisible car. Use the <color=green>joystick</color> to move."},
-                new Module { buttonText = "Hard Drive <color=grey>[</color><color=green>J</color><color=grey>]</color>", overlapText = "Sticky Drive <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Movement.HardDrive, toolTip = "Similar to drive, but locks you to the ground."},
+                new Module { buttonText = $"Drive {Bracket("green", "J")}", aliases = new[] { "Car Monke" }, method = Movement.Drive, toolTip = "Lets you drive around in your invisible car. Use the <color=green>joystick</color> to move."},
+                new Module { buttonText = $"Hard Drive {Bracket("green", "J")}", overlapText = $"Sticky Drive {Bracket("green", "J")}", method = Movement.HardDrive, toolTip = "Similar to drive, but locks you to the ground."},
 
-                new Module { buttonText = "Noclip <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Movement.Noclip, toolTip = "Makes you go through objects when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Noclip {Bracket("green", "T")}", method = Movement.Noclip, toolTip = "Makes you go through objects when holding <color=green>trigger</color>."},
                 new Module { buttonText = "Up And Down", method = Movement.UpAndDown, toolTip = "Makes you go up when holding your <color=green>trigger</color>, and down when holding your <color=green>grip</color>."},
                 new Module { buttonText = "Left And Right", method = Movement.LeftAndRight, toolTip = "Makes you go left when holding your <color=green>trigger</color>, and right when holding your <color=green>grip</color>."},
                 new Module { buttonText = "Forwards And Backwards", method = Movement.ForwardsAndBackwards, toolTip = "Makes you go forwards when holding your <color=green>trigger</color>, and backwards when holding your <color=green>grip</color>."},
 
                 new Module { buttonText = "Size Changer", method = Movement.SizeChanger, enableMethod = Movement.DisableSizeChanger, disableMethod = Movement.DisableSizeChanger, toolTip = "Increase your size by holding <color=green>trigger</color>, and decrease your size by holding <color=green>grip</color>."},
 
-                new Module { buttonText = "Auto Walk <color=grey>[</color><color=green>J</color><color=grey>]</color>", aliases = new[] { "Ghost Walk", "Walk Simulator" }, method = Movement.AutoWalk, toolTip = "Makes your character automatically walk when using the <color=green>joystick</color>."},
-                new Module { buttonText = "Auto Funny Run <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.AutoFunnyRun, toolTip = "Makes your character automatically funny run when holding <color=green>grip</color>."},
-                new Module { buttonText = "Auto Pinch Climb <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.AutoPinchClimb, toolTip = "Makes your character automatically pinch climb when holding <color=green>grip</color>."},
-                new Module { buttonText = "Auto Elevator Climb <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.AutoElevatorClimb, toolTip = "Makes your character automatically elevator climb when holding <color=green>grip</color>."},
-                new Module { buttonText = "Auto Branch <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.AutoBranch, toolTip = "Makes your character automatically branch when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Auto Walk {Bracket("green", "J")}", aliases = new[] { "Ghost Walk", "Walk Simulator" }, method = Movement.AutoWalk, toolTip = "Makes your character automatically walk when using the <color=green>joystick</color>."},
+                new Module { buttonText = $"Auto Funny Run {Bracket("green", "G")}", method = Movement.AutoFunnyRun, toolTip = "Makes your character automatically funny run when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Auto Pinch Climb {Bracket("green", "G")}", method = Movement.AutoPinchClimb, toolTip = "Makes your character automatically pinch climb when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Auto Elevator Climb {Bracket("green", "G")}", method = Movement.AutoElevatorClimb, toolTip = "Makes your character automatically elevator climb when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Auto Branch {Bracket("green", "G")}", method = Movement.AutoBranch, toolTip = "Makes your character automatically branch when holding <color=green>grip</color>."},
 
                 new Module { buttonText = "Force Tag Freeze", method = Movement.ForceTagFreeze, disableMethod = Movement.NoTagFreeze, toolTip = "Forces tag freeze on your character."},
                 new Module { buttonText = "No Tag Freeze", method = Movement.NoTagFreeze, toolTip = "Disables tag freeze on your character."},
@@ -710,11 +718,11 @@ namespace Qubit.Modules
                 new Module { buttonText = "High Gravity", aliases = new[] { "Mars Gravity" }, postMethod = Movement.HighGravity, toolTip = "Makes gravity higher on your character."},
                 new Module { buttonText = "Reverse Gravity", aliases = new[] { "Flip Gravity" }, enableMethod = Movement.ReverseGravity, disableMethod = Movement.UnflipCharacter, toolTip = "Reverses gravity on your character."},
 
-                new Module { buttonText = "Rewind <color=grey>[</color><color=green>T</color><color=grey>]</color>", aliases = new[] { "Reverse" }, method = Movement.Rewind, disableMethod = Movement.ClearRewind, toolTip = "Brings you back in time when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Rewind {Bracket("green", "T")}", aliases = new[] { "Reverse" }, method = Movement.Rewind, disableMethod = Movement.ClearRewind, toolTip = "Brings you back in time when holding <color=green>trigger</color>."},
                 new Module { buttonText = "Macros", method =() => CurrentCategoryName = "Macros", isTogglable = false, toolTip = "Opens a category to manage your macros."},
 
-                new Module { buttonText = "Wall Walk <color=grey>[</color><color=green>G</color><color=grey>]</color>", postMethod = Movement.WallWalk, toolTip = "Makes you get brought towards any wall you touch when holding <color=green>grip</color>."},
-                new Module { buttonText = "Legitimate Wall Walk <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.LegitimateWallWalk, toolTip = "Makes you get brought towards any wall you touch when holding <color=green>grip</color>, but less noticable."},
+                new Module { buttonText = $"Wall Walk {Bracket("green", "G")}", postMethod = Movement.WallWalk, toolTip = "Makes you get brought towards any wall you touch when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Legitimate Wall Walk {Bracket("green", "G")}", method = Movement.LegitimateWallWalk, toolTip = "Makes you get brought towards any wall you touch when holding <color=green>grip</color>, but less noticable."},
                 new Module { buttonText = "Spider Walk", aliases = new[] { "Spider Monke", "Spider Monkey" }, method = Movement.SpiderWalk, disableMethod = Movement.UnflipCharacter, toolTip = "Makes your gravity and character towards any wall you touch. This may cause motion sickness."},
 
                 new Module { buttonText = "Teleport to Random", method = Movement.TeleportToRandom, isTogglable = false, toolTip = "Teleports you to a random player."},
@@ -722,17 +730,17 @@ namespace Qubit.Modules
                 new Module { buttonText = "Teleport Gun", method = Movement.TeleportGun, toolTip = "Teleports to wherever your hand desires."},
                 new Module { buttonText = "Airstrike", method = Movement.Airstrike, toolTip = "Teleports to wherever your hand desires, except farther up, then launches you back down."},
 
-                new Module { buttonText = "Checkpoint <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.Checkpoint, disableMethod = Movement.DisableCheckpoint, toolTip = "Place a checkpoint with <color=green>grip</color> and teleport to it with <color=green>A</color>."},
-                new Module { buttonText = "Advanced Checkpoints <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.AdvancedCheckpoints, disableMethod = Movement.DisableAdvancedCheckpoints, toolTip = "Place checkpoints with <color=green>grip</color>, use your joystick to swap between checkpoints, and teleport to your selected checkpoint with <color=green>A</color>."},
-                new Module { buttonText = "Ender Pearl <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.EnderPearl, disableMethod = Movement.DestroyEnderPearl, toolTip = "Gives you a throwable ender pearl when holding <color=green>grip</color>."},
-                new Module { buttonText = "C4 <color=grey>[</color><color=green>G</color><color=grey>]</color>", aliases = new[] { "Bomb" }, method = Movement.Bomb, disableMethod = Movement.DisableBomb, toolTip = "Place a C4 with <color=green>grip</color> and detonate it with <color=green>A</color>."},
+                new Module { buttonText = $"Checkpoint {Bracket("green", "G")}", method = Movement.Checkpoint, disableMethod = Movement.DisableCheckpoint, toolTip = "Place a checkpoint with <color=green>grip</color> and teleport to it with <color=green>A</color>."},
+                new Module { buttonText = $"Advanced Checkpoints {Bracket("green", "G")}", method = Movement.AdvancedCheckpoints, disableMethod = Movement.DisableAdvancedCheckpoints, toolTip = "Place checkpoints with <color=green>grip</color>, use your joystick to swap between checkpoints, and teleport to your selected checkpoint with <color=green>A</color>."},
+                new Module { buttonText = $"Ender Pearl {Bracket("green", "G")}", method = Movement.EnderPearl, disableMethod = Movement.DestroyEnderPearl, toolTip = "Gives you a throwable ender pearl when holding <color=green>grip</color>."},
+                new Module { buttonText = $"C4 {Bracket("green", "G")}", aliases = new[] { "Bomb" }, method = Movement.Bomb, disableMethod = Movement.DisableBomb, toolTip = "Place a C4 with <color=green>grip</color> and detonate it with <color=green>A</color>."},
 
                 new Module { buttonText = "Punch Mod", method = Movement.PunchMod, toolTip = "Lets people punch you across the map."},
                 new Module { buttonText = "Telekinesis", method = Movement.Telekinesis, toolTip = "Lets people control you with nothing but the power of their finger."},
                 new Module { buttonText = "Safety Bubble", method = Movement.SafetyBubble, toolTip = "Moves you away from players if they get too close to you."},
                 new Module { buttonText = "Solid Players", aliases = new[] { "Solid Monke" }, method = Movement.SolidPlayers, disableMethod = Movement.DisableSolidPlayers, toolTip = "Lets you walk on top of other players."},
-                new Module { buttonText = "Pull Mod <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.PullMod, toolTip = "Pulls you more whenever you walk to simulate speed without modifying your velocity."},
-                new Module { buttonText = "Long Jump <color=grey>[</color><color=green>A</color><color=grey>]</color>", overlapText = "Playspace Abuse <color=grey>[</color><color=green>A</color><color=grey>]</color>", aliases = new[] { "Long Jump" }, method = Movement.PlayspaceAbuse, toolTip = "Makes you look like you're legitimately long jumping when holding <color=green>A</color>."},
+                new Module { buttonText = $"Pull Mod {Bracket("green", "G")}", method = Movement.PullMod, toolTip = "Pulls you more whenever you walk to simulate speed without modifying your velocity."},
+                new Module { buttonText = $"Long Jump {Bracket("green", "A")}", overlapText = $"Playspace Abuse {Bracket("green", "A")}", aliases = new[] { "Long Jump" }, method = Movement.PlayspaceAbuse, toolTip = "Makes you look like you're legitimately long jumping when holding <color=green>A</color>."},
                 new Module { buttonText = "Velocity Long Arms", overlapText = "Predictions", aliases = new[] { "Velocity Long Arms" }, enableMethod = Movement.CreateVelocityTrackers, method = Movement.VelocityLongArms, disableMethod = Movement.DestroyVelocityTrackers, toolTip = "Moves your arms farther depending on how fast you move them."},
 
                 new Module { buttonText = "Timer", enableMethod =() => TimerPatch.enabled = true, method = Movement.Timer, disableMethod =() => { TimerPatch.enabled = false; Time.timeScale = 1f; References.Player.debugMovement = false;  }, toolTip = "Speeds up or slows down the time of your game."},
@@ -770,14 +778,14 @@ namespace Qubit.Modules
                 new Module { buttonText = "Vertical Long Arms", method = Movement.VerticalLongArms, toolTip = "Gives you a version of long arms to help you vertically."},
                 new Module { buttonText = "Horizontal Long Arms", method = Movement.HorizontalLongArms, toolTip = "Gives you a version of long arms to help you horizontally."},
 
-                new Module { buttonText = "Extenders <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Movement.Extenders, enableMethod =() => Movement.extendingTime = 0f, disableMethod = Movement.DisableSteamLongArms, toolTip = "Steam long arms, but it slowly disables when holding the right trigger."},
+                new Module { buttonText = $"Extenders {Bracket("green", "J")}", method = Movement.Extenders, enableMethod =() => Movement.extendingTime = 0f, disableMethod = Movement.DisableSteamLongArms, toolTip = "Steam long arms, but it slowly disables when holding the right trigger."},
 
-                new Module { buttonText = "Flick Jump <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.FlickJump, toolTip = "Makes your hand go down really fast when holding <color=green>A</color>."},
+                new Module { buttonText = $"Flick Jump {Bracket("green", "A")}", method = Movement.FlickJump, toolTip = "Makes your hand go down really fast when holding <color=green>A</color>."},
 
                 new Module { buttonText = "Bunny Hop", aliases = new[] { "Bhop" }, method = Movement.BunnyHop, toolTip = "Makes you automatically jump when on the ground."},
                 new Module { buttonText = "Strafe", method = Movement.Strafe, toolTip = "Makes you strafe when in the air."},
                 new Module { buttonText = "Dynamic Strafe", method = Movement.DynamicStrafe, toolTip = "Makes you dynamically strafe when in the air."},
-                new Module { buttonText = "Ground Helper <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.GroundHelper, toolTip = "Helps you run on ground when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ground Helper {Bracket("green", "G")}", method = Movement.GroundHelper, toolTip = "Helps you run on ground when holding <color=green>grip</color>."},
 
                 new Module { buttonText = "Low FPS Movement", enableMethod = Movement.LowFPSMovement, disableMethod =() => References.Tagger._forceFramerateCheck = true, toolTip = "Simulates movement at low FPS by changing how your velocity is stored."},
 
@@ -789,20 +797,20 @@ namespace Qubit.Modules
                 new Module { buttonText = "Liquid Run Helper", enableMethod =() => Movement.LiquidRunHelper(true), disableMethod =() => Movement.LiquidRunHelper(false), toolTip = "Adds back the nostalgic water running to the game." },
                 new Module { buttonText = "Disable Air", overlapText = "Disable Wind Barriers", aliases = new[] { "Disable Air" }, enableMethod =() => { ForcePatches.enabled = true; GetObject("Environment Objects/LocalObjects_Prefab/Forest/Environment/Forest_ForceVolumes/").SetActive(false); GetObject("Environment Objects/LocalObjects_Prefab/ForestToHoverboard/TurnOnInForestAndHoverboard/ForestDome_CollisionOnly").SetActive(false); }, disableMethod =() => { ForcePatches.enabled = false; GetObject("Environment Objects/LocalObjects_Prefab/Forest/Environment/Forest_ForceVolumes/").SetActive(true); GetObject("Environment Objects/LocalObjects_Prefab/ForestToHoverboard/TurnOnInForestAndHoverboard/ForestDome_CollisionOnly").SetActive(true); }, toolTip = "Disables the wind barriers in every map." },
 
-                new Module { buttonText = "Ghost <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.Ghost, disableMethod = Movement.EnableRig, toolTip = "Keeps your rig still when holding <color=green>A</color>."},
-                new Module { buttonText = "Invisible <color=grey>[</color><color=green>B</color><color=grey>]</color>", method = Movement.Invisible, disableMethod = Movement.EnableRig, toolTip = "Makes you go invisible when holding <color=green>B</color>."},
+                new Module { buttonText = $"Ghost {Bracket("green", "A")}", method = Movement.Ghost, disableMethod = Movement.EnableRig, toolTip = "Keeps your rig still when holding <color=green>A</color>."},
+                new Module { buttonText = $"Invisible {Bracket("green", "B")}", method = Movement.Invisible, disableMethod = Movement.EnableRig, toolTip = "Makes you go invisible when holding <color=green>B</color>."},
 
                 new Module { buttonText = "Rig Gun", method = Movement.RigGun, toolTip = "Moves your rig to wherever your hand desires."},
-                new Module { buttonText = "Grab Rig <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.GrabRig, toolTip = "Lets you grab your rig when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Grab Rig {Bracket("green", "G")}", method = Movement.GrabRig, toolTip = "Lets you grab your rig when holding <color=green>grip</color>."},
 
                 new Module { buttonText = "Spin Head X", method =() => Movement.SpinHead("x"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the X axis."},
                 new Module { buttonText = "Spin Head Y", method =() => Movement.SpinHead("y"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the Y axis."},
                 new Module { buttonText = "Spin Head Z", method =() => Movement.SpinHead("z"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the Z axis."},
 
-                new Module { buttonText = "Spaz Rig <color=grey>[</color><color=green>A</color><color=grey>]</color>", enableMethod = Movement.EnableSpazRig, method = Movement.SpazRig, disableMethod = Movement.DisableSpazRig, toolTip = "Makes every part of your rig spaz out a little bit when holding <color=green>A</color>."},
+                new Module { buttonText = $"Spaz Rig {Bracket("green", "A")}", enableMethod = Movement.EnableSpazRig, method = Movement.SpazRig, disableMethod = Movement.DisableSpazRig, toolTip = "Makes every part of your rig spaz out a little bit when holding <color=green>A</color>."},
                 new Module { buttonText = "Spaz Full Body", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.VRRigLateUpdate_SpazBody, method =() => ghostException = true, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.VRRigLateUpdate_SpazBody; ghostException = false; }, toolTip = "Makes your body spaz in a bunch of different directions."},
-                new Module { buttonText = "Spaz Rig Hands <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.SpazHands, toolTip = "Makes your rig's hands spaz out everywhere when holding <color=green>A</color>."},
-                new Module { buttonText = "Spaz Hands <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.SpazRealHands, toolTip = "Makes your hands spaz out everywhere when holding <color=green>A</color>."},
+                new Module { buttonText = $"Spaz Rig Hands {Bracket("green", "A")}", method = Movement.SpazHands, toolTip = "Makes your rig's hands spaz out everywhere when holding <color=green>A</color>."},
+                new Module { buttonText = $"Spaz Hands {Bracket("green", "A")}", method = Movement.SpazRealHands, toolTip = "Makes your hands spaz out everywhere when holding <color=green>A</color>."},
                 new Module { buttonText = "Random Spaz Head Position", enableMethod = Movement.EnableSpazHead, method = Movement.RandomSpazHeadPosition, disableMethod = Movement.FixHeadPosition, toolTip = "Makes your head position spaz out for 0 to 1 seconds every 1 to 4 seconds."},
                 new Module { buttonText = "Random Spaz Head", overlapText = "Random Spaz Head Rotation", method = Movement.RandomSpazHead, disableMethod = Fun.FixHead, toolTip = "Makes your head rotation spaz out for 0 to 1 seconds every 1 to 4 seconds."},
                 new Module { buttonText = "Spaz Head Position", enableMethod = Movement.EnableSpazHead, method = Movement.SpazHeadPosition, disableMethod = Movement.FixHeadPosition, toolTip = "Makes your head position spaz out."},
@@ -813,7 +821,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Laggy Rig", method = Movement.LaggyRig, disableMethod = Movement.EnableRig, toolTip = "Makes your rig laggy."},
                 new Module { buttonText = "Smooth Rig", method =() => PhotonNetwork.SerializationRate = 30, disableMethod =() => PhotonNetwork.SerializationRate = 10, toolTip = "Makes your rig really smooth."},
-                new Module { buttonText = "Update Rig <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.UpdateRig, disableMethod = Movement.EnableRig, toolTip = "Freezes your rig in place. Whenever you click <color=green>A</color>, your rig will update."},
+                new Module { buttonText = $"Update Rig {Bracket("green", "A")}", method = Movement.UpdateRig, disableMethod = Movement.EnableRig, toolTip = "Freezes your rig in place. Whenever you click <color=green>A</color>, your rig will update."},
 
                 new Module { buttonText = "Freeze Rig Limbs", method = Movement.FreezeRigLimbs, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your hands and head freeze on your rig, but not your body."},
                 new Module { buttonText = "Freeze Rig Body", method = Movement.FreezeRigBody, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your body freeze on your rig, but not your hands and head."},
@@ -828,7 +836,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Control Rig Rotation", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.VRRigLateUpdate_Control, disableMethod =() => TorsoPatch.VRRigLateUpdate -= Movement.VRRigLateUpdate_Control, toolTip = "Control your rig rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
 
                 new Module { buttonText = "Control Body Rotation", postMethod = Movement.ControlBodyRotation, toolTip = "Control your body rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
-                new Module { buttonText = "Flip <color=grey>[</color><color=green>A</color><color=grey>]</color> <color=grey>[</color><color=green>B</color><color=grey>]</color>", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.Flip, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
+                new Module { buttonText = $"Flip {Bracket("green", "A")} {Bracket("green", "B")}", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.Flip, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
                 new Module { buttonText = "Spider Crawl", postMethod = Movement.SpiderCrawl, toolTip = "Makes you look like a spider."},
                 new Module { buttonText = "Upwards Body", postMethod = Movement.UpwardsBody, toolTip = "Makes your body point upwards."},
 
@@ -837,16 +845,16 @@ namespace Qubit.Modules
                 new Module { buttonText = "Reverse Rig Body", method =() => Movement.SetBodyPatch(true, 2), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Flips your body around backwards, but not your head."},
                 new Module { buttonText = "Rec Room Body", method = Movement.RecRoomBody, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Makes your rig like how the Rec Room bodies are."},
                 new Module { buttonText = "Dinnerbone", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.VRRigLateUpdate_Dinnerbone, method =() => ghostException = true, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.VRRigLateUpdate_Dinnerbone; ghostException = false;  }, toolTip = "Flips you upside down, inspired by the easter egg in Minecraft."},
-                new Module { buttonText = "Freeze Body Rotation <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Movement.FreezeBodyRotation, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Freezes your body rotation in place, but not your head, when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Freeze Body Rotation {Bracket("green", "G")}", method = Movement.FreezeBodyRotation, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Freezes your body rotation in place, but not your head, when holding <color=green>grip</color>."},
 
-                new Module { buttonText = "Auto Dance <color=grey>[</color><color=green>A</color><color=grey>]</color>", aliases = new[] { "Emote" }, method = Movement.AutoDance, toolTip = "Makes you dance when holding <color=green>A</color>."},
-                new Module { buttonText = "Auto Griddy <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.AutoGriddy, toolTip = "Makes you griddy when holding <color=green>A</color>."},
-                new Module { buttonText = "Auto T Pose <color=grey>[</color><color=green>A</color><color=grey>]</color>", overlapText = "T Pose <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.AutoTPose, toolTip = "Makes you t pose when holding <color=green>A</color>. Good for fly trolling."},
-                new Module { buttonText = "Helicopter <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.Helicopter, toolTip = "Turns you into a helicopter when holding <color=green>A</color>."},
-                new Module { buttonText = "Beyblade <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.Beyblade, toolTip = "Turns you into a beyblade when holding <color=green>A</color>."},
-                new Module { buttonText = "Still Beyblade <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.StillBeyblade, disableMethod =() => Movement.stillBeybladeStartPos = Vector3.zero, toolTip = "Turns you into a beyblade when holding <color=green>A</color>. Doesn't move you."},
+                new Module { buttonText = $"Auto Dance {Bracket("green", "A")}", aliases = new[] { "Emote" }, method = Movement.AutoDance, toolTip = "Makes you dance when holding <color=green>A</color>."},
+                new Module { buttonText = $"Auto Griddy {Bracket("green", "A")}", method = Movement.AutoGriddy, toolTip = "Makes you griddy when holding <color=green>A</color>."},
+                new Module { buttonText = $"Auto T Pose {Bracket("green", "A")}", overlapText = $"T Pose {Bracket("green", "A")}", method = Movement.AutoTPose, toolTip = "Makes you t pose when holding <color=green>A</color>. Good for fly trolling."},
+                new Module { buttonText = $"Helicopter {Bracket("green", "A")}", method = Movement.Helicopter, toolTip = "Turns you into a helicopter when holding <color=green>A</color>."},
+                new Module { buttonText = $"Beyblade {Bracket("green", "A")}", method = Movement.Beyblade, toolTip = "Turns you into a beyblade when holding <color=green>A</color>."},
+                new Module { buttonText = $"Still Beyblade {Bracket("green", "A")}", method = Movement.StillBeyblade, disableMethod =() => Movement.stillBeybladeStartPos = Vector3.zero, toolTip = "Turns you into a beyblade when holding <color=green>A</color>. Doesn't move you."},
                 new Module { buttonText = "Spin Bot", enableMethod =() => TorsoPatch.VRRigLateUpdate += Movement.TorsoPatch_VRRigLateUpdate, method =() => ghostException = true, disableMethod =() => { TorsoPatch.VRRigLateUpdate -= Movement.TorsoPatch_VRRigLateUpdate; ghostException = false; }, toolTip = "Makes your body spin around, but not your head."},
-                new Module { buttonText = "Fan <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Movement.Fan, toolTip = "Turns you into a fan when holding <color=green>A</color>."},
+                new Module { buttonText = $"Fan {Bracket("green", "A")}", method = Movement.Fan, toolTip = "Turns you into a fan when holding <color=green>A</color>."},
                 new Module { buttonText = "Ghost Animations", method = Movement.GhostAnimations, disableMethod = Movement.DisableGhostAnimations, toolTip = "Makes you look like a ghost, making your movement snappy and slow."},
                 new Module { buttonText = "Minecraft Animations", method = Movement.MinecraftAnimations, disableMethod = Movement.EnableRig, toolTip = "Puts your hands down, and makes you walk when holding <color=green>A</color>. You can also point with <color=green>B</color>."},
 
@@ -893,7 +901,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Tag All", method = Advantages.TagAll, disableMethod = Movement.EnableRig, toolTip = "Attempts to tag everyone in the the room."},
 
                 new Module { buttonText = "Tag Aura", aliases = new[] { "Tag Range" }, method = Advantages.TagAura, toolTip = "Moves your hand into nearby players when tagged."},
-                new Module { buttonText = "Grip Tag Aura <color=grey>[</color><color=green>G</color><color=grey>]</color>", aliases = new[] { "Grip Tag Range" }, method = Advantages.GripTagAura, toolTip = "Moves your hand into nearby players when tagged and when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Grip Tag Aura {Bracket("green", "G")}", aliases = new[] { "Grip Tag Range" }, method = Advantages.GripTagAura, toolTip = "Moves your hand into nearby players when tagged and when holding <color=green>grip</color>."},
 
                 new Module { buttonText = "Tag Aura Gun", method = Advantages.TagAuraGun, toolTip = "Gives a player tag aura."},
                 new Module { buttonText = "Tag Aura All", method = Advantages.TagAuraAll, toolTip = "Gives all players tag aura."},
@@ -930,10 +938,10 @@ namespace Qubit.Modules
             {
                 new Module { buttonText = "Exit Visual Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { buttonText = "Morning Time", method =() => BetterDayNightManager.instance.SetTimeOfDay(1), toolTip = "Sets your time of day to morning."},
-                new Module { buttonText = "Day Time", method =() => BetterDayNightManager.instance.SetTimeOfDay(3), toolTip = "Sets your time of day to daytime."},
-                new Module { buttonText = "Evening Time", method =() => BetterDayNightManager.instance.SetTimeOfDay(7), toolTip = "Sets your time of day to evening."},
-                new Module { buttonText = "Night Time", method =() => BetterDayNightManager.instance.SetTimeOfDay(0), toolTip = "Sets your time of day to night."},
+                new Module { buttonText = "Morning Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(1), toolTip = "Sets your time of day to morning."},
+                new Module { buttonText = "Day Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(3), toolTip = "Sets your time of day to daytime."},
+                new Module { buttonText = "Evening Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(7), toolTip = "Sets your time of day to evening."},
+                new Module { buttonText = "Night Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(0), toolTip = "Sets your time of day to night."},
                 new Module { buttonText = "Fullbright", method =() => Visuals.SetFullbrightStatus(true), disableMethod =() => Visuals.SetFullbrightStatus(false), toolTip = "Disables the dynamic lighting in maps that use it."},
 
                 new Module { buttonText = "Remove Blindfold", method = Visuals.RemoveBlindfold, toolTip = "Disables the blindfold in the prop hunt map."},
@@ -967,7 +975,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Playtime Overlay", method =() => { Notifications.information["Playtime"] = Visuals.OverallPlaytime; Visuals.UpdatePlaytime(); }, disableMethod =() => Notifications.information.Remove("Playtime"), toolTip = "Displays your play time from when the mod was enabled on your screen.", legal = true},
                 new Module { buttonText = "Room Information Overlay", overlapText = "Important Room Info Overlay", method =() => { if (Networking.InRoom) { Notifications.information["Room Code"] = PhotonNetwork.CurrentRoom.Name; Notifications.information["Players"] = PhotonNetwork.PlayerList.Length.ToString(); } else { Notifications.information.Remove("Room Code"); Notifications.information.Remove("Players"); } }, disableMethod =() => { Notifications.information.Remove("Room Code"); Notifications.information.Remove("Players"); }, toolTip = "Displays basic information about the room on your screen.", legal = true},
                 new Module { buttonText = "Extra Room Info Overlay", method =() => Visuals.ExtraRoomInfo(), disableMethod =() => Visuals.ExtraRoomInfo(false), toolTip = "Displays extra information about the room on your screen."},
-                new Module { buttonText = "Networking Overlay", method =() => { Notifications.information["Ping"] = PhotonNetwork.GetPing().ToString(); Notifications.information["Region"] = References.Network.regionNames[References.Network.currentRegionIndex].ToUpper(); }, disableMethod =() => { Notifications.information.Remove("Ping"); Notifications.information.Remove("Region"); }, toolTip = "Displays information about networking on your screen.", legal = true},
+                new Module { buttonText = "Networking Overlay", method =() => { Notifications.information["Ping"] = PhotonNetwork.GetPing().ToString(); Notifications.information["Region"] = ManagerRegistry.NetworkSystem.regionNames[ManagerRegistry.NetworkSystem.currentRegionIndex].ToUpper(); }, disableMethod =() => { Notifications.information.Remove("Ping"); Notifications.information.Remove("Region"); }, toolTip = "Displays information about networking on your screen.", legal = true},
                 new Module { buttonText = "Clipboard Overlay", method =() => Notifications.information["Clip"] = GUIUtility.systemCopyBuffer.Length > 20 ? GUIUtility.systemCopyBuffer[..20] : GUIUtility.systemCopyBuffer, disableMethod =() => Notifications.information.Remove("Clip"), toolTip = "Displays your current clipboard on your screen.", legal = true},
                 new Module { buttonText = "Velocity Overlay", method =() => Notifications.information["Velocity"] = $"{References.Rigidbody.linearVelocity.magnitude:F1}m/s", disableMethod =() => Notifications.information.Remove("Velocity"), toolTip = "Displays your velocity on your screen.", legal = true},
                 new Module { buttonText = "Nearby Overlay", method = Visuals.NearbyTaggerOverlay, disableMethod =() => Notifications.information.Remove("Nearby"), toolTip = "Displays the distance to the nearest tagger/target on your screen."},
@@ -1021,7 +1029,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Remove Leaves", enableMethod = Visuals.EnableRemoveLeaves, disableMethod = Visuals.DisableRemoveLeaves, toolTip = "Removes leaves on trees, good for branching."},
                 new Module { buttonText = "Streamer Remove Leaves", enableMethod = Visuals.EnableStreamerRemoveLeaves, disableMethod = Visuals.DisableStreamerRemoveLeaves, toolTip = "Removes leaves on trees in VR, but not on the camera. Good for streaming."},
                 new Module { buttonText = "Remove Cosmetics", enableMethod = Visuals.DisableCosmetics, disableMethod = Visuals.EnableCosmetics, toolTip = "Locally toggles off your cosmetics, so you can wear sight-blocking cosmetics such as the eyepatch."},
-                new Module { buttonText = "X-Ray <color=grey>[</color><color=green>T</color><color=grey>]</color>", aliases = new[] { "See Through" }, method = Visuals.Xray, toolTip = "Lets you see through objects when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"X-Ray {Bracket("green", "T")}", aliases = new[] { "See Through" }, method = Visuals.Xray, toolTip = "Lets you see through objects when holding <color=green>trigger</color>."},
 
                 new Module { buttonText = "Special Cosmetic Indicators", aliases = new[] { "Cosmetic ESP" }, method = Visuals.CosmeticIndicators, disableMethod = Visuals.DisableCosmeticIndicators, toolTip = "Shows icons above people's heads if they are a Finger Painter, Illustrator, Administrator, Stick, Forest Guide, or Another Axiom Creator."},
 
@@ -1116,7 +1124,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Instant Hand Taps", method =() => References.Tagger.tapCoolDown = 0f, disableMethod =() => References.Tagger.tapCoolDown = 0.33f, toolTip = "Removes the hand tap cooldown."},
                 new Module { buttonText = "Silent Hand Taps on Tag", aliases = new[] { "No Hand Taps on Tag" }, method = Fun.SilentHandTapsOnTag, disableMethod = Fun.FixHandTaps, toolTip = "Makes your hand taps really quiet when you're tagged, good for ambush."},
 
-                new Module { buttonText = "Water Splash Hands <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.WaterSplashHands, toolTip = "Splashes water when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Water Splash Hands {Bracket("green", "G")}", method = Fun.WaterSplashHands, toolTip = "Splashes water when holding <color=green>grip</color>."},
                 new Module { buttonText = "Give Water Splash Hands Gun", method = Fun.GiveWaterSplashHandsGun, toolTip = "Gives whoever your hand desires the water splash hands mod." },
 
                 new Module { buttonText = "Water Splash Walk", method = Fun.WaterSplashWalk, toolTip = "Splashes water whenever you take a step."},
@@ -1167,13 +1175,13 @@ namespace Qubit.Modules
                 new Module { buttonText = "Gong", method =() => Fun.Boop(248), toolTip = "Makes a gong sound when you hit someone's face."},
                 new Module { buttonText = "Slap", method =() => Fun.Boop(338), toolTip = "Makes a slap sound when you hit someone's face."},
 
-                new Module { buttonText = "Auto Clicker <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Fun.AutoClicker, toolTip = "Automatically presses  trigger for you when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Auto Clicker {Bracket("green", "T")}", method = Fun.AutoClicker, toolTip = "Automatically presses  trigger for you when holding <color=green>trigger</color>."},
 
                 new Module { buttonText = "Keyboard Tracker", enableMethod = Fun.EnableKeyboardTracker, method = Fun.KeyboardTracker, disableMethod = Fun.DisableKeyboardTracker, toolTip = "Tracks everyone's keyboard inputs in the lobby."},
 
                 new Module { buttonText = "Tag Sounds", enableMethod = Fun.PreloadTagSounds, method =() => TagPatch.enabled = true, disableMethod =() => TagPatch.enabled = false, toolTip = "Plays a selection of dramatic sound effects when tagging players. Credits to Wyndigo for the idea."},
 
-                new Module { buttonText = "Free Camera <color=grey>[</color><color=green>J</color><color=grey>]</color>", postMethod = Fun.Freecam, disableMethod = Fun.DisableFreecam, toolTip = "Exit your own body and fly around to your free will.", legal = true},
+                new Module { buttonText = $"Free Camera {Bracket("green", "J")}", postMethod = Fun.Freecam, disableMethod = Fun.DisableFreecam, toolTip = "Exit your own body and fly around to your free will.", legal = true},
                 new Module { buttonText = "Third Person Camera", postMethod = Fun.ThirdPersonCamera, disableMethod = Fun.DisableFreecam, toolTip = "Moves your camera to behind your head."},
                 new Module { buttonText = "Flip Camera", postMethod = Fun.FlipCamera, disableMethod = Fun.DisableFreecam, toolTip = "Flips your camera 180 degrees."},
                 new Module { buttonText = "Camera FOV", postMethod = Fun.CameraFOV, disableMethod = Fun.FixCameraFOV, toolTip = "Changes the FOV of your PC camera.", legal = true},
@@ -1229,18 +1237,18 @@ namespace Qubit.Modules
                 new Module { buttonText = "Disable Pitch Scaling", method = Fun.DisablePitchScaling, disableMethod = Fun.EnablePitchScaling, toolTip = "Disables the pitch effects on players' voices when they are a different scale."},
                 new Module { buttonText = "Disable Mouth Movement", method = Fun.DisableMouthMovement, disableMethod = Fun.EnableMouthMovement, toolTip = "Disables your mouth from moving."},
 
-                new Module { buttonText = "Activate All Doors <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.ActivateAllDoors, toolTip = "Activates all doors when holding <color=green>grip</color>."},
-                new Module { buttonText = "Tap All Crystals <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.TapAllClass<GorillaCaveCrystal>, toolTip = "Taps all crystals when holding <color=green>grip</color>."},
-                new Module { buttonText = "Tap All Bells <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.TapAllClass<TappableBell>, toolTip = "Taps all bells when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Activate All Doors {Bracket("green", "G")}", method = Fun.ActivateAllDoors, toolTip = "Activates all doors when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Tap All Crystals {Bracket("green", "G")}", method = Fun.TapAllClass<GorillaCaveCrystal>, toolTip = "Taps all crystals when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Tap All Bells {Bracket("green", "G")}", method = Fun.TapAllClass<TappableBell>, toolTip = "Taps all bells when holding <color=green>grip</color>."},
                 new Module { buttonText = "Trigger Leaf Pile Gun", method = Fun.TriggerLeafPileGun, toolTip = "Shows the effects on whatever leaf pile you desire."},
 
-                new Module { buttonText = "Get Bracelet <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.GetBracelet(true), toolTip = "Gives you a party bracelet without needing to be in a party."},
-                new Module { buttonText = "Spam Bracelet <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.BraceletSpam, toolTip = "Spams the party bracelet on and off."},
+                new Module { buttonText = $"Get Bracelet {Bracket("green", "G")}", method =() => Fun.GetBracelet(true), toolTip = "Gives you a party bracelet without needing to be in a party."},
+                new Module { buttonText = $"Spam Bracelet {Bracket("green", "G")}", method = Fun.BraceletSpam, toolTip = "Spams the party bracelet on and off."},
                 new Module { buttonText = "Remove Bracelet", method = Fun.RemoveBracelet, isTogglable = false, toolTip = "Disables the party bracelet. This does not kick you from the party."},
 
                 new Module { buttonText = "Rainbow Bracelet", method = Fun.RainbowBracelet, disableMethod = Fun.RemoveRainbowBracelet, toolTip = "Gives you a rainbow party bracelet."},
 
-                new Module { buttonText = "Quest Noises <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Fun.QuestNoises, toolTip = "Makes noises at the quest machine in city when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Quest Noises {Bracket("green", "T")}", method = Fun.QuestNoises, toolTip = "Makes noises at the quest machine in city when holding <color=green>trigger</color>."},
                 new Module { buttonText = "Max Quest Score", method = Fun.MaxQuestScore, toolTip = "Gives you the maximum quest score in the game (99999)."},
                 new Module { buttonText = "Custom Quest Score", method = Fun.CustomQuestScore, toolTip = "Gives you a custom quest score. You can change this in the settings."},
 
@@ -1270,8 +1278,8 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Custom Virtual Stump Video", enableMethod = Fun.CustomVirtualStumpVideo, disableMethod = Fun.DisableCustomVirtualStumpVideo, toolTip = "Plays a video by the virtual stump VR headset in stump."},
 
-                new Module { buttonText = "Get Builder Watch", method = Fun.GiveBuilderWatch, isTogglable = false, toolTip = "Gives you the builder watch without needing to be in attic."},
-                new Module { buttonText = "Remove Builder Watch", method = Fun.RemoveBuilderWatch, isTogglable = false, toolTip = "Disables the builder watch."},
+                new Module { buttonText = "Get Builder Watch", method = Blocks.GiveBuilderWatch, isTogglable = false, toolTip = "Gives you the builder watch without needing to be in attic."},
+                new Module { buttonText = "Remove Builder Watch", method = Blocks.RemoveBuilderWatch, isTogglable = false, toolTip = "Disables the builder watch."},
 
                 //new ButtonInfo { buttonText = "Joystick Rope Control <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Overpowered.JoystickRopeControl, toolTip = "Control the ropes in the direction of your joystick."},
 
@@ -1282,11 +1290,11 @@ namespace Qubit.Modules
                 //new ButtonInfo { buttonText = "Fling Rope Gun", method = Overpowered.FlingRopeGun, toolTip = "Flings whatever rope your hand desires away from you."},
                 //new ButtonInfo { buttonText = "Fling All Ropes Gun", method = Overpowered.FlingAllRopesGun, toolTip = "Flings every rope in whatever direction your hand desires."},
 
-                new Module { buttonText = "Fast Gliders", enableMethod =() => Fun.ModifyGliderSpeed(0.5f, 0.5f), disableMethod =() => Fun.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders fast."},
-                new Module { buttonText = "Slow Gliders", enableMethod =() => Fun.ModifyGliderSpeed(0.05f, 0.05f), disableMethod =() => Fun.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders slow."},
+                new Module { buttonText = "Fast Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.5f, 0.5f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders fast."},
+                new Module { buttonText = "Slow Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.05f, 0.05f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders slow."},
 
-                new Module { buttonText = "Glider Blind Gun", method = Fun.GliderBlindGun, toolTip = "Moves all of the gliders to whoever your hand desires' faces." },
-                new Module { buttonText = "Glider Blind All", method = Fun.GliderBlindAll, toolTip = "Moves all of the gliders to everyone's faces." },
+                new Module { buttonText = "Glider Blind Gun", method = Gliders.GliderBlindGun, toolTip = "Moves all of the gliders to whoever your hand desires' faces." },
+                new Module { buttonText = "Glider Blind All", method = Gliders.GliderBlindAll, toolTip = "Moves all of the gliders to everyone's faces." },
 
                 new Module { buttonText = "Fast Ropes", enableMethod =() => RopePatch.enabled = true, disableMethod =() => RopePatch.enabled = false, toolTip = "Makes ropes go five times faster when jumping on them."},
                 new Module { buttonText = "Rope Grab Reach", method = Fun.RopeGrabReach, disableMethod =() => ClimbablePatch.enabled = false, toolTip = "Allows you to grab ropes from farther away."},
@@ -1306,41 +1314,41 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Large Snowballs", enableMethod =() => EnablePatch.enabled = true, disableMethod =() => EnablePatch.enabled = false, toolTip = "Makes snowballs by default the largest size."},
 
-                new Module { buttonText = "Fast Snowballs", overlapText = "Fast Projectiles", method = Fun.FastSnowballs, disableMethod = Fun.FixSnowballs, toolTip = "Makes projectiles go really fast when thrown."},
-                new Module { buttonText = "Slow Snowballs", overlapText = "Slow Projectiles", method = Fun.SlowSnowballs, disableMethod = Fun.FixSnowballs, toolTip = "Makes projectiles go really slow when thrown."},
+                new Module { buttonText = "Fast Snowballs", overlapText = "Fast Projectiles", method = Projectiles.FastSnowballs, disableMethod = Projectiles.FixSnowballs, toolTip = "Makes projectiles go really fast when thrown."},
+                new Module { buttonText = "Slow Snowballs", overlapText = "Slow Projectiles", method = Projectiles.SlowSnowballs, disableMethod = Projectiles.FixSnowballs, toolTip = "Makes projectiles go really slow when thrown."},
 
                 new Module { buttonText = "Projectile Range", method = Fun.ProjectileRange, toolTip = "Increases the hitbox scale of your projectiles."},
 
-                new Module { buttonText = "Rainbow Held Projectiles", enableMethod = Fun.HookProjectileColors, method =() => Fun.projHookColor = Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { buttonText = "Flash Held Projectiles", enableMethod = Fun.HookProjectileColors, method =() => Fun.projHookColor = Time.time % 0.2f > 0.1f ? Color.white : Color.black, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { buttonText = "Strobe Held Projectiles", enableMethod = Fun.HookProjectileColors, method =() => Fun.projHookColor = RandomColor(), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { buttonText = "Custom Held Projectiles", enableMethod = Fun.HookProjectileColors, method =() => Fun.projHookColor = new Color(Fun.red / 10f, Fun.green / 10f, Fun.blue / 10f), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be whatever your custom projectile color is set to in the projectile settings."},
+                new Module { buttonText = "Rainbow Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { buttonText = "Flash Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = Time.time % 0.2f > 0.1f ? Color.white : Color.black, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { buttonText = "Strobe Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = RandomColor(), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { buttonText = "Custom Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = new Color(Fun.red / 10f, Fun.green / 10f, Fun.blue / 10f), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Changes your projectile's color to be whatever your custom projectile color is set to in the projectile settings."},
 
-                new Module { buttonText = "Fast Hoverboard", method = Fun.FastHoverboard, disableMethod = Fun.FixHoverboard, toolTip = "Makes your hoverboard go really fast."},
-                new Module { buttonText = "Slow Hoverboard", method = Fun.SlowHoverboard, disableMethod = Fun.FixHoverboard, toolTip = "Makes your hoverboard go really slow."},
+                new Module { buttonText = "Fast Hoverboard", method = Hoverboards.FastHoverboard, disableMethod = Hoverboards.FixHoverboard, toolTip = "Makes your hoverboard go really fast."},
+                new Module { buttonText = "Slow Hoverboard", method = Hoverboards.SlowHoverboard, disableMethod = Hoverboards.FixHoverboard, toolTip = "Makes your hoverboard go really slow."},
 
-                new Module { buttonText = "Rainbow Hoverboard", method = Fun.RainbowHoverboard, toolTip = "Changes your hoverboard's color to be rainbow."},
-                new Module { buttonText = "Strobe Hoverboard", overlapText = "Flash Hoverboard", method = Fun.StrobeHoverboard, toolTip = "Changes your hoverboard's color to flash between black and white."},
-                new Module { buttonText = "Random Hoverboard", overlapText = "Strobe Hoverboard", method = Fun.RandomHoverboard, toolTip = "Changes your hoverboard's color to flash random colors."},
+                new Module { buttonText = "Rainbow Hoverboard", method = Hoverboards.RainbowHoverboard, toolTip = "Changes your hoverboard's color to be rainbow."},
+                new Module { buttonText = "Strobe Hoverboard", overlapText = "Flash Hoverboard", method = Hoverboards.StrobeHoverboard, toolTip = "Changes your hoverboard's color to flash between black and white."},
+                new Module { buttonText = "Random Hoverboard", overlapText = "Strobe Hoverboard", method = Hoverboards.RandomHoverboard, toolTip = "Changes your hoverboard's color to flash random colors."},
 
-                new Module { buttonText = "Black Screen Gun", method =() => Fun.HoverboardScreenGun(Color.black), toolTip = "Uses the hoverboards to blind whoever your hand desires."},
-                new Module { buttonText = "Black Screen All", method =() => Fun.HoverboardScreenAll(Color.black), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
+                new Module { buttonText = "Black Screen Gun", method =() => Hoverboards.HoverboardScreenGun(Color.black), toolTip = "Uses the hoverboards to blind whoever your hand desires."},
+                new Module { buttonText = "Black Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.black), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
 
-                new Module { buttonText = "White Screen Gun", method =() => Fun.HoverboardScreenGun(Color.white), toolTip = "Uses the hoverboards to make whoever your hand desires' screen white."},
-                new Module { buttonText = "White Screen All", method =() => Fun.HoverboardScreenAll(Color.white), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to flash the screen of everyone in the room."},
+                new Module { buttonText = "White Screen Gun", method =() => Hoverboards.HoverboardScreenGun(Color.white), toolTip = "Uses the hoverboards to make whoever your hand desires' screen white."},
+                new Module { buttonText = "White Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.white), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to flash the screen of everyone in the room."},
 
-                new Module { buttonText = "Flash Screen Gun", method =() => Fun.HoverboardScreenGun(Time.time % 0.2f > 0.1f ? Color.white : Color.black), toolTip = "Uses the hoverboards to flash the screen of whoever your hand desires."},
-                new Module { buttonText = "Flash Screen All", method =() => Fun.HoverboardScreenAll(Time.time % 0.2f > 0.1f ? Color.white : Color.black), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
+                new Module { buttonText = "Flash Screen Gun", method =() => Hoverboards.HoverboardScreenGun(Time.time % 0.2f > 0.1f ? Color.white : Color.black), toolTip = "Uses the hoverboards to flash the screen of whoever your hand desires."},
+                new Module { buttonText = "Flash Screen All", method =() => Hoverboards.HoverboardScreenAll(Time.time % 0.2f > 0.1f ? Color.white : Color.black), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
 
-                new Module { buttonText = "Strobe Screen Gun", method =() => Fun.HoverboardScreenGun(RandomColor()), toolTip = "Uses the hoverboards to flash the screen of whoever your hand desires."},
-                new Module { buttonText = "Strobe Screen All", method =() => Fun.HoverboardScreenAll(RandomColor()), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
+                new Module { buttonText = "Strobe Screen Gun", method =() => Hoverboards.HoverboardScreenGun(RandomColor()), toolTip = "Uses the hoverboards to flash the screen of whoever your hand desires."},
+                new Module { buttonText = "Strobe Screen All", method =() => Hoverboards.HoverboardScreenAll(RandomColor()), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to blind everyone in the room."},
 
-                new Module { buttonText = "Rainbow Screen Gun", method =() => Fun.HoverboardScreenGun(Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f)), toolTip = "Uses the hoverboards to make the screen of whoever your hand desires rainbow."},
-                new Module { buttonText = "Rainbow Screen All", method =() => Fun.HoverboardScreenAll(Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f)), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to make the screen of everyone in the room rainbow."},
+                new Module { buttonText = "Rainbow Screen Gun", method =() => Hoverboards.HoverboardScreenGun(Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f)), toolTip = "Uses the hoverboards to make the screen of whoever your hand desires rainbow."},
+                new Module { buttonText = "Rainbow Screen All", method =() => Hoverboards.HoverboardScreenAll(Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f)), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the hoverboards to make the screen of everyone in the room rainbow."},
 
-                new Module { buttonText = "Hoverboard Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.HoverboardSpam, toolTip = "Spams hoverboards from your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Spam Spawn Hoverboards", method = Fun.SpawnHoverboard, toolTip = "Spam spawns hoverboards at your player position."},
-                new Module { buttonText = "Spawn Hoverboard", method = Fun.SpawnHoverboard, isTogglable = false, toolTip = "Spawns a hoverboard at your player position."},
+                new Module { buttonText = $"Hoverboard Spam {Bracket("green", "G")}", method = Hoverboards.HoverboardSpam, toolTip = "Spams hoverboards from your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = "Spam Spawn Hoverboards", method = Hoverboards.SpawnHoverboard, toolTip = "Spam spawns hoverboards at your player position."},
+                new Module { buttonText = "Spawn Hoverboard", method = Hoverboards.SpawnHoverboard, isTogglable = false, toolTip = "Spawns a hoverboard at your player position."},
 
                 new Module { buttonText = "Start All Races", method = Fun.StartAllRaces, isTogglable = false, toolTip = "Starts every race in the hoverboard map."},
 
@@ -1350,73 +1358,73 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Fast Throw Players", method =() => ReleasePatch.enabled = true, disableMethod =() => ReleasePatch.enabled = false, toolTip = "Makes players go really fast when you throw them."},
 
-                new Module { buttonText = "Noclip Building", method = Fun.NoclipBuilding, disableMethod = Fun.DisableNoclipBuilding, toolTip = "Disables the colliders of every block in the block map."},
+                new Module { buttonText = "Noclip Building", method = Blocks.NoclipBuilding, disableMethod = Blocks.DisableNoclipBuilding, toolTip = "Disables the colliders of every block in the block map."},
                 new Module { buttonText = "Overlap Building", enableMethod =() => OverlapPatch.enabled = true, disableMethod =() => OverlapPatch.enabled = false, toolTip = "Lets you place pieces inside of each other in the attic."},
                 new Module { buttonText = "Small Building", enableMethod =() => BuildPatch.enabled = true, disableMethod =() => BuildPatch.enabled = false, toolTip = "Lets you build in the block map while small."},
-                new Module { buttonText = "Multi Grab", method = Fun.MultiGrab, toolTip = "Lets you grab multiple objects."},
+                new Module { buttonText = "Multi Grab", method = Blocks.MultiGrab, toolTip = "Lets you grab multiple objects."},
 
                 new Module { buttonText = "Block Size Toggle", method = Fun.AtticSizeToggle, toolTip = "Toggles your scale when pressing <color=green>grip</color> or <color=green>trigger</color>."},
-                new Module { buttonText = "Grab All Nearby Blocks <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.GrabAllBlocksNearby, toolTip = "Grabs every nearby building block when holding <color=green>G</color>."},
-                new Module { buttonText = "Grab All Selected Blocks <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.GrabAllSelectedNearby, toolTip = "Grabs every nearby building block that matches your selection when holding <color=green>G</color>."},
+                new Module { buttonText = $"Grab All Nearby Blocks {Bracket("green", "G")}", method = Blocks.GrabAllBlocksNearby, toolTip = "Grabs every nearby building block when holding <color=green>G</color>."},
+                new Module { buttonText = $"Grab All Selected Blocks {Bracket("green", "G")}", method = Blocks.GrabAllSelectedNearby, toolTip = "Grabs every nearby building block that matches your selection when holding <color=green>G</color>."},
 
-                new Module { buttonText = "Massive Block <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.MassiveBlock, toolTip = "Spawns you a massive block when you press <color=green>grip</color>."},
-                new Module { buttonText = "Select Block Gun", method = Fun.SelectBlockGun, toolTip = "Selects whatever building block your hand desires to be used for the building mods." },
-                new Module { buttonText = "Copy Block Info Gun", method = Fun.CopyBlockInfoGun, toolTip = "Copies whatever building block your hand desires to be used for the building mods to your clipboard." },
-                new Module { buttonText = "Building Block Browser", method = Fun.BlockBrowser, isTogglable = false, toolTip = "Browse through every block that you can spawn and select it." },
+                new Module { buttonText = $"Massive Block {Bracket("green", "G")}", method = Blocks.MassiveBlock, toolTip = "Spawns you a massive block when you press <color=green>grip</color>."},
+                new Module { buttonText = "Select Block Gun", method = Blocks.SelectBlockGun, toolTip = "Selects whatever building block your hand desires to be used for the building mods." },
+                new Module { buttonText = "Copy Block Info Gun", method = Blocks.CopyBlockInfoGun, toolTip = "Copies whatever building block your hand desires to be used for the building mods to your clipboard." },
+                new Module { buttonText = "Building Block Browser", method = Blocks.BlockBrowser, isTogglable = false, toolTip = "Browse through every block that you can spawn and select it." },
 
-                new Module { buttonText = "Grab Building Blocks <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.SpamGrabBlocks, toolTip = "Forces the building block into your hand when holding <color=green>grip</color>." },
-                new Module { buttonText = "Building Block Minigun <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.BuildingBlockMinigun, toolTip = "Spams building blocks out of your hand when holding <color=green>grip</color>." },
-                new Module { buttonText = "Building Block Gun", method = Fun.BlocksGun, toolTip = "Moves the building blocks to wherever your hand desires." },
+                new Module { buttonText = $"Grab Building Blocks {Bracket("green", "G")}", method = Blocks.SpamGrabBlocks, toolTip = "Forces the building block into your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Building Block Minigun {Bracket("green", "G")}", method = Blocks.BuildingBlockMinigun, toolTip = "Spams building blocks out of your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = "Building Block Gun", method = Blocks.BlocksGun, toolTip = "Moves the building blocks to wherever your hand desires." },
 
-                new Module { buttonText = "Orbit Building Blocks", method = Fun.OrbitBlocks, toolTip = "Orbits the building blocks around you." },
-                new Module { buttonText = "Rain Building Blocks", method = Fun.RainBuildingBlocks, toolTip = "Makes the building blocks fall around you like rain." },
-                new Module { buttonText = "Building Block Fountain", method = Fun.BuildingBlockFountain, toolTip = "Spurts building blocks out of your head like a fountain." },
-                new Module { buttonText = "Building Block Aura", method = Fun.BuildingBlockAura, toolTip = "Moves the building blocks around you at random positions." },
+                new Module { buttonText = "Orbit Building Blocks", method = Blocks.OrbitBlocks, toolTip = "Orbits the building blocks around you." },
+                new Module { buttonText = "Rain Building Blocks", method = Blocks.RainBuildingBlocks, toolTip = "Makes the building blocks fall around you like rain." },
+                new Module { buttonText = "Building Block Fountain", method = Blocks.BuildingBlockFountain, toolTip = "Spurts building blocks out of your head like a fountain." },
+                new Module { buttonText = "Building Block Aura", method = Blocks.BuildingBlockAura, toolTip = "Moves the building blocks around you at random positions." },
 
-                new Module { buttonText = "Building Block Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = Fun.BuildingBlockTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
+                new Module { buttonText = "Building Block Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = Blocks.BuildingBlockTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
 
-                new Module { buttonText = "Place Building Block Gun", method = Fun.PlaceBlockGun, toolTip = "Places whatever building block your hand desires on the last grid space you have placed blocks on." },
+                new Module { buttonText = "Place Building Block Gun", method = Blocks.PlaceBlockGun, toolTip = "Places whatever building block your hand desires on the last grid space you have placed blocks on." },
 
-                new Module { buttonText = "Destroy Building Block Gun", method = Fun.DestroyBlockGun, toolTip = "Shreds whatever building block your hand desires." },
-                new Module { buttonText = "Destroy Building Blocks", overlapText = "Destroy All Building Blocks", method = Fun.DestroyBlocks, toolTip = "Shreds every building block." },
+                new Module { buttonText = "Destroy Building Block Gun", method = Blocks.DestroyBlockGun, toolTip = "Shreds whatever building block your hand desires." },
+                new Module { buttonText = "Destroy Building Blocks", overlapText = "Destroy All Building Blocks", method = Blocks.DestroyBlocks, toolTip = "Shreds every building block." },
 
-                new Module { buttonText = "Save Builder Table Data", method = Fun.SaveBuilderTableData, isTogglable = false, toolTip = "Dumps the data of your current build to a JSON file." },
-                new Module { buttonText = "Load Builder Table Data", method = Fun.LoadBuilderTableData, isTogglable = false, toolTip = "Loads the data of the dumped JSON files in your game directory and saves it to your current slot." },
+                new Module { buttonText = "Save Builder Table Data", method = Blocks.SaveBuilderTableData, isTogglable = false, toolTip = "Dumps the data of your current build to a JSON file." },
+                new Module { buttonText = "Load Builder Table Data", method = Blocks.LoadBuilderTableData, isTogglable = false, toolTip = "Loads the data of the dumped JSON files in your game directory and saves it to your current slot." },
 
                 new Module { buttonText = "Disable Critters Dome", enableMethod =() => GetObject("Critters/Critters_Environment/Landscape/Critters_Landscape_Dome").SetActive(false), disableMethod =() => GetObject("Critters/Critters_Environment/Landscape/Critters_Landscape_Dome").SetActive(true), toolTip = "Disables the critters dome." },
                 new Module { buttonText = "Enable Forest Dome", enableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/Forest/Super Infection Zone - Forest Variant/ForestDome_Prefab").SetActive(true), disableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/Forest/Super Infection Zone - Forest Variant/ForestDome_Prefab").SetActive(false), toolTip = "Enables the dome in forest." },
 
-                new Module { buttonText = "Critter Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.CritterSpam, toolTip = "Spawns critters on your hand when holding <color=green>grip</color>"},
-                new Module { buttonText = "Critter Minigun <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.CritterMinigun, toolTip = "Shoots critters out of your hand when holding <color=green>grip</color>"},
-                new Module { buttonText = "Critter Gun", method = Fun.CritterGun, toolTip = "Spawns critters at wherever your hand desires."},
+                new Module { buttonText = $"Critter Spam {Bracket("green", "G")}", method = Critters.CritterSpam, toolTip = "Spawns critters on your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Minigun {Bracket("green", "G")}", method = Critters.CritterMinigun, toolTip = "Shoots critters out of your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = "Critter Gun", method = Critters.CritterGun, toolTip = "Spawns critters at wherever your hand desires."},
 
-                new Module { buttonText = "Critter Sticky Goo Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.ObjectSpam(CrittersActor.CrittersActorType.StickyGoo), toolTip = "Spams sticky goo in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Sticky Goo Spam {Bracket("green", "G")}", method =() => Critters.ObjectSpam(CrittersActor.CrittersActorType.StickyGoo), toolTip = "Spams sticky goo in your hand when holding <color=green>grip</color>"},
 
-                new Module { buttonText = "Critter Food Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.ObjectSpam(CrittersActor.CrittersActorType.Food), toolTip = "Spams food in your hand when holding <color=green>grip</color>"},
-                new Module { buttonText = "Critter Noise Maker Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.ObjectSpam(CrittersActor.CrittersActorType.NoiseMaker), toolTip = "Spams noise makers in your hand when holding <color=green>grip</color>"},
-                new Module { buttonText = "Critter Stun Bomb Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.ObjectSpam(CrittersActor.CrittersActorType.StunBomb), toolTip = "Spams stun bombs in your hand when holding <color=green>grip</color>"},
-                new Module { buttonText = "Critter Sticky Trap Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.ObjectSpam(CrittersActor.CrittersActorType.StickyTrap), toolTip = "Spams sticky traps in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Food Spam {Bracket("green", "G")}", method =() => Critters.ObjectSpam(CrittersActor.CrittersActorType.Food), toolTip = "Spams food in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Noise Maker Spam {Bracket("green", "G")}", method =() => Critters.ObjectSpam(CrittersActor.CrittersActorType.NoiseMaker), toolTip = "Spams noise makers in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Stun Bomb Spam {Bracket("green", "G")}", method =() => Critters.ObjectSpam(CrittersActor.CrittersActorType.StunBomb), toolTip = "Spams stun bombs in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Sticky Trap Spam {Bracket("green", "G")}", method =() => Critters.ObjectSpam(CrittersActor.CrittersActorType.StickyTrap), toolTip = "Spams sticky traps in your hand when holding <color=green>grip</color>"},
 
-                new Module { buttonText = "Critter Sticky Goo Gun", method =() => Fun.ObjectGun(CrittersActor.CrittersActorType.StickyGoo), toolTip = "Spams sticky goo at wherever your hand desires."},
+                new Module { buttonText = "Critter Sticky Goo Gun", method =() => Critters.ObjectGun(CrittersActor.CrittersActorType.StickyGoo), toolTip = "Spams sticky goo at wherever your hand desires."},
 
-                new Module { buttonText = "Critter Food Gun", method =() => Fun.ObjectGun(CrittersActor.CrittersActorType.Food), toolTip = "Spams food at wherever your hand desires."},
-                new Module { buttonText = "Critter Noise Maker Gun", method =() => Fun.ObjectGun(CrittersActor.CrittersActorType.NoiseMaker), toolTip = "Spams noise makers at wherever your hand desires."},
-                new Module { buttonText = "Critter Stun Bomb Gun", method =() => Fun.ObjectGun(CrittersActor.CrittersActorType.StunBomb), toolTip = "Spams stun bombs at wherever your hand desires."},
-                new Module { buttonText = "Critter Sticky Trap Gun", method =() => Fun.ObjectGun(CrittersActor.CrittersActorType.StickyTrap), toolTip = "Spams sticky traps at wherever your hand desires."},
+                new Module { buttonText = "Critter Food Gun", method =() => Critters.ObjectGun(CrittersActor.CrittersActorType.Food), toolTip = "Spams food at wherever your hand desires."},
+                new Module { buttonText = "Critter Noise Maker Gun", method =() => Critters.ObjectGun(CrittersActor.CrittersActorType.NoiseMaker), toolTip = "Spams noise makers at wherever your hand desires."},
+                new Module { buttonText = "Critter Stun Bomb Gun", method =() => Critters.ObjectGun(CrittersActor.CrittersActorType.StunBomb), toolTip = "Spams stun bombs at wherever your hand desires."},
+                new Module { buttonText = "Critter Sticky Trap Gun", method =() => Critters.ObjectGun(CrittersActor.CrittersActorType.StickyTrap), toolTip = "Spams sticky traps at wherever your hand desires."},
 
-                new Module { buttonText = "Critter Shockwave Effect Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.EffectSpam(CrittersManager.CritterEvent.StunExplosion), toolTip = "Spams the shockwave particles in your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Critter Sticky Effect Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.EffectSpam(CrittersManager.CritterEvent.StickyDeployed), toolTip = "Spams the sticky particles in your hand when holding <color=green>grip</color>"},
-                new Module { buttonText = "Critter Eating Effect Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.EffectSpam(CrittersManager.CritterEvent.StickyTriggered), toolTip = "Spams the sticky eating particles in your hand when holding <color=green>grip</color>"},
-                new Module { buttonText = "Critter Noise Effect Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.EffectSpam(CrittersManager.CritterEvent.NoiseMakerTriggered), toolTip = "Spams the noise particles in your hand when holding <color=green>grip</color>"},
-                new Module { buttonText = "Critter Particle Effect Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.EffectSpam((CrittersManager.CritterEvent)Random.Range(0, 4)), toolTip = "Spams every particle in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Shockwave Effect Spam {Bracket("green", "G")}", method =() => Critters.EffectSpam(CrittersManager.CritterEvent.StunExplosion), toolTip = "Spams the shockwave particles in your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Critter Sticky Effect Spam {Bracket("green", "G")}", method =() => Critters.EffectSpam(CrittersManager.CritterEvent.StickyDeployed), toolTip = "Spams the sticky particles in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Eating Effect Spam {Bracket("green", "G")}", method =() => Critters.EffectSpam(CrittersManager.CritterEvent.StickyTriggered), toolTip = "Spams the sticky eating particles in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Noise Effect Spam {Bracket("green", "G")}", method =() => Critters.EffectSpam(CrittersManager.CritterEvent.NoiseMakerTriggered), toolTip = "Spams the noise particles in your hand when holding <color=green>grip</color>"},
+                new Module { buttonText = $"Critter Particle Effect Spam {Bracket("green", "G")}", method =() => Critters.EffectSpam((CrittersManager.CritterEvent)Random.Range(0, 4)), toolTip = "Spams every particle in your hand when holding <color=green>grip</color>"},
 
-                new Module { buttonText = "Critter Shockwave Effect Gun", method =() => Fun.EffectGun(CrittersManager.CritterEvent.StunExplosion), toolTip = "Spams the shockwave particles at wherever your hand desires."},
-                new Module { buttonText = "Critter Sticky Effect Gun", method =() => Fun.EffectGun(CrittersManager.CritterEvent.StickyDeployed), toolTip = "Spams the sticky particles at wherever your hand desires."},
-                new Module { buttonText = "Critter Eating Effect Gun", method =() => Fun.EffectGun(CrittersManager.CritterEvent.StickyTriggered), toolTip = "Spams the sticky eating particles at wherever your hand desires."},
-                new Module { buttonText = "Critter Noise Effect Gun", method =() => Fun.EffectGun(CrittersManager.CritterEvent.NoiseMakerTriggered), toolTip = "Spams the noise particles at wherever your hand desires."},
-                new Module { buttonText = "Critter Particle Effect Gun", method =() => Fun.EffectGun((CrittersManager.CritterEvent)Random.Range(0, 4)), toolTip = "Spams every particle at wherever your hand desires."},
+                new Module { buttonText = "Critter Shockwave Effect Gun", method =() => Critters.EffectGun(CrittersManager.CritterEvent.StunExplosion), toolTip = "Spams the shockwave particles at wherever your hand desires."},
+                new Module { buttonText = "Critter Sticky Effect Gun", method =() => Critters.EffectGun(CrittersManager.CritterEvent.StickyDeployed), toolTip = "Spams the sticky particles at wherever your hand desires."},
+                new Module { buttonText = "Critter Eating Effect Gun", method =() => Critters.EffectGun(CrittersManager.CritterEvent.StickyTriggered), toolTip = "Spams the sticky eating particles at wherever your hand desires."},
+                new Module { buttonText = "Critter Noise Effect Gun", method =() => Critters.EffectGun(CrittersManager.CritterEvent.NoiseMakerTriggered), toolTip = "Spams the noise particles at wherever your hand desires."},
+                new Module { buttonText = "Critter Particle Effect Gun", method =() => Critters.EffectGun((CrittersManager.CritterEvent)Random.Range(0, 4)), toolTip = "Spams every particle at wherever your hand desires."},
 
-                new Module { buttonText = "Grab ID Card <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.GrabIDCard, toolTip = "Puts the ID card in your hand." },
+                new Module { buttonText = $"Grab ID Card {Bracket("green", "G")}", method = Fun.GrabIDCard, toolTip = "Puts the ID card in your hand." },
                 new Module { buttonText = "Entity Reach", method =() => EntityGrabPatch.enabled = true, disableMethod =() => EntityGrabPatch.enabled = false, toolTip = "Gives you the ability to grab entities from farther away in the horror map." },
 
                 new Module { buttonText = "Infinite Prop Distance", method =() => Fun.SetPropDistanceLimit(float.MaxValue), disableMethod =() => Fun.SetPropDistanceLimit(0.35f), toolTip = "Removes the distance limit of props in the prop hunt map." },
@@ -1425,20 +1433,20 @@ namespace Qubit.Modules
                 new Module { buttonText = "Spaz Tool Stations", method = Fun.SpazToolStations, toolTip = "Spazzes out the tool purchase stations in the horror map." },
                 new Module { buttonText = "Purchase All Tool Stations", method = Fun.PurchaseAllToolStations, toolTip = "Makes every tool purchase station force purchase in the horror map." },
 
-                new Module { buttonText = "Ghost Reactor Gate Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnergyCostGate"]), toolTip = "Spawns gates out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Core Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleCore"]), toolTip = "Spawns collectible cores out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Slime Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleSentientCore"]), toolTip = "Spawns sentient collectible cores out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Tool Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.ToolSpamGrip, toolTip = "Spawns random tools out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Flower Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleFlower"]), toolTip = "Spawns flowers out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Crate Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorBreakableCrate"]), toolTip = "Spawns barrels out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Barrel Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorBreakableBarrel"]), toolTip = "Spawns barrels out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Bug Enemy Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyPest"]), toolTip = "Spawns the annoying bug enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Large Bug Enemy Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyPestBig"]), toolTip = "Spawns the large annoying bug enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Ranged Enemy Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyRanged"]), toolTip = "Spawns ranged enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Chaser Enemy Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyChaser"]), toolTip = "Spawns chasing enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Armored Ranged Enemy Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyRangedArmored"]), toolTip = "Spawns armored ranged enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Armored Chaser Enemy Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyChaserArmored"]), toolTip = "Spawns armored chasing enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Ghost Reactor Entity Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.SpamEntityGrip, toolTip = "Spawns a random entity out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Gate Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnergyCostGate"]), toolTip = "Spawns gates out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Core Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleCore"]), toolTip = "Spawns collectible cores out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Slime Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleSentientCore"]), toolTip = "Spawns sentient collectible cores out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Tool Spam {Bracket("green", "G")}", method = Fun.ToolSpamGrip, toolTip = "Spawns random tools out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Flower Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleFlower"]), toolTip = "Spawns flowers out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Crate Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorBreakableCrate"]), toolTip = "Spawns barrels out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Barrel Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorBreakableBarrel"]), toolTip = "Spawns barrels out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Bug Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyPest"]), toolTip = "Spawns the annoying bug enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Large Bug Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyPestBig"]), toolTip = "Spawns the large annoying bug enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Ranged Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyRanged"]), toolTip = "Spawns ranged enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Chaser Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyChaser"]), toolTip = "Spawns chasing enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Armored Ranged Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyRangedArmored"]), toolTip = "Spawns armored ranged enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Armored Chaser Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyChaserArmored"]), toolTip = "Spawns armored chasing enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Ghost Reactor Entity Spam {Bracket("green", "G")}", method = Fun.SpamEntityGrip, toolTip = "Spawns a random entity out of your hand when holding <color=green>grip</color>."},
 
                 new Module { buttonText = "Ghost Reactor Gate Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorEnergyCostGate"]), toolTip = "Spawns gates at wherever your hand desires."},
                 new Module { buttonText = "Ghost Reactor Core Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorCollectibleCore"]), toolTip = "Spawns collectible cores at wherever your hand desires."},
@@ -1474,7 +1482,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "No Blaster Cooldown", method =() => CooldownPatch.enabled = true, disableMethod =() => CooldownPatch.enabled = false, toolTip = "Removes the cooldown on the blaster."},
                 new Module { buttonText = "Blaster Aimbot", enableMethod =() => FirePatch.enabled = true, method = Fun.DebugBlasterAimbot, disableMethod =() => FirePatch.enabled = false, toolTip = "Automatically aims the blaster towards players."},
 
-                new Module { buttonText = "Blaster Laser Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.BlasterLaserSpam, toolTip = "Spams lasers out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Blaster Laser Spam {Bracket("green", "G")}", method = Fun.BlasterLaserSpam, toolTip = "Spams lasers out of your hand when holding <color=green>grip</color>."},
 
                 new Module { buttonText = "Blaster Float Gun", method =() => Fun.BlasterFlingGun(Vector3.up), toolTip = "Uses the blasters to fling whoever your hand desires vertically."},
                 new Module { buttonText = "Blaster Float All", method =() => Fun.BlasterFlingAll(Vector3.up), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room vertically."},
@@ -1491,23 +1499,23 @@ namespace Qubit.Modules
                 new Module { buttonText = "Blaster Fling Away All", overlapText = "Blaster Push All", aliases = new[] { "Blaster Fling Towards All" }, method = Fun.BlasterFlingAwayAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room away from you."},
 
                 new Module { buttonText = "Blaster Kick Gun", method = Fun.BlasterKickGun, toolTip = "Kicks whoever your hand desires using the blasters." },
-                new Module { buttonText = "Blaster Kick All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Fun.BlasterKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room when holding <color=green>trigger</color> using the blasters." },
+                new Module { buttonText = $"Blaster Kick All {Bracket("green", "T")}", method = Fun.BlasterKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room when holding <color=green>trigger</color> using the blasters." },
 
                 new Module { buttonText = "Blaster Crash Gun", method = Fun.BlasterCrashGun, toolTip = "Crashes whoever your hand desires using the blasters." },
-                new Module { buttonText = "Blaster Crash All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Fun.BlasterCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room when holding <color=green>trigger</color> using the blasters." },
+                new Module { buttonText = $"Blaster Crash All {Bracket("green", "T")}", method = Fun.BlasterCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room when holding <color=green>trigger</color> using the blasters." },
 
-                new Module { buttonText = "Stilt Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Turkey Stilt Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Motorized Stilt Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Thruster Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Yoyo Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Blaster Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Lobber Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Strider Tentacle Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Crawler Tentacle Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Platform Deployer Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Gadget Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.GadgetSpamGrip, toolTip = "Spawns random gadgets out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Resource Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.ResourceSpamGrip, toolTip = "Spawns random resources out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Turkey Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Motorized Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Thruster Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Yoyo Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Blaster Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Lobber Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Strider Tentacle Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Crawler Tentacle Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Platform Deployer Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Gadget Spam {Bracket("green", "G")}", method = Fun.GadgetSpamGrip, toolTip = "Spawns random gadgets out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Resource Spam {Bracket("green", "G")}", method = Fun.ResourceSpamGrip, toolTip = "Spawns random resources out of your hand when holding <color=green>grip</color>."},
 
                 new Module { buttonText = "Stilt Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts at wherever your hand desires."},
                 new Module { buttonText = "Turkey Stilt Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts at wherever your hand desires."},
@@ -1531,142 +1539,142 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Destroy Gadget Gun", method = Fun.DestroyGadgetGun, toolTip = "Destroys any gadget which your hand desires."},
 
-                new Module { buttonText = "Fire Sound Spam <color=grey>[</color><color=green>T</color><color=grey>]</color>", enableMethod =() => Fun.CheckOwnedCosmetic("LBALH."), method = Fun.FireSoundSpam, toolTip = "Spams fire sounds when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Fire Sound Spam {Bracket("green", "T")}", enableMethod =() => Cosmetics.CheckOwnedCosmetic("LBALH."), method = Fun.FireSoundSpam, toolTip = "Spams fire sounds when holding <color=green>trigger</color>."},
 
-                new Module { buttonText = "Bubble Gun", enableMethod =() => Fun.CheckOwnedThrowable(33), method =() => Fun.BubblerGun(33, Quaternion.identity, 0.1f), toolTip = "Uses the bubbler to spawn bubbles at wherever your hand desires."},
-                new Module { buttonText = "Fire Gun", enableMethod =() => Fun.CheckOwnedThrowable(175), method =() => Fun.BubblerGun(175, Quaternion.Euler(180f, 0f, 0f)), toolTip = "Uses the bubbler to spawn bubbles at wherever your hand desires."},
+                new Module { buttonText = "Bubble Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(33), method =() => Fun.BubblerGun(33, Quaternion.identity, 0.1f), toolTip = "Uses the bubbler to spawn bubbles at wherever your hand desires."},
+                new Module { buttonText = "Fire Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(175), method =() => Fun.BubblerGun(175, Quaternion.Euler(180f, 0f, 0f)), toolTip = "Uses the bubbler to spawn bubbles at wherever your hand desires."},
 
-                new Module { buttonText = "White Color Gun", enableMethod =() => Fun.CheckOwnedThrowable(629), method = Fun.WhiteColorGun, toolTip = "Sprays whoever your hand desires with the sunblock spray cosmetic."},
-                new Module { buttonText = "White Color All", enableMethod =() => Fun.CheckOwnedThrowable(629), method =() => Fun.WhiteColorTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Sprays everyone in the room with the sunblock spray cosmetic."},
+                new Module { buttonText = "White Color Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(629), method = Fun.WhiteColorGun, toolTip = "Sprays whoever your hand desires with the sunblock spray cosmetic."},
+                new Module { buttonText = "White Color All", enableMethod =() => Projectiles.CheckOwnedThrowable(629), method =() => Fun.WhiteColorTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Sprays everyone in the room with the sunblock spray cosmetic."},
 
-                new Module { buttonText = "Black Color Gun", enableMethod =() => Fun.CheckOwnedThrowable(600), method = Fun.BlackColorGun, toolTip = "Uses the smoke bomb to make whoever your hand desires black."},
-                new Module { buttonText = "Black Color All", enableMethod =() => Fun.CheckOwnedThrowable(600), method =() => Fun.BlackColorTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Uses the smoke bomb to make everyone in the room black."},
+                new Module { buttonText = "Black Color Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method = Fun.BlackColorGun, toolTip = "Uses the smoke bomb to make whoever your hand desires black."},
+                new Module { buttonText = "Black Color All", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method =() => Fun.BlackColorTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Uses the smoke bomb to make everyone in the room black."},
 
-                new Module { buttonText = "Chicken Gun", enableMethod =() => Fun.CheckOwnedThrowable(651), method = Fun.ChickenGun, toolTip = "Uses the smoke bomb to make whoever your hand desires black."},
-                new Module { buttonText = "Chicken All", enableMethod =() => Fun.CheckOwnedThrowable(651), method =() => Fun.ChickenTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Uses the smoke bomb to make everyone in the room black."},
+                new Module { buttonText = "Chicken Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(651), method = Fun.ChickenGun, toolTip = "Uses the smoke bomb to make whoever your hand desires black."},
+                new Module { buttonText = "Chicken All", enableMethod =() => Projectiles.CheckOwnedThrowable(651), method =() => Fun.ChickenTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Uses the smoke bomb to make everyone in the room black."},
 
-                new Module { buttonText = "Whoopee Cushion Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", enableMethod =() => Fun.CheckOwnedThrowable(626), method =() => Fun.ThrowableProjectileSpam(626), toolTip = "Spawns whoopee cushions on your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Whoopee Cushion Minigun <color=grey>[</color><color=green>G</color><color=grey>]</color>", enableMethod =() => Fun.CheckOwnedThrowable(626), method =() => Fun.ThrowableProjectileMinigun(626), toolTip = "Shoots whoopee cushions out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Whoopee Cushion Gun", enableMethod =() => Fun.CheckOwnedThrowable(626), method =() => Fun.ThrowableProjectileGun(626), toolTip = "Spawns whoopee cushions at wherever your hand desires."},
+                new Module { buttonText = $"Whoopee Cushion Spam {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(626), method =() => Projectiles.ThrowableProjectileSpam(626), toolTip = "Spawns whoopee cushions on your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Whoopee Cushion Minigun {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(626), method =() => Projectiles.ThrowableProjectileMinigun(626), toolTip = "Shoots whoopee cushions out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = "Whoopee Cushion Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(626), method =() => Projectiles.ThrowableProjectileGun(626), toolTip = "Spawns whoopee cushions at wherever your hand desires."},
 
-                new Module { buttonText = "Smoke Bomb Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", enableMethod =() => Fun.CheckOwnedThrowable(600), method =() => Fun.ThrowableProjectileSpam(600), toolTip = "Spawns smoke bombs on your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Smoke Bomb Minigun <color=grey>[</color><color=green>G</color><color=grey>]</color>", enableMethod =() => Fun.CheckOwnedThrowable(600), method =() => Fun.ThrowableProjectileMinigun(600), toolTip = "Shoots smoke bombs out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Smoke Bomb Gun", enableMethod =() => Fun.CheckOwnedThrowable(600), method =() => Fun.ThrowableProjectileGun(600), toolTip = "Spawns smoke bombs at wherever your hand desires."},
+                new Module { buttonText = $"Smoke Bomb Spam {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method =() => Projectiles.ThrowableProjectileSpam(600), toolTip = "Spawns smoke bombs on your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Smoke Bomb Minigun {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method =() => Projectiles.ThrowableProjectileMinigun(600), toolTip = "Shoots smoke bombs out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = "Smoke Bomb Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method =() => Projectiles.ThrowableProjectileGun(600), toolTip = "Spawns smoke bombs at wherever your hand desires."},
 
-                new Module { buttonText = "Firecracker Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", enableMethod =() => Fun.CheckOwnedThrowable(587), method =() => Fun.ThrowableProjectileSpam(587), toolTip = "Spawns firecrackers on your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Firecracker Minigun <color=grey>[</color><color=green>G</color><color=grey>]</color>", enableMethod =() => Fun.CheckOwnedThrowable(587), method =() => Fun.ThrowableProjectileMinigun(587), toolTip = "Shoots firecrackers out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = "Firecracker Gun", enableMethod =() => Fun.CheckOwnedThrowable(587), method =() => Fun.ThrowableProjectileGun(587), toolTip = "Spawns firecrackers at wherever your hand desires."},
+                new Module { buttonText = $"Firecracker Spam {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(587), method =() => Projectiles.ThrowableProjectileSpam(587), toolTip = "Spawns firecrackers on your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Firecracker Minigun {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(587), method =() => Projectiles.ThrowableProjectileMinigun(587), toolTip = "Shoots firecrackers out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = "Firecracker Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(587), method =() => Projectiles.ThrowableProjectileGun(587), toolTip = "Spawns firecrackers at wherever your hand desires."},
 
                 new Module { buttonText = "Spaz All Moles", method = Fun.SpazMoleMachines, toolTip = "Gives the moles a seizure."},
                 new Module { buttonText = "Auto Start Moles", method = Fun.AutoStartMoles, toolTip = "Automatically starts the mole games."},
                 new Module { buttonText = "Auto Hit Moles", method =() => Fun.AutoHitMoleType(false), toolTip = "Hits all of the moles automatically."},
                 new Module { buttonText = "Auto Hit Hazards", method =() => Fun.AutoHitMoleType(true), toolTip = "Hits all of the hazards automatically."},
 
-                new Module { buttonText = "No Respawn Bug", enableMethod =() => Fun.SetRespawnDistance("Floating Bug Holdable"), disableMethod =() => Fun.SetRespawnDistance("Floating Bug Holdable", 50f), toolTip = "Doesn't respawn the bug if it goes too far outside the bounds of forest."},
-                new Module { buttonText = "No Respawn Bat", enableMethod =() => Fun.SetRespawnDistance("Cave Bat Holdable"), disableMethod =() => Fun.SetRespawnDistance("Cave Bat Holdable", 50f), toolTip = "Doesn't respawn the bat if it goes too far outside the bounds of caves."},
-                new Module { buttonText = "No Respawn Firefly", enableMethod =() => Fun.SetRespawnDistance("Firefly"), disableMethod =() => Fun.SetRespawnDistance("Firefly", 50f), toolTip = "Doesn't respawn the firefly if it goes too far outside the bounds of forest."},
+                new Module { buttonText = "No Respawn Bug", enableMethod =() => Bugs.SetRespawnDistance("Floating Bug Holdable"), disableMethod =() => Bugs.SetRespawnDistance("Floating Bug Holdable", 50f), toolTip = "Doesn't respawn the bug if it goes too far outside the bounds of forest."},
+                new Module { buttonText = "No Respawn Bat", enableMethod =() => Bugs.SetRespawnDistance("Cave Bat Holdable"), disableMethod =() => Bugs.SetRespawnDistance("Cave Bat Holdable", 50f), toolTip = "Doesn't respawn the bat if it goes too far outside the bounds of caves."},
+                new Module { buttonText = "No Respawn Firefly", enableMethod =() => Bugs.SetRespawnDistance("Firefly"), disableMethod =() => Bugs.SetRespawnDistance("Firefly", 50f), toolTip = "Doesn't respawn the firefly if it goes too far outside the bounds of forest."},
 
-                new Module { buttonText = "Permanent Bug", method =() => Fun.PermanentOwnership("Floating Bug Holdable"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the bug."},
-                new Module { buttonText = "Permanent Bat", method =() => Fun.PermanentOwnership("Cave Bat Holdable"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the bat."},
-                new Module { buttonText = "Permanent Firefly", method =() => Fun.PermanentOwnership("Firefly"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the firefly."},
+                new Module { buttonText = "Permanent Bug", method =() => Bugs.PermanentOwnership("Floating Bug Holdable"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the bug."},
+                new Module { buttonText = "Permanent Bat", method =() => Bugs.PermanentOwnership("Cave Bat Holdable"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the bat."},
+                new Module { buttonText = "Permanent Firefly", method =() => Bugs.PermanentOwnership("Firefly"), disableMethod =() => OwnershipPatch.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the firefly."},
 
-                new Module { buttonText = "Bug Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.BugSpam, disableMethod = Fun.DisableBugSpam, toolTip = "Shoots the bug and firefly out of your hand repeatedly." },
-                new Module { buttonText = "Camera Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.CameraSpam, disableMethod = Fun.DisableCameraSpam, toolTip = "Shoots the camera out of your hand repeatedly." },
-                new Module { buttonText = "Everything Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.EverythingSpam, disableMethod = Fun.DisableEverythingSpam, toolTip = "Shoots everything out of your hand repeatedly." },
+                new Module { buttonText = $"Bug Spam {Bracket("green", "G")}", method = Bugs.BugSpam, disableMethod = Bugs.DisableBugSpam, toolTip = "Shoots the bug and firefly out of your hand repeatedly." },
+                new Module { buttonText = $"Camera Spam {Bracket("green", "G")}", method = LckCamera.CameraSpam, disableMethod = LckCamera.DisableCameraSpam, toolTip = "Shoots the camera out of your hand repeatedly." },
+                new Module { buttonText = $"Everything Spam {Bracket("green", "G")}", method = Fun.EverythingSpam, disableMethod = Fun.DisableEverythingSpam, toolTip = "Shoots everything out of your hand repeatedly." },
 
-                new Module { buttonText = "Bug Phallus", method = Fun.BugPhallus, toolTip = "Gives you a phallus in the form of the bugs." },
-                new Module { buttonText = "Bug Phallus Gun", method = Fun.BugPhallusGun, toolTip = "Gives whoever your hand desires a phallus in the form of the bugs." },
+                new Module { buttonText = "Bug Phallus", method = Bugs.BugPhallus, toolTip = "Gives you a phallus in the form of the bugs." },
+                new Module { buttonText = "Bug Phallus Gun", method = Bugs.BugPhallusGun, toolTip = "Gives whoever your hand desires a phallus in the form of the bugs." },
 
-                new Module { buttonText = "Bug Vibrate Gun", method = Fun.BugVibrateGun, toolTip = "Vibrates the controllers of whoever your hand desires using the bugs." },
-                new Module { buttonText = "Bug Vibrate All", enableMethod = Fun.EnableBugVibrateAll, method = Fun.BugVibrateAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Vibrates the controllers of everyone in the room using the bugs." },
+                new Module { buttonText = "Bug Vibrate Gun", method = Bugs.BugVibrateGun, toolTip = "Vibrates the controllers of whoever your hand desires using the bugs." },
+                new Module { buttonText = "Bug Vibrate All", enableMethod = Bugs.EnableBugVibrateAll, method = Bugs.BugVibrateAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Vibrates the controllers of everyone in the room using the bugs." },
 
-                new Module { buttonText = "Holster Bug", method =() => Fun.HolsterObject("Floating Bug Holdable", TransferrableObject.PositionState.OnLeftArm), toolTip = "Holsters the bug on your left arm." },
-                new Module { buttonText = "Holster Bat", method =() => Fun.HolsterObject("Cave Bat Holdable", TransferrableObject.PositionState.OnChest), toolTip = "Holsters the bat on your chest." },
-                new Module { buttonText = "Holster Firefly", method =() => Fun.HolsterObject("Firefly", TransferrableObject.PositionState.OnRightArm), toolTip = "Holsters the firefly on your right arm." },
+                new Module { buttonText = "Holster Bug", method =() => Bugs.HolsterObject("Floating Bug Holdable", TransferrableObject.PositionState.OnLeftArm), toolTip = "Holsters the bug on your left arm." },
+                new Module { buttonText = "Holster Bat", method =() => Bugs.HolsterObject("Cave Bat Holdable", TransferrableObject.PositionState.OnChest), toolTip = "Holsters the bat on your chest." },
+                new Module { buttonText = "Holster Firefly", method =() => Bugs.HolsterObject("Firefly", TransferrableObject.PositionState.OnRightArm), toolTip = "Holsters the firefly on your right arm." },
 
-                new Module { buttonText = "Freeze Bug", method =() => Fun.FreezeObject("Floating Bug Holdable"), toolTip = "Freezes the bug in place." },
-                new Module { buttonText = "Freeze Bat", method =() => Fun.FreezeObject("Cave Bat Holdable"), toolTip = "Freezes the bat in place." },
-                new Module { buttonText = "Freeze Firefly", method =() => Fun.FreezeObject("Firefly"), toolTip = "Freezes the firefly in place." },
+                new Module { buttonText = "Freeze Bug", method =() => Bugs.FreezeObject("Floating Bug Holdable"), toolTip = "Freezes the bug in place." },
+                new Module { buttonText = "Freeze Bat", method =() => Bugs.FreezeObject("Cave Bat Holdable"), toolTip = "Freezes the bat in place." },
+                new Module { buttonText = "Freeze Firefly", method =() => Bugs.FreezeObject("Firefly"), toolTip = "Freezes the firefly in place." },
 
-                new Module { buttonText = "Fast Bug", method =() => Fun.SetObjectSpeed("Floating Bug Holdable", 5f), disableMethod =() => Fun.SetObjectSpeed("Floating Bug Holdable"), toolTip = "Speeds up the bug." },
-                new Module { buttonText = "Fast Bat", method =() => Fun.SetObjectSpeed("Cave Bat Holdable", 5f), disableMethod =() => Fun.SetObjectSpeed("Cave Bat Holdable"), toolTip = "Speeds up the bat." },
-                new Module { buttonText = "Fast Firefly", method =() => Fun.SetObjectSpeed("Firefly", 5f), disableMethod =() => Fun.SetObjectSpeed("Firefly"), toolTip = "Speeds up the firefly." },
+                new Module { buttonText = "Fast Bug", method =() => Bugs.SetObjectSpeed("Floating Bug Holdable", 5f), disableMethod =() => Bugs.SetObjectSpeed("Floating Bug Holdable"), toolTip = "Speeds up the bug." },
+                new Module { buttonText = "Fast Bat", method =() => Bugs.SetObjectSpeed("Cave Bat Holdable", 5f), disableMethod =() => Bugs.SetObjectSpeed("Cave Bat Holdable"), toolTip = "Speeds up the bat." },
+                new Module { buttonText = "Fast Firefly", method =() => Bugs.SetObjectSpeed("Firefly", 5f), disableMethod =() => Bugs.SetObjectSpeed("Firefly"), toolTip = "Speeds up the firefly." },
 
-                new Module { buttonText = "Slow Bug", method =() => Fun.SetObjectSpeed("Floating Bug Holdable", 0.1f), disableMethod =() => Fun.SetObjectSpeed("Floating Bug Holdable"), toolTip = "Slows down the bug." },
-                new Module { buttonText = "Slow Bat", method =() => Fun.SetObjectSpeed("Cave Bat Holdable", 0.1f), disableMethod =() => Fun.SetObjectSpeed("Cave Bat Holdable"), toolTip = "Slows down the bat." },
-                new Module { buttonText = "Slow Firefly", method =() => Fun.SetObjectSpeed("Firefly", 0.1f), disableMethod =() => Fun.SetObjectSpeed("Firefly"), toolTip = "Slows down the firefly." },
+                new Module { buttonText = "Slow Bug", method =() => Bugs.SetObjectSpeed("Floating Bug Holdable", 0.1f), disableMethod =() => Bugs.SetObjectSpeed("Floating Bug Holdable"), toolTip = "Slows down the bug." },
+                new Module { buttonText = "Slow Bat", method =() => Bugs.SetObjectSpeed("Cave Bat Holdable", 0.1f), disableMethod =() => Bugs.SetObjectSpeed("Cave Bat Holdable"), toolTip = "Slows down the bat." },
+                new Module { buttonText = "Slow Firefly", method =() => Bugs.SetObjectSpeed("Firefly", 0.1f), disableMethod =() => Bugs.SetObjectSpeed("Firefly"), toolTip = "Slows down the firefly." },
 
-                new Module { buttonText = "Physical Bug", method =() => Fun.PhysicalObject("Floating Bug Holdable"), toolTip = "Gives the bug physics, letting you grab onto it and throw it." },
-                new Module { buttonText = "Physical Bat", method =() => Fun.PhysicalObject("Cave Bat Holdable"), toolTip = "Gives the bat physics, letting you grab onto it and throw it." },
-                new Module { buttonText = "Physical Firefly", method =() => Fun.PhysicalObject("Firefly"), toolTip = "Gives the firefly physics, letting you grab onto it and throw it." },
-                new Module { buttonText = "Physical Camera", method = Fun.PhysicalCamera, toolTip = "Gives the camera physics, letting you grab onto it and throw it." },
+                new Module { buttonText = "Physical Bug", method =() => Bugs.PhysicalObject("Floating Bug Holdable"), toolTip = "Gives the bug physics, letting you grab onto it and throw it." },
+                new Module { buttonText = "Physical Bat", method =() => Bugs.PhysicalObject("Cave Bat Holdable"), toolTip = "Gives the bat physics, letting you grab onto it and throw it." },
+                new Module { buttonText = "Physical Firefly", method =() => Bugs.PhysicalObject("Firefly"), toolTip = "Gives the firefly physics, letting you grab onto it and throw it." },
+                new Module { buttonText = "Physical Camera", method = LckCamera.PhysicalCamera, toolTip = "Gives the camera physics, letting you grab onto it and throw it." },
 
-                new Module { buttonText = "Grab Bug <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.ObjectToHand("Floating Bug Holdable"), toolTip = "Forces the bug into your hand when holding <color=green>grip</color>." },
-                new Module { buttonText = "Grab Bat <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.ObjectToHand("Cave Bat Holdable"), toolTip = "Forces the bat into your hand when holding <color=green>grip</color>." },
-                new Module { buttonText = "Grab Firefly <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.ObjectToHand("Firefly"), toolTip = "Forces the firefly into your hand when holding <color=green>grip</color>." },
-                new Module { buttonText = "Grab Camera <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.GrabCamera, toolTip = "Forces the camera into your hand when holding <color=green>grip</color>." },
-                new Module { buttonText = "Grab Tablet <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.GrabTablet, toolTip = "Forces the tablet into your hand when holding <color=green>grip</color>." },
-                new Module { buttonText = "Grab Balloons <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.GrabBalloons, toolTip = "Forces every single balloon cosmetic into your hand when holding <color=green>grip</color>." },
-                new Module { buttonText = "Grab Gliders <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Fun.GrabGliders, toolTip = "Forces the bug into your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Grab Bug {Bracket("green", "G")}", method =() => Bugs.ObjectToHand("Floating Bug Holdable"), toolTip = "Forces the bug into your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Grab Bat {Bracket("green", "G")}", method =() => Bugs.ObjectToHand("Cave Bat Holdable"), toolTip = "Forces the bat into your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Grab Firefly {Bracket("green", "G")}", method =() => Bugs.ObjectToHand("Firefly"), toolTip = "Forces the firefly into your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Grab Camera {Bracket("green", "G")}", method = LckCamera.GrabCamera, toolTip = "Forces the camera into your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Grab Tablet {Bracket("green", "G")}", method = LckCamera.GrabTablet, toolTip = "Forces the tablet into your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Grab Balloons {Bracket("green", "G")}", method = Balloons.GrabBalloons, toolTip = "Forces every single balloon cosmetic into your hand when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Grab Gliders {Bracket("green", "G")}", method = Gliders.GrabGliders, toolTip = "Forces the bug into your hand when holding <color=green>grip</color>." },
 
-                new Module { buttonText = "Bug Gun", method =() => Fun.ObjectToPointGun("Floating Bug Holdable"), toolTip = "Moves the bug to wherever your hand desires." },
-                new Module { buttonText = "Bat Gun", method =() => Fun.ObjectToPointGun("Cave Bat Holdable"), toolTip = "Moves the bat to wherever your hand desires." },
-                new Module { buttonText = "Firefly Gun", method =() => Fun.ObjectToPointGun("Firefly"), toolTip = "Moves the firefly to wherever your hand desires." },
-                new Module { buttonText = "Camera Gun", method = Fun.CameraGun, toolTip = "Moves the camera to wherever your hand desires." },
-                new Module { buttonText = "Tablet Gun", method = Fun.TabletGun, toolTip = "Moves the tablet to wherever your hand desires." },
-                new Module { buttonText = "Balloon Gun", method = Fun.BalloonGun, toolTip = "Moves every single balloon cosmetic to wherever your hand desires." },
-                new Module { buttonText = "Glider Gun", method = Fun.GliderGun, toolTip = "Moves the gliders to wherever your hand desires." },
-                new Module { buttonText = "Hoverboard Gun", method = Fun.HoverboardGun, toolTip = "Spawns hoverboards at wherever your hand desires."},
+                new Module { buttonText = "Bug Gun", method =() => Bugs.ObjectToPointGun("Floating Bug Holdable"), toolTip = "Moves the bug to wherever your hand desires." },
+                new Module { buttonText = "Bat Gun", method =() => Bugs.ObjectToPointGun("Cave Bat Holdable"), toolTip = "Moves the bat to wherever your hand desires." },
+                new Module { buttonText = "Firefly Gun", method =() => Bugs.ObjectToPointGun("Firefly"), toolTip = "Moves the firefly to wherever your hand desires." },
+                new Module { buttonText = "Camera Gun", method = LckCamera.CameraGun, toolTip = "Moves the camera to wherever your hand desires." },
+                new Module { buttonText = "Tablet Gun", method = LckCamera.TabletGun, toolTip = "Moves the tablet to wherever your hand desires." },
+                new Module { buttonText = "Balloon Gun", method = Balloons.BalloonGun, toolTip = "Moves every single balloon cosmetic to wherever your hand desires." },
+                new Module { buttonText = "Glider Gun", method = Gliders.GliderGun, toolTip = "Moves the gliders to wherever your hand desires." },
+                new Module { buttonText = "Hoverboard Gun", method = Hoverboards.HoverboardGun, toolTip = "Spawns hoverboards at wherever your hand desires."},
 
-                new Module { buttonText = "Spaz Bug", method =() => Fun.SpazObject("Floating Bug Holdable"), toolTip = "Gives the bug a seizure." },
-                new Module { buttonText = "Spaz Bat", method =() => Fun.SpazObject("Cave Bat Holdable"), toolTip = "Gives the bat a seizure." },
-                new Module { buttonText = "Spaz Firefly", method =() => Fun.SpazObject("Firefly"), toolTip = "Gives the firefly a seizure." },
-                new Module { buttonText = "Spaz Camera", method = Fun.SpazCamera, toolTip = "Gives the camera a seizure." },
-                new Module { buttonText = "Spaz Tablet", method = Fun.SpazTablet, toolTip = "Gives the tablet a seizure." },
-                new Module { buttonText = "Spaz Balloons", method = Fun.SpazBalloons, toolTip = "Gives the balloons a seizure." },
-                new Module { buttonText = "Spaz Gliders", method = Fun.SpazGliders, toolTip = "Gives the gliders a seizure." },
-                new Module { buttonText = "Spaz Hoverboard", method = Fun.SpazHoverboard, toolTip = "Gives your hoverboard a seizure while holding it."},
+                new Module { buttonText = "Spaz Bug", method =() => Bugs.SpazObject("Floating Bug Holdable"), toolTip = "Gives the bug a seizure." },
+                new Module { buttonText = "Spaz Bat", method =() => Bugs.SpazObject("Cave Bat Holdable"), toolTip = "Gives the bat a seizure." },
+                new Module { buttonText = "Spaz Firefly", method =() => Bugs.SpazObject("Firefly"), toolTip = "Gives the firefly a seizure." },
+                new Module { buttonText = "Spaz Camera", method = LckCamera.SpazCamera, toolTip = "Gives the camera a seizure." },
+                new Module { buttonText = "Spaz Tablet", method = LckCamera.SpazTablet, toolTip = "Gives the tablet a seizure." },
+                new Module { buttonText = "Spaz Balloons", method = Balloons.SpazBalloons, toolTip = "Gives the balloons a seizure." },
+                new Module { buttonText = "Spaz Gliders", method = Gliders.SpazGliders, toolTip = "Gives the gliders a seizure." },
+                new Module { buttonText = "Spaz Hoverboard", method = Hoverboards.SpazHoverboard, toolTip = "Gives your hoverboard a seizure while holding it."},
 
-                new Module { buttonText = "Orbit Bug", method =() => Fun.OrbitObject("Floating Bug Holdable"), toolTip = "Orbits the bug around you." },
-                new Module { buttonText = "Orbit Bat", method =() => Fun.OrbitObject("Cave Bat Holdable", 240f), toolTip = "Orbits the bat around you." },
-                new Module { buttonText = "Orbit Firefly", method =() => Fun.OrbitObject("Firefly", 120f), toolTip = "Orbits the firefly around you." },
-                new Module { buttonText = "Orbit Camera", method = Fun.OrbitCamera, toolTip = "Orbits the camera around you." },
-                new Module { buttonText = "Orbit Tablet", method = Fun.OrbitTablet, toolTip = "Orbits the tablet around you." },
-                new Module { buttonText = "Orbit Balloons", method = Fun.OrbitBalloons, toolTip = "Orbits the balloons around you." },
-                new Module { buttonText = "Orbit Gliders", method = Fun.OrbitGliders, toolTip = "Orbits the gliders around you." },
-                new Module { buttonText = "Orbit Hoverboards", method = Fun.OrbitHoverboards, toolTip = "Orbits the hoverboards around you."},
+                new Module { buttonText = "Orbit Bug", method =() => Bugs.OrbitObject("Floating Bug Holdable"), toolTip = "Orbits the bug around you." },
+                new Module { buttonText = "Orbit Bat", method =() => Bugs.OrbitObject("Cave Bat Holdable", 240f), toolTip = "Orbits the bat around you." },
+                new Module { buttonText = "Orbit Firefly", method =() => Bugs.OrbitObject("Firefly", 120f), toolTip = "Orbits the firefly around you." },
+                new Module { buttonText = "Orbit Camera", method = LckCamera.OrbitCamera, toolTip = "Orbits the camera around you." },
+                new Module { buttonText = "Orbit Tablet", method = LckCamera.OrbitTablet, toolTip = "Orbits the tablet around you." },
+                new Module { buttonText = "Orbit Balloons", method = Balloons.OrbitBalloons, toolTip = "Orbits the balloons around you." },
+                new Module { buttonText = "Orbit Gliders", method = Gliders.OrbitGliders, toolTip = "Orbits the gliders around you." },
+                new Module { buttonText = "Orbit Hoverboards", method = Hoverboards.OrbitHoverboards, toolTip = "Orbits the hoverboards around you."},
 
-                new Module { buttonText = "Bug Aura", method =() => Fun.ObjectAura("Floating Bug Holdable"), toolTip = "Teleports the bug around you in random positions." },
-                new Module { buttonText = "Bat Aura", method =() => Fun.ObjectAura("Cave Bat Holdable"), toolTip = "Teleports the bat around you in random positions." },
-                new Module { buttonText = "Firefly Aura", method =() => Fun.ObjectAura("Firefly"), toolTip = "Teleports the firefly around you in random positions." },
-                new Module { buttonText = "Camera Aura", method = Fun.CameraAura, toolTip = "Teleports the camera around you in random positions." },
-                new Module { buttonText = "Tablet Aura", method = Fun.TabletAura, toolTip = "Teleports the tablet around you in random positions." },
-                new Module { buttonText = "Balloon Aura", method = Fun.BalloonAura, toolTip = "Teleports the balloons around you in random positions." },
-                new Module { buttonText = "Glider Aura", method = Fun.GliderAura, toolTip = "Teleports the camera around you in random positions." },
-                new Module { buttonText = "Hoverboard Aura", method = Fun.HoverboardAura, toolTip = "Teleports the hoverboards around you in random positions."},
+                new Module { buttonText = "Bug Aura", method =() => Bugs.ObjectAura("Floating Bug Holdable"), toolTip = "Teleports the bug around you in random positions." },
+                new Module { buttonText = "Bat Aura", method =() => Bugs.ObjectAura("Cave Bat Holdable"), toolTip = "Teleports the bat around you in random positions." },
+                new Module { buttonText = "Firefly Aura", method =() => Bugs.ObjectAura("Firefly"), toolTip = "Teleports the firefly around you in random positions." },
+                new Module { buttonText = "Camera Aura", method = LckCamera.CameraAura, toolTip = "Teleports the camera around you in random positions." },
+                new Module { buttonText = "Tablet Aura", method = LckCamera.TabletAura, toolTip = "Teleports the tablet around you in random positions." },
+                new Module { buttonText = "Balloon Aura", method = Balloons.BalloonAura, toolTip = "Teleports the balloons around you in random positions." },
+                new Module { buttonText = "Glider Aura", method = Gliders.GliderAura, toolTip = "Teleports the camera around you in random positions." },
+                new Module { buttonText = "Hoverboard Aura", method = Hoverboards.HoverboardAura, toolTip = "Teleports the hoverboards around you in random positions."},
 
-                new Module { buttonText = "Ride Bug", method =() => Fun.RideObject("Floating Bug Holdable"), toolTip = "Repeatedly teleports you on top of the bug." },
-                new Module { buttonText = "Ride Bat", method =() => Fun.RideObject("Cave Bat Holdable"), toolTip = "Repeatedly teleports you on top of the bat." },
-                new Module { buttonText = "Ride Firefly", method =() => Fun.RideObject("Firefly"), toolTip = "Repeatedly teleports you on top of the firefly." },
+                new Module { buttonText = "Ride Bug", method =() => Bugs.RideObject("Floating Bug Holdable"), toolTip = "Repeatedly teleports you on top of the bug." },
+                new Module { buttonText = "Ride Bat", method =() => Bugs.RideObject("Cave Bat Holdable"), toolTip = "Repeatedly teleports you on top of the bat." },
+                new Module { buttonText = "Ride Firefly", method =() => Bugs.RideObject("Firefly"), toolTip = "Repeatedly teleports you on top of the firefly." },
 
-                new Module { buttonText = "Become Bug", method =() => Fun.BecomeObject("Floating Bug Holdable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the bug." },
-                new Module { buttonText = "Become Bat", method =() => Fun.BecomeObject("Cave Bat Holdable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the bat." },
-                new Module { buttonText = "Become Firefly", method =() => Fun.BecomeObject("Firefly"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the firefly." },
-                new Module { buttonText = "Become Camera", method = Fun.BecomeCamera, disableMethod = Movement.EnableRig, toolTip = "Turns you into the camera." },
-                new Module { buttonText = "Become Tablet", method = Fun.BecomeTablet, disableMethod = Movement.EnableRig, toolTip = "Turns you into the tablet." },
-                new Module { buttonText = "Become Balloon", method = Fun.BecomeBalloon, disableMethod = Movement.EnableRig, toolTip = "Turns you into a balloon when holding <color=green>trigger</color>." },
-                new Module { buttonText = "Become Hoverboard", method = Fun.BecomeHoverboard, disableMethod = Movement.EnableRig, toolTip = "Turns you into a hoverboard when holding <color=green>trigger</color>." },
+                new Module { buttonText = "Become Bug", method =() => Bugs.BecomeObject("Floating Bug Holdable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the bug." },
+                new Module { buttonText = "Become Bat", method =() => Bugs.BecomeObject("Cave Bat Holdable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the bat." },
+                new Module { buttonText = "Become Firefly", method =() => Bugs.BecomeObject("Firefly"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the firefly." },
+                new Module { buttonText = "Become Camera", method = LckCamera.BecomeCamera, disableMethod = Movement.EnableRig, toolTip = "Turns you into the camera." },
+                new Module { buttonText = "Become Tablet", method = LckCamera.BecomeTablet, disableMethod = Movement.EnableRig, toolTip = "Turns you into the tablet." },
+                new Module { buttonText = "Become Balloon", method = Balloons.BecomeBalloon, disableMethod = Movement.EnableRig, toolTip = "Turns you into a balloon when holding <color=green>trigger</color>." },
+                new Module { buttonText = "Become Hoverboard", method = Hoverboards.BecomeHoverboard, disableMethod = Movement.EnableRig, toolTip = "Turns you into a hoverboard when holding <color=green>trigger</color>." },
 
-                new Module { buttonText = "Destroy Bug", method =() => Fun.DestroyObject("Floating Bug Holdable"), toolTip = "Sends the bug to hell." },
-                new Module { buttonText = "Destroy Firefly", method =() => Fun.DestroyObject("Firefly"), toolTip = "Sends the bug to hell." },
-                new Module { buttonText = "Destroy Bat", method =() => Fun.DestroyObject("Cave Bat Holdable"), toolTip = "Sends the bat to hell." },
-                new Module { buttonText = "Destroy Camera", method = Fun.DestroyCamera, toolTip = "Sends the camera to hell." },
-                new Module { buttonText = "Destroy Tablet", method = Fun.DestroyTablet, toolTip = "Sends the tablet to hell." },
-                new Module { buttonText = "Destroy Balloons", method = Fun.DestroyBalloons, isTogglable = false, toolTip = "Sends every single balloon cosmetic to hell." },
-                new Module { buttonText = "Destroy Gliders", method = Fun.DestroyGliders, isTogglable = false, toolTip = "Sends every single glider to hell." },
+                new Module { buttonText = "Destroy Bug", method =() => Bugs.DestroyObject("Floating Bug Holdable"), toolTip = "Sends the bug to hell." },
+                new Module { buttonText = "Destroy Firefly", method =() => Bugs.DestroyObject("Firefly"), toolTip = "Sends the bug to hell." },
+                new Module { buttonText = "Destroy Bat", method =() => Bugs.DestroyObject("Cave Bat Holdable"), toolTip = "Sends the bat to hell." },
+                new Module { buttonText = "Destroy Camera", method = LckCamera.DestroyCamera, toolTip = "Sends the camera to hell." },
+                new Module { buttonText = "Destroy Tablet", method = LckCamera.DestroyTablet, toolTip = "Sends the tablet to hell." },
+                new Module { buttonText = "Destroy Balloons", method = Balloons.DestroyBalloons, isTogglable = false, toolTip = "Sends every single balloon cosmetic to hell." },
+                new Module { buttonText = "Destroy Gliders", method = Gliders.DestroyGliders, isTogglable = false, toolTip = "Sends every single glider to hell." },
 
-                new Module { buttonText = "Respawn Gliders", method = Fun.RespawnGliders, isTogglable = false, toolTip = "Respawns all the gliders." },
-                new Module { buttonText = "Pop All Balloons", method = Fun.PopAllBalloons, isTogglable = false, toolTip = "Pops every single balloon cosmetic." },
+                new Module { buttonText = "Respawn Gliders", method = Gliders.RespawnGliders, isTogglable = false, toolTip = "Respawns all the gliders." },
+                new Module { buttonText = "Pop All Balloons", method = Balloons.PopAllBalloons, isTogglable = false, toolTip = "Pops every single balloon cosmetic." },
 
                 new Module { buttonText = "Golden Name Tag", method =() => Fun.GoldenNameTag(true), disableMethod =() => Fun.GoldenNameTag(false), toolTip = "Changes your name tag to a golden color. This mod only works if you are subscribed to the fan club." },
                 new Module { buttonText = "Flash Name Tag", method = Fun.FlashNameTag, toolTip = "Flashes your name tag to between golden and white. This mod only works if you are subscribed to the fan club." },
@@ -1708,22 +1716,22 @@ namespace Qubit.Modules
                 new Module { buttonText = "Copy Cosmetics Gun", method = Fun.CopyCosmeticsGun, toolTip = "Steals the cosmetics of whoever your hand desires." },
 
                 new Module { buttonText = "Change Accessories", overlapText = "Change Cosmetics", method = Fun.ChangeAccessories, toolTip = "Use your grips to change what hat you're wearing." },
-                new Module { buttonText = "Spaz Accessories", overlapText = "Spaz Cosmetics <color=grey>[</color><color=green>All</color><color=grey>]</color>", method = Fun.SpazAccessories, toolTip = "Spazzes your hats out for everyone when holding <color=green>trigger</color>." },
-                new Module { buttonText = "Spaz Cosmetics <color=grey>[</color><color=green>Others</color><color=grey>]</color>", method = Fun.SpazAccessoriesOthers, toolTip = "Spazzes your hats out for everyone except you when holding <color=green>trigger</color>." },
+                new Module { buttonText = "Spaz Accessories", overlapText = $"Spaz Cosmetics {Bracket("green", "All")}", method = Cosmetics.SpazAccessories, toolTip = "Spazzes your hats out for everyone when holding <color=green>trigger</color>." },
+                new Module { buttonText = $"Spaz Cosmetics {Bracket("green", "Others")}", method = Cosmetics.SpazAccessoriesOthers, toolTip = "Spazzes your hats out for everyone except you when holding <color=green>trigger</color>." },
 
-                new Module { buttonText = "Spaz Balloon Cosmetics <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Fun.SpazAccessoriesBalloon, toolTip = "Spazzes your balloons out for everyone when holding <color=green>trigger</color>." },
+                new Module { buttonText = $"Spaz Balloon Cosmetics {Bracket("green", "T")}", method = Cosmetics.SpazAccessoriesBalloon, toolTip = "Spazzes your balloons out for everyone when holding <color=green>trigger</color>." },
 
-                new Module { buttonText = "Cosmetic Spoof", enableMethod = Fun.TryOnAnywhere, disableMethod = Fun.TryOffAnywhere, toolTip = "Lets you try on cosmetics from anywhere. Enable this mod after wearing the cosmetics." },
-                new Module { buttonText = "Cosmetic Browser", method = Fun.CosmeticBrowser, isTogglable = false, toolTip = "Browse through every cosmetic that you can try on and add it to your cart." },
+                new Module { buttonText = "Cosmetic Spoof", enableMethod = Cosmetics.TryOnAnywhere, disableMethod = Cosmetics.TryOffAnywhere, toolTip = "Lets you try on cosmetics from anywhere. Enable this mod after wearing the cosmetics." },
+                new Module { buttonText = "Cosmetic Browser", method = Cosmetics.CosmeticBrowser, isTogglable = false, toolTip = "Browse through every cosmetic that you can try on and add it to your cart." },
                 new Module { buttonText = "Auto Spoof Cosmetics", enableMethod = Fun.AutoLoadCosmetics, disableMethod = Fun.NoAutoLoadCosmetics, toolTip = "Automatically spoofs your cosmetics, making you appear with anything you're able to try-on." },
 
-                new Module { buttonText = "Auto Purchase Cosmetics", overlapText = "Auto Purchase Free Cosmetics", method = Fun.AutoPurchaseCosmetics, toolTip = "Automatically purchases any free cosmetics." },
-                new Module { buttonText = "Auto Purchase Current Cosmetics", method = Fun.AutoPurchasePaidCosmetics, toolTip = "Automatically purchases all cosmetics on your outfit until you own everything. This does use shiny rocks." },
-                new Module { buttonText = "Disable Cosmetics on Tag", method = Fun.DisableCosmeticsOnTag, toolTip = "Disables your cosmetics when you get tagged, good for ambush." },
+                new Module { buttonText = "Auto Purchase Cosmetics", overlapText = "Auto Purchase Free Cosmetics", method = Cosmetics.AutoPurchaseCosmetics, toolTip = "Automatically purchases any free cosmetics." },
+                new Module { buttonText = "Auto Purchase Current Cosmetics", method = Cosmetics.AutoPurchasePaidCosmetics, toolTip = "Automatically purchases all cosmetics on your outfit until you own everything. This does use shiny rocks." },
+                new Module { buttonText = "Disable Cosmetics on Tag", method = Cosmetics.DisableCosmeticsOnTag, toolTip = "Disables your cosmetics when you get tagged, good for ambush." },
 
                 new Module { buttonText = "Unlock Fan Club Subscription", aliases = new[] { "Unlock VIM", "Unlock Very Cool Monke", "Free VIM" }, enableMethod =() => SubscriptionPatches.enabled = true, disableMethod =() => SubscriptionPatches.enabled = false, toolTip = "Unlocks the Gorilla Tag fan club subscription." },
-                new Module { buttonText = "Unlock All Cosmetics", method = Fun.UnlockAllCosmetics, toolTip = "Unlocks every cosmetic in the game. This mod is client-sided." },
-                new Module { buttonText = "Unlimited Shiny Rocks", enableMethod =() => PurchasePatch.enabled = true, method =() => CosmeticsController.instance.currencyBalance = int.MaxValue, disableMethod =() => PurchasePatch.enabled = false, toolTip = "Gives you 2 billion shiny rocks. This mod is client sided." },
+                new Module { buttonText = "Unlock All Cosmetics", method = Cosmetics.UnlockAllCosmetics, toolTip = "Unlocks every cosmetic in the game. This mod is client-sided." },
+                new Module { buttonText = "Unlimited Shiny Rocks", enableMethod =() => PurchasePatch.enabled = true, method =() => ManagerRegistry.CosmeticsController.currencyBalance = int.MaxValue, disableMethod =() => PurchasePatch.enabled = false, toolTip = "Gives you 2 billion shiny rocks. This mod is client sided." },
 
                 new Module { buttonText = "Sticky Holdables", method = Fun.StickyHoldables, toolTip = "Makes your holdables sticky.", legal = true},
                 new Module { buttonText = "Spaz Holdables", method = Fun.SpazHoldables, toolTip = "Spazzes out the positions of your holdables." },
@@ -1785,28 +1793,28 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Soundboard", method =() => Sound.LoadSoundboard(), isTogglable = false, toolTip = "A working, customizable soundboard that lets you play audios through your microphone."},
 
-                new Module { buttonText = "Bass Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(68), toolTip = "Plays the loud drum sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Metal Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(18), toolTip = "Plays the metal sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Wolf Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(195), toolTip = "Plays the wolf howl when holding <color=green>grip</color>." },
-                new Module { buttonText = "Cat Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(236), toolTip = "Plays the cat meow when holding <color=green>grip</color>." },
-                new Module { buttonText = "Turkey Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(83), toolTip = "Plays the turkey sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Frog Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(91), toolTip = "Plays the frog creak when holding <color=green>grip</color>." },
-                new Module { buttonText = "Bee Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(191), toolTip = "Plays the bee buzz when holding <color=green>grip</color>." },
-                new Module { buttonText = "Squeak Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(215), toolTip = "Plays the squeak sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Okay Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(336), toolTip = "Plays the sound of jmancurly saying \"okay\" with autotune when holding <color=green>grip</color>." },
-                new Module { buttonText = "Scream Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(337), toolTip = "Plays the sound of jmancurly screaming when holding <color=green>grip</color>." },
-                new Module { buttonText = "Slap Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(338), toolTip = "Plays the slap sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Jmancurly Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Sound.JmancurlySoundSpam, toolTip = "Plays the sounds from the jmancurly statue when holding <color=green>grip</color>." },
-                new Module { buttonText = "Random Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Sound.RandomSoundSpam, toolTip = "Plays random sounds when holding <color=green>grip</color>." },
-                new Module { buttonText = "Earrape Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(215), toolTip = "Plays a high-pitched sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Ding Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(244), toolTip = "Plays a ding sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Crystal Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Sound.CrystalSoundSpam, toolTip = "Plays some crystal noises when holding <color=green>grip</color>." },
-                new Module { buttonText = "Piano Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(Random.Range(295, 307)), toolTip = "Plays some terrible piano when holding <color=green>grip</color>." },
-                new Module { buttonText = "Big Crystal Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(213), toolTip = "Plays a long crystal sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Pan Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(248), toolTip = "Plays a pan sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "AK-47 Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(203), toolTip = "Plays a sound that sounds like an AK-47 when holding <color=green>grip</color>." },
-                new Module { buttonText = "Siren Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Sound.SirenSoundSpam, toolTip = "Plays a siren sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Tick Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Sound.SoundSpam(148), toolTip = "Plays a tick sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Bass Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(68), toolTip = "Plays the loud drum sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Metal Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(18), toolTip = "Plays the metal sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Wolf Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(195), toolTip = "Plays the wolf howl when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Cat Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(236), toolTip = "Plays the cat meow when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Turkey Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(83), toolTip = "Plays the turkey sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Frog Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(91), toolTip = "Plays the frog creak when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Bee Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(191), toolTip = "Plays the bee buzz when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Squeak Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(215), toolTip = "Plays the squeak sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Okay Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(336), toolTip = "Plays the sound of jmancurly saying \"okay\" with autotune when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Scream Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(337), toolTip = "Plays the sound of jmancurly screaming when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Slap Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(338), toolTip = "Plays the slap sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Jmancurly Sound Spam {Bracket("green", "G")}", method = Sound.JmancurlySoundSpam, toolTip = "Plays the sounds from the jmancurly statue when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Random Sound Spam {Bracket("green", "G")}", method = Sound.RandomSoundSpam, toolTip = "Plays random sounds when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Earrape Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(215), toolTip = "Plays a high-pitched sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Ding Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(244), toolTip = "Plays a ding sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Crystal Sound Spam {Bracket("green", "G")}", method = Sound.CrystalSoundSpam, toolTip = "Plays some crystal noises when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Piano Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(Random.Range(295, 307)), toolTip = "Plays some terrible piano when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Big Crystal Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(213), toolTip = "Plays a long crystal sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Pan Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(248), toolTip = "Plays a pan sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"AK-47 Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(203), toolTip = "Plays a sound that sounds like an AK-47 when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Siren Sound Spam {Bracket("green", "G")}", method = Sound.SirenSoundSpam, toolTip = "Plays a siren sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Tick Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(148), toolTip = "Plays a tick sound when holding <color=green>grip</color>." },
 
                 ButtonHelper.Create("Custom Sound ID",
                     () => Enumerable.Range(0, References.Player?.materialData?.Count ?? 0).Select(i => i.ToString()).ToArray(),
@@ -1814,7 +1822,7 @@ namespace Qubit.Modules
                     v => Sound.soundId = v,
                     toolTip: "Changes the Sound ID of the Custom Sound Spam."
                 ),
-                new Module { buttonText = "Custom Sound Spam", overlapText = "Custom Sound Spam <color=grey>[</color><color=green>0</color><color=grey>]</color>", method = Sound.CustomSoundSpam, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
+                new Module { buttonText = "Custom Sound Spam", overlapText = $"Custom Sound Spam {Bracket("green", "0")}", method = Sound.CustomSoundSpam, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
 
                 new Module { buttonText = "Override Tap Sound", method =() => { EffectDataPatch.enabled = true; EffectDataPatch.material = Sound.soundId; }, disableMethod =() => {  EffectDataPatch.enabled = false;  EffectDataPatch.material = -1; }, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
             },
@@ -1823,20 +1831,20 @@ namespace Qubit.Modules
             {
                 new Module { buttonText = "Exit Projectile Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { buttonText = "Grab Projectile <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.GrabProjectile, disableMethod = () => Projectiles.previousGripHeld.Clear(), toolTip = "Grabs your selected projectile holding <color=green>grip</color>." },
-                new Module { buttonText = "Projectile Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.ProjectileSpam, toolTip = "Spams your selected projectile when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Grab Projectile {Bracket("green", "G")}", method = Projectiles.GrabProjectile, disableMethod = () => Projectiles.previousGripHeld.Clear(), toolTip = "Grabs your selected projectile holding <color=green>grip</color>." },
+                new Module { buttonText = $"Projectile Spam {Bracket("green", "G")}", method = Projectiles.ProjectileSpam, toolTip = "Spams your selected projectile when holding <color=green>grip</color>." },
                 new Module { buttonText = "Projectile Gun", method = Projectiles.ProjectileGun, toolTip = "Spams your selected projectile at wherever your hand desires." },
-                new Module { buttonText = "Laser Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.LazerSpam, toolTip = "Spams your selected projectile out of your eyes like lasers when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Laser Spam {Bracket("green", "G")}", method = Projectiles.LazerSpam, toolTip = "Spams your selected projectile out of your eyes like lasers when holding <color=green>grip</color>." },
                 new Module { buttonText = "Give Projectile Spam Gun", method = Projectiles.GiveProjectileSpamGun, toolTip = "Acts like the projectile spam, but you can give it to whoever your hand desires when they hold <color=green>grip</color>." },
-                new Module { buttonText = "Impact Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.ImpactSpam, toolTip = "Orbits impact effects around you" },
-                new Module { buttonText = "Impact Orbit <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.ImpactSpam, toolTip = "Acts like the projectile spam, but uses the impacts instead." },
-                new Module { buttonText = "Laser Eyes <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.LazerEyes, toolTip = "Makes you shoot lasers out of your eyes when holding <color=green>grip</color>." },
-                new Module { buttonText = "Urine <color=grey>[</color><color=green>G</color><color=grey>]</color>", aliases = new[] { "Pee", "Piss" }, method = Projectiles.Urine, toolTip = "Makes you pee when holding <color=green>grip</color>." },
-                new Module { buttonText = "Feces <color=grey>[</color><color=green>G</color><color=grey>]</color>", aliases = new[] { "Poop", "Shit" }, method = Projectiles.Feces, toolTip = "Makes you poo when holding <color=green>grip</color>." },
-                new Module { buttonText = "Period <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.Period, toolTip = "Makes you have your period when holding <color=green>grip</color>." },
-                new Module { buttonText = "Semen <color=grey>[</color><color=green>G</color><color=grey>]</color>", aliases = new[] { "Cum", "Ejaculate" }, method = Projectiles.Semen, toolTip = "Makes you ejaculate when holding <color=green>grip</color>." },
-                new Module { buttonText = "Vomit <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.Vomit, toolTip = "Makes you throw up when holding <color=green>grip</color>." },
-                new Module { buttonText = "Spit <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.Spit, toolTip = "Makes you spit when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Impact Spam {Bracket("green", "G")}", method = Projectiles.ImpactSpam, toolTip = "Orbits impact effects around you" },
+                new Module { buttonText = $"Impact Orbit {Bracket("green", "G")}", method = Projectiles.ImpactSpam, toolTip = "Acts like the projectile spam, but uses the impacts instead." },
+                new Module { buttonText = $"Laser Eyes {Bracket("green", "G")}", method = Projectiles.LazerEyes, toolTip = "Makes you shoot lasers out of your eyes when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Urine {Bracket("green", "G")}", aliases = new[] { "Pee", "Piss" }, method = Projectiles.Urine, toolTip = "Makes you pee when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Feces {Bracket("green", "G")}", aliases = new[] { "Poop", "Shit" }, method = Projectiles.Feces, toolTip = "Makes you poo when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Period {Bracket("green", "G")}", method = Projectiles.Period, toolTip = "Makes you have your period when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Semen {Bracket("green", "G")}", aliases = new[] { "Cum", "Ejaculate" }, method = Projectiles.Semen, toolTip = "Makes you ejaculate when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Vomit {Bracket("green", "G")}", method = Projectiles.Vomit, toolTip = "Makes you throw up when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Spit {Bracket("green", "G")}", method = Projectiles.Spit, toolTip = "Makes you spit when holding <color=green>grip</color>." },
 
                 new Module { buttonText = "Laser Eyes Gun", method = Projectiles.LazerEyesGun, toolTip = "Makes whoever your hand desires shoot lasers out of their eyes." },
                 new Module { buttonText = "Urine Gun", aliases = new[] { "Pee Gun", "Piss Gun" }, method = Projectiles.UrineGun, toolTip = "Makes whoever your hand desires pee." },
@@ -1854,32 +1862,32 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Projectile Nuke Gun", method = Projectiles.ProjectileNukeGun, toolTip = "Spawns a lot of projectiles airstriking from the sky at wherever your hand desires."},
 
-                new Module { buttonText = "Projectile Rain <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Projectiles.ProjectileRain, toolTip = "Rains projectiles around you when holding <color=green>trigger</color>."},
-                new Module { buttonText = "Projectile Hail <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Projectiles.ProjectileHail, toolTip = "Hails projectiles around you when holding <color=green>trigger</color>."},
-                new Module { buttonText = "Projectile Fountain <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Projectiles.ProjectileFountain, toolTip = "Fountains projectiles above you when holding <color=green>trigger</color>."},
-                new Module { buttonText = "Projectile Positional Fountain <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.ProjectilePositionalFountain, disableMethod = Projectiles.DisableProjectilePositionalFountain, toolTip = "Place a fountain <color=green>grip</color> and use it with <color=green>trigger</color>. It will fountain projectiles at wherever the fountain is."},
+                new Module { buttonText = $"Projectile Rain {Bracket("green", "T")}", method = Projectiles.ProjectileRain, toolTip = "Rains projectiles around you when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Projectile Hail {Bracket("green", "T")}", method = Projectiles.ProjectileHail, toolTip = "Hails projectiles around you when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Projectile Fountain {Bracket("green", "T")}", method = Projectiles.ProjectileFountain, toolTip = "Fountains projectiles above you when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Projectile Positional Fountain {Bracket("green", "G")}", method = Projectiles.ProjectilePositionalFountain, disableMethod = Projectiles.DisableProjectilePositionalFountain, toolTip = "Place a fountain <color=green>grip</color> and use it with <color=green>trigger</color>. It will fountain projectiles at wherever the fountain is."},
 
-                new Module { buttonText = "Projectile Orbit <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Projectiles.ProjectileOrbit, toolTip = "Orbits projectiles around you when holding <color=green>trigger</color>."},
-                new Module { buttonText = "Projectile Aura <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Projectiles.ProjectileAura, toolTip = "Randomly spawns projectiles around you when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Projectile Orbit {Bracket("green", "T")}", method = Projectiles.ProjectileOrbit, toolTip = "Orbits projectiles around you when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Projectile Aura {Bracket("green", "T")}", method = Projectiles.ProjectileAura, toolTip = "Randomly spawns projectiles around you when holding <color=green>trigger</color>."},
 
                 new Module { buttonText = "Snowball Punch Mod", method = Projectiles.SnowballPunchMod, toolTip = "Flings people when you punch them."},
                 new Module { buttonText = "Snowball Boxing", method = Projectiles.SnowballBoxing, toolTip = "Gives everyone the punch mod by using snowballs."},
-                new Module { buttonText = "Snowball Dash <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Projectiles.SnowballDash, toolTip = "Allows other players to dash themself into the air with the snowballs."},
+                new Module { buttonText = $"Snowball Dash {Bracket("green", "A")}", method = Projectiles.SnowballDash, toolTip = "Allows other players to dash themself into the air with the snowballs."},
                 new Module { buttonText = "Snowball High Jump", method = Projectiles.SnowballHighJump, toolTip = "Allow everyone to jump higher using snowballs."},
                 new Module { buttonText = "Snowball Particle Gun", method = Projectiles.SnowballParticleGun, toolTip = "Spawns snowball particles wherever your hand desires."},
                 new Module { buttonText = "Snowball Impact Effect Gun", method = Projectiles.SnowballImpactEffectGun, toolTip = "Spawns snowball impact events on whoever your hand desires."},
 
-                new Module { buttonText = "Snowball Fling Zone <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Projectiles.SnowballFlingZone, disableMethod = Projectiles.DisableSnowballFlingZone, toolTip = "Spawn and move fling zones with your <color=green>right grip</color>. Press <color=green>trigger</color> to remove fling zones."},
+                new Module { buttonText = $"Snowball Fling Zone {Bracket("green", "G")}", method = Projectiles.SnowballFlingZone, disableMethod = Projectiles.DisableSnowballFlingZone, toolTip = "Spawn and move fling zones with your <color=green>right grip</color>. Press <color=green>trigger</color> to remove fling zones."},
 
                 new Module { buttonText = "Snowball Fling Gun", method = Projectiles.SnowballFlingGun, toolTip = "Flings whoever your hand desires."},
-                new Module { buttonText = "Snowball Fling All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Projectiles.SnowballFlingAll, toolTip = "Flings everybody when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Snowball Fling All {Bracket("green", "T")}", method = Projectiles.SnowballFlingAll, toolTip = "Flings everybody when holding <color=green>trigger</color>."},
                 new Module { buttonText = "Snowball Safety Bubble", aliases = new[] { "Snowball Fling Aura" }, method = Projectiles.SnowballSafetyBubble, toolTip = "Anyone who gets too close to you will be launched away."},
 
                 new Module { buttonText = "Snowball Protect Gun", method = Projectiles.SnowballProtectGun, toolTip = "Protects whoever your hand desires by flinging anyone who gets too close. "},
                 new Module { buttonText = "Snowball Protect All", method = Projectiles.SnowballProtectAll, toolTip = "Protects everyone by flinging anyone who gets too close. "},
 
                 new Module { buttonText = "Snowball Fling Vertical Gun", method = Projectiles.SnowballFlingVerticalGun, toolTip = "Flings whoever your hand desires vertically."},
-                new Module { buttonText = "Snowball Fling Vertical All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Projectiles.SnowballFlingVerticalAll, toolTip = "Flings everybody vertically when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Snowball Fling Vertical All {Bracket("green", "T")}", method = Projectiles.SnowballFlingVerticalAll, toolTip = "Flings everybody vertically when holding <color=green>trigger</color>."},
                 new Module { buttonText = "Snowball Bring Gun", method = Projectiles.SnowballBringGun, toolTip = "Flings everybody towards wherever your hand desires."},
                 new Module { buttonText = "Snowball Push Gun", method = Projectiles.SnowballPushGun, aliases = new[] { "Snowball Fling Away Gun" }, toolTip = "Flings everybody away from wherever your hand desires."},
 
@@ -1894,7 +1902,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Snowball Buttocks", method = Projectiles.SnowballButtocks, disableMethod = Projectiles.DisableSnowballGenitals, toolTip = "Gives you fake buttocks using the snowballs." },
                 new Module { buttonText = "Snowball Breasts", method = Projectiles.SnowballBreasts, disableMethod = Projectiles.DisableSnowballGenitals, toolTip = "Gives you fake breasts using the snowballs." },
 
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Snowball Fling</color><color=grey>]</color>", method = Projectiles.AntiReportSnowballFling, toolTip = "Flings whoever tries to report you with the snowballs."}
+                new Module { buttonText = $"Anti Report {Bracket("green", "Snowball Fling")}", method = Projectiles.AntiReportSnowballFling, toolTip = "Flings whoever tries to report you with the snowballs."}
             },
 
             ["Master Mods"] = new[]
@@ -2009,12 +2017,12 @@ namespace Qubit.Modules
                 new Module { buttonText = "Spaz Kill Gun", method = Master.SpazKillGun, toolTip = "Repeatedly kills and revives whoever your hand desires."},
                 new Module { buttonText = "Spaz Kill All", method = Master.SpazKillAll, toolTip = "Repeatedly kills and revives everyone in the room."},
 
-                new Module { buttonText = "Unlimited Building", enableMethod = Master.UnlimitedBuilding, disableMethod = Master.DisableUnlimitedBuilding, toolTip = "Unlimits building, disabling drop zones and letting you place on people's plots." },
+                new Module { buttonText = "Unlimited Building", enableMethod = Blocks.UnlimitedBuilding, disableMethod = Blocks.DisableUnlimitedBuilding, toolTip = "Unlimits building, disabling drop zones and letting you place on people's plots." },
 
-                new Module { buttonText = "Shotgun <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Master.Shotgun, toolTip = "Spawns you a shotgun when you press <color=green>grip</color>."},
+                new Module { buttonText = $"Shotgun {Bracket("green", "G")}", method = Master.Shotgun, toolTip = "Spawns you a shotgun when you press <color=green>grip</color>."},
 
-                new Module { buttonText = "Building Block Crash Gun", method = Master.BlockCrashGun, toolTip = "Crashes whoever your hand desires if they are inside of the block map."},
-                new Module { buttonText = "Building Block Crash All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Master.BlockCrashAll, toolTip = "Crashes everybody inside of the block map."},
+                new Module { buttonText = "Building Block Crash Gun", method = Blocks.BlockCrashGun, toolTip = "Crashes whoever your hand desires if they are inside of the block map."},
+                new Module { buttonText = $"Building Block Crash All {Bracket("green", "T")}", method = Blocks.BlockCrashAll, toolTip = "Crashes everybody inside of the block map."},
 
                 new Module { buttonText = "Block Anti Report", enableMethod = Master.EnableAtticAntiReport, method = Master.AtticAntiReport, toolTip = "Automatically builds blocks around your report button."},
 
@@ -2023,7 +2031,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Block Tower Gun", overlapText = "Building Block Tower Gun",method = Master.AtticTowerGun, toolTip = "Builds a tower wherever your hand desires."},
 
                 new Module { buttonText = "Block Freeze Gun", overlapText = "Building Block Freeze Gun", method = Master.AtticFreezeGun, toolTip = "Freeze whoever your hand desires."},
-                new Module { buttonText = "Block Freeze All <color=grey>[</color><color=green>T</color><color=grey>]</color>", overlapText = "Building Block Freeze All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Master.AtticFreezeAll, toolTip = "Freezes everyone in the lobby when holding <color=green>trigger</color>."},
+                new Module { buttonText = $"Block Freeze All {Bracket("green", "T")}", overlapText = $"Building Block Freeze All {Bracket("green", "T")}", method = Master.AtticFreezeAll, toolTip = "Freezes everyone in the lobby when holding <color=green>trigger</color>."},
 
                 new Module { buttonText = "Block Float Gun", overlapText = "Building Block Float Gun", method = Master.AtticFloatGun, toolTip = "Makes whoever your hand desires float using the building blocks."},
                 new Module { buttonText = "Building Block Fling Gun", method = Master.AtticFlingGun, toolTip = "Flings whoever your hand desires using the building blocks."},
@@ -2036,7 +2044,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Slow Monsters", enableMethod = Master.SlowMonsters, disableMethod = Master.FixMonsters, toolTip = "Slows down the basement monsters." },
                 new Module { buttonText = "Fast Monsters", enableMethod = Master.FastMonsters, disableMethod = Master.FixMonsters, toolTip = "Speeds up the basement monsters." },
 
-                new Module { buttonText = "Grab Monsters <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Master.GrabMonsters, toolTip = "Puts the basement monsters in your hand." },
+                new Module { buttonText = $"Grab Monsters {Bracket("green", "G")}", method = Master.GrabMonsters, toolTip = "Puts the basement monsters in your hand." },
                 new Module { buttonText = "Monster Gun", method = Master.MonsterGun, toolTip = "Moves the basement monsters to wherever your hand desires." },
                 new Module { buttonText = "Spaz Monsters", method = Master.SpazMonsters, toolTip = "Gives the basement monsters a seizure." },
                 new Module { buttonText = "Orbit Monsters", method = Master.OrbitMonsters, toolTip = "Orbits the basement monsters around you." },
@@ -2072,12 +2080,12 @@ namespace Qubit.Modules
                 new Module { buttonText = "Unlock Driver Gun", method =() => Master.DriverStatusGun(false), isTogglable = true, toolTip = "Unlocks the driver for whoever your hand desires in the virtual stump."},
                 new Module { buttonText = "Spaz Driver Gun", method = Master.SpazDriverStatusGun, isTogglable = true, toolTip = "Spaz makes and unmakes whoever your hand desires the driver in the virtual stump."},
 
-                new Module { buttonText = "Bonk Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Master.BetaSoundSpam(4), toolTip = "Plays the bonk sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Count Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Master.BetaSoundSpam(1), toolTip = "Plays the count sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Brawl Count Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Master.BetaSoundSpam(6), toolTip = "Plays the brawl count sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Brawl Start Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Master.BetaSoundSpam(7), toolTip = "Plays the brawl start sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Tag Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Master.BetaSoundSpam(0), toolTip = "Plays the tag sound when holding <color=green>grip</color>." },
-                new Module { buttonText = "Round End Sound Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Master.BetaSoundSpam(2), toolTip = "Plays the round end sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Bonk Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(4), toolTip = "Plays the bonk sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Count Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(1), toolTip = "Plays the count sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Brawl Count Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(6), toolTip = "Plays the brawl count sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Brawl Start Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(7), toolTip = "Plays the brawl start sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Tag Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(0), toolTip = "Plays the tag sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Round End Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(2), toolTip = "Plays the round end sound when holding <color=green>grip</color>." },
 
                 new Module { buttonText = "Paintbrawl Start Game", method = Master.PaintbrawlStartGame, isTogglable = false, toolTip = "Starts a game of paintbrawl." },
                 new Module { buttonText = "Paintbrawl End Game", method = Master.PaintbrawlEndGame, isTogglable = false, toolTip = "Ends the current game of paintbrawl." },
@@ -2117,27 +2125,27 @@ namespace Qubit.Modules
                 new Module { buttonText = "Guardian Protector", method = Overpowered.GuardianProtector, toolTip = "Pushes people away from the guardian moon if they try to approach it."},
 
                 new Module { buttonText = "Guardian Grab Gun", method = Overpowered.GuardianGrabGun, toolTip = "Grabs whoever your hand desires if you're the guardian."},
-                new Module { buttonText = "Guardian Grab All <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Overpowered.GuardianGrabAll, toolTip = "Grabs everyone in the room if you're the guardian."},
+                new Module { buttonText = $"Guardian Grab All {Bracket("green", "G")}", method = Overpowered.GuardianGrabAll, toolTip = "Grabs everyone in the room if you're the guardian."},
 
                 new Module { buttonText = "Guardian Release Gun", method = Overpowered.GuardianReleaseGun, toolTip = "Releases whoever your hand desires if you're the guardian."},
-                new Module { buttonText = "Guardian Release All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianReleaseAll, toolTip = "Releases everyone in the room if you're the guardian."},
+                new Module { buttonText = $"Guardian Release All {Bracket("green", "T")}", method = Overpowered.GuardianReleaseAll, toolTip = "Releases everyone in the room if you're the guardian."},
 
                 new Module { buttonText = "Guardian Fling Gun", method = Overpowered.GuardianFlingGun, toolTip = "Flings whoever your hand desires."},
-                new Module { buttonText = "Guardian Fling All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianFlingAll, toolTip = "Flings everyone in the room."},
+                new Module { buttonText = $"Guardian Fling All {Bracket("green", "T")}", method = Overpowered.GuardianFlingAll, toolTip = "Flings everyone in the room."},
 
                 new Module { buttonText = "Guardian Bring Gun", method = Overpowered.GuardianBringGun, toolTip = "Brings whoever your hand desires towards you."},
-                new Module { buttonText = "Guardian Bring All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianBringAll, toolTip = "Brings everyone in the room towards you."},
+                new Module { buttonText = $"Guardian Bring All {Bracket("green", "T")}", method = Overpowered.GuardianBringAll, toolTip = "Brings everyone in the room towards you."},
 
                 new Module { buttonText = "Guardian Bring All Gun", method = Overpowered.GuardianBringAllGun, toolTip = "Brings everyone in the room towards wherever your hand desires."},
 
                 new Module { buttonText = "Guardian Bring Away Gun", method = Overpowered.GuardianBringAwayGun, toolTip = "Brings whoever your hand desires towards you."},
-                new Module { buttonText = "Guardian Bring Away All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianBringAwayAll, toolTip = "Brings everyone in the room towards you."},
+                new Module { buttonText = $"Guardian Bring Away All {Bracket("green", "T")}", method = Overpowered.GuardianBringAwayAll, toolTip = "Brings everyone in the room towards you."},
 
                 new Module { buttonText = "Bring Away All Gun", method = Overpowered.GuardianBringAwayAllGun, toolTip = "Brings everyone in the room towards wherever your hand desires."},
 
                 new Module { buttonText = "Guardian Anti Stump", method = Overpowered.GuardianAntiStump, toolTip = "Anyone who gets too close to the stump entrance will be launched away."},
 
-                new Module { buttonText = "Guardian Orbit All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianOrbitAll, toolTip = "Orbits everyone in the room around you."},
+                new Module { buttonText = $"Guardian Orbit All {Bracket("green", "T")}", method = Overpowered.GuardianOrbitAll, toolTip = "Orbits everyone in the room around you."},
 
                 new Module { buttonText = "Guardian Punch Mod", method = Overpowered.GuardianPunchMod, toolTip = "Flings people when you punch them."},
                 new Module { buttonText = "Guardian Boxing", method = Overpowered.GuardianBoxing, toolTip = "Lets everyone in the room punch eachother."},
@@ -2146,13 +2154,13 @@ namespace Qubit.Modules
                 new Module { buttonText = "Guardian Give Fly All", method = Overpowered.GuardianGiveFlyAll, toolTip = "Gives everyone in the room fly when they hold their right thumb down."},
 
                 new Module { buttonText = "Guardian Spaz Player Gun", method = Overpowered.GuardianSpazPlayerGun, toolTip = "Spazzes out whoever your hand desires."},
-                new Module { buttonText = "Guardian Spaz All Players <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianSpazAllPlayers, toolTip = "Spazzes out everyone in the room."},
+                new Module { buttonText = $"Guardian Spaz All Players {Bracket("green", "T")}", method = Overpowered.GuardianSpazAllPlayers, toolTip = "Spazzes out everyone in the room."},
 
-                new Module { buttonText = "Guardian Effect Spam Hands <color=grey>[</color><color=green>G</color><color=grey>]</color>", method = Overpowered.GuardianEffectSpamHands, toolTip = "Spawns effects when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Guardian Effect Spam Hands {Bracket("green", "G")}", method = Overpowered.GuardianEffectSpamHands, toolTip = "Spawns effects when holding <color=green>grip</color>."},
                 new Module { buttonText = "Effect Spam Gun", method = Overpowered.GuardianEffectSpamGun, overlapText = "Guardian Effect Spam Gun", toolTip = "Spawns effects wherever your hand desires."},
 
                 new Module { buttonText = "Guardian Freeze Gun", method = Overpowered.GuardianPhysicalFreezeGun, toolTip = "Freezes whoever your hand desires." },
-                new Module { buttonText = "Guardian Freeze All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianPhysicalFreezeAll, toolTip = "Freezes everyone in the room when holding <color=green>trigger</color>." },
+                new Module { buttonText = $"Guardian Freeze All {Bracket("green", "T")}", method = Overpowered.GuardianPhysicalFreezeAll, toolTip = "Freezes everyone in the room when holding <color=green>trigger</color>." },
 
                 //new ButtonInfo { buttonText = "Guardian Kick Gun", method = Overpowered.GuardianKickGun, toolTip = "Kicks whoever your hand desires." },
                 //new ButtonInfo { buttonText = "Guardian Kick All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianKickAll, toolTip = "Kicks everyone in the room when holding <color=green>trigger</color>." },
@@ -2176,7 +2184,7 @@ namespace Qubit.Modules
                 //new ButtonInfo { buttonText = "Crash Server", enableMethod =() => SerializePatch.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(0.5f, 40), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes the room." },
                 //new ButtonInfo { buttonText = "Za Warudo <color=grey>[</color><color=green>T</color><color=grey>]</color>", enableMethod = Overpowered.ZaWarudo_enableMethod, method = Overpowered.ZaWarudo, toolTip = "Freeze all, but with special effects." },
 
-                new Module { buttonText = "Anti Report <color=grey>[</color><color=green>Fling</color><color=grey>]</color>", method = Overpowered.AntiReportFling, toolTip = "Flings whoever tries to report you."},
+                new Module { buttonText = $"Anti Report {Bracket("green", "Fling")}", method = Overpowered.AntiReportFling, toolTip = "Flings whoever tries to report you."},
 
                 new Module { buttonText = "Grab Fling Gun", enableMethod =() => Overpowered.GrabStatus = true, method = Overpowered.GrabFlingGun, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to fling whoever your hand desires."},
                 new Module { buttonText = "Grab Fling All", enableMethod =() => Overpowered.GrabStatus = true, postMethod = Overpowered.GrabFlingAll, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to fling everyone in the room."},
@@ -2202,20 +2210,20 @@ namespace Qubit.Modules
 
                 //new ButtonInfo { buttonText = "Barrel Punch Mod", method = Overpowered.BarrelPunchMod, toolTip = "Flings people when you punch them."},
 
-                //new ButtonInfo { buttonText = "Barrel Fling Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingGun, toolTip = "Flings whoever your hand desires using the barrels."},
-                //new ButtonInfo { buttonText = "Barrel Fling All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Fling Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingGun, toolTip = "Flings whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Fling All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels."},
 
-                //new ButtonInfo { buttonText = "Barrel Fling Towards Gun", overlapText = "Barrel Bring Gun", aliases = new[] { "Barrel Fling Towards Gun" }, enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsGun, toolTip = "Flings whoever your hand desires using the barrels towards you."},
-                //new ButtonInfo { buttonText = "Barrel Fling Towards All", overlapText = "Barrel Bring All", aliases = new[] { "Barrel Fling Towards All" }, enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels towards you."},
+                //new ButtonInfo { buttonText = "Barrel Fling Towards Gun", overlapText = "Barrel Bring Gun", aliases = new[] { "Barrel Fling Towards Gun" }, enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsGun, toolTip = "Flings whoever your hand desires using the barrels towards you."},
+                //new ButtonInfo { buttonText = "Barrel Fling Towards All", overlapText = "Barrel Bring All", aliases = new[] { "Barrel Fling Towards All" }, enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels towards you."},
 
-                //new ButtonInfo { buttonText = "Barrel Kick Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickGun, toolTip = "Kicks whoever your hand desires using the barrels."},
-                //new ButtonInfo { buttonText = "Barrel Kick All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Kick Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickGun, toolTip = "Kicks whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Kick All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room using the barrels."},
 
-                //new ButtonInfo { buttonText = "Barrel Crash Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashGun, toolTip = "Crashes whoever your hand desires using the barrels."},
-                //new ButtonInfo { buttonText = "Barrel Crash All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Crash Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashGun, toolTip = "Crashes whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Crash All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room using the barrels."},
 
-                //new ButtonInfo { buttonText = "Barrel Obliterate Gun", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateGun, toolTip = "Obliterates whoever your hand desires using the barrels."},
-                //new ButtonInfo { buttonText = "Barrel Obliterate All", enableMethod =() => Fun.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateAll, toolTip = "Obliterates everyone in the room using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Obliterate Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateGun, toolTip = "Obliterates whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Obliterate All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateAll, toolTip = "Obliterates everyone in the room using the barrels."},
 
                 //new ButtonInfo { buttonText = "Barrel City Kick Gun", method = Overpowered.CityKickGun, toolTip = "Flings whoever your hand desires using the barrels into the clouds map to kick them."},
                 //new ButtonInfo { buttonText = "Barrel City Kick All", method = Overpowered.CityKickAll, toolTip = "Flings everyone in the room using the barrels into the clouds map to kick them."},
@@ -2239,7 +2247,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Elevator Kick On Touch", method = Overpowered.ElevatorKickOnTouch, toolTip = "Kicks players you touch if they are in the elevator."},
 
                 new Module { buttonText = "Instant Party", method = Overpowered.InstantParty, toolTip = "Makes parties form instantly, instead of having to wait a couple of seconds." },
-                new Module { buttonText = "Leave Party", method =() => FriendshipGroupDetection.Instance.LeaveParty(), isTogglable = false, toolTip = "Leaves the party, incase you can't pull off the string." },
+                new Module { buttonText = "Leave Party", method =() => ManagerRegistry.FriendshipGroupDetection.LeaveParty(), isTogglable = false, toolTip = "Leaves the party, incase you can't pull off the string." },
                 new Module { buttonText = "Party Break Network Triggers", method = Overpowered.PartyBreakNetworkTriggers, toolTip = "Breaks the network triggers for anyone in your party." },
 
                 new Module { buttonText = "Party Kick Gun", method = Overpowered.PartyKickGun, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks whoever your hand desires if they're in your party from the room."},
@@ -2254,7 +2262,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Auto Party Ban", method = Overpowered.AutoPartyBan, toolTip = "When you party, you will automatically send everyone in your party to a bannable code." },
 
                 new Module { buttonText = "Break Audio Gun", method = Overpowered.BreakAudioGun, toolTip = "Attempts to break the audio of whoever your hand desires." },
-                new Module { buttonText = "Break Audio All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.BreakAudioAll, toolTip = "Attempts to break everyone's audio when holding trigger." },
+                new Module { buttonText = $"Break Audio All {Bracket("green", "T")}", method = Overpowered.BreakAudioAll, toolTip = "Attempts to break everyone's audio when holding trigger." },
             },
 
             ["Soundboard"] = new[]
@@ -2353,219 +2361,212 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Mod Givers", method =() => CurrentCategoryName = "Mod Givers", isTogglable = false, toolTip = "Opens the mod givers page.", legal = true},
 
-                new Module { buttonText = "Get Menu Users", method = Experimental.GetMenuUsers, isTogglable = false, toolTip = "Detects who is using the menu.", legal = true},
-                new Module { buttonText = "Auto Get Menu Users", enableMethod =() => References.Network.OnJoinedRoomEvent += Experimental.GetMenuUsers, disableMethod =() => References.Network.OnJoinedRoomEvent -= Experimental.GetMenuUsers, isTogglable = true, toolTip = "Detects who is using the menu on room join.", legal = true},
-                new Module { buttonText = "Menu User Name Tags", enableMethod = Experimental.EnableAdminMenuUserTags, method = Experimental.AdminMenuUserTags, disableMethod = Experimental.DisableAdminMenuUserTags, toolTip = "Puts nametags on menu users.", legal = true},
-                new Module { buttonText = "Conduct Menu Users", enableMethod =() => { Experimental.EnableAdminMenuUserTags(); GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>().text = "CONSOLE USER LIST"; GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().richText = true; }, method = Experimental.ConsoleOnConduct, toolTip = "Shows menu users on the code of conduct.", legal = true},
-                new Module { buttonText = "Menu User Tracers", enableMethod = Experimental.EnableAdminMenuUserTracers, method = Experimental.MenuUserTracers, disableMethod =() => {Visuals.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand to menu users.", legal = true},
+                new Module { buttonText = "Get Menu Users", method = Admin.GetMenuUsers, isTogglable = false, toolTip = "Detects who is using the menu.", legal = true},
+                new Module { buttonText = "Auto Get Menu Users", enableMethod =() => ManagerRegistry.NetworkSystem.OnJoinedRoomEvent += Admin.GetMenuUsers, disableMethod =() => ManagerRegistry.NetworkSystem.OnJoinedRoomEvent -= Admin.GetMenuUsers, isTogglable = true, toolTip = "Detects who is using the menu on room join.", legal = true},
+                new Module { buttonText = "Menu User Name Tags", enableMethod = Admin.EnableAdminMenuUserTags, method = Admin.AdminMenuUserTags, disableMethod = Admin.DisableAdminMenuUserTags, toolTip = "Puts nametags on menu users.", legal = true},
+                new Module { buttonText = "Conduct Menu Users", enableMethod =() => { Admin.EnableAdminMenuUserTags(); GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>().text = "CONSOLE USER LIST"; GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().richText = true; }, method = Admin.ConsoleOnConduct, toolTip = "Shows menu users on the code of conduct.", legal = true},
+                new Module { buttonText = "Menu User Tracers", enableMethod = Admin.EnableAdminMenuUserTracers, method = Admin.MenuUserTracers, disableMethod =() => {Visuals.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand to menu users.", legal = true},
 
-                new Module { buttonText = "Admin Kick Gun", method = Experimental.AdminKickGun, toolTip = "Kicks whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Kick All", method = Experimental.AdminKickAll, isTogglable = false, toolTip = "Kicks everyone using the menu.", legal = true},
+                new Module { buttonText = "Admin Kick Gun", method = Admin.AdminKickGun, toolTip = "Kicks whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Kick All", method = Admin.AdminKickAll, isTogglable = false, toolTip = "Kicks everyone using the menu.", legal = true},
 
-                new Module { buttonText = "Admin Crash Gun", method = Experimental.AdminCrashGun, toolTip = "Crashes whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Crash All", method = Experimental.AdminCrashAll, toolTip = "Crashes everyone using the menu.", legal = true},
+                new Module { buttonText = "Admin Crash Gun", method = Admin.AdminCrashGun, toolTip = "Crashes whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Crash All", method = Admin.AdminCrashAll, toolTip = "Crashes everyone using the menu.", legal = true},
 
-                new Module { buttonText = "Admin Break Game Gun", method = Experimental.AdminCrashBypassGun, toolTip = "Crashes menu users who attempt to bypass crashers, also breaks the game.", legal = true},
+                new Module { buttonText = "Admin Break Game Gun", method = Admin.AdminCrashBypassGun, toolTip = "Crashes menu users who attempt to bypass crashers, also breaks the game.", legal = true},
 
-                new Module { buttonText = "Admin Flip Menu Gun", method = Experimental.FlipMenuGun, toolTip = "Flips the menu of whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Flip Menu Gun", method = Admin.FlipMenuGun, toolTip = "Flips the menu of whoever your hand desires if they're using the menu.", legal = true},
 
-                new Module { buttonText = "Admin Freeze Gun", method =() => Experimental.AdminFreezeGun(true), toolTip = "Freezes whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Unfreeze Gun", method =() => Experimental.AdminFreezeGun(false), toolTip = "Unfreezes whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Spaz Freeze Gun", method =() => { Experimental.AdminFreezeGun(true); Experimental.AdminFreezeGun(false); }, toolTip = "Freezes and unfreezes whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Freeze Gun", method =() => Admin.AdminFreezeGun(true), toolTip = "Freezes whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Unfreeze Gun", method =() => Admin.AdminFreezeGun(false), toolTip = "Unfreezes whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Spaz Freeze Gun", method =() => { Admin.AdminFreezeGun(true); Admin.AdminFreezeGun(false); }, toolTip = "Freezes and unfreezes whoever your hand desires if they're using the menu.", legal = true},
 
-                new Module { buttonText = "Admin Mute Gun", method =() => Experimental.AdminEnableGun(true, "Mute Microphone"), toolTip = "Mutes whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Unmute Gun", method =() => Experimental.AdminEnableGun(false, "Mute Microphone"), toolTip = "Unmutes whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Stutter Voice Gun", method =() => { Experimental.AdminEnableGun(true, "Mute Microphone"); Experimental.AdminEnableGun(false, "Mute Microphone"); }, toolTip = "Stutters the voice of whoever your hand desires by muting and unmuting them if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Mute Gun", method =() => Admin.AdminEnableGun(true, "Mute Microphone"), toolTip = "Mutes whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Unmute Gun", method =() => Admin.AdminEnableGun(false, "Mute Microphone"), toolTip = "Unmutes whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Stutter Voice Gun", method =() => { Admin.AdminEnableGun(true, "Mute Microphone"); Admin.AdminEnableGun(false, "Mute Microphone"); }, toolTip = "Stutters the voice of whoever your hand desires by muting and unmuting them if they're using the menu.", legal = true},
 
-                new Module { buttonText = "Admin Jumpscare Gun", method = Experimental.AdminJumpscareGun, toolTip = "Jumpscares whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Jumpscare All", method = Experimental.AdminJumpscareAll, isTogglable = false, toolTip = "Jumpscares everyone using the menu.", legal = true},
+                new Module { buttonText = "Admin Jumpscare Gun", method = Admin.AdminJumpscareGun, toolTip = "Jumpscares whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Jumpscare All", method = Admin.AdminJumpscareAll, isTogglable = false, toolTip = "Jumpscares everyone using the menu.", legal = true},
 
-                new Module { buttonText = "Admin Mute All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Experimental.AdminMute, toolTip = "Mutes everyone while holding trigger.", legal = true},
+                new Module { buttonText = $"Admin Mute All {Bracket("green", "T")}", method = Admin.AdminMute, toolTip = "Mutes everyone while holding trigger.", legal = true},
 
-                new Module { buttonText = "Admin Board Mute Gun", method =() => Experimental.AdminBMuteGun(true), toolTip = "Mutes whoever your hand desires for everyone using the menu.", legal = true},
-                new Module { buttonText = "Admin Board Unmute Gun", method =() => Experimental.AdminBMuteGun(false), toolTip = "Unmutes whoever your hand desires for everyone using the menu.", legal = true},
-                new Module { buttonText = "Admin Board Stutter Voice Gun", method =() => { Experimental.AdminBMuteGun(true); Experimental.AdminBMuteGun(false); }, toolTip = "Stutters the voice of whoever your hand desires for everyone using the menu by muting and unmuting them.", legal = true},
+                new Module { buttonText = "Admin Board Mute Gun", method =() => Admin.AdminBMuteGun(true), toolTip = "Mutes whoever your hand desires for everyone using the menu.", legal = true},
+                new Module { buttonText = "Admin Board Unmute Gun", method =() => Admin.AdminBMuteGun(false), toolTip = "Unmutes whoever your hand desires for everyone using the menu.", legal = true},
+                new Module { buttonText = "Admin Board Stutter Voice Gun", method =() => { Admin.AdminBMuteGun(true); Admin.AdminBMuteGun(false); }, toolTip = "Stutters the voice of whoever your hand desires for everyone using the menu by muting and unmuting them.", legal = true},
 
-                new Module { buttonText = "Admin Board Mute All", method =() => Experimental.AdminBMuteAll(true), isTogglable = false, toolTip = "Mutes everyone for players using the menu.", legal = true},
-                new Module { buttonText = "Admin Board Unmute All", method =() => Experimental.AdminBMuteAll(false), isTogglable = false, toolTip = "Unmutes everyone for players using the menu.", legal = true},
-                new Module { buttonText = "Admin Board Stutter Voice All", method =() => { Experimental.AdminBMuteAll(true); Experimental.AdminBMuteAll(false); }, toolTip = "Stutters the voice of everyone for players using the menu by muting and unmuting them.", legal = true},
+                new Module { buttonText = "Admin Board Mute All", method =() => Admin.AdminBMuteAll(true), isTogglable = false, toolTip = "Mutes everyone for players using the menu.", legal = true},
+                new Module { buttonText = "Admin Board Unmute All", method =() => Admin.AdminBMuteAll(false), isTogglable = false, toolTip = "Unmutes everyone for players using the menu.", legal = true},
+                new Module { buttonText = "Admin Board Stutter Voice All", method =() => { Admin.AdminBMuteAll(true); Admin.AdminBMuteAll(false); }, toolTip = "Stutters the voice of everyone for players using the menu by muting and unmuting them.", legal = true},
 
-                new Module { buttonText = "Admin Disable Menu Gun", method =() => Experimental.AdminLockdownGun(true), toolTip = "Disables the menu of whoever your hand desires if they're using one.", legal = true},
-                new Module { buttonText = "Admin Enable Menu Gun", method =() => Experimental.AdminLockdownGun(false), toolTip = "Enables the menu of whoever your hand desires if they're using one.", legal = true},
+                new Module { buttonText = "Admin Disable Menu Gun", method =() => Admin.AdminLockdownGun(true), toolTip = "Disables the menu of whoever your hand desires if they're using one.", legal = true},
+                new Module { buttonText = "Admin Enable Menu Gun", method =() => Admin.AdminLockdownGun(false), toolTip = "Enables the menu of whoever your hand desires if they're using one.", legal = true},
 
-                new Module { buttonText = "Admin Disable Menu All", method =() => Experimental.AdminLockdownAll(true), toolTip = "Disables the menu of whoever your hand desires if they're using one.", legal = true},
-                new Module { buttonText = "Admin Enable Menu All", method =() => Experimental.AdminLockdownAll(false), toolTip = "Enables the menu of whoever your hand desires if they're using one.", legal = true},
+                new Module { buttonText = "Admin Disable Menu All", method =() => Admin.AdminLockdownAll(true), toolTip = "Disables the menu of whoever your hand desires if they're using one.", legal = true},
+                new Module { buttonText = "Admin Enable Menu All", method =() => Admin.AdminLockdownAll(false), toolTip = "Enables the menu of whoever your hand desires if they're using one.", legal = true},
 
-                new Module { buttonText = "Admin Fully Disable Menu Gun", method =() => Experimental.AdminFullLockdownGun(true), toolTip = "Disables the menu of whoever your hand desires and turns off their mods if they're using one.", legal = true},
-                new Module { buttonText = "Admin Fully Enable Menu Gun", method =() => Experimental.AdminFullLockdownGun(false), toolTip = "Enables the menu of whoever your hand desires and turns off their mods if they're using one.", legal = true},
+                new Module { buttonText = "Admin Fully Disable Menu Gun", method =() => Admin.AdminFullLockdownGun(true), toolTip = "Disables the menu of whoever your hand desires and turns off their mods if they're using one.", legal = true},
+                new Module { buttonText = "Admin Fully Enable Menu Gun", method =() => Admin.AdminFullLockdownGun(false), toolTip = "Enables the menu of whoever your hand desires and turns off their mods if they're using one.", legal = true},
 
-                new Module { buttonText = "Admin Fully Disable Menu All", method =() => Experimental.AdminFullLockdownAll(true), isTogglable = false, toolTip = "Disables the menu of whoever your hand desires and turns off their mods if they're using one.", legal = true},
-                new Module { buttonText = "Admin Fully Enable Menu All", method =() => Experimental.AdminFullLockdownAll(false), isTogglable = false, toolTip = "Enables the menu of whoever your hand desires and turns off their mods if they're using one.", legal = true},
+                new Module { buttonText = "Admin Fully Disable Menu All", method =() => Admin.AdminFullLockdownAll(true), isTogglable = false, toolTip = "Disables the menu of whoever your hand desires and turns off their mods if they're using one.", legal = true},
+                new Module { buttonText = "Admin Fully Enable Menu All", method =() => Admin.AdminFullLockdownAll(false), isTogglable = false, toolTip = "Enables the menu of whoever your hand desires and turns off their mods if they're using one.", legal = true},
 
-                new Module { buttonText = "Admin Teleport Gun", method = Experimental.AdminTeleportGun, toolTip = "Teleports whoever using the menu to wherever your hand desires.", legal = true},
-                new Module { buttonText = "Admin Fling Gun", method = Experimental.AdminFlingGun, toolTip = "Flings whoever your hand desires upwards.", legal = true},
-                new Module { buttonText = "Admin Strangle", method = Experimental.AdminStrangle, toolTip = "Strangles whoever you grab if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Fake Cosmetics", overlapText = "Admin Spoof Cosmetics", method =() => Experimental.AdminSpoofCosmetics(), enableMethod =() => { References.Network.OnPlayerJoined += Experimental.OnPlayerJoinSpoof; Experimental.AdminSpoofCosmetics(true); }, disableMethod =() => { References.Network.OnPlayerJoined -= Experimental.OnPlayerJoinSpoof; Experimental.oldCosmetics = null; }, toolTip = "Makes everyone using the menu see whatever cosmetics you have on as if you owned them.", legal = true},
+                new Module { buttonText = "Admin Teleport Gun", method = Admin.AdminTeleportGun, toolTip = "Teleports whoever using the menu to wherever your hand desires.", legal = true},
+                new Module { buttonText = "Admin Fling Gun", method = Admin.AdminFlingGun, toolTip = "Flings whoever your hand desires upwards.", legal = true},
+                new Module { buttonText = "Admin Strangle", method = Admin.AdminStrangle, toolTip = "Strangles whoever you grab if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Fake Cosmetics", overlapText = "Admin Spoof Cosmetics", method =() => Cosmetics.AdminSpoofCosmetics(), enableMethod =() => { ManagerRegistry.NetworkSystem.OnPlayerJoined += Cosmetics.OnPlayerJoinSpoof; Cosmetics.AdminSpoofCosmetics(true); }, disableMethod =() => { ManagerRegistry.NetworkSystem.OnPlayerJoined -= Cosmetics.OnPlayerJoinSpoof; Cosmetics.oldCosmetics = null; }, toolTip = "Makes everyone using the menu see whatever cosmetics you have on as if you owned them.", legal = true},
 
-                new Module { buttonText = "Admin Lightning Gun", method = Experimental.LightningGun, toolTip = "Spawns lightning wherever your hand desires.", legal = true},
-                new Module { buttonText = "Admin Lightning Aura", method = Experimental.LightningAura, toolTip = "Spawns lightning wherever your hand desires.", legal = true},
-                new Module { buttonText = "Admin Lightning Rain", method = Experimental.LightningRain, toolTip = "Rains lightning around you and strikes whoever you hit.", legal = true},
+                new Module { buttonText = "Admin Lightning Gun", method = Admin.LightningGun, toolTip = "Spawns lightning wherever your hand desires.", legal = true},
+                new Module { buttonText = "Admin Lightning Aura", method = Admin.LightningAura, toolTip = "Spawns lightning wherever your hand desires.", legal = true},
+                new Module { buttonText = "Admin Lightning Rain", method = Admin.LightningRain, toolTip = "Rains lightning around you and strikes whoever you hit.", legal = true},
 
-                new Module { buttonText = "Admin Laser <color=grey>[</color><color=green>A</color><color=grey>]</color>", method = Experimental.AdminLaser, toolTip = "Shines a red laser out of your hand when holding <color=green>A</color> or <color=green>X</color>.", legal = true},
-                new Module { buttonText = "Admin Beam <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Experimental.AdminBeam, toolTip = "Shines a rainbow spinning laser out of your head when holding <color=green>trigger</color>.", legal = true},
-                new Module { buttonText = "Admin Fractals <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Experimental.AdminFractals, toolTip = "Shines white lines out of your body when holding <color=green>trigger</color>.", legal = true},
+                new Module { buttonText = $"Admin Laser {Bracket("green", "A")}", method = Admin.AdminLaser, toolTip = "Shines a red laser out of your hand when holding <color=green>A</color> or <color=green>X</color>.", legal = true},
+                new Module { buttonText = $"Admin Beam {Bracket("green", "T")}", method = Admin.AdminBeam, toolTip = "Shines a rainbow spinning laser out of your head when holding <color=green>trigger</color>.", legal = true},
+                new Module { buttonText = $"Admin Fractals {Bracket("green", "T")}", method = Admin.AdminFractals, toolTip = "Shines white lines out of your body when holding <color=green>trigger</color>.", legal = true},
 
-                new Module { buttonText = "Admin Fear Gun", method = Experimental.AdminFearGun, toolTip = "Sends a person into pure fear and scarefulness.", legal = true},
-                new Module { buttonText = "Admin Object Gun", method = Experimental.AdminObjectGun, toolTip = "Spawns an object wherever your hand desires.", legal = true},
-                new Module { buttonText = "Admin Random Object Gun", method = Experimental.AdminRandomObjectGun, toolTip = "Spawns a random object wherever your hand desires.", legal = true},
+                new Module { buttonText = "Admin Fear Gun", method = Admin.AdminFearGun, toolTip = "Sends a person into pure fear and scarefulness.", legal = true},
+                new Module { buttonText = "Admin Object Gun", method = Admin.AdminObjectGun, toolTip = "Spawns an object wherever your hand desires.", legal = true},
+                new Module { buttonText = "Admin Random Object Gun", method = Admin.AdminRandomObjectGun, toolTip = "Spawns a random object wherever your hand desires.", legal = true},
 
                 new Module { buttonText = "NotifLabel", overlapText = "No Notification Set", label = true, legal = true},
-                new Module { buttonText = "Set Notification", isTogglable = false, method = Experimental.GetTargetNotification, toolTip = "Changes the notification text. The notification text is based off of what you type into the search bar.", legal = true},
-                new Module { buttonText = "Admin Notify Self", isTogglable = false, method = Experimental.NotifySelf, toolTip = "Sends a notification to yourself. The notification text is based off of what you type into the search bar.", legal = true},
-                new Module { buttonText = "Admin Notify Gun", method = Experimental.NotifyGun, toolTip = "Sends a notification to whoever your hand desires. The notification text is based off of what you type into the search bar.", legal = true},
-                new Module { buttonText = "Admin Notify All", isTogglable = false, method = Experimental.NotifyAll, toolTip = "Sends a notification to everyone using the menu. The notification text is based off of what you type into the search bar.", legal = true},
+                new Module { buttonText = "Set Notification", isTogglable = false, method = Admin.GetTargetNotification, toolTip = "Changes the notification text. The notification text is based off of what you type into the search bar.", legal = true},
+                new Module { buttonText = "Admin Notify Self", isTogglable = false, method = Admin.NotifySelf, toolTip = "Sends a notification to yourself. The notification text is based off of what you type into the search bar.", legal = true},
+                new Module { buttonText = "Admin Notify Gun", method = Admin.NotifyGun, toolTip = "Sends a notification to whoever your hand desires. The notification text is based off of what you type into the search bar.", legal = true},
+                new Module { buttonText = "Admin Notify All", isTogglable = false, method = Admin.NotifyAll, toolTip = "Sends a notification to everyone using the menu. The notification text is based off of what you type into the search bar.", legal = true},
 
-                new Module { buttonText = "Admin Join Gun", enableMethod = Experimental.GetTargetNotification, method = Experimental.JoinGun, toolTip = "Brings whoever your hand desires to a room. The room is based off of what you type into the search bar.", legal = true},
-                new Module { buttonText = "Admin Join All", isTogglable = false, method = Experimental.JoinAll, toolTip = "Brings everyone using the menu to a room. The room is based off of what you type into the search bar.", legal = true},
-                new Module { buttonText = "Admin Network Scale", method = Experimental.AdminNetworkScale, disableMethod = Experimental.UnAdminNetworkScale, toolTip = "Networks your scale to others with the menu.", legal = true},
+                new Module { buttonText = "Admin Join Gun", enableMethod = Admin.GetTargetNotification, method = Admin.JoinGun, toolTip = "Brings whoever your hand desires to a room. The room is based off of what you type into the search bar.", legal = true},
+                new Module { buttonText = "Admin Join All", isTogglable = false, method = Admin.JoinAll, toolTip = "Brings everyone using the menu to a room. The room is based off of what you type into the search bar.", legal = true},
+                new Module { buttonText = "Admin Network Scale", method = Admin.AdminNetworkScale, disableMethod = Admin.UnAdminNetworkScale, toolTip = "Networks your scale to others with the menu.", legal = true},
 
-                new Module { buttonText = "Admin Confirm Notification", method = Experimental.ConfirmNotifyAllUsing, isTogglable = false, toolTip = "Sends a notification to everyone using the menu confirming that you're an admin.", legal = true},
+                new Module { buttonText = "Admin Confirm Notification", method = Admin.ConfirmNotifyAllUsing, isTogglable = false, toolTip = "Sends a notification to everyone using the menu confirming that you're an admin.", legal = true},
 
-                new Module { buttonText = "Admin Levitate All", method = Experimental.FlyAllUsing, toolTip = "Sends everyone using the menu flying away upwards.", legal = true},
-                new Module { buttonText = "Admin Bouncy All", method = Experimental.BouncyAllUsing, toolTip = "Makes everyone using the menu bouncy.", legal = true},
-                new Module { buttonText = "Admin Bring Gun", method = Experimental.AdminBringGun, toolTip = "Brings whoever your hand desires to you if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Bring All", method = Experimental.BringAllUsing, toolTip = "Brings everyone using the menu to you.", legal = true},
-                new Module { buttonText = "Admin Organize Gun", method = Experimental.AdminOrganizeGun, toolTip = "Brings every menu user into a straight line.", legal = true},
-                new Module { buttonText = "Admin Bring Hand All", method = Experimental.BringHandAllUsing, toolTip = "Brings everyone using the menu to your hand.", legal = true},
-                new Module { buttonText = "Admin Bring Head All", method = Experimental.BringHeadAllUsing, toolTip = "Brings everyone using the menu to your head.", legal = true},
-                new Module { buttonText = "Admin Orbit All", method = Experimental.OrbitAllUsing, toolTip = "Makes everyone using the menu orbit you.", legal = true},
+                new Module { buttonText = "Admin Levitate All", method = Admin.FlyAllUsing, toolTip = "Sends everyone using the menu flying away upwards.", legal = true},
+                new Module { buttonText = "Admin Bouncy All", method = Admin.BouncyAllUsing, toolTip = "Makes everyone using the menu bouncy.", legal = true},
+                new Module { buttonText = "Admin Bring Gun", method = Admin.AdminBringGun, toolTip = "Brings whoever your hand desires to you if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Bring All", method = Admin.BringAllUsing, toolTip = "Brings everyone using the menu to you.", legal = true},
+                new Module { buttonText = "Admin Organize Gun", method = Admin.AdminOrganizeGun, toolTip = "Brings every menu user into a straight line.", legal = true},
+                new Module { buttonText = "Admin Bring Hand All", method = Admin.BringHandAllUsing, toolTip = "Brings everyone using the menu to your hand.", legal = true},
+                new Module { buttonText = "Admin Bring Head All", method = Admin.BringHeadAllUsing, toolTip = "Brings everyone using the menu to your head.", legal = true},
+                new Module { buttonText = "Admin Orbit All", method = Admin.OrbitAllUsing, toolTip = "Makes everyone using the menu orbit you.", legal = true},
 
-                new Module { buttonText = "Admin Lag Gun", method = Experimental.AdminLagGun, toolTip = "Lags whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Lag All", method = Experimental.AdminLagAll, toolTip = "Lags everyone using the menu.", legal = true},
-                new Module { buttonText = "Admin Lag Spike Gun", method = Experimental.AdminLagSpikeGun, toolTip = "Lag spikes whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Lag Spike All", method = Experimental.AdminLagSpikeAll, isTogglable = false, toolTip = "Lag spikes everyone using the menu.", legal = true},
+                new Module { buttonText = "Admin Lag Gun", method = Admin.AdminLagGun, toolTip = "Lags whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Lag All", method = Admin.AdminLagAll, toolTip = "Lags everyone using the menu.", legal = true},
+                new Module { buttonText = "Admin Lag Spike Gun", method = Admin.AdminLagSpikeGun, toolTip = "Lag spikes whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Lag Spike All", method = Admin.AdminLagSpikeAll, isTogglable = false, toolTip = "Lag spikes everyone using the menu.", legal = true},
 
-                new Module { buttonText = "Admin Vibrate Gun", method = Experimental.AdminVibrateGun, toolTip = "Vibrate whoever your hand desires if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Vibrate All", method = Experimental.AdminVibrateAll, isTogglable = false, toolTip = "Vibrates everyone using the menu.", legal = true},
+                new Module { buttonText = "Admin Vibrate Gun", method = Admin.AdminVibrateGun, toolTip = "Vibrate whoever your hand desires if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Vibrate All", method = Admin.AdminVibrateAll, isTogglable = false, toolTip = "Vibrates everyone using the menu.", legal = true},
 
-                new Module { buttonText = "Admin Block Gun", method = Experimental.AdminBlockGun, toolTip = "Disables whoever your hand desires from joining servers for 5 minutes if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Announce Block Gun", method =() => Experimental.AdminABlockGun(false), toolTip = "Block gun, but it sends a notification to everyone using the menu that the target was blocked.", legal = true},
-                new Module { buttonText = "Silent Announce Block Gun", method =() => Experimental.AdminABlockGun(true), toolTip = "Block gun, but it sends a notification to everyone using the menu that the target was blocked. Hides your name.", legal = true},
+                new Module { buttonText = "Admin Block Gun", method = Admin.AdminBlockGun, toolTip = "Disables whoever your hand desires from joining servers for 5 minutes if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Announce Block Gun", method =() => Admin.AdminABlockGun(false), toolTip = "Block gun, but it sends a notification to everyone using the menu that the target was blocked.", legal = true},
+                new Module { buttonText = "Silent Announce Block Gun", method =() => Admin.AdminABlockGun(true), toolTip = "Block gun, but it sends a notification to everyone using the menu that the target was blocked. Hides your name.", legal = true},
 
-                new Module { buttonText = "Admin Open Menu Gun", method =() => Experimental.AdminButtonPressGun("lSecondary"), toolTip = "Force a player to open their menu.", legal = true},
-                new Module { buttonText = "Admin Toggle Invis Gun", method =() => Experimental.AdminButtonPressGun("rSecondary"), toolTip = "Force a player to toggle invisibility mod.", legal = true},
+                new Module { buttonText = "Admin Open Menu Gun", method =() => Admin.AdminButtonPressGun("lSecondary"), toolTip = "Force a player to open their menu.", legal = true},
+                new Module { buttonText = "Admin Toggle Invis Gun", method =() => Admin.AdminButtonPressGun("rSecondary"), toolTip = "Force a player to toggle invisibility mod.", legal = true},
 
-                new Module { buttonText = "Admin Punch Mod", method = Experimental.AdminPunchMod, toolTip = "Flings people when you punch them if they're using the menu.", legal = true},
-                new Module { buttonText = "Admin Find User", enableMethod =() => { Experimental.EnableAdminMenuUserTags(); Experimental.FindUserTime = Time.time; }, method = Experimental.AdminFindUser, toolTip = "Joins publics until a menu user is found.", legal = true},
+                new Module { buttonText = "Admin Punch Mod", method = Admin.AdminPunchMod, toolTip = "Flings people when you punch them if they're using the menu.", legal = true},
+                new Module { buttonText = "Admin Find User", enableMethod =() => { Admin.EnableAdminMenuUserTags(); Admin.FindUserTime = Time.time; }, method = Admin.AdminFindUser, toolTip = "Joins publics until a menu user is found.", legal = true},
 
-                new Module { buttonText = "No Admin Indicator", enableMethod = Experimental.EnableNoAdminIndicator, method = Experimental.NoAdminIndicator, disableMethod = Experimental.AdminIndicatorBack, toolTip = "Disables the cone that appears above your head to others with the menu.", legal = true},
+                new Module { buttonText = "No Admin Indicator", enableMethod = Admin.EnableNoAdminIndicator, method = Admin.NoAdminIndicator, disableMethod = Admin.AdminIndicatorBack, toolTip = "Disables the cone that appears above your head to others with the menu.", legal = true},
                 new Module { buttonText = "Allow Kick Self", enableMethod =() => Console.allowKickSelf = true, disableMethod =() => Console.allowKickSelf = false, toolTip = "Lets other admins kick you.", legal = true},
                 new Module { buttonText = "Disable Fling Self", enableMethod =() => Console.disableFlingSelf = true, disableMethod =() => Console.disableFlingSelf = false, toolTip = "Other admins can't fling you.", legal = true},
 
-                new Module { buttonText = "Admin Platform Exclude Gun", method =() => Experimental.AdminPlatToggleGun(true), toolTip = "Puts a player who is included for platform networking to be excluded.", legal = true},
-                new Module { buttonText = "Admin Platform Include Gun", method =() => Experimental.AdminPlatToggleGun(false), toolTip = "Puts a player who is excluded for platform networking to be included.", legal = true},
+                new Module { buttonText = "Admin Platform Exclude Gun", method =() => Admin.AdminPlatToggleGun(true), toolTip = "Puts a player who is included for platform networking to be excluded.", legal = true},
+                new Module { buttonText = "Admin Platform Include Gun", method =() => Admin.AdminPlatToggleGun(false), toolTip = "Puts a player who is excluded for platform networking to be included.", legal = true},
 
-                new Module { buttonText = "Admin Dark Gun", method = Experimental.DarkGun, toolTip = "Makes selected player's view dark.", legal = true},
-                new Module { buttonText = "Admin Dark All", method = Experimental.DarkAllUsing, isTogglable = false, toolTip = "Makes all using's view dark.", legal = true},
+                new Module { buttonText = "Admin Dark Gun", method = Admin.DarkGun, toolTip = "Makes selected player's view dark.", legal = true},
+                new Module { buttonText = "Admin Dark All", method = Admin.DarkAllUsing, isTogglable = false, toolTip = "Makes all using's view dark.", legal = true},
 
-                new Module { buttonText = "Admin Light Gun", method = Experimental.LightGun, toolTip = "Fix lighting of selected player.", legal = true},
-                new Module { buttonText = "Admin Light All", method = Experimental.LightAllUsing, isTogglable = false, toolTip = "Fix lighting of all using.", legal = true},
+                new Module { buttonText = "Admin Light Gun", method = Admin.LightGun, toolTip = "Fix lighting of selected player.", legal = true},
+                new Module { buttonText = "Admin Light All", method = Admin.LightAllUsing, isTogglable = false, toolTip = "Fix lighting of all using.", legal = true},
 
-                new Module { buttonText = "Admin No Gravity Gun", method = Experimental.ZeroGravityGun, toolTip = "Zero gravity for selected player.", legal = true},
-                new Module { buttonText = "Admin No Gravity All", method = Experimental.ZeroGravityAllUsing, isTogglable = false, toolTip = "Zero gravity for all using.", legal = true},
+                new Module { buttonText = "Admin No Gravity Gun", method = Admin.ZeroGravityGun, toolTip = "Zero gravity for selected player.", legal = true},
+                new Module { buttonText = "Admin No Gravity All", method = Admin.ZeroGravityAllUsing, isTogglable = false, toolTip = "Zero gravity for all using.", legal = true},
 
-                new Module { buttonText = "Admin Low Gravity Gun", method = Experimental.LowGravityGun, toolTip = "Low gravity for selected player.", legal = true},
-                new Module { buttonText = "Admin Low Gravity All", method = Experimental.LowGravityAllUsing, isTogglable = false, toolTip = "Low gravity for all using.", legal = true},
+                new Module { buttonText = "Admin Low Gravity Gun", method = Admin.LowGravityGun, toolTip = "Low gravity for selected player.", legal = true},
+                new Module { buttonText = "Admin Low Gravity All", method = Admin.LowGravityAllUsing, isTogglable = false, toolTip = "Low gravity for all using.", legal = true},
 
-                new Module { buttonText = "Admin High Gravity Gun", method = Experimental.HighGravityGun, toolTip = "High gravity for selected player.", legal = true},
-                new Module { buttonText = "Admin High Gravity All", method = Experimental.HighGravityAllUsing, isTogglable = false, toolTip = "High gravity for all using.", legal = true},
+                new Module { buttonText = "Admin High Gravity Gun", method = Admin.HighGravityGun, toolTip = "High gravity for selected player.", legal = true},
+                new Module { buttonText = "Admin High Gravity All", method = Admin.HighGravityAllUsing, isTogglable = false, toolTip = "High gravity for all using.", legal = true},
 
-                new Module { buttonText = "Admin Reset Gravity Gun", method = Experimental.ResetGravityGun, toolTip = "Fix gravity for selected player.", legal = true},
-                new Module { buttonText = "Admin Reset Gravity All", method = Experimental.ResetGravityAllUsing, isTogglable = false, toolTip = "Fix gravity for all using.", legal = true},
+                new Module { buttonText = "Admin Reset Gravity Gun", method = Admin.ResetGravityGun, toolTip = "Fix gravity for selected player.", legal = true},
+                new Module { buttonText = "Admin Reset Gravity All", method = Admin.ResetGravityAllUsing, isTogglable = false, toolTip = "Fix gravity for all using.", legal = true},
 
-                new Module { buttonText = "Admin Creeper Gun", method = Experimental.CreeperGun, toolTip = "Swaps hands of selected player for 5 seconds.", legal = true},
-                new Module { buttonText = "Admin Creeper All", method = Experimental.CreeperAllUsing, isTogglable = false, toolTip = "Swaps hands of all using for 5 seconds.", legal = true},
+                new Module { buttonText = "Admin Creeper Gun", method = Admin.CreeperGun, toolTip = "Swaps hands of selected player for 5 seconds.", legal = true},
+                new Module { buttonText = "Admin Creeper All", method = Admin.CreeperAllUsing, isTogglable = false, toolTip = "Swaps hands of all using for 5 seconds.", legal = true},
 
-                new Module { buttonText = "Admin Earthquake Gun", method = Experimental.EarthquakeGun, toolTip = "Shakes the view of selected player.", legal = true},
-                new Module { buttonText = "Admin Earthquake All", method = Experimental.EarthquakeAllUsing, isTogglable = false, toolTip = "Shakes the view of all using.", legal = true},
+                new Module { buttonText = "Admin Earthquake Gun", method = Admin.EarthquakeGun, toolTip = "Shakes the view of selected player.", legal = true},
+                new Module { buttonText = "Admin Earthquake All", method = Admin.EarthquakeAllUsing, isTogglable = false, toolTip = "Shakes the view of all using.", legal = true},
 
-                new Module { buttonText = "Admin Drunk Gun", method = Experimental.DrunkGun, toolTip = "Spins the camera of the selected player.", legal = true},
-                new Module { buttonText = "Admin Drunk All", method = Experimental.DrunkAllUsing, isTogglable = false, toolTip = "Spins the camera of all using.", legal = true},
+                new Module { buttonText = "Admin Drunk Gun", method = Admin.DrunkGun, toolTip = "Spins the camera of the selected player.", legal = true},
+                new Module { buttonText = "Admin Drunk All", method = Admin.DrunkAllUsing, isTogglable = false, toolTip = "Spins the camera of all using.", legal = true},
 
-                new Module { buttonText = "Admin Rendering Gun", method = Experimental.WeirdGun, toolTip = "Makes selected players rendering tweak.", legal = true},
-                new Module { buttonText = "Admin Rendering All", method = Experimental.WeirdAllUsing, isTogglable = false, toolTip = "Makes all using rendering tweak.", legal = true},
+                new Module { buttonText = "Admin Rendering Gun", method = Admin.WeirdGun, toolTip = "Makes selected players rendering tweak.", legal = true},
+                new Module { buttonText = "Admin Rendering All", method = Admin.WeirdAllUsing, isTogglable = false, toolTip = "Makes all using rendering tweak.", legal = true},
 
-                new Module { buttonText = "Admin World Off Gun", method = Experimental.WorldOffGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin World Off All", method = Experimental.WorldOffAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin World Off Gun", method = Admin.WorldOffGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin World Off All", method = Admin.WorldOffAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
-                new Module { buttonText = "Admin World On Gun", method = Experimental.WorldOnGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin World On All", method = Experimental.WorldOnAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin World On Gun", method = Admin.WorldOnGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin World On All", method = Admin.WorldOnAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
+                new Module { buttonText = "Admin Spin Gun", method = Admin.SpinGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Spin All", method = Admin.SpinAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
+                new Module { buttonText = "Admin Invert Gun", method = Admin.InvertGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Invert All", method = Admin.InvertAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
+                new Module { buttonText = "Admin Bounce Gun", method = Admin.BounceGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Bounce All", method = Admin.BounceAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
+                new Module { buttonText = "Admin Rainbow Gun", method = Admin.RainbowGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Rainbow All", method = Admin.RainbowAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
-                new Module { buttonText = "Admin Spin Gun", method = Experimental.SpinGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Spin All", method = Experimental.SpinAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin Flip Gun", method = Admin.FlipGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Flip All", method = Admin.FlipAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
-                new Module { buttonText = "Admin Invert Gun", method = Experimental.InvertGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Invert All", method = Experimental.InvertAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin Zero-G Gun", method = Admin.ZeroGGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Zero-G All", method = Admin.ZeroGAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
+                new Module { buttonText = "Admin Super Jump Gun", method = Admin.SuperjumpGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Super Jump All", method = Admin.SuperjumpAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
-                new Module { buttonText = "Admin Bounce Gun", method = Experimental.BounceGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Bounce All", method = Experimental.BounceAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
-
-                new Module { buttonText = "Admin Rainbow Gun", method = Experimental.RainbowGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Rainbow All", method = Experimental.RainbowAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
-
-
-                new Module { buttonText = "Admin Flip Gun", method = Experimental.FlipGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Flip All", method = Experimental.FlipAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
-
-                new Module { buttonText = "Admin Zero-G Gun", method = Experimental.ZeroGGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Zero-G All", method = Experimental.ZeroGAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
-
-
-                new Module { buttonText = "Admin Super Jump Gun", method = Experimental.SuperjumpGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Super Jump All", method = Experimental.SuperjumpAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
-
-                new Module { buttonText = "Admin Blur Gun", method = Experimental.BlurGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Blur All", method = Experimental.BlurAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin Blur Gun", method = Admin.BlurGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Blur All", method = Admin.BlurAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
 
-                new Module { buttonText = "Admin Tpose Gun", method = Experimental.TposeGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Tpose All", method = Experimental.TposeAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin Tpose Gun", method = Admin.TposeGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Tpose All", method = Admin.TposeAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
-                new Module { buttonText = "Admin Headspin Gun", method = Experimental.HeadspinGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Headspin All", method = Experimental.HeadspinAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
-
-
-                new Module { buttonText = "Admin F&P Gun", method = Experimental.FreezeandpullGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin F&P All", method = Experimental.FreezeandpullAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
-
-                new Module { buttonText = "Admin Magnet Gun", method = Experimental.MagnetGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Magnet All", method = Experimental.MagnetAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin Headspin Gun", method = Admin.HeadspinGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Headspin All", method = Admin.HeadspinAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
 
-                new Module { buttonText = "Admin Ragdoll Gun", method = Experimental.RagdollGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Ragdoll All", method = Experimental.RagdollAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin F&P Gun", method = Admin.FreezeandpullGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin F&P All", method = Admin.FreezeandpullAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
-                new Module { buttonText = "Admin Blackhole Gun", method = Experimental.BlackholeGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Blackhole All", method = Experimental.BlackholeAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
-
-
-                new Module { buttonText = "Admin Yeet Gun", method = Experimental.YeetGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Yeet All", method = Experimental.YeetAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
-
-                new Module { buttonText = "Admin Lastmoment Gun", method = Experimental.LastmomentGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Lastmoment All", method = Experimental.LastmomentAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin Magnet Gun", method = Admin.MagnetGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Magnet All", method = Admin.MagnetAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
 
-                new Module { buttonText = "Admin Stun Gun", method = Experimental.StunGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin Stun All", method = Experimental.StunAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin Ragdoll Gun", method = Admin.RagdollGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Ragdoll All", method = Admin.RagdollAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
-                new Module { buttonText = "Admin LSD Gun", method = Experimental.LSDGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
-                new Module { buttonText = "Admin LSD All", method = Experimental.LSDAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+                new Module { buttonText = "Admin Blackhole Gun", method = Admin.BlackholeGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Blackhole All", method = Admin.BlackholeAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new Module { buttonText = "Admin Yeet Gun", method = Admin.YeetGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Yeet All", method = Admin.YeetAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new Module { buttonText = "Admin Lastmoment Gun", method = Admin.LastmomentGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Lastmoment All", method = Admin.LastmomentAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
+
+
+                new Module { buttonText = "Admin Stun Gun", method = Admin.StunGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin Stun All", method = Admin.StunAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
+
+                new Module { buttonText = "Admin LSD Gun", method = Admin.LSDGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
+                new Module { buttonText = "Admin LSD All", method = Admin.LSDAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
             },
 
             ["Enabled Mods"] = new[]
@@ -2578,11 +2579,11 @@ namespace Qubit.Modules
                 new Module { buttonText = "Search", method = Modules.Categories.Settings.Search, isTogglable = false, toolTip = "Lets you search for specific mods.", legal = true},
                 new Module { buttonText = "Global Return", method = Modules.Categories.Settings.GlobalReturn, isTogglable = false, toolTip = "Returns you to the previous category.", legal = true},
                 new Module { buttonText = "Info Screen", method = Modules.Categories.Settings.Debug, enableMethod = Modules.Categories.Settings.ShowDebug, disableMethod = Modules.Categories.Settings.HideDebug, toolTip = "Shows game and modding related information.", legal = true},
-                new Module { buttonText = "Donate Button", method =() => { Notifications.ClearAllNotifications(); acceptedDonations = true; File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_HideDonationButton.txt", "true"); Prompt($"If you like this menu and would like to support, you should join our Patreon! ", () => Process.Start("https://patreon.com/Qubit")); }, isTogglable = false, toolTip = "An advertisement for Qubit's Patreon.", legal = true},
+                new Module { buttonText = "Donate Button", method =() => { Notifications.Clear(); acceptedDonations = true; File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_HideDonationButton.txt", "true"); Prompt($"If you like this menu and would like to support, you should join our Patreon! ", () => Files.Start("https://patreon.com/Qubit")); }, isTogglable = false, toolTip = "An advertisement for Qubit's Patreon.", legal = true},
                 new Module { buttonText = "Update Button", method =() => UpdatePrompt(), isTogglable = false, toolTip = "Prompts you to update the menu.", legal = true },
 
-                new Module { buttonText = "Accept Prompt", method =() => { Notifications.ClearAllNotifications(); if (inTextInput) Modules.Categories.Settings.DestroyKeyboard(); CurrentPrompt.AcceptAction?.Invoke(); Modules.Categories.Settings.StopCurrentPrompt(); }, isTogglable = false, legal = true},
-                new Module { buttonText = "Decline Prompt", method =() => { Notifications.ClearAllNotifications(); if (inTextInput) Modules.Categories.Settings.DestroyKeyboard(); CurrentPrompt.DeclineAction?.Invoke(); Modules.Categories.Settings.StopCurrentPrompt(); }, isTogglable = false, legal = true},
+                new Module { buttonText = "Accept Prompt", method =() => { Notifications.Clear(); if (inTextInput) Modules.Categories.Settings.DestroyKeyboard(); CurrentPrompt.AcceptAction?.Invoke(); Modules.Categories.Settings.StopCurrentPrompt(); }, isTogglable = false, legal = true},
+                new Module { buttonText = "Decline Prompt", method =() => { Notifications.Clear(); if (inTextInput) Modules.Categories.Settings.DestroyKeyboard(); CurrentPrompt.DeclineAction?.Invoke(); Modules.Categories.Settings.StopCurrentPrompt(); }, isTogglable = false, legal = true},
 
                 new Module { buttonText = "Hide Qubit Clock", legal = true, isSetting = true, toolTip = "Hides the clock on the Qubit menu. Disable this setting to show it."},
                 new Module { buttonText = "Hide Qubit Date", legal = true, isSetting = true, toolTip = "Hides the date on the Qubit menu. Disable this setting to show it."},
@@ -2603,8 +2604,8 @@ namespace Qubit.Modules
                 new Module { buttonText = "Fix Broken Buttons", method = Experimental.FixDuplicateButtons, isTogglable = false, toolTip = "Fixes any duplicate or broken buttons.", legal = true},
 
                 new Module { buttonText = "Get Sound Data", method = Experimental.DumpSoundData, isTogglable = false, toolTip = "Dumps the hand tap sounds to a file.", legal = true},
-                new Module { buttonText = "Get Cosmetic Data", method = Experimental.DumpCosmeticData, isTogglable = false, toolTip = "Dumps the cosmetics and their data to a file.", legal = true},
-                new Module { buttonText = "Get Decryptable Cosmetic Data", method = Experimental.DecryptableCosmeticData, isTogglable = false, toolTip = "Dumps the cosmetics and their data to a easily decryptable file for databases.", legal = true},
+                new Module { buttonText = "Get Cosmetic Data", method = Cosmetics.DumpCosmeticData, isTogglable = false, toolTip = "Dumps the cosmetics and their data to a file.", legal = true},
+                new Module { buttonText = "Get Decryptable Cosmetic Data", method = Cosmetics.DecryptableCosmeticData, isTogglable = false, toolTip = "Dumps the cosmetics and their data to a easily decryptable file for databases.", legal = true},
                 new Module { buttonText = "Get RPC Data", method = Experimental.DumpRPCData, isTogglable = false, toolTip = "Dumps the data of every RPC to a file.", legal = true},
 
                 new Module { buttonText = "Copy Custom Gamemode Script", method = Experimental.CopyCustomGamemodeScript, isTogglable = false, toolTip = "Copies the Lua script source code of the current custom map being played."},
@@ -2709,15 +2710,15 @@ namespace Qubit.Modules
             {
                 new Module { buttonText = "Exit Friend Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true},
 
-                //new ButtonInfo { buttonText = "Disable Rig Networking", enableMethod =() => FriendManager.RigNetworking = false, disableMethod =() => FriendManager.RigNetworking = true, toolTip = "Disables the networking between friends when your rig is disabled.", legal = true},
-                //new ButtonInfo { buttonText = "Disable Platform Networking", enableMethod =() => FriendManager.PlatformNetworking = false, disableMethod =() => FriendManager.PlatformNetworking = true, toolTip = "Disables the platform networking between friends.", legal = true},
-                //new ButtonInfo { buttonText = "Disable Pinging", enableMethod =() => FriendManager.Pinging = false, disableMethod =() => FriendManager.Pinging = true, toolTip = "Disables the pinging feature between friends.", legal = true},
-                //new ButtonInfo { buttonText = "Disable Messaging", enableMethod =() => FriendManager.Messaging = false, disableMethod =() => FriendManager.Messaging = true, toolTip = "Disables the message feature between friends.", legal = true},
-                //new ButtonInfo { buttonText = "Disable Friend Sounds", enableMethod =() => FriendManager.SoundEffects = false, disableMethod =() => FriendManager.SoundEffects = true, toolTip = "Disables the sound effects in the friend system.", legal = true},
+                new Module { buttonText = "Disable Rig Networking", enableMethod =() => Friends.RigNetworking = false, disableMethod =() => Friends.RigNetworking = true, toolTip = "Disables the networking between friends when your rig is disabled.", legal = true},
+                new Module { buttonText = "Disable Platform Networking", enableMethod =() => Friends.PlatformNetworking = false, disableMethod =() => Friends.PlatformNetworking = true, toolTip = "Disables the platform networking between friends.", legal = true},
+                new Module { buttonText = "Disable Pinging", enableMethod =() => Friends.Pinging = false, disableMethod =() => Friends.Pinging = true, toolTip = "Disables the pinging feature between friends.", legal = true},
+                new Module { buttonText = "Disable Messaging", enableMethod =() => Friends.Messaging = false, disableMethod =() => Friends.Messaging = true, toolTip = "Disables the message feature between friends.", legal = true},
+                new Module { buttonText = "Disable Friend Sounds", enableMethod =() => Friends.SoundEffects = false, disableMethod =() => Friends.SoundEffects = true, toolTip = "Disables the sound effects in the friend system.", legal = true},
 
-               // new ButtonInfo { buttonText = "Disable Invite Notifications", enableMethod =() => FriendManager.InviteNotifications = false, disableMethod =() => FriendManager.InviteNotifications = true, toolTip = "Disables the prompt and notification when getting an invite from a friend.", legal = true},
-                //new ButtonInfo { buttonText = "Disable Preference Sharing", enableMethod =() => FriendManager.PreferenceSharing = false, disableMethod =() => FriendManager.PreferenceSharing = true, toolTip = "Disables the prompt and notification when a friend shares their preferences with you.", legal = true},
-                // ButtonInfo { buttonText = "Physical Platforms", enableMethod =() => FriendManager.PhysicalPlatforms = true, disableMethod =() => FriendManager.PhysicalPlatforms = false, toolTip = "Allows networked platforms to be collided with between friends.", legal = true},
+               new Module { buttonText = "Disable Invite Notifications", enableMethod =() => Friends.InviteNotifications = false, disableMethod =() => Friends.InviteNotifications = true, toolTip = "Disables the prompt and notification when getting an invite from a friend.", legal = true},
+                new Module { buttonText = "Disable Preference Sharing", enableMethod =() => Friends.PreferenceSharing = false, disableMethod =() => Friends.PreferenceSharing = true, toolTip = "Disables the prompt and notification when a friend shares their preferences with you.", legal = true},
+                new Module { buttonText = "Physical Platforms", enableMethod =() => Friends.PhysicalPlatforms = true, disableMethod =() => Friends.PhysicalPlatforms = false, toolTip = "Allows networked platforms to be collided with between friends.", legal = true},
             },
 
             ["Fun Settings"] = new[]
@@ -2746,7 +2747,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "No Random Position Grab", toolTip = "Disables the position randomization in the \"Grab All ### Blocks\" mods."},
                 new Module { buttonText = "No Random Rotation Grab", toolTip = "Disables the rotation randomization in the \"Grab All ### Blocks\" mods."},
 
-                ButtonHelper.CreateNumeric("Change Block Delay", 1, 20, Fun.blockDebounceIndex, Fun.ApplyBlockDelay, v => (v / 20f).ToString(), "Gives the blocks a delay before spawning."),
+                ButtonHelper.CreateNumeric("Change Block Delay", 1, 20, Blocks.blockDebounceIndex, Blocks.ApplyBlockDelay, v => (v / 20f).ToString(), "Gives the blocks a delay before spawning."),
                 ButtonHelper.CreateNumeric("Change Cycle Delay", 1, 4, Fun.cycleSpeedIndex, Fun.ApplyCycleDelay, v => (v / 2f).ToString(), "Changes the delay on name cycle mods.", overlapText: "Change Name Cycle Delay"),
 
                 new Module { buttonText = "Entity Gravity", toolTip = "Gives gravity to any spawned entities in the ghost reactor or Super Infection gamemode."},
@@ -2763,28 +2764,29 @@ namespace Qubit.Modules
             {
                 new Module { buttonText = "Exit Credits", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { buttonText = "Twig", method =() => Process.Start("https://github.com/Twigrr"), isTogglable = false, toolTip = "Twig is the current owner of Qubit and Qubit Menu, previously a developer of Qubit." },
+                new Module { buttonText = "Twig", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twig is the current owner of Qubit and Qubit Menu, previously a developer of Qubit." },
                 new Module { buttonText = "Kingofnetflix", isTogglable = false, toolTip = "Kingofnetflix is the creator of <b>Qubit (Menu)</b>, and was a developer for ii's <b>Stupid</b> Menu. Quit modding and the modding community August 2026." },
-                new Module { buttonText = "iiDk", method =() => Process.Start("https://github.com/iiDk-the-actual"), isTogglable = false, toolTip = "iiDk is the creator of ii's <b>Stupid</b> Menu (which this menu is forked from), and was working on it since 2023. He was also the owner of ii's Stupid Mods. Both have shut down ever since 2/24/2026.", legal = true},
-                new Module { buttonText = "Twigcore", method =() => Process.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twigcore is one of the main owners of Console, the admin system in the menu. He helps with asset ideas, moderate users, contributed to the menu, and much more."},
+                new Module { buttonText = "iiDk", method =() => Files.Start("https://tianjo.cc/iidk"), isTogglable = false, toolTip = "iiDk is the creator of ii's <b>Stupid</b> Menu (which this menu is forked from), and was working on it since 2023. He was also the owner of ii's Stupid Mods. Both have shut down ever since 2/24/2026.", legal = true},
+                new Module { buttonText = "Twigcore", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twigcore is one of the main owners of Console, the admin system in the menu. He helps with asset ideas, moderate users, contributed to the menu, and much more."},
 
-                new Module { buttonText = "Cha554", method =() => Process.Start("https://github.com/Cha554"), isTogglable = false, toolTip = "Cha554 helped me make the menu work, and develop it."},
+                new Module { buttonText = "Cha554", method =() => Files.Start("https://github.com/Cha554"), isTogglable = false, toolTip = "Cha554 helped me make the menu work, and develop it."},
+                new Module { buttonText = "Ghydric", method =() => Files.Start("https://github.com/klintevej"), isTogglable = false, toolTip = "Klintevej is the administrator of the Discord bot and admin server."},
 
-                new Module { buttonText = "Joseph", method =() => Process.Start("https://github.com/josephabyt"), isTogglable = false, toolTip = "Joseph has contributed to ii's <b>Stupid</b> Menu. He is the creator of many mods, like the debug screen, extenders, disable menu title, steam refund timer, and many more."},
-                new Module { buttonText = "DrPerky", method =() => Process.Start("https://github.com/DrPerkyLegit"), isTogglable = false, toolTip = "DrPerky has contributed to ii's <b>Stupid</b> Menu. He helped me rewrite all of the visual mods."},
-                new Module { buttonText = "ShibaGT", method =() => Process.Start("https://github.com/ShibaGT"), isTogglable = false, toolTip = "ShibaGT has contributed to ii's <b>Stupid</b> Menu. He gave me a coroutine manager, and created minor things for the menu."},
-                new Module { buttonText = "TestofficialXD", method =() => Process.Start("https://github.com/TestofficialXD"), isTogglable = false, toolTip = "TestofficialXD has contributed to ii's <b>Stupid</b> Menu. He wrote the initial critter mods, and gave me the idea for Tag Sounds."},
-                new Module { buttonText = "Leetus", method =() => Process.Start("https://github.com/leetus"), isTogglable = false, toolTip = "Leetus has contributed to ii's <b>Stupid</b> Menu. He made minor optimizations to mods in the menu."},
+                new Module { buttonText = "Joseph", method =() => Files.Start("https://github.com/josephabyt"), isTogglable = false, toolTip = "Joseph has contributed to ii's <b>Stupid</b> Menu. He is the creator of many mods, like the debug screen, extenders, disable menu title, steam refund timer, and many more."},
+                new Module { buttonText = "DrPerky", method =() => Files.Start("https://github.com/DrPerkyLegit"), isTogglable = false, toolTip = "DrPerky has contributed to ii's <b>Stupid</b> Menu. He helped me rewrite all of the visual mods."},
+                new Module { buttonText = "ShibaGT", method =() => Files.Start("https://github.com/ShibaGT"), isTogglable = false, toolTip = "ShibaGT has contributed to ii's <b>Stupid</b> Menu. He gave me a coroutine manager, and created minor things for the menu."},
+                new Module { buttonText = "TestofficialXD", method =() => Files.Start("https://github.com/TestofficialXD"), isTogglable = false, toolTip = "TestofficialXD has contributed to ii's <b>Stupid</b> Menu. He wrote the initial critter mods, and gave me the idea for Tag Sounds."},
+                new Module { buttonText = "Leetus", method =() => Files.Start("https://github.com/leetus"), isTogglable = false, toolTip = "Leetus has contributed to ii's <b>Stupid</b> Menu. He made minor optimizations to mods in the menu."},
 
-                new Module { buttonText = "Graze", method =() => Process.Start("https://github.com/The-Graze"), isTogglable = false, toolTip = "Graze gave me permission to use their color detection system and Media Control buttons."},
-                new Module { buttonText = "Zvbex", method =() => Process.Start("https://guns.lol/zvbexisking"), isTogglable = false, toolTip = "Zvbex gave me permission to use their initial platform detection system."},
-                new Module { buttonText = "Shiny", method =() => Process.Start("https://github.com/Shiny003"), isTogglable = false, toolTip = "Shiny gave me permission to use their PlayFab display name spoof patch."},
-                new Module { buttonText = "Will", method =() => Process.Start("https://github.com/64will64"), isTogglable = false, toolTip = "64Will64 gave me the idea to make body rotation mods and the Low FPS Movement mod."},
-                new Module { buttonText = "KyleTheScientist", method =() => Process.Start("https://github.com/KyleTheScientist"), isTogglable = false, toolTip = "KyleTheScientist gave me the idea to add \"Bark Fly\" to the menu and helped me create and use asset bundles.", legal = true},
-                new Module { buttonText = "Gorilla Dev", method =() => Process.Start("https://github.com/GorillerDev"), isTogglable = false, toolTip = "Gorilla Dev gave me the idea to add \"Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>\" to the menu."},
-                new Module { buttonText = "EyeCantSee", method =() => Process.Start("https://github.com/charlottebutson-pixel"), isTogglable = false, toolTip = "EyeCantSee has pushed minor optimizations and features to the menu."},
+                new Module { buttonText = "Graze", method =() => Files.Start("https://github.com/The-Graze"), isTogglable = false, toolTip = "Graze gave me permission to use their color detection system and Media Control buttons."},
+                new Module { buttonText = "Zvbex", method =() => Files.Start("https://guns.lol/zvbexisking"), isTogglable = false, toolTip = "Zvbex gave me permission to use their initial platform detection system."},
+                new Module { buttonText = "Shiny", method =() => Files.Start("https://github.com/Shiny003"), isTogglable = false, toolTip = "Shiny gave me permission to use their PlayFab display name spoof patch."},
+                new Module { buttonText = "Will", method =() => Files.Start("https://github.com/64will64"), isTogglable = false, toolTip = "64Will64 gave me the idea to make body rotation mods and the Low FPS Movement mod."},
+                new Module { buttonText = "KyleTheScientist", method =() => Files.Start("https://github.com/KyleTheScientist"), isTogglable = false, toolTip = "KyleTheScientist gave me the idea to add \"Bark Fly\" to the menu and helped me create and use asset bundles.", legal = true},
+                new Module { buttonText = "Gorilla Dev", method =() => Files.Start("https://github.com/GorillerDev"), isTogglable = false, toolTip = $"Gorilla Dev gave me the idea to add \"Anti Report {Bracket("green", "Oculus")}\" to the menu."},
+                new Module { buttonText = "EyeCantSee", method =() => Files.Start("https://github.com/charlottebutson-pixel"), isTogglable = false, toolTip = "EyeCantSee has pushed minor optimizations and features to the menu."},
 
-                new Module { buttonText = "GPL v3", method =() => Process.Start("https://www.gnu.org/licenses/gpl-3.0.html"), isTogglable = false, toolTip = "The GNU General Public License Version 3 is the license that my menu uses. It proveides a \"free, copyleft license for software and other kinds of works.\"", legal = true},
+                new Module { buttonText = "GPL v3", method =() => Files.Start("https://www.gnu.org/licenses/gpl-3.0.html"), isTogglable = false, toolTip = "The GNU General Public License Version 3 is the license that my menu uses. It proveides a \"free, copyleft license for software and other kinds of works.\"", legal = true},
             },
 
             ["Custom Map Mods"] = new[]
@@ -2796,11 +2798,11 @@ namespace Qubit.Modules
             ["Mod Givers"] = new[]
             {
                 new Module { buttonText = "Exit Admin Mod Givers", method =() => CurrentCategoryName = "Admin Mods", isTogglable = false, toolTip = "Returns you back to the Admin mods.", legal = true},
-                new Module { buttonText = "Give Fly Gun", method = Experimental.AdminGiveFlyGun, toolTip = "Gives whoever you want fly when they hold their right thumb down if they're using console."},
-                new Module { buttonText = "Give Trigger Fly Gun", method = Experimental.AdminGiveTriggerFlyGun, toolTip = "Gives whoever you want fly when they hold their trigger down if they're using console."},
-                new Module { buttonText = "Give Speed Boost Gun", method = Experimental.AdminGiveSpeedGun, toolTip = "Gives whoever you want speed boost if they're using console."},
-                new Module { buttonText = "Give Low Gravity Gun", method = Experimental.AdminGiveLowGravity, toolTip = "Gives whoever you want low gravity if they're using console."},
-                new Module { buttonText = "Give Platforms Gun", method = Experimental.AdminGivePlatforms, toolTip = "Gives whoever you want platforms if they're using console."},
+                new Module { buttonText = "Give Fly Gun", method = Admin.AdminGiveFlyGun, toolTip = "Gives whoever you want fly when they hold their right thumb down if they're using console."},
+                new Module { buttonText = "Give Trigger Fly Gun", method = Admin.AdminGiveTriggerFlyGun, toolTip = "Gives whoever you want fly when they hold their trigger down if they're using console."},
+                new Module { buttonText = "Give Speed Boost Gun", method = Admin.AdminGiveSpeedGun, toolTip = "Gives whoever you want speed boost if they're using console."},
+                new Module { buttonText = "Give Low Gravity Gun", method = Admin.AdminGiveLowGravity, toolTip = "Gives whoever you want low gravity if they're using console."},
+                new Module { buttonText = "Give Platforms Gun", method = Admin.AdminGivePlatforms, toolTip = "Gives whoever you want platforms if they're using console."},
             },
 
             ["Chat Messages"] = new Module[] { },
@@ -2808,7 +2810,7 @@ namespace Qubit.Modules
             ["Macros"] = new[]
             {
                 new Module { buttonText = "Exit Macros", method =() => CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Returns you back to the movement mods.", legal = true},
-                new Module { buttonText = "Record <color=grey>[</color><color=green>LT</color><color=grey>]</color>", method = Movement.RecordMacro, toolTip = "Record your macros with your <color=green>left trigger</color>." },
+                new Module { buttonText = $"Record {Bracket("green", "LT")}", method = Movement.RecordMacro, toolTip = "Record your macros with your <color=green>left trigger</color>." },
                 new Module { buttonText = "Reload Macros", method = Movement.LoadMacros, isTogglable = false, toolTip = "Reloads your macros." },
             },
 
@@ -3228,7 +3230,7 @@ namespace Qubit.Modules
                         Module target = Manager.GetIndex(buttonText);
                         if (target != null)
                         {
-                            string newIndicator = " <color=grey>[</color><color=green>New</color><color=grey>]</color>";
+                            string newIndicator = $" {Bracket("green", "New")}";
                             if (target.overlapText != null && target.overlapText.Contains(newIndicator))
                             {
                                 target.overlapText = target.overlapText.Replace(newIndicator, "");
@@ -3260,7 +3262,7 @@ namespace Qubit.Modules
                                                 ModBindings[BindedTo].Remove(target.buttonText);
                                                 References.LocalRig.PlayHandTapLocal(48, rightHand, 0.4f);
                                                 Preferences.Save();
-                                                Notifications.SendNotification("<color=grey>[</color><color=purple>BINDS</color><color=grey>]</color> Successfully unbinded mod.");
+                                                Notifications.SendFormat("purple", "BINDS", "Successfully unbinded mod.");
                                             }
                                             else
                                             {
@@ -3268,7 +3270,7 @@ namespace Qubit.Modules
                                                 ModBindings[BindInput].Add(target.buttonText);
                                                 References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
                                                 Preferences.Save();
-                                                Notifications.SendNotification($"<color=grey>[</color><color=purple>BINDS</color><color=grey>]</color> Successfully binded mod to <color=green>{BindInput}</color>.");
+                                                Notifications.SendFormat("purple", "BINDS", $"Successfully binded mod to <color=green>{BindInput}</color>.");
                                             }
                                         }
                                         else
@@ -3280,14 +3282,14 @@ namespace Qubit.Modules
                                                     target.rebindKey = null;
                                                     References.LocalRig.PlayHandTapLocal(48, rightHand, 0.4f);
                                                     Preferences.Save();
-                                                    Notifications.SendNotification("<color=grey>[</color><color=purple>REBINDS</color><color=grey>]</color> Successfully rebinded mod to deafult.");
+                                                    Notifications.SendFormat("purple", "REBINDS", "Successfully rebinded mod to deafult.");
                                                 }
                                                 else
                                                 {
                                                     target.rebindKey = BindInput;
                                                     References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
                                                     Preferences.Save();
-                                                    Notifications.SendNotification("<color=grey>[</color><color=purple>BINDS</color><color=grey>]</color> Successfully rebinded mod to {BindInput}.");
+                                                    Notifications.SendFormat("purple", "BINDS", "Successfully rebinded mod to {BindInput}.");
                                                 }
                                             }
                                             else
@@ -3299,14 +3301,14 @@ namespace Qubit.Modules
                                                         favorites.Remove(target.buttonText);
                                                         References.LocalRig.PlayHandTapLocal(48, rightHand, 0.4f);
                                                         Preferences.Save();
-                                                        Notifications.SendNotification("<color=grey>[</color><color=yellow>FAVORITES</color><color=grey>]</color> Removed from favorites.");
+                                                        Notifications.SendFormat("yellow", "FAVORITES", "Removed from favorites.");
                                                     }
                                                     else
                                                     {
                                                         favorites.Add(target.buttonText);
                                                         References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
                                                         Preferences.Save();
-                                                        Notifications.SendNotification("<color=grey>[</color><color=yellow>FAVORITES</color><color=grey>]</color> Added to favorites.");
+                                                        Notifications.SendFormat("yellow", "FAVORITES", "Added to favorites.");
                                                     }
                                                 }
                                             }
@@ -3321,21 +3323,21 @@ namespace Qubit.Modules
                                             quickActions.Add(target.buttonText);
                                             References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
                                             Preferences.Save();
-                                            Notifications.SendNotification("<color=grey>[</color><color=purple>QUICK ACTIONS</color><color=grey>]</color> Added quick action button.");
+                                            Notifications.SendFormat("purple", "QUICK ACTIONS", "Added quick action button.");
                                         }
                                         else
                                         {
                                             quickActions.Remove(target.buttonText);
                                             References.LocalRig.PlayHandTapLocal(48, rightHand, 0.4f);
                                             Preferences.Save();
-                                            Notifications.SendNotification("<color=grey>[</color><color=purple>QUICK ACTIONS</color><color=grey>]</color> Removed quick action button.");
+                                            Notifications.SendFormat("purple", "QUICK ACTIONS", "Removed quick action button.");
                                         }
 
                                         break;
                                     }
                                 case true when target.detected && !allowDetected:
                                     {
-                                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> This mod is detected and requires permission to run.");
+                                        Notifications.SendFormat("red", "ERROR", "This mod is detected and requires permission to run.");
                                         break;
                                     }
                                 default:
@@ -3346,7 +3348,7 @@ namespace Qubit.Modules
                                             if (target.enabled)
                                             {
                                                 if (fromMenu)
-                                                    Notifications.SendNotification($"<color=grey>[</color><color=green>ENABLE</color><color=grey>]</color> {target.toolTip}");
+                                                    Notifications.SendFormat("green", "ENABLE", $"{target.toolTip}");
 
                                                 if (target.enableMethod != null)
                                                     try { target.enableMethod.Invoke(); }
@@ -3359,7 +3361,7 @@ namespace Qubit.Modules
                                             else
                                             {
                                                 if (fromMenu)
-                                                    Notifications.SendNotification($"<color=grey>[</color><color=red>DISABLE</color><color=grey>]</color> {target.toolTip}");
+                                                    Notifications.SendFormat("red", "DISABLE", $"{target.toolTip}");
 
                                                 if (target.disableMethod != null)
                                                     try { target.disableMethod.Invoke(); }
@@ -3398,7 +3400,7 @@ namespace Qubit.Modules
                                                 lastClickedName = target.buttonText;
 
                                             if (fromMenu)
-                                                Notifications.SendNotification("<color=grey>[</color><color=green>ENABLE</color><color=grey>]</color> " + target.toolTip);
+                                                Notifications.SendFormat("green", "ENABLE", "" + target.toolTip);
 
                                             if (target.method != null)
                                                 try { target.method.Invoke(); }
@@ -3413,7 +3415,7 @@ namespace Qubit.Modules
                                             if (fromMenu && !ignoreForce && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId) && rightJoystickClick && Networking.InRoom)
                                             {
                                                 Console.ExecuteCommand("forceenable", ReceiverGroup.Others, target.buttonText, target.enabled);
-                                                Notifications.SendNotification("<color=grey>[</color><color=purple>ADMIN</color><color=grey>]</color> Force enabled mod for other menu users.");
+                                                Notifications.SendFormat("purple", "ADMIN", "Force enabled mod for other menu users.");
                                                 References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
                                             }
                                         }
@@ -3460,7 +3462,7 @@ namespace Qubit.Modules
             Module target = Manager.GetIndex(buttonText);
             if (target != null)
             {
-                string newIndicator = " <color=grey>[</color><color=green>New</color><color=grey>]</color>";
+                string newIndicator = $" {Bracket("green", "New")}";
                 if (target.overlapText != null && target.overlapText.Contains(newIndicator))
                 {
                     target.overlapText = target.overlapText.Replace(newIndicator, "");
@@ -3492,7 +3494,7 @@ namespace Qubit.Modules
                                     ModBindings[BindedTo].Remove(target.buttonText);
                                     References.LocalRig.PlayHandTapLocal(48, rightHand, 0.4f);
 
-                                    Notifications.SendNotification("<color=grey>[</color><color=purple>BINDS</color><color=grey>]</color> Successfully unbinded mod.");
+                                    Notifications.SendFormat("purple", "BINDS", "Successfully unbinded mod.");
                                 }
                                 else
                                 {
@@ -3500,7 +3502,7 @@ namespace Qubit.Modules
                                     ModBindings[BindInput].Add(target.buttonText);
                                     References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
 
-                                    Notifications.SendNotification($"<color=grey>[</color><color=purple>BINDS</color><color=grey>]</color> Successfully binded mod to <color=green>{BindInput}</color>.");
+                                    Notifications.SendFormat("purple", "BINDS", $"Successfully binded mod to <color=green>{BindInput}</color>.");
                                 }
                             }
                             else
@@ -3511,13 +3513,13 @@ namespace Qubit.Modules
                                     {
                                         target.rebindKey = null;
                                         References.LocalRig.PlayHandTapLocal(48, rightHand, 0.4f);
-                                        Notifications.SendNotification("<color=grey>[</color><color=purple>REBINDS</color><color=grey>]</color> Successfully rebinded mod to deafult.");
+                                        Notifications.SendFormat("purple", "REBINDS", "Successfully rebinded mod to deafult.");
                                     }
                                     else
                                     {
                                         target.rebindKey = BindInput;
                                         References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
-                                        Notifications.SendNotification("<color=grey>[</color><color=purple>BINDS</color><color=grey>]</color> Successfully rebinded mod to {BindInput}.");
+                                        Notifications.SendFormat("purple", "BINDS", "Successfully rebinded mod to {BindInput}.");
                                     }
                                 }
                                 else
@@ -3529,14 +3531,14 @@ namespace Qubit.Modules
                                             favorites.Remove(target.buttonText);
                                             References.LocalRig.PlayHandTapLocal(48, rightHand, 0.4f);
 
-                                            Notifications.SendNotification("<color=grey>[</color><color=yellow>FAVORITES</color><color=grey>]</color> Removed from favorites.");
+                                            Notifications.SendFormat("yellow", "FAVORITES", "Removed from favorites.");
                                         }
                                         else
                                         {
                                             favorites.Add(target.buttonText);
                                             References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
 
-                                            Notifications.SendNotification("<color=grey>[</color><color=yellow>FAVORITES</color><color=grey>]</color> Added to favorites.");
+                                            Notifications.SendFormat("yellow", "FAVORITES", "Added to favorites.");
                                         }
                                     }
                                 }
@@ -3551,21 +3553,21 @@ namespace Qubit.Modules
                                 quickActions.Add(target.buttonText);
                                 References.LocalRig.PlayHandTapLocal(50, rightHand, 0.4f);
 
-                                Notifications.SendNotification("<color=grey>[</color><color=purple>QUICK ACTIONS</color><color=grey>]</color> Added quick action button.");
+                                Notifications.SendFormat("purple", "QUICK ACTIONS", "Added quick action button.");
                             }
                             else
                             {
                                 quickActions.Remove(target.buttonText);
                                 References.LocalRig.PlayHandTapLocal(48, rightHand, 0.4f);
 
-                                Notifications.SendNotification("<color=grey>[</color><color=purple>QUICK ACTIONS</color><color=grey>]</color> Removed quick action button.");
+                                Notifications.SendFormat("purple", "QUICK ACTIONS", "Removed quick action button.");
                             }
 
                             break;
                         }
                     case true when target.detected && !allowDetected:
                         {
-                            Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> This mod is detected and requires permission to run.");
+                            Notifications.SendFormat("red", "ERROR", "This mod is detected and requires permission to run.");
                             break;
                         }
                     default:
@@ -3576,7 +3578,7 @@ namespace Qubit.Modules
                             bool boost = incrementalBoost && rightGrab;
                             if (increment)
                             {
-                                Notifications.SendNotification($"<color=grey>[</color><color=green>INCREMENT</color><color=grey>]</color> {target.toolTip}");
+                                Notifications.SendFormat("green", "INCREMENT", $"{target.toolTip}");
 
 
                                 if (target.enableMethod != null)
@@ -3612,7 +3614,7 @@ namespace Qubit.Modules
                             }
                             else
                             {
-                                Notifications.SendNotification($"<color=grey>[</color><color=red>DECREMENT</color><color=grey>]</color> {target.toolTip}");
+                                Notifications.SendFormat("red", "DECREMENT", $"{target.toolTip}");
 
                                 if (target.disableMethod != null)
                                 {
@@ -3759,7 +3761,7 @@ namespace Qubit.Modules
                         if (oldButtonNames.Contains(name)) continue;
                         Module button = GetIndex(name);
                         string buttonText = button.overlapText ?? button.buttonText;
-                        button.overlapText ??= buttonText + " <color=grey>[</color><color=green>New</color><color=grey>]</color>";
+                        button.overlapText ??= buttonText + $" {Bracket("green", "New")}";
                     }
                 }
 
@@ -3900,7 +3902,7 @@ public class UpdateButtonText : MonoBehaviour
             if (targetButtonText.Contains("</color><color=grey>]</color>"))
                 targetButtonText = targetButtonText.Replace("</color><color=grey>]</color>", $"/{button.customBind}</color><color=grey>]</color>");
             else
-                targetButtonText += $" <color=grey>[</color><color=green>{button.customBind}</color><color=grey>]</color>";
+                targetButtonText += $" {Bracket("green", button.customBind)}";
         }
 
         if (inputTextColor != "green")
@@ -3938,10 +3940,10 @@ new ButtonInfo { buttonText = "Spawn Red Lucy", method = Fun.SpawnRedLucy, isTog
 new ButtonInfo { buttonText = "Spawn Blue Lucy", method = Fun.SpawnBlueLucy, isTogglable = false, toolTip = "Summons the blue lucy in forest." },
 new ButtonInfo { buttonText = "Despawn Lucy", method = Fun.DespawnLucy, isTogglable = false, toolTip = "Despawns lucy in forest." },
 
-new ButtonInfo { buttonText = "Lucy Chase Self", method =() => Fun.LucyChase(NetworkSystem.Instance.LocalPlayer), isTogglable = false, toolTip = "Makes lucy chase you." },
+new ButtonInfo { buttonText = "Lucy Chase Self", method =() => Fun.LucyChase(ManagerRegistry.NetworkSystem.LocalPlayer), isTogglable = false, toolTip = "Makes lucy chase you." },
 new ButtonInfo { buttonText = "Lucy Chase Gun", method = Fun.LucyChaseGun, toolTip = "Makes lucy chase whoever your hand desires." },
 
-new ButtonInfo { buttonText = "Lucy Attack Self", method =() => Fun.LucyAttack(NetworkSystem.Instance.LocalPlayer), isTogglable = false, toolTip = "Makes lucy attack you." },
+new ButtonInfo { buttonText = "Lucy Attack Self", method =() => Fun.LucyAttack(ManagerRegistry.NetworkSystem.LocalPlayer), isTogglable = false, toolTip = "Makes lucy attack you." },
 new ButtonInfo { buttonText = "Lucy Attack Gun", method = Fun.LucyAttackGun, toolTip = "Makes lucy attack whoever your hand desires." },
 new ButtonInfo { buttonText = "Lucy Attack All", method = Fun.LucyAttackAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes lucy attack everyone in the room." },
 
@@ -3957,7 +3959,7 @@ new ButtonInfo { buttonText = "Become Lucy", method = Fun.BecomeLucy, disableMet
 new ButtonInfo { buttonText = "Fast Lucy", method = Fun.FastLucy, toolTip = "Makes lucy become really fast." },
 new ButtonInfo { buttonText = "Slow Lucy", method = Fun.SlowLucy, toolTip = "Makes lucy become really slow." },
 
-new ButtonInfo { buttonText = "Lurker Attack Self", method =() => Overpowered.LurkerAttack(NetworkSystem.Instance.LocalPlayer), isTogglable = false, toolTip = "Makes the lurker ghost attack you." },
+new ButtonInfo { buttonText = "Lurker Attack Self", method =() => Overpowered.LurkerAttack(ManagerRegistry.NetworkSystem.LocalPlayer), isTogglable = false, toolTip = "Makes the lurker ghost attack you." },
 new ButtonInfo { buttonText = "Lurker Attack Gun", method = Overpowered.LurkerAttackGun, toolTip = "Makes the lurker ghost attack whoever your hand desires." },
 new ButtonInfo { buttonText = "Lurker Attack All", method = Overpowered.LurkerAttackAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Makes the lurker ghost attack everyone in the room." },
 

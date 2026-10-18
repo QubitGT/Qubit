@@ -45,17 +45,22 @@ using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
 using static Qubit.Utilities.GameModes;
 using static Qubit.Utilities.GameObj;
+using Qubit.Libraries.Entities;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Modules.Categories
 {
     public static class Master
     {
+        #region Settings
+        public static float materialDelay;
+        #endregion
 
+        #region Methods
         public static void UntagAll()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 foreach (Player v in PhotonNetwork.PlayerList)
@@ -65,7 +70,7 @@ namespace Qubit.Modules.Categories
         public static void SpamTagSelf()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 if (!(Time.time > Advantages.spamTagDelay)) return;
@@ -86,7 +91,7 @@ namespace Qubit.Modules.Categories
                 if (gunLocked && lockTarget != null)
                 {
                     if (!Networking.IsMasterClient)
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                        Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
                         if (Time.time > Advantages.spamTagDelay)
@@ -116,7 +121,7 @@ namespace Qubit.Modules.Categories
         public static void SpamTagAll()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 if (!(Time.time > Advantages.spamTagDelay)) return;
@@ -147,7 +152,7 @@ namespace Qubit.Modules.Categories
 
                 }
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             }, new GunLibrary.GunSettings { onIdle = () =>
                 {
                     if (gunLocked)
@@ -162,12 +167,12 @@ namespace Qubit.Modules.Categories
         {
             if (!Networking.InRoom)
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in a room.");
+                Notifications.SendFormat("red", "ERROR", "You are not in a room.");
                 return;
             }
             if (!Networking.IsMasterClient)
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 return;
             }
             GorillaTagManager tagman = ManagerRegistry.GorillaTagManager;
@@ -189,7 +194,7 @@ namespace Qubit.Modules.Categories
                         if (PhotonNetwork.IsMasterClient)
                             RemoveInfected(GetPlayerFromVRRig(gunTarget));
                         else
-                            Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                            Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     }
                 }
             });
@@ -198,7 +203,7 @@ namespace Qubit.Modules.Categories
         public static void PaintbrawlStartGame()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GameModes.StartPaintbrawl();
@@ -208,7 +213,7 @@ namespace Qubit.Modules.Categories
         public static void PaintbrawlEndGame()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GameModes.EndPaintbrawl();
@@ -218,7 +223,7 @@ namespace Qubit.Modules.Categories
         public static void PaintbrawlRestartGame()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GameModes.EndPaintbrawl();
@@ -233,7 +238,7 @@ namespace Qubit.Modules.Categories
             Advantages.paintbrawlSpamDelay = Time.time + 0.1f;
 
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GameModes.SetPaintbrawlHealth(PhotonNetwork.LocalPlayer.ActorNumber, Random.Range(0, 4));
@@ -249,7 +254,7 @@ namespace Qubit.Modules.Categories
                 if (gunLocked && lockTarget != null)
                 {
                     if (!Networking.IsMasterClient)
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                        Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
                         if (Time.time > Advantages.paintbrawlSpamDelay)
@@ -257,7 +262,7 @@ namespace Qubit.Modules.Categories
                             Advantages.paintbrawlSpamDelay = Time.time + 0.1f;
 
                             if (!Networking.IsMasterClient)
-                                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                                Notifications.SendFormat("red", "ERROR", "You are not master client.");
                             else
                             {
                                 GameModes.SetPaintbrawlHealth(PhotonNetwork.LocalPlayer.ActorNumber, Random.Range(0, 4));
@@ -292,7 +297,7 @@ namespace Qubit.Modules.Categories
             Advantages.paintbrawlSpamDelay = Time.time + 0.1f;
 
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 foreach (Player player in PhotonNetwork.PlayerList)
@@ -306,7 +311,7 @@ namespace Qubit.Modules.Categories
             {
                 NetPlayer owner = GetPlayerFromVRRig(gunTarget);
                 if (!Networking.IsMasterClient)
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 else
                 {
                     GameModes.SetPaintbrawlHealth(owner.ActorNumber, 4);
@@ -317,7 +322,7 @@ namespace Qubit.Modules.Categories
         public static void PaintbrawlReviveSelf()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GameModes.SetPaintbrawlHealth(PhotonNetwork.LocalPlayer.ActorNumber, 4);
@@ -327,7 +332,7 @@ namespace Qubit.Modules.Categories
         public static void PaintbrawlReviveAll()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 foreach (Player player in PhotonNetwork.PlayerList)
@@ -339,7 +344,7 @@ namespace Qubit.Modules.Categories
         public static void PaintbrawlNoDelay()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GameModes.SetPaintbrawlCooldowns(0f, 0f, 0f);
@@ -354,7 +359,7 @@ namespace Qubit.Modules.Categories
         public static void PaintbrawlGodMode()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GameModes.SetPaintbrawlHealth(PhotonNetwork.LocalPlayer.ActorNumber, 4);
@@ -375,13 +380,13 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.IsMasterClient)
                     GRPlayer.Get(GetPlayerFromVRRig(gunTarget).ActorNumber).shiftCreditCache = currency;
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             });
         }
 
         public static void SetCurrencyAll(int currency = 0)
         {
-            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
 
             foreach (Player target in PhotonNetwork.PlayerList)
             {
@@ -403,13 +408,13 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.IsMasterClient)
                     GRPlayer.Get(GetPlayerFromVRRig(gunTarget).ActorNumber).shiftCreditCache += currency;
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             });
         }
 
         public static void AddCurrencyAll(int currency = 0)
         {
-            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
 
             foreach (Player target in PhotonNetwork.PlayerList)
             {
@@ -420,7 +425,7 @@ namespace Qubit.Modules.Categories
 
         public static void Invincibility()
         {
-            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
 
             GRPlayer plr = GRPlayer.Get(PhotonNetwork.LocalPlayer.ActorNumber);
 
@@ -432,22 +437,22 @@ namespace Qubit.Modules.Categories
 
         public static void StartShift()
         {
-            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-            ManagerRegistry.GhostReactor.GhostReactorManager.RequestShiftStartAuthority(GhostReactor.instance.shiftManager.ShiftState == GhostReactorShiftManager.State.WaitingForFirstShiftStart);
+            if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
+            ManagerRegistry.GhostReactor.GhostReactorManager.RequestShiftStartAuthority(ManagerRegistry.GhostReactor.Instance.shiftManager.ShiftState == GhostReactorShiftManager.State.WaitingForFirstShiftStart);
             RPCProtection();
         }
 
         public static void EndShift()
         {
-            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
             ManagerRegistry.GhostReactor.GhostReactorManager.RequestShiftEnd();
             RPCProtection();
         }
 
         public static void SetQuota()
         {
-            if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-            GhostReactor.instance.shiftManager.shiftStats.SetShiftStat(GRShiftStatType.CoresCollected, GhostReactor.instance.shiftManager.coresRequiredToDelveDeeper);
+            if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
+            ManagerRegistry.GhostReactor.Instance.shiftManager.shiftStats.SetShiftStat(GRShiftStatType.CoresCollected, ManagerRegistry.GhostReactor.Instance.shiftManager.coresRequiredToDelveDeeper);
             RPCProtection();
         }
 
@@ -516,16 +521,16 @@ namespace Qubit.Modules.Categories
             }
         }
         public static void EnableAtticAntiReport() =>
-            Fun.startTimeBuilding = Time.time + 5f;
+            Blocks.startTimeBuilding = Time.time + 5f;
 
         public static void AtticAntiReport()
         {
-            if (Time.time > Fun.startTimeBuilding)
+            if (Time.time > Blocks.startTimeBuilding)
                 return;
 
             foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer == Networking.LocalPlayer))
             {
-                Fun.RequestCreatePiece(-566818631, line.reportButton.transform.position + RandomVector3(0.3f), RandomQuaternion(), 0, null, true);
+                Blocks.CreatePiece(-566818631, line.reportButton.transform.position + RandomVector3(0.3f), RandomQuaternion(), 0, null, true);
                 RPCProtection();
             }
         }
@@ -535,7 +540,7 @@ namespace Qubit.Modules.Categories
             GunLibrary.Point(NewPointer =>
             {
                 if (!PhotonNetwork.IsMasterClient)
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 else
                     Coroutines.instance.StartCoroutine(Fun.DrawSmallDelay(NewPointer.transform.position));
             });
@@ -546,10 +551,10 @@ namespace Qubit.Modules.Categories
             GunLibrary.Point(NewPointer =>
             {
                 if (!PhotonNetwork.IsMasterClient)
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 else
                 {
-                    Fun.RequestCreatePiece(Fun.pieceIdSet, NewPointer.transform.position, RandomQuaternion(), 0, null, true);
+                    Blocks.CreatePiece(Blocks.pieceIdSet, NewPointer.transform.position, RandomQuaternion(), 0, null, true);
                     RPCProtection();
                 }
             });
@@ -560,13 +565,13 @@ namespace Qubit.Modules.Categories
             GunLibrary.Target(lockTarget =>
             {
                 if (!PhotonNetwork.IsMasterClient)
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 else
                 {
                     Player target = NetPlayerToPlayer(lockTarget.GetPlayer());
-                    Fun.RequestCreatePiece(-566818631, lockTarget.headMesh.transform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                    Fun.RequestCreatePiece(-566818631, lockTarget.leftHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                    Fun.RequestCreatePiece(-566818631, lockTarget.rightHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
+                    Blocks.CreatePiece(-566818631, lockTarget.headMesh.transform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
+                    Blocks.CreatePiece(-566818631, lockTarget.leftHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
+                    Blocks.CreatePiece(-566818631, lockTarget.rightHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
                     RPCProtection();
                 }
             }, new GunLibrary.GunSettings { locks = true });
@@ -579,13 +584,13 @@ namespace Qubit.Modules.Categories
                 Player target = GetRandomPlayer(false);
 
                 if (!PhotonNetwork.IsMasterClient)
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 else
                 {
                     GetVRRigFromPlayer(target);
-                    Fun.RequestCreatePiece(-566818631, lockTarget.headMesh.transform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                    Fun.RequestCreatePiece(-566818631, lockTarget.leftHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                    Fun.RequestCreatePiece(-566818631, lockTarget.rightHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
+                    Blocks.CreatePiece(-566818631, lockTarget.headMesh.transform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
+                    Blocks.CreatePiece(-566818631, lockTarget.leftHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
+                    Blocks.CreatePiece(-566818631, lockTarget.rightHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
                     RPCProtection();
                 }
             }
@@ -599,11 +604,11 @@ namespace Qubit.Modules.Categories
                 if (gunLocked && lockTarget != null)
                 {
                     if (!PhotonNetwork.IsMasterClient)
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                        Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
                         Fun.floatPower += (0.3f - Fun.floatPower) * 0.05f;
-                        Fun.RequestCreatePiece(-566818631, lockTarget.transform.position + Vector3.down * Fun.floatPower, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), true);
+                        Blocks.CreatePiece(-566818631, lockTarget.transform.position + Vector3.down * Fun.floatPower, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), true);
                         RPCProtection();
                     }
                 }
@@ -633,10 +638,10 @@ namespace Qubit.Modules.Categories
                 if (gunLocked && lockTarget != null)
                 {
                     if (!PhotonNetwork.IsMasterClient)
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                        Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
-                        Fun.RequestCreatePiece(-566818631, lockTarget.transform.position + Vector3.down * 0.35f, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, Vector3.up * 50f);
+                        Blocks.CreatePiece(-566818631, lockTarget.transform.position + Vector3.down * 0.35f, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, Vector3.up * 50f);
                         RPCProtection();
                     }
                 }
@@ -666,10 +671,10 @@ namespace Qubit.Modules.Categories
                 if (gunLocked && lockTarget != null)
                 {
                     if (!PhotonNetwork.IsMasterClient)
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                        Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
-                        Fun.RequestCreatePiece(-566818631, lockTarget.transform.position, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, (References.HeadCollider.transform.position - lockTarget.transform.position).normalized * 50f);
+                        Blocks.CreatePiece(-566818631, lockTarget.transform.position, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, (References.HeadCollider.transform.position - lockTarget.transform.position).normalized * 50f);
                         RPCProtection();
                     }
                 }
@@ -699,10 +704,10 @@ namespace Qubit.Modules.Categories
                 if (gunLocked && lockTarget != null)
                 {
                     if (!PhotonNetwork.IsMasterClient)
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                        Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
-                        Fun.RequestCreatePiece(-566818631, lockTarget.transform.position, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, (lockTarget.transform.position - References.HeadCollider.transform.position).normalized * 50f);
+                        Blocks.CreatePiece(-566818631, lockTarget.transform.position, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, (lockTarget.transform.position - References.HeadCollider.transform.position).normalized * 50f);
                         RPCProtection();
                     }
                 }
@@ -730,7 +735,7 @@ namespace Qubit.Modules.Categories
 
                 if (Fun.position != Vector3.zero)
                 {
-                    Fun.RequestCreatePiece(Fun.pieceIdSet, Fun.position, Quaternion.Euler(0f, Time.frameCount % 360, 0f), 0, null, true);
+                    Blocks.CreatePiece(Blocks.pieceIdSet, Fun.position, Quaternion.Euler(0f, Time.frameCount % 360, 0f), 0, null, true);
                     RPCProtection();
 
                     Fun.position += new Vector3(0f, 0.1f, 0f);
@@ -740,25 +745,13 @@ namespace Qubit.Modules.Categories
                     Fun.position = NewPointer.transform.position;
             }, new GunLibrary.GunSettings { onIdle = () => { Fun.position = Vector3.zero; } });
         }
-
-        public static void UnlimitedBuilding()
-        {
-            BuilderPieceInteractor.instance.maxHoldablePieceStackCount = int.MaxValue;
-            UnlimitPatches.enabled = true;
-        }
-
-        public static void DisableUnlimitedBuilding()
-        {
-            BuilderPieceInteractor.instance.maxHoldablePieceStackCount = 50;
-            UnlimitPatches.enabled = false;
-        }
         public static void Shotgun()
         {
             if (Fun.isFiring)
                 References.InputPoller.leftControllerGripFloat = 1f;
 
             if (rightGrab && !Fun.previousGripDown)
-                Coroutines.instance.StartCoroutine(Fun.CreateShotgun());
+                Coroutines.instance.StartCoroutine(Blocks.CreateShotgun());
 
             if (rightGrab && rightTrigger > 0.5f && !Fun.previousTriggerDown)
                 Coroutines.instance.StartCoroutine(Fun.FireShotgun());
@@ -771,7 +764,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
             {
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
                 monkeyeAI.speed = 0.02f;
             }
         }
@@ -780,7 +773,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
             {
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
                 monkeyeAI.speed = 0.5f;
             }
         }
@@ -789,7 +782,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
             {
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
                 monkeyeAI.speed = 0.1f;
             }
         }
@@ -800,7 +793,7 @@ namespace Qubit.Modules.Categories
             {
                 foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
                 {
-                    if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                    if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
                     monkeyeAI.gameObject.transform.position = References.RightHand.position;
                 }
             }
@@ -812,7 +805,7 @@ namespace Qubit.Modules.Categories
             {
                 foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
                 {
-                    if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                    if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
                     monkeyeAI.gameObject.transform.position = NewPointer.transform.position + Vector3.up;
                 }
             });
@@ -822,7 +815,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
             {
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
                 monkeyeAI.transform.rotation = Quaternion.Euler(new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
             }
         }
@@ -833,7 +826,7 @@ namespace Qubit.Modules.Categories
             int index = 0;
             foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
             {
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
                 float offset = 360f / them.Length * index;
                 monkeyeAI.transform.position = References.HeadCollider.transform.position + new Vector3(MathF.Cos(offset + (float)Time.frameCount / 30) * 2f, 1f, MathF.Sin(offset + (float)Time.frameCount / 30) * 2f);
                 index++;
@@ -844,7 +837,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
             {
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
                 monkeyeAI.gameObject.transform.position = new Vector3(99999f, 99999f, 99999f);
             }
         }
@@ -869,7 +862,7 @@ namespace Qubit.Modules.Categories
                 PromptSingle("You are not a VIM subscriber, so this mod will not function.");
                 return;
             }
-            References.Network.PlayerListOthers.ForEach(p => RoomControls.KickPlayer(p.ActorNumber));
+            ManagerRegistry.NetworkSystem.PlayerListOthers.ForEach(p => RoomControls.KickPlayer(p.ActorNumber));
         }
 
         public static void VIMBlockGun()
@@ -893,7 +886,7 @@ namespace Qubit.Modules.Categories
                 PromptSingle("You are not a VIM subscriber, so this mod will not function.");
                 return;
             }
-            References.Network.PlayerListOthers.ForEach(p => RoomControls.KickAndBlockPlayer(p.ActorNumber));
+            ManagerRegistry.NetworkSystem.PlayerListOthers.ForEach(p => RoomControls.KickAndBlockPlayer(p.ActorNumber));
         }
 
         public static void VIMMuteGun()
@@ -936,10 +929,10 @@ namespace Qubit.Modules.Categories
                 PromptSingle("You are not a VIM subscriber, so this mod will not function.");
                 return;
             }
-            References.Network.PlayerListOthers.ForEach(p => RoomControls.MutePlayer(p.ActorNumber));
+            ManagerRegistry.NetworkSystem.PlayerListOthers.ForEach(p => RoomControls.MutePlayer(p.ActorNumber));
         }
         public static void VIMUnmuteAll() =>
-            References.Network.PlayerListOthers.ForEach(p => RoomControls.UnmutePlayer(p.UserId));
+            ManagerRegistry.NetworkSystem.PlayerListOthers.ForEach(p => RoomControls.UnmutePlayer(p.UserId));
 
         public static void GuardianSelf() =>
             GameModes.SetGuardian(PhotonNetwork.LocalPlayer);
@@ -963,7 +956,7 @@ namespace Qubit.Modules.Categories
                     i++;
                 }
             }
-            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            else Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
 
         public static void UnguardianSelf()
@@ -973,7 +966,7 @@ namespace Qubit.Modules.Categories
                 foreach (var gorillaGuardianZoneManager in GorillaGuardianZoneManager.zoneManagers.Where(gorillaGuardianZoneManager => gorillaGuardianZoneManager.enabled && gorillaGuardianZoneManager.IsZoneValid()).Where(gorillaGuardianZoneManager => gorillaGuardianZoneManager.CurrentGuardian == Networking.LocalPlayer))
                     gorillaGuardianZoneManager.SetGuardian(null);
             }
-            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            else Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
 
         public static void UnguardianGun()
@@ -985,7 +978,7 @@ namespace Qubit.Modules.Categories
                     foreach (var gorillaGuardianZoneManager in GorillaGuardianZoneManager.zoneManagers.Where(gorillaGuardianZoneManager => gorillaGuardianZoneManager.enabled && gorillaGuardianZoneManager.IsZoneValid()).Where(gorillaGuardianZoneManager => gorillaGuardianZoneManager.CurrentGuardian == GetPlayerFromVRRig(gunTarget)))
                         gorillaGuardianZoneManager.SetGuardian(null);
                 }
-                else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                else Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 Overpowered.guardianDelay = Time.time + 0.1f;
             }, new GunLibrary.GunSettings { when = () => Time.time > Overpowered.guardianDelay });
         }
@@ -997,14 +990,13 @@ namespace Qubit.Modules.Categories
                 foreach (var gorillaGuardianZoneManager in GorillaGuardianZoneManager.zoneManagers.Where(gorillaGuardianZoneManager => gorillaGuardianZoneManager.enabled && gorillaGuardianZoneManager.IsZoneValid()))
                     gorillaGuardianZoneManager.SetGuardian(null);
             }
-            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            else Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
-        public static float materialDelay;
         public static void MaterialTarget(VRRig rig)
         {
             if (!Networking.IsMasterClient)
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 return;
             }
 
@@ -1014,7 +1006,7 @@ namespace Qubit.Modules.Categories
             state++;
             state %= 6;
 
-            if (GorillaGameManager.instance.GameType() == GameModeType.Casual)
+            if (ManagerRegistry.GorillaGameManager.GameType() == GameModeType.Casual)
             {
                 if (state < 4)
                     state = 4;
@@ -1054,7 +1046,7 @@ namespace Qubit.Modules.Categories
                 if (gunLocked && lockTarget != null)
                 {
                     if (!Networking.IsMasterClient)
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                        Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
                         if (Time.time > materialDelay)
@@ -1108,9 +1100,9 @@ namespace Qubit.Modules.Categories
         public static void DriverStatus(bool locked)
         {
             if (PhotonNetwork.IsMasterClient)
-                CustomMapsTerminal.instance.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, locked, PhotonNetwork.LocalPlayer.ActorNumber);
+                ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, locked, PhotonNetwork.LocalPlayer.ActorNumber);
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
         public static void SpazDriver()
         {
@@ -1119,8 +1111,8 @@ namespace Qubit.Modules.Categories
                 if (Time.time > Overpowered.spazDriverDelay)
                 {
                     Overpowered.spazDriverDelay = Time.time + 0.1f;
-                    CustomMapsTerminal.instance.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
-                    CustomMapsTerminal.instance.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, false, PhotonNetwork.LocalPlayer.ActorNumber);
+                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
+                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, false, PhotonNetwork.LocalPlayer.ActorNumber);
                 }
             }
         }
@@ -1130,7 +1122,7 @@ namespace Qubit.Modules.Categories
             GunLibrary.Target(lockTarget =>
             {
                 if (PhotonNetwork.IsMasterClient)
-                    CustomMapsTerminal.instance.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, locked, lockTarget.GetPlayer().ActorNumber);
+                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, locked, lockTarget.GetPlayer().ActorNumber);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
@@ -1143,8 +1135,8 @@ namespace Qubit.Modules.Categories
                     if (Time.time > Overpowered.spazDriverDelay)
                     {
                         Overpowered.spazDriverDelay = Time.time + 0.1f;
-                        CustomMapsTerminal.instance.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, lockTarget.GetPlayer().ActorNumber);
-                        CustomMapsTerminal.instance.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, false, lockTarget.GetPlayer().ActorNumber);
+                        ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, lockTarget.GetPlayer().ActorNumber);
+                        ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, false, lockTarget.GetPlayer().ActorNumber);
                     }
                 }
             }, new GunLibrary.GunSettings { locks = true });
@@ -1159,7 +1151,7 @@ namespace Qubit.Modules.Categories
 
             if (!PhotonNetwork.IsMasterClient)
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 Manager.GetIndex("Virtual Stump Kick Gun").SetEnabled(false);
                 return;
             }
@@ -1170,7 +1162,7 @@ namespace Qubit.Modules.Categories
 
                 if (CustomMapsTerminal.GetDriverID() != PhotonNetwork.LocalPlayer.ActorNumber)
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>VSTUMP</color><color=grey>]</color> Gaining control of the terminal, please wait...");
+                    Notifications.SendFormat("purple", "VSTUMP", "Gaining control of the terminal, please wait...");
                     Overpowered.BecomeDriver();
                     return;
                 }
@@ -1179,23 +1171,23 @@ namespace Qubit.Modules.Categories
                 {
                     Overpowered.id = CustomMaps.Manager.currentMapId == 4977315 ? 5024157 : 4977315;
 
-                    CustomMapsTerminal.instance.mapTerminalNetworkObject.photonView.RPC("UpdateScreen_RPC", lockTarget.GetPhotonPlayer(), new object[]
+                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.RPC("UpdateScreen_RPC", lockTarget.GetPhotonPlayer(), new object[]
                     {
                         6,
                         Overpowered.id,
                         CustomMapsTerminal.GetDriverID()
                     });
-                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> You now have access to use the gun.");
+                    Notifications.SendFormat("green", "SUCCESS", "You now have access to use the gun.");
                 }
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Please temporarily enter the Virtual Stump.");
+                    Notifications.SendFormat("red", "ERROR", "Please temporarily enter the Virtual Stump.");
             }
 
             if (Overpowered.id != null)
             {
                 GunLibrary.Target(gunTarget =>
                 {
-                    CustomMapsTerminal.instance.mapTerminalNetworkObject.photonView.RPC("SetRoomMap_RPC", lockTarget.GetPhotonPlayer(), Overpowered.id.Value);
+                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.RPC("SetRoomMap_RPC", lockTarget.GetPhotonPlayer(), Overpowered.id.Value);
                 });
             }
         }
@@ -1210,7 +1202,7 @@ namespace Qubit.Modules.Categories
 
             if (!PhotonNetwork.IsMasterClient)
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 Toggle("Virtual Stump Kick All");
                 return;
             }
@@ -1221,7 +1213,7 @@ namespace Qubit.Modules.Categories
 
                 if (CustomMapsTerminal.GetDriverID() != PhotonNetwork.LocalPlayer.ActorNumber)
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>INFO</color><color=grey>]</color> Gaining control of the terminal, please wait...");
+                    Notifications.SendFormat("purple", "INFO", "Gaining control of the terminal, please wait...");
                     Overpowered.BecomeDriver();
                     return;
                 }
@@ -1230,21 +1222,21 @@ namespace Qubit.Modules.Categories
                 {
                     Overpowered.id = CustomMaps.Manager.currentMapId == 4977315 ? 5024157 : 4977315;
 
-                    CustomMapsTerminal.instance.mapTerminalNetworkObject.photonView.RPC("UpdateScreen_RPC", RpcTarget.Others, new object[]
+                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.RPC("UpdateScreen_RPC", RpcTarget.Others, new object[]
                     {
                         6,
                         Overpowered.id,
                         CustomMapsTerminal.GetDriverID()
                     });
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>INFO</color><color=grey>]</color> Kicking...");
+                    Notifications.SendFormat("purple", "INFO", "Kicking...");
                 }
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Please temporarily enter the Virtual Stump.");
+                    Notifications.SendFormat("red", "ERROR", "Please temporarily enter the Virtual Stump.");
             }
 
-            CustomMapsTerminal.instance.mapTerminalNetworkObject.photonView.RPC("SetRoomMap_RPC", RpcTarget.Others, Overpowered.id.Value);
+            ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.RPC("SetRoomMap_RPC", RpcTarget.Others, Overpowered.id.Value);
 
-            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully kicked others.");
+            Notifications.SendFormat("green", "SUCCESS", "Successfully kicked others.");
             Toggle("Virtual Stump Kick All");
         }
 
@@ -1298,9 +1290,9 @@ namespace Qubit.Modules.Categories
                 Overpowered.propHuntSpazDelay = Time.time + 0.1f;
                 Overpowered.propHuntSpazMode = !Overpowered.propHuntSpazMode;
 
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
 
-                if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+                if (Networking.InRoom && ManagerRegistry.GorillaGameManager.GameType() == GameModeType.PropHunt)
                 {
                     GameModes.SetPropHuntRoundStart(Overpowered.propHuntSpazMode ? 1 : 2);
                     GameModes.RandomizePropHuntSeed();
@@ -1315,48 +1307,12 @@ namespace Qubit.Modules.Categories
                 Overpowered.propHuntSpazDelay = Time.time + 0.1f;
                 Overpowered.propHuntSpazMode = !Overpowered.propHuntSpazMode;
 
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+                if (!Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
 
-                if (Networking.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+                if (Networking.InRoom && ManagerRegistry.GorillaGameManager.GameType() == GameModeType.PropHunt)
                 {
                     GameModes.SetPropHuntRoundStart(Overpowered.propHuntSpazMode ? 0 : 1);
                 }
-            }
-        }
-
-        public static void BlockCrashGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                    Fun.RequestCreatePiece(1934114066, new Vector3(-127.6248f, 16.99441f, -217.2094f), Quaternion.identity, 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true);
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }, new GunLibrary.GunSettings { onIdle = () =>
-                {
-                    if (gunLocked)
-                        gunLocked = false;
-                } });
-        }
-
-        public static void BlockCrashAll()
-        {
-            if (rightTrigger > 0.5f)
-            {
-                if (!Networking.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                Fun.RequestCreatePiece(1934114066, new Vector3(-127.6248f, 16.99441f, -217.2094f), Quaternion.identity, 0, RpcTarget.Others, false, true);
             }
         }
         public static void ActivateGreyZoneGun(bool status)
@@ -1372,24 +1328,24 @@ namespace Qubit.Modules.Categories
         {
             if (!Networking.IsMasterClient)
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 return;
             }
 
             SerializePatch.OverrideSerialization = () =>
             {
-                MassSerialize(true, new[] { GreyZoneManager.Instance.photonView });
+                MassSerialize(true, new[] { ManagerRegistry.GreyZoneManager.photonView });
                 SerializePatch.OverrideSerialization = null;
                 return false;
             };
 
             Overpowered.wipeOverride ??= Coroutines.instance.StartCoroutine(Overpowered.ClearOverride());
 
-            GreyZoneManager.Instance.greyZoneActive = status;
-            GreyZoneManager.Instance.photonConnectedDuringActivation = Networking.InRoom;
-            GreyZoneManager.Instance.greyZoneActivationTime = (GreyZoneManager.Instance.photonConnectedDuringActivation ? PhotonNetwork.Time : ((double)Time.time));
+            ManagerRegistry.GreyZoneManager.greyZoneActive = status;
+            ManagerRegistry.GreyZoneManager.photonConnectedDuringActivation = Networking.InRoom;
+            ManagerRegistry.GreyZoneManager.greyZoneActivationTime = (ManagerRegistry.GreyZoneManager.photonConnectedDuringActivation ? PhotonNetwork.Time : ((double)Time.time));
 
-            SendSerialize(GreyZoneManager.Instance.photonView, new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
+            SendSerialize(ManagerRegistry.GreyZoneManager.photonView, new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
         }
 
         public static void ActivateGreyZone(bool status)
@@ -1398,18 +1354,18 @@ namespace Qubit.Modules.Categories
             {
                 if (!Networking.IsMasterClient)
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     return;
                 }
 
                 if (status)
                 {
 
-                    GreyZoneManager.Instance.ActivateGreyZoneAuthority();
+                    ManagerRegistry.GreyZoneManager.ActivateGreyZoneAuthority();
                 }
 
                 else if (!status)
-                    GreyZoneManager.Instance.DeactivateGreyZoneAuthority();
+                    ManagerRegistry.GreyZoneManager.DeactivateGreyZoneAuthority();
             }
         }
         public static void SpazGreyZoneGun()
@@ -1440,7 +1396,7 @@ namespace Qubit.Modules.Categories
             if (controller != null)
             {
                 controller.JumpToState(state);
-                controller.reliableState.stateStartTime = Networking.InRoom ? References.Network.SimTime : Time.timeAsDouble;
+                controller.reliableState.stateStartTime = Networking.InRoom ? ManagerRegistry.NetworkSystem.SimTime : Time.timeAsDouble;
             }
         }
 
@@ -1454,13 +1410,13 @@ namespace Qubit.Modules.Categories
                     hitTargetNetworkState.TargetHit(Vector3.zero, Vector3.zero);
                 }
             }
-            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            else Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
 
         public static void InfectionToTag()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GorillaTagManager gorillaTagManager = ManagerRegistry.GorillaTagManager;
@@ -1471,7 +1427,7 @@ namespace Qubit.Modules.Categories
         public static void TagToInfection()
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 GorillaTagManager gorillaTagManager = ManagerRegistry.GorillaTagManager;
@@ -1489,7 +1445,7 @@ namespace Qubit.Modules.Categories
             if (PhotonNetwork.IsMasterClient)
                 AddRock(Networking.LocalPlayer);
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
 
         public static void RockGun()
@@ -1500,7 +1456,7 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.IsMasterClient)
                     AddRock(GetPlayerFromVRRig(gunTarget));
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             }, new GunLibrary.GunSettings { when = () => Time.time > Overpowered.rockDebounce });
         }
 
@@ -1527,7 +1483,7 @@ namespace Qubit.Modules.Categories
                         if (PhotonNetwork.IsMasterClient)
                             AddRock(GetPlayerFromVRRig(nearbyPlayer));
                         else
-                            Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                            Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     }
                 }
             }
@@ -1560,7 +1516,7 @@ namespace Qubit.Modules.Categories
                         if (PhotonNetwork.IsMasterClient)
                             AddRock(rig.GetPlayer());
                         else
-                            Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                            Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     }
                 }
             }
@@ -1574,7 +1530,7 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.IsMasterClient)
                     AddRock(GetRandomPlayer(true));
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             }
         }
 
@@ -1744,5 +1700,6 @@ namespace Qubit.Modules.Categories
 
         public static void UpdateMasterLabel() =>
             Manager.GetIndex("MasterLabel").overlapText = Networking.IsMasterClient ? "You are master client." : "You are not master client.";
+        #endregion
     }
 }

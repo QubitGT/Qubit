@@ -39,6 +39,7 @@ namespace Qubit.Modules.Categories
 {
     public static class Room
     {
+        #region Methods
         public static void RoomCreator()
         {
             Important.CustomRoomConfig room = new Important.CustomRoomConfig();
@@ -56,7 +57,7 @@ namespace Qubit.Modules.Categories
                 () =>
                 {
                     CreateRoom(finalName, room.isPublic, room.size, JoinType.Solo);
-                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Creating room, please be patient.");
+                    Notifications.SendFormat("green", "SUCCESS", "Creating room, please be patient.");
                     PromptSingle("Success! Please be patient while the room is being created.");
                 }, () =>
                 {
@@ -159,9 +160,9 @@ namespace Qubit.Modules.Categories
 
         public static void Reconnect()
         {
-            string roomName = References.Network.RoomName;
+            string roomName = ManagerRegistry.NetworkSystem.RoomName;
 
-            References.Network.ReturnToSinglePlayer();
+            ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
             QueueRoom(roomName);
         }
 
@@ -170,7 +171,7 @@ namespace Qubit.Modules.Categories
             if (Important.queueCoroutine != null)
                 Coroutines.instance.StopCoroutine(Important.queueCoroutine);
 
-            References.Network.netState = Networking.InRoom ? NetSystemState.InGame : NetSystemState.Idle;
+            ManagerRegistry.NetworkSystem.netState = Networking.InRoom ? NetSystemState.InGame : NetSystemState.Idle;
 
             partyLastCode = null;
             partyKickReconnecting = false;
@@ -180,19 +181,19 @@ namespace Qubit.Modules.Categories
         {
             if (Networking.InRoom)
             {
-                References.Network.ReturnToSinglePlayer();
+                ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
                 Coroutines.instance.StartCoroutine(Important.JoinRandomDelay());
                 return;
             }
 
-            GorillaNetworkJoinTrigger trigger = PhotonNetworkController.Instance.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
-            PhotonNetworkController.Instance.AttemptToJoinPublicRoom(trigger);
+            GorillaNetworkJoinTrigger trigger = ManagerRegistry.PhotonNetworkController.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
+            ManagerRegistry.PhotonNetworkController.AttemptToJoinPublicRoom(trigger);
         }
         public static void CreateRoom(string roomName, bool isPublic, byte roomSize = 0, JoinType roomJoinType = JoinType.Solo)
         {
             if (roomSize > 10 && !roomName.StartsWith("@"))
                 roomName = $"@{roomName}";
-            var netTrigger = PhotonNetworkController.Instance.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
+            var netTrigger = ManagerRegistry.PhotonNetworkController.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
             RoomConfig roomConfig = new RoomConfig
             {
                 createIfMissing = true,
@@ -201,7 +202,7 @@ namespace Qubit.Modules.Categories
                 MaxPlayers = roomSize == 0 ? RoomSystem.GetRoomSizeForCreate(netTrigger.zone, Enum.Parse<GameModeType>(References.Computer.currentGameMode.Value, true), !isPublic, SubscriptionManager.IsLocalSubscribed()) : roomSize,
                 CustomProps = new Hashtable
                 {
-                    { "platform", PhotonNetworkController.Instance.platformTag },
+                    { "platform", ManagerRegistry.PhotonNetworkController.platformTag },
                     { "gameMode", netTrigger.GetFullDesiredGameModeString() },
                     { "language", LocalisationManager.CurrentLanguage.ToString() },
                     { "fan_club", SubscriptionManager.IsLocalSubscribed() ? "true" : "false" },
@@ -209,30 +210,30 @@ namespace Qubit.Modules.Categories
                 }
             };
 
-            PhotonNetworkController.Instance.currentJoinType = roomJoinType;
+            ManagerRegistry.PhotonNetworkController.currentJoinType = roomJoinType;
 
             if (roomJoinType == JoinType.JoinWithParty || roomJoinType == JoinType.ForceJoinWithParty)
-                Task.Run(PhotonNetworkController.Instance.SendPartyFollowCommands);
+                Task.Run(ManagerRegistry.PhotonNetworkController.SendPartyFollowCommands);
 
             switch (roomJoinType)
             {
                 case JoinType.JoinWithNearby:
                 case JoinType.JoinWithElevator:
-                    roomConfig.SetFriendIDs(PhotonNetworkController.Instance.FriendIDList);
+                    roomConfig.SetFriendIDs(ManagerRegistry.PhotonNetworkController.FriendIDList);
                     break;
                 case JoinType.JoinWithParty:
                 case JoinType.ForceJoinWithParty:
-                    roomConfig.SetFriendIDs(FriendshipGroupDetection.Instance.PartyMemberIDs.ToList());
+                    roomConfig.SetFriendIDs(ManagerRegistry.FriendshipGroupDetection.PartyMemberIDs.ToList());
                     break;
             }
 
             if (Overpowered.instantCreate)
             {
-                (References.Network as NetworkSystemPUN).internalState = NetworkSystemPUN.InternalState.Searching_Creating;
+                (ManagerRegistry.NetworkSystem as NetworkSystemPUN).internalState = NetworkSystemPUN.InternalState.Searching_Creating;
                 _ = Important.ForceCreateRoom(roomName, roomConfig);
             }
             else
-                References.Network.ConnectToRoom(roomName, roomConfig);
+                ManagerRegistry.NetworkSystem.ConnectToRoom(roomName, roomConfig);
         }
 
         public static string RandomRoomName()
@@ -244,5 +245,6 @@ namespace Qubit.Modules.Categories
                     return text;
             }
         }
+        #endregion
     }
 }

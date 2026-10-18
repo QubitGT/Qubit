@@ -44,6 +44,21 @@ namespace Qubit.Modules.Categories
 {
     public static class Detected
     {
+        #region Settings
+        public static Dictionary<VRRig, int> viewIdArchive = new Dictionary<VRRig, int>();
+
+        public static float muteDelay;
+
+        public static string name = "Qubit";
+
+        private static float customPropertyDelay;
+
+        private static float spazGamemodeDelay;
+
+        public static bool moddedGamemode;
+        #endregion
+
+        #region Methods
         public static void EnterDetectedTab()
         {
             if (!allowDetected)
@@ -65,8 +80,6 @@ namespace Qubit.Modules.Categories
             }
             else Manager.CurrentCategoryName = "Detected Mods";
         }
-
-        public static Dictionary<VRRig, int> viewIdArchive = new Dictionary<VRRig, int>();
 
         public static void Destroy(object target, Hashtable hashtable = null, RaiseEventOptions raiseEventOptions = null, int viewID = -1)
         {
@@ -664,8 +677,6 @@ namespace Qubit.Modules.Categories
                     Destroy(rig.GetPhotonPlayer());
             }
         }
-
-        public static float muteDelay;
         public static void MuteGun()
         {
             GunLibrary.Target(lockTarget =>
@@ -726,8 +737,6 @@ namespace Qubit.Modules.Categories
 
 
         }
-
-        public static string name = "Qubit";
 
         public static void PromptNameChange() =>
             Prompt("Would you like to set a name?", () => PromptSingleText("Please enter the name you'd like to use:", () => name = keyboardInput, "Done"));
@@ -809,7 +818,7 @@ namespace Qubit.Modules.Categories
                     [ActorProperties.PlayerName] = References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)]
                 };
                 PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(lockTarget.GetPlayer().ActorNumber, hashtable);
-                MonkeAgent.instance.SendReport("evading the name ban", lockTarget.GetPlayer().UserId, lockTarget.GetPlayer().NickName);
+                ManagerRegistry.MonkeAgent.SendReport("evading the name ban", lockTarget.GetPlayer().UserId, lockTarget.GetPlayer().NickName);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
@@ -822,11 +831,9 @@ namespace Qubit.Modules.Categories
                     [ActorProperties.PlayerName] = References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)]
                 };
                 PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(player.ActorNumber, hashtable);
-                MonkeAgent.instance.SendReport("evading the name ban", player.UserId, player.NickName);
+                ManagerRegistry.MonkeAgent.SendReport("evading the name ban", player.UserId, player.NickName);
             }
         }
-
-        private static float customPropertyDelay;
         public static void BypassModCheckersGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -1122,7 +1129,7 @@ namespace Qubit.Modules.Categories
 
         public static void KickNetworkTriggers()
         {
-            if (References.Network.SessionIsPrivate)
+            if (ManagerRegistry.NetworkSystem.SessionIsPrivate)
                 Overpowered.SetRoomStatus(false);
 
             Hashtable hash = new Hashtable
@@ -1131,8 +1138,6 @@ namespace Qubit.Modules.Categories
             };
             PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
         }
-
-        private static float spazGamemodeDelay;
         public static void SpazGamemode()
         {
             if (Time.time > spazGamemodeDelay)
@@ -1141,14 +1146,12 @@ namespace Qubit.Modules.Categories
                 spazGamemodeDelay = Time.time + 0.1f;
             }
         }
-
-        public static bool moddedGamemode;
         public static void ChangeGamemode(GameModeType gamemode)
         {
             if (!Networking.InRoom)
                 return;
 
-            References.Network.NetDestroy(GameMode.activeNetworkHandler.NetView.gameObject);
+            ManagerRegistry.NetworkSystem.NetDestroy(GameMode.activeNetworkHandler.NetView.gameObject);
 
             Hashtable hash = new Hashtable
             {
@@ -1156,7 +1159,7 @@ namespace Qubit.Modules.Categories
                     RoomConfig.Room_GameModePropKey,
                     new GameModeString
                     {
-                        zone = PhotonNetworkController.Instance.currentJoinTrigger.networkZone,
+                        zone = ManagerRegistry.PhotonNetworkController.currentJoinTrigger.networkZone,
                         queue = moddedGamemode ? References.Computer.currentQueue + "MODDED_" : References.Computer.currentQueue,
                         gameType = gamemode.ToString()
                     }.ToString()
@@ -1169,7 +1172,7 @@ namespace Qubit.Modules.Categories
         {
             for (int i = 0; i > 2; i++)
             {
-                GorillaServer.Instance.CheckForBadName(new CheckForBadNameRequest
+                ManagerRegistry.GorillaServer.CheckForBadName(new CheckForBadNameRequest
                 {
                     name = References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)],
                     forRoom = true,
@@ -1177,5 +1180,6 @@ namespace Qubit.Modules.Categories
                 }, null, null);
             }
         }
+        #endregion
     }
 }

@@ -110,7 +110,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public static void KillAll()
         {
             if (!(Time.time > killDelay)) return;
-            foreach (NetPlayer player in References.Network.PlayerListOthers)
+            foreach (NetPlayer player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 KillPlayer(player.ActorNumber);
 
             killDelay = Time.time + 0.1f;
@@ -280,7 +280,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public static void CrashAll()
         {
             if (!(Time.time > crashDelay)) return;
-            foreach (NetPlayer player in References.Network.PlayerListOthers)
+            foreach (NetPlayer player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 CrashPlayer(player.ActorNumber);
 
             crashDelay = Time.time + 0.1f;
@@ -293,7 +293,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
                 NetPlayer netPlayer = GetPlayerFromVRRig(vrrig);
                 CrashPlayer(netPlayer.ActorNumber);
                 crashDelay = Time.time + 0.5f;
-                Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been crashed.");
+                Notifications.SendFormat("purple", "ANTI-REPORT", "" + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been crashed.");
             });
         }
     }

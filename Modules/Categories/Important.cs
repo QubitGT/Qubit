@@ -63,222 +63,41 @@ using static Qubit.Modules.Manager;
 using static Qubit.Utilities.Assets;
 using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules.Categories
 {
     public static class Important
     {
+        #region Types
         public class CustomRoomConfig
         {
             public string name;
             public bool isPublic;
             public byte size;
         }
-        public static string oldId = "";
-        public async static void CheckNewAcc()
-        {
-            await Task.Delay(10000);
 
-            if (PhotonNetwork.LocalPlayer.UserId != oldId)
-                playTime = 0f;
+        // Credits to The-Graze/MusicControls for control methods
+        internal enum VirtualKeyCodes : uint
+        {
+            NEXT_TRACK = 0xB0,
+            PREVIOUS_TRACK = 0xB1,
+            PLAY_PAUSE = 0xB3,
         }
+        #endregion
+
+        #region Settings
+        public static string oldId = "";
 
         public static Coroutine queueCoroutine;
         public static int reconnectDelay = 1;
-
-        public static IEnumerator QueueRoomCoroutine(string roomName)
-        {
-            NetworkSystemPUN instance = (NetworkSystemPUN)References.Network;
-
-            instance.ReturnToSinglePlayer();
-            yield return new WaitUntil(() => instance.netState == NetSystemState.Idle);
-            yield return new WaitForSeconds(0.5f);
-
-            // instance.netState = NetSystemState.Connecting;
-
-            while (!instance.InRoom)
-            {
-                PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(roomName, JoinType.Solo);
-                yield return new WaitForSeconds(reconnectDelay);
-            }
-        }
-
-        public static IEnumerator JoinRandomDelay()
-        {
-            yield return new WaitForSeconds(1.5f);
-            Room.JoinRandom();
-        }
-
-        public static async Task ForceCreateRoom(string name, RoomConfig options)
-        {
-            if (Networking.InRoom)
-                await References.Network.ReturnToSinglePlayer();
-
-            await (References.Network as NetworkSystemPUN).TryCreateRoom(name, options);
-        }
-
-        public static void BroadcastRoom(string roomName, bool create, string key, string shuffler)
-        {
-            string text = NetworkSystem.ShuffleRoomName(roomName, shuffler.Substring(2, 8), true) + "|" + NetworkSystem.ShuffleRoomName("ABCDEFGHIJKLMNPQRSTUVWXYZ123456789".Substring(References.Network.currentRegionIndex, 1), shuffler[..2], true);
-
-            BroadcastMyRoomRequest broadcastMyRoomRequest = new BroadcastMyRoomRequest
-            {
-                KeyToFollow = key,
-                RoomToJoin = text,
-                Set = create
-            };
-
-            GorillaServer.Instance.BroadcastMyRoom(broadcastMyRoomRequest, delegate { }, delegate { });
-        }
-
-        // The code below is fully safe. I know, it seems suspicious.
-        public static void RestartGame()
-        {
-            Preferences.Save();
-            string logoLines = PluginInfo.Logo.Split(@"
-")
-                .Aggregate("", (current, line) => current + (Environment.NewLine + "echo      " + line));
-
-            string restartScript = @"@echo off
-title Qubit Menu - Restarting Gorilla Tag
-color 5
-
-cls
-echo." + logoLines + @"
-echo.
-
-echo Your game is restarting, please wait...
-echo.
-
-:WAIT_LOOP
-tasklist /FI ""IMAGENAME eq Gorilla Tag.exe"" | find /I ""Gorilla Tag.exe"" >nul
-if %ERRORLEVEL%==0 (
-    timeout /t 1 >nul
-    goto WAIT_LOOP
-)
-
-start steam://run/1533390
-exit";
-
-            string fileName = $"{PluginInfo.BaseDirectory}/RestartScript.bat";
-
-            File.WriteAllText(fileName, restartScript);
-
-            string filePath = Files.GetGamePath() + "/" + fileName;
-            Process.Start(filePath);
-            Application.Quit();
-        }
-
-        public static void OpenGorillaTagFolder()
-        {
-            string filePath = Assembly.GetExecutingAssembly().Location.Split("BepInEx\\")[0];
-            Process.Start(filePath);
-        }
 
         private static DiscordRpcClient discord;
         private static DateTime? startTime;
         private static DateTime? endTime;
         private static float updateTime;
-        public static void DiscordRPC()
-        {
-            if (discord == null)
-            {
-                discord = new DiscordRpcClient("1396080212441042944")
-                {
-                    Logger = new Libraries.DiscordRPC.Logging.DiscordLogManager()
-                };
-
-                discord.Initialize();
-            }
-
-            if (Networking.InRoom)
-            {
-                endTime = null;
-
-                if (startTime == null)
-                    startTime = DateTime.UtcNow;
-            }
-            else
-            {
-                startTime = null;
-
-                if (endTime == null)
-                    endTime = DateTime.UtcNow;
-            }
-
-            if (Time.time > updateTime)
-            {
-                updateTime = Time.time + 1f;
-                bool inRoom = Networking.InRoom;
-                string roomName = inRoom ? References.Network.RoomName : "-";
-
-                discord.SetPresence(new RichPresence
-                {
-                    Details = inRoom ? $"Playing {GorillaGameManager.instance.GameType().ToString().ToLower()}" : "Playing alone",
-                    State = inRoom ? $"Room: {roomName} ({PhotonNetwork.PlayerList.Length}/{PhotonNetwork.CurrentRoom.MaxPlayers})" : "Not in a room",
-                    Assets = new Libraries.DiscordRPC.Entities.Assets
-                    {
-                        LargeImageKey = "cone",
-                        LargeImageText = "Qubit Menu",
-                        SmallImageKey = inRoom ? "online" : "offline",
-                        SmallImageText = inRoom ? "Online" : "Offline"
-                    },
-                    Timestamps = inRoom ? new Timestamps
-                    {
-                        Start = startTime ?? endTime ?? DateTime.UtcNow
-                    } : null,
-                    Buttons = new[]
-                    {
-                        new Button
-                        {
-                            Label = "Discord Server",
-                            Url = serverLink
-                        },
-                        new Button
-                        {
-                            Label = "Download",
-                            Url = "https://github.com/QubitGT/Qubit/"
-                        }
-                    }
-                });
-            }
-        }
-
-        public static void DisableDiscordRPC()
-        {
-            if (discord != null)
-            {
-                discord.ClearPresence();
-                discord.Dispose();
-                discord = null;
-            }
-        }
 
         private static bool quickSongExists;
-        public static void EnsureIntegrationProgram()
-        {
-            quickSongExists = File.Exists($"{PluginInfo.BaseDirectory}/QuickSong.exe");
-            if (!quickSongExists)
-            {
-                Prompt("This mod requires the \"QuickSong\" library. Would you like to automatically download it? (16.3mb)", () =>
-                {
-                    using UnityWebRequest request = UnityWebRequest.Get("https://github.com/Qubit/QuickSong/releases/latest/download/QuickSong.exe");
-                    UnityWebRequestAsyncOperation operation = request.SendWebRequest();
-
-                    while (!operation.isDone) { }
-
-                    if (request.result == UnityWebRequest.Result.Success)
-                    {
-                        File.WriteAllBytes($"{PluginInfo.BaseDirectory}/QuickSong.exe", request.downloadHandler.data);
-                        Notifications.SendNotification($"<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully downloaded QuickSong to {PluginInfo.BaseDirectory}/QuickSong.exe.");
-                    }
-                    else
-                        Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not download QuickSong: {(request.error.IsNullOrEmpty() ? "Unknown error" : request.error)}");
-
-                    quickSongExists = File.Exists($"{PluginInfo.BaseDirectory}/QuickSong.exe");
-                }, () => Toggle("Media Integration"));
-            }
-        }
 
         public static string Title { get; private set; } = "Unknown";
         public static string Artist { get; private set; } = "Unknown";
@@ -290,89 +109,6 @@ exit";
         public static float ElapsedTime { get; private set; }
 
         public static bool ValidData { get; private set; }
-
-        public static async Task UpdateDataAsync()
-        {
-            ProcessStartInfo psi = new ProcessStartInfo
-            {
-                FileName = $"{Files.GetGamePath()}/{PluginInfo.BaseDirectory}/QuickSong.exe",
-                Arguments = "-all",
-                UseShellExecute = false,
-                RedirectStandardOutput = true,
-                CreateNoWindow = true
-            };
-
-            using Process proc = new Process { StartInfo = psi };
-            proc.Start();
-            string output = await proc.StandardOutput.ReadToEndAsync();
-
-            await Task.Run(() => proc.WaitForExit());
-
-            Paused = true;
-            Title = "Unknown";
-            Artist = "Unknown";
-
-            StartTime = 0f;
-            EndTime = 0f;
-            ElapsedTime = 0f;
-
-            try
-            {
-                Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(output);
-                Title = (string)data["Title"];
-                Artist = (string)data["Artist"];
-
-                StartTime = Convert.ToSingle(data["StartTime"]);
-                EndTime = Convert.ToSingle(data["EndTime"]);
-                ElapsedTime = Convert.ToSingle(data["ElapsedTime"]);
-
-                Paused = (string)data["Status"] != "Playing";
-                Icon.LoadImage(Convert.FromBase64String((string)data["ThumbnailBase64"]));
-
-                ValidData = true;
-            }
-            catch { }
-        }
-
-        private static IEnumerator UpdateDataCoroutine(float delay = 0f)
-        {
-            yield return new WaitForSeconds(delay);
-
-            _ = UpdateDataAsync();
-            yield return null;
-        }
-
-        // Credits to The-Graze/MusicControls for control methods
-        internal enum VirtualKeyCodes : uint
-        {
-            NEXT_TRACK = 0xB0,
-            PREVIOUS_TRACK = 0xB1,
-            PLAY_PAUSE = 0xB3,
-        }
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-        internal static extern void keybd_event(uint bVk, uint bScan, uint dwFlags, uint dwExtraInfo);
-        internal static void SendKey(VirtualKeyCodes virtualKeyCode) => keybd_event((uint)virtualKeyCode, 0, 0, 0);
-
-        public static void PreviousTrack()
-        {
-            Coroutines.instance.StartCoroutine(UpdateDataCoroutine(0.1f));
-            ElapsedTime = 0f;
-            SendKey(VirtualKeyCodes.PREVIOUS_TRACK);
-        }
-
-        public static void PauseTrack()
-        {
-            Paused = !Paused;
-            SendKey(VirtualKeyCodes.PLAY_PAUSE);
-        }
-
-        public static void SkipTrack()
-        {
-            Coroutines.instance.StartCoroutine(UpdateDataCoroutine(0.1f));
-            ElapsedTime = 0f;
-            SendKey(VirtualKeyCodes.NEXT_TRACK);
-        }
 
         private static float updateDataDelay;
         private static float inputDelay;
@@ -463,6 +199,297 @@ exit";
             }
         }
 
+#pragma warning disable CS0618 // Type or member is obsolete
+        private static bool wasenabled = true;
+
+        public static float zoomFOV = 35f;
+
+        private static bool reportMenuToggle;
+
+        private static bool acceptedTOS;
+
+        public static GameObject physicalQuitBox;
+
+        private static float lastTime;
+
+        private static Vector3? oldLocalPosition;
+
+        public static bool lastTagLag;
+
+        public static bool lastSteam;
+        #endregion
+
+        #region Methods
+        public async static void CheckNewAcc()
+        {
+            await Task.Delay(10000);
+
+            if (PhotonNetwork.LocalPlayer.UserId != oldId)
+                playTime = 0f;
+        }
+
+        public static IEnumerator QueueRoomCoroutine(string roomName)
+        {
+            NetworkSystemPUN instance = (NetworkSystemPUN)ManagerRegistry.NetworkSystem;
+
+            instance.ReturnToSinglePlayer();
+            yield return new WaitUntil(() => instance.netState == NetSystemState.Idle);
+            yield return new WaitForSeconds(0.5f);
+
+            // instance.netState = NetSystemState.Connecting;
+
+            while (!instance.InRoom)
+            {
+                ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(roomName, JoinType.Solo);
+                yield return new WaitForSeconds(reconnectDelay);
+            }
+        }
+
+        public static IEnumerator JoinRandomDelay()
+        {
+            yield return new WaitForSeconds(1.5f);
+            Room.JoinRandom();
+        }
+
+        public static async Task ForceCreateRoom(string name, RoomConfig options)
+        {
+            if (Networking.InRoom)
+                await ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
+
+            await (ManagerRegistry.NetworkSystem as NetworkSystemPUN).TryCreateRoom(name, options);
+        }
+
+        public static void BroadcastRoom(string roomName, bool create, string key, string shuffler)
+        {
+            string text = NetworkSystem.ShuffleRoomName(roomName, shuffler.Substring(2, 8), true) + "|" + NetworkSystem.ShuffleRoomName("ABCDEFGHIJKLMNPQRSTUVWXYZ123456789".Substring(ManagerRegistry.NetworkSystem.currentRegionIndex, 1), shuffler[..2], true);
+
+            BroadcastMyRoomRequest broadcastMyRoomRequest = new BroadcastMyRoomRequest
+            {
+                KeyToFollow = key,
+                RoomToJoin = text,
+                Set = create
+            };
+
+            ManagerRegistry.GorillaServer.BroadcastMyRoom(broadcastMyRoomRequest, delegate { }, delegate { });
+        }
+
+        // The code below is fully safe. I know, it seems suspicious.
+        public static void RestartGame()
+        {
+            Preferences.Save();
+            string logoLines = PluginInfo.Logo.Split(@"
+")
+                .Aggregate("", (current, line) => current + (Environment.NewLine + "echo      " + line));
+
+            string restartScript = @"@echo off
+title Qubit Menu - Restarting Gorilla Tag
+color 5
+
+cls
+echo." + logoLines + @"
+echo.
+
+echo Your game is restarting, please wait...
+echo.
+
+:WAIT_LOOP
+tasklist /FI ""IMAGENAME eq Gorilla Tag.exe"" | find /I ""Gorilla Tag.exe"" >nul
+if %ERRORLEVEL%==0 (
+    timeout /t 1 >nul
+    goto WAIT_LOOP
+)
+
+start steam://run/1533390
+exit";
+
+            string fileName = $"{PluginInfo.BaseDirectory}/RestartScript.bat";
+
+            File.WriteAllText(fileName, restartScript);
+
+            string filePath = Files.GetGamePath() + "/" + fileName;
+            Files.Start(filePath);
+            Application.Quit();
+        }
+
+        public static void OpenGorillaTagFolder()
+        {
+            string filePath = Assembly.GetExecutingAssembly().Location.Split("BepInEx\\")[0];
+            Files.Start(filePath);
+        }
+        public static void DiscordRPC()
+        {
+            if (discord == null)
+            {
+                discord = new DiscordRpcClient("1396080212441042944")
+                {
+                    Logger = new Libraries.DiscordRPC.Logging.DiscordLogManager()
+                };
+
+                discord.Initialize();
+            }
+
+            if (Networking.InRoom)
+            {
+                endTime = null;
+
+                if (startTime == null)
+                    startTime = DateTime.UtcNow;
+            }
+            else
+            {
+                startTime = null;
+
+                if (endTime == null)
+                    endTime = DateTime.UtcNow;
+            }
+
+            if (Time.time > updateTime)
+            {
+                updateTime = Time.time + 1f;
+                bool inRoom = Networking.InRoom;
+                string roomName = inRoom ? ManagerRegistry.NetworkSystem.RoomName : "-";
+
+                discord.SetPresence(new RichPresence
+                {
+                    Details = inRoom ? $"Playing {ManagerRegistry.GorillaGameManager.GameType().ToString().ToLower()}" : "Playing alone",
+                    State = inRoom ? $"Room: {roomName} ({PhotonNetwork.PlayerList.Length}/{PhotonNetwork.CurrentRoom.MaxPlayers})" : "Not in a room",
+                    Assets = new Libraries.DiscordRPC.Entities.Assets
+                    {
+                        LargeImageKey = "cone",
+                        LargeImageText = "Qubit Menu",
+                        SmallImageKey = inRoom ? "online" : "offline",
+                        SmallImageText = inRoom ? "Online" : "Offline"
+                    },
+                    Timestamps = inRoom ? new Timestamps
+                    {
+                        Start = startTime ?? endTime ?? DateTime.UtcNow
+                    } : null,
+                    Buttons = new[]
+                    {
+                        new Button
+                        {
+                            Label = "Discord Server",
+                            Url = PluginInfo.DiscordInvite
+                        },
+                        new Button
+                        {
+                            Label = "Download",
+                            Url = PluginInfo.GitMaster + "/"
+                        }
+                    }
+                });
+            }
+        }
+
+        public static void DisableDiscordRPC()
+        {
+            if (discord != null)
+            {
+                discord.ClearPresence();
+                discord.Dispose();
+                discord = null;
+            }
+        }
+        public static void EnsureIntegrationProgram()
+        {
+            quickSongExists = File.Exists($"{PluginInfo.BaseDirectory}/QuickSong.exe");
+            if (!quickSongExists)
+            {
+                Prompt("This mod requires the \"QuickSong\" library. Would you like to automatically download it? (16.3mb)", () =>
+                {
+                    using UnityWebRequest request = UnityWebRequest.Get("https://github.com/Qubit/QuickSong/releases/latest/download/QuickSong.exe");
+                    UnityWebRequestAsyncOperation operation = request.SendWebRequest();
+
+                    while (!operation.isDone) { }
+
+                    if (request.result == UnityWebRequest.Result.Success)
+                    {
+                        File.WriteAllBytes($"{PluginInfo.BaseDirectory}/QuickSong.exe", request.downloadHandler.data);
+                        Notifications.SendFormat("green", "SUCCESS", $"Successfully downloaded QuickSong to {PluginInfo.BaseDirectory}/QuickSong.exe.");
+                    }
+                    else
+                        Notifications.SendFormat("red", "ERROR", $"Could not download QuickSong: {(request.error.IsNullOrEmpty() ? "Unknown error" : request.error)}");
+
+                    quickSongExists = File.Exists($"{PluginInfo.BaseDirectory}/QuickSong.exe");
+                }, () => Toggle("Media Integration"));
+            }
+        }
+
+        public static async Task UpdateDataAsync()
+        {
+            ProcessStartInfo psi = new ProcessStartInfo
+            {
+                FileName = $"{Files.GetGamePath()}/{PluginInfo.BaseDirectory}/QuickSong.exe",
+                Arguments = "-all",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                CreateNoWindow = true
+            };
+
+            using Process proc = new Process { StartInfo = psi };
+            proc.Start();
+            string output = await proc.StandardOutput.ReadToEndAsync();
+
+            await Task.Run(() => proc.WaitForExit());
+
+            Paused = true;
+            Title = "Unknown";
+            Artist = "Unknown";
+
+            StartTime = 0f;
+            EndTime = 0f;
+            ElapsedTime = 0f;
+
+            try
+            {
+                Dictionary<string, object> data = JsonConvert.DeserializeObject<Dictionary<string, object>>(output);
+                Title = (string)data["Title"];
+                Artist = (string)data["Artist"];
+
+                StartTime = Convert.ToSingle(data["StartTime"]);
+                EndTime = Convert.ToSingle(data["EndTime"]);
+                ElapsedTime = Convert.ToSingle(data["ElapsedTime"]);
+
+                Paused = (string)data["Status"] != "Playing";
+                Icon.LoadImage(Convert.FromBase64String((string)data["ThumbnailBase64"]));
+
+                ValidData = true;
+            }
+            catch { }
+        }
+
+        private static IEnumerator UpdateDataCoroutine(float delay = 0f)
+        {
+            yield return new WaitForSeconds(delay);
+
+            _ = UpdateDataAsync();
+            yield return null;
+        }
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
+        internal static extern void keybd_event(uint bVk, uint bScan, uint dwFlags, uint dwExtraInfo);
+        internal static void SendKey(VirtualKeyCodes virtualKeyCode) => keybd_event((uint)virtualKeyCode, 0, 0, 0);
+
+        public static void PreviousTrack()
+        {
+            Coroutines.instance.StartCoroutine(UpdateDataCoroutine(0.1f));
+            ElapsedTime = 0f;
+            SendKey(VirtualKeyCodes.PREVIOUS_TRACK);
+        }
+
+        public static void PauseTrack()
+        {
+            Paused = !Paused;
+            SendKey(VirtualKeyCodes.PLAY_PAUSE);
+        }
+
+        public static void SkipTrack()
+        {
+            Coroutines.instance.StartCoroutine(UpdateDataCoroutine(0.1f));
+            ElapsedTime = 0f;
+            SendKey(VirtualKeyCodes.NEXT_TRACK);
+        }
+
         public static void MediaIntegration()
         {
             if (quickSongExists)
@@ -496,7 +523,7 @@ exit";
                     text.margin = new Vector4(0.5f, 0, 0, 0);
 
                     if (text != null && text.fontMaterial != null)
-                        text.fontMaterial.shader = TextMeshPros.TmpShader;
+                        text.fontMaterial.shader = Extensions.TextMeshPro.TmpShader;
 
                     mediaText = text;
                 }
@@ -567,16 +594,11 @@ exit";
             mediaText = null;
         }
 
-#pragma warning disable CS0618 // Type or member is obsolete
-        private static bool wasenabled = true;
-
         public static void EnableFPC()
         {
             if (TPC != null)
                 wasenabled = TPC.gameObject.transform.Find("CM vcam1").GetComponent<CinemachineVirtualCamera>().enabled;
         }
-
-        public static float zoomFOV = 35f;
         public static void MoveFPC()
         {
             if (TPC != null)
@@ -618,12 +640,10 @@ exit";
             if (!XRSettings.isDeviceActive)
                 return;
 
-            ConnectedControllerHandler.Instance.overrideLeftEnable = enabled;
-            ConnectedControllerHandler.Instance.overrideRightEnable = enabled;
-            ConnectedControllerHandler.Instance.UpdateControllerStates();
+            ManagerRegistry.ConnectedControllerHandler.overrideLeftEnable = enabled;
+            ManagerRegistry.ConnectedControllerHandler.overrideRightEnable = enabled;
+            ManagerRegistry.ConnectedControllerHandler.UpdateControllerStates();
         }
-
-        private static bool reportMenuToggle;
         public static void OculusReportMenu()
         {
             if (leftPrimary && !reportMenuToggle)
@@ -636,8 +656,6 @@ exit";
             }
             reportMenuToggle = leftPrimary;
         }
-
-        private static bool acceptedTOS;
         public static void AcceptTOS()
         {
             try
@@ -678,7 +696,7 @@ exit";
             while (!newSessionDataTask.IsCompleted)
                 yield return null;
             if (newSessionDataTask.IsFaulted)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to redeem shiny rocks.");
+                Notifications.SendFormat("red", "ERROR", "Failed to redeem shiny rocks.");
 
             GetPlayerData_Data newSessionData = newSessionDataTask.Result;
             if (newSessionData.responseType == GetSessionResponseType.NOT_FOUND)
@@ -688,18 +706,18 @@ exit";
                 while (!optInTask.IsCompleted)
                     yield return null;
                 if (optInTask.IsFaulted)
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to redeem shiny rocks.");
+                    Notifications.SendFormat("red", "ERROR", "Failed to redeem shiny rocks.");
 
-                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully redeemed shiny rocks!");
-                CosmeticsController.instance.GetCurrencyBalance();
+                Notifications.SendFormat("green", "SUCCESS", "Successfully redeemed shiny rocks!");
+                ManagerRegistry.CosmeticsController.GetCurrencyBalance();
             }
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You have already redeemed the shiny rocks.");
+                Notifications.SendFormat("red", "ERROR", "You have already redeemed the shiny rocks.");
             yield break;
         }
 
         public static void JoinDiscord() =>
-            Process.Start(serverLink);
+            Files.OpenURL(PluginInfo.DiscordInvite);
 
         public static void CopyPlayerPosition()
         {
@@ -725,8 +743,6 @@ exit";
 
             GUIUtility.systemCopyBuffer = text;
         }
-
-        public static GameObject physicalQuitBox;
         public static void PhysicalQuitbox()
         {
             GameObject quitBox = GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab/QuitBox");
@@ -756,8 +772,6 @@ exit";
                     Settings.UnblockPlayer(rig);
             }
         }
-
-        private static float lastTime;
         public static void CapFPS(int fps)
         {
             float targetDelta = 1f / fps;
@@ -778,8 +792,6 @@ exit";
             QualitySettings.vSyncCount = 0;
             Application.targetFrameRate = int.MaxValue;
         }
-
-        private static Vector3? oldLocalPosition;
         public static void PCButtonClick()
         {
             if (Mouse.current.leftButton.isPressed && GunPointer == null)
@@ -872,18 +884,15 @@ exit";
             if (currentRegion != region)
                 PhotonNetwork.ConnectToRegion(region);
 
-            References.Network.currentRegionIndex = Array.IndexOf(References.Network.regionNames, region);
+            ManagerRegistry.NetworkSystem.currentRegionIndex = Array.IndexOf(ManagerRegistry.NetworkSystem.regionNames, region);
 
-            NetworkSystemPUN punNetwork = (NetworkSystemPUN)References.Network;
+            NetworkSystemPUN punNetwork = (NetworkSystemPUN)ManagerRegistry.NetworkSystem;
             for (int i = 0; i < punNetwork.regionData.Length; i++)
             {
                 NetworkRegionInfo regionInfo = punNetwork.regionData[i];
-                regionInfo.pingToRegion = Array.IndexOf(References.Network.regionNames, regionInfo) == i ? 0 : 9999;
+                regionInfo.pingToRegion = Array.IndexOf(ManagerRegistry.NetworkSystem.regionNames, regionInfo) == i ? 0 : 9999;
             }
         }
-
-        public static bool lastTagLag;
-
-        public static bool lastSteam;
+        #endregion
     }
 }

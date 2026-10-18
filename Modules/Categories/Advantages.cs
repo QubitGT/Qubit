@@ -51,8 +51,29 @@ namespace Qubit.Modules.Categories
 {
     public static class Advantages
     {
+        #region Settings
         public static bool instantTag = true;
 
+        public static float spamTagDelay;
+
+        public static float tagAuraDistance = 1.666f;
+        public static int tagAuraIndex = 1;
+        public static readonly string[] TagAuraRangeNames = { "Short", "Normal", "Far", "Maximum" };
+        public static readonly float[] TagAuraRangeDistances = { 0.777f, 1.666f, 3f, 5.5f };
+
+        public static int tagRangeIndex;
+        private static float tagReachDistance = 0.3f;
+        public static readonly string[] TagReachDistanceNames = { "Unnoticable", "Normal", "Far", "Maximum" };
+        public static readonly float[] TagReachDistances = { 0.3f, 0.5f, 1f, 3f };
+
+        private static float reportTagDelay;
+
+        private static float tagGunDelay;
+
+        public static float paintbrawlSpamDelay;
+        #endregion
+
+        #region Methods
         public static void TagSelf()
         {
             static void TurnOff()
@@ -63,14 +84,14 @@ namespace Qubit.Modules.Categories
             if (PhotonNetwork.IsMasterClient)
             {
                 AddInfected(PhotonNetwork.LocalPlayer);
-                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> You have been tagged.");
+                Notifications.SendFormat("green", "SUCCESS", "You have been tagged.");
                 TurnOff();
             }
             else
             {
                 if (InfectedList().Contains(PhotonNetwork.LocalPlayer))
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> You have been tagged.");
+                    Notifications.SendFormat("green", "SUCCESS", "You have been tagged.");
                     References.LocalRig.enabled = true;
                     TurnOff();
 
@@ -173,8 +194,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static float spamTagDelay;
-
         public static void GiveTagLagGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -191,7 +210,7 @@ namespace Qubit.Modules.Categories
 
                 }
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             }, new GunLibrary.GunSettings { onIdle = () =>
                 {
                     if (gunLocked)
@@ -201,17 +220,7 @@ namespace Qubit.Modules.Categories
                     }
                 } });
         }
-
-        public static float tagAuraDistance = 1.666f;
-        public static int tagAuraIndex = 1;
-        public static readonly string[] TagAuraRangeNames = { "Short", "Normal", "Far", "Maximum" };
-        public static readonly float[] TagAuraRangeDistances = { 0.777f, 1.666f, 3f, 5.5f };
         public static void ApplyTagAuraRange(int index) { tagAuraIndex = index; tagAuraDistance = TagAuraRangeDistances[index]; }
-
-        public static int tagRangeIndex;
-        private static float tagReachDistance = 0.3f;
-        public static readonly string[] TagReachDistanceNames = { "Unnoticable", "Normal", "Far", "Maximum" };
-        public static readonly float[] TagReachDistances = { 0.3f, 0.5f, 1f, 3f };
         public static void ApplyTagReachDistance(int index) { tagRangeIndex = index; tagReachDistance = TagReachDistances[index]; }
 
         public static void TagAura()
@@ -354,8 +363,6 @@ namespace Qubit.Modules.Categories
                     }
                 } });
         }
-
-        private static float reportTagDelay;
         public static void ReportTag(VRRig rig)
         {
             if (Time.time > reportTagDelay)
@@ -381,7 +388,7 @@ namespace Qubit.Modules.Categories
 
             if (!References.LocalRig.IsTagged())
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
+                Notifications.SendFormat("red", "ERROR", "You must be tagged.");
                 TurnOff();
                 return;
             }
@@ -458,7 +465,7 @@ namespace Qubit.Modules.Categories
                 ReloadMenu();
             }
 
-            if (GorillaGameManager.instance.GameType() == GameModeType.HuntDown)
+            if (ManagerRegistry.GorillaGameManager.GameType() == GameModeType.HuntDown)
             {
                 HuntTagAll();
                 return;
@@ -470,21 +477,21 @@ namespace Qubit.Modules.Categories
                     AddInfected(v);
 
                 TurnOff();
-                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
+                Notifications.SendFormat("green", "SUCCESS", "Everyone is tagged!");
             }
             else
             {
                 if (instantTag)
                 {
                     InstantTagAll();
-                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
+                    Notifications.SendFormat("green", "SUCCESS", "Everyone is tagged!");
                     TurnOff();
                     return;
                 }
 
                 if (!References.LocalRig.IsTagged())
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
+                    Notifications.SendFormat("red", "ERROR", "You must be tagged.");
                     TurnOff();
                 }
                 else
@@ -535,7 +542,7 @@ namespace Qubit.Modules.Categories
                     }
                     else
                     {
-                        Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
+                        Notifications.SendFormat("green", "SUCCESS", "Everyone is tagged!");
                         References.LocalRig.enabled = true;
                         TurnOff();
                     }
@@ -558,8 +565,6 @@ namespace Qubit.Modules.Categories
 
             RPCProtection();
         }
-
-        private static float tagGunDelay;
         public static void InstantTagGun()
         {
             GunLibrary.Aim(GunData =>
@@ -586,7 +591,7 @@ namespace Qubit.Modules.Categories
         {
             if (!References.LocalRig.IsTagged())
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
+                Notifications.SendFormat("red", "ERROR", "You must be tagged.");
                 return;
             }
 
@@ -651,7 +656,7 @@ namespace Qubit.Modules.Categories
             }
             else
             {
-                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
+                Notifications.SendFormat("green", "SUCCESS", "Everyone is tagged!");
                 References.LocalRig.enabled = true;
                 Manager.GetIndex("Tag All").enabled = false;
                 ReloadMenu();
@@ -690,7 +695,7 @@ namespace Qubit.Modules.Categories
         }
 
         public static void TagOnJoin() =>
-            References.Network.SetMyTutorialComplete();
+            ManagerRegistry.NetworkSystem.SetMyTutorialComplete();
 
         public static void ReportAntiTag()
         {
@@ -714,15 +719,13 @@ namespace Qubit.Modules.Categories
             };
         }
 
-        public static float paintbrawlSpamDelay;
-
         public static void PaintbrawlKillGun()
         {
             GunLibrary.Target(gunTarget =>
             {
                 NetPlayer owner = GetPlayerFromVRRig(gunTarget);
                 if (!Networking.IsMasterClient)
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 else
                     GameModes.SetPaintbrawlHealth(owner, 0);
             });
@@ -815,7 +818,7 @@ namespace Qubit.Modules.Categories
             Fun.paintbrawlTriggerLine.startColor = Color.black;
             Fun.paintbrawlTriggerLine.endColor = Color.black;
 
-            Vector3 localPosition = localSlingshot.drawingHand.transform.position + (localSlingshot.centerOrigin.position - localSlingshot.drawingHand.transform.position).normalized * ((EquipmentInteractor.instance.grabRadius - localSlingshot.dummyProjectileColliderRadius) * (localSlingshot.dummyProjectileInitialScale * Mathf.Abs(localSlingshot.transform.lossyScale.x)));
+            Vector3 localPosition = localSlingshot.drawingHand.transform.position + (localSlingshot.centerOrigin.position - localSlingshot.drawingHand.transform.position).normalized * ((ManagerRegistry.EquipmentInteractor.grabRadius - localSlingshot.dummyProjectileColliderRadius) * (localSlingshot.dummyProjectileInitialScale * Mathf.Abs(localSlingshot.transform.lossyScale.x)));
             Vector3 localVelocity = localSlingshot.GetLaunchVelocity();
 
             Visuals.DrawTrajectory(localPosition, localVelocity, Fun.paintbrawlTriggerLine, NoInvisLayerMask(), Vector3.down * 10.79f);
@@ -849,10 +852,10 @@ namespace Qubit.Modules.Categories
                 switch (thereIsTagLag)
                 {
                     case true when !Important.lastTagLag:
-                        Notifications.SendNotification("<color=grey>[</color><color=red>TAG LAG</color><color=grey>]</color> There is currently tag lag.");
+                        Notifications.SendFormat("red", "TAG LAG", "There is currently tag lag.");
                         break;
                     case false when Important.lastTagLag:
-                        Notifications.SendNotification("<color=grey>[</color><color=green>TAG LAG</color><color=grey>]</color> There is no longer tag lag.");
+                        Notifications.SendFormat("green", "TAG LAG", "There is no longer tag lag.");
                         break;
                 }
 
@@ -861,7 +864,7 @@ namespace Qubit.Modules.Categories
             else
             {
                 if (Important.lastTagLag)
-                    Notifications.SendNotification("<color=grey>[</color><color=green>TAG LAG</color><color=grey>]</color> There is no longer tag lag.");
+                    Notifications.SendFormat("green", "TAG LAG", "There is no longer tag lag.");
                 Important.lastTagLag = false;
             }
         }
@@ -911,5 +914,6 @@ namespace Qubit.Modules.Categories
             PlayerSerializePatch.stopSerialization = false;
             Movement.isBlinking = false;
         }
+        #endregion
     }
 }

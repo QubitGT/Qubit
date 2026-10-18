@@ -61,6 +61,8 @@ using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Utilities.Assets;
 using static Qubit.Utilities.GameObj;
+using static Qubit.Modules.Categories.Projectiles;
+using static Qubit.Libraries.Entities.Critters;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using JoinType = GorillaNetworking.JoinType;
 using Object = UnityEngine.Object;
@@ -70,13 +72,235 @@ namespace Qubit.Modules.Categories
 {
     public static class Overpowered
     {
-        public static void AlwaysGuardian() =>
-            GameModes.BecomeGuardian();
-
-
+        #region Settings
         public static float guardianDelay;
 
         private static float playerColorDelay;
+
+        public static readonly Dictionary<VRRig, int> materialState = new Dictionary<VRRig, int>();
+
+        public static float guardianSpazDelay;
+        public static bool guardianSpazToggle;
+
+        public static float guardianProtectorDelay;
+
+        private static float crashAllDelay;
+
+        public static float spazDriverDelay;
+
+        public static long? id;
+        public static float setMapDelay;
+
+        public const int ItemCrashCount = 500;
+
+        public static int masterVisualizationType;
+        public static readonly string[] VisualizationTypeNames = { "Sphere", "Cube", "Tracer" };
+
+        private static float reportDelay;
+
+        public static float propHuntSpazDelay;
+        public static bool propHuntSpazMode;
+
+        public static float destroyDelay;
+
+        public static float resourceIncrementDelay;
+
+        public static int? spawnedNetId;
+        public static int spawnedFrame;
+
+        public static float blasterDelay;
+        public static Coroutine BlasterCoroutine;
+
+        public static readonly Dictionary<NetPlayer, float> perPlayerDictionary = new Dictionary<NetPlayer, float>();
+
+        public static HalloweenGhostChaser _lucy;
+        public static HalloweenGhostChaser Lucy
+        {
+            get
+            {
+                _lucy ??= GameObject.Find("Environment Objects/05Maze_PersistentObjects/Ghosts/Halloween Ghost/FloatingChaseSkeleton").GetComponent<HalloweenGhostChaser>();
+                return _lucy;
+            }
+            set => _lucy = value;
+        }
+
+        private static float grabDelay = 0;
+
+        private static float releaseDelay;
+
+        private static float flingDelay;
+
+
+        private static float antiReportFlingDelay;
+
+        private static float thingdeb;
+
+        private static float slamDel;
+        private static bool flip;
+
+        private static float closeRoomDelay;
+
+        public static float zaWarudoNotificationDelay;
+
+        public static Coroutine ZaWarudo_StartCoroutineVariable;
+        public static Coroutine ZaWarudo_EndCoroutineVariable;
+
+        public static AudioClip ZaWarudo_Start;
+        public static AudioClip ZaWarudo_Stop;
+
+        private static bool zaWarudoTrigger;
+
+        public static int lagIndex = 2;
+        public static int lagAmount;
+        public static float lagDelay;
+        public static readonly string[] LagPowerNames = { "Light", "Heavy", "Spike", "Stutter", "Freeze" };
+        public static readonly int[] LagAmounts = { 40, 113, 425, 1000, 3800 };
+        public static readonly float[] LagDelays = { 0.1f, 0.25f, 1f, 3f, 8f };
+
+        public static int lagTypeIndex;
+        public static readonly string[] LagTypeNames = { "Default", "Backup" };
+
+        private static float lagDebounce;
+
+        public static byte LagEvent
+        {
+            get
+            {
+                return lagTypeIndex switch
+                {
+                    0 => 3,
+                    1 => 186,
+                    _ => 3,
+                };
+            }
+        }
+
+        public static object LagData
+        {
+            get
+            {
+                return lagTypeIndex switch
+                {
+                    0 => default,
+                    1 => new object[] { float.NaN },
+                    _ => default,
+                };
+            }
+        }
+
+        public static bool GrabStatus
+        {
+            get => HandLinkPatch.enabled;
+            set
+            {
+                HandLinkPatch.enabled = value;
+
+                if (!value && !References.LocalRig.enabled)
+                    References.LocalRig.enabled = true;
+            }
+        }
+
+        public const int BarrelIndex = 618;
+
+        private static float notifyTime;
+
+        public static float delay;
+
+        public static bool kickToPublic;
+        public static bool rejoinOnKick;
+        public static string specificRoom;
+
+        private static float kickDelay;
+
+        private static float elevatorKickDelay;
+
+        public static float greyZoneDelay;
+
+        public static Coroutine wipeOverride;
+
+        public static float spazGreyDelay;
+        public static bool greyState;
+
+        public static Coroutine partyKickDelayCoroutine;
+
+        public static bool previousInParty;
+
+        private static float breakDelay;
+
+        public static bool legacyKickFreeze;
+
+        /// <summary>
+        /// Indicates whether event optimization is enabled. When enabled, it reduces network load by limiting certain RPC calls and adjusting serialization rates.
+        /// </summary>
+        private static bool _optimizeEvents;
+        public static bool OptimizeEvents
+        {
+            get => _optimizeEvents;
+            set
+            {
+                if (_optimizeEvents != value)
+                {
+                    _optimizeEvents = value;
+                    if (_optimizeEvents)
+                    {
+                        if (legacyKickFreeze)
+                            SerializePatch.OverrideSerialization = () => false;
+                        else
+                        {
+                            PhotonNetwork.SerializationRate = 2;
+                            RPCFilter.FilteredRPCs["OnHandTapRPC"] = () => false;
+                            RPCFilter.FilteredRPCs["RPC_UpdateCosmeticsWithTryonPacked"] = () => false;
+
+                            SerializePatch.OverrideSerialization = () =>
+                            {
+                                References.LocalRig.GetPhotonView().Serialize();
+                                return true;
+                            };
+                        }
+                    }
+                    else
+                    {
+                        if (SerializePatch.OverrideSerialization != null)
+                            SerializePatch.OverrideSerialization = null;
+
+                        PhotonNetwork.SerializationRate = 10;
+                        RPCFilter.FilteredRPCs.Remove("OnHandTapRPC");
+                        RPCFilter.FilteredRPCs.Remove("RPC_UpdateCosmeticsWithTryonPacked");
+                    }
+                }
+            }
+        }
+
+        private static float antiReportLagDelay;
+
+        public static float setMasterDelay;
+
+        public static float rockDebounce;
+
+        public static float slowDelay;
+
+        public static float vibrateDelay;
+
+        public static Coroutine RopeCoroutine;
+
+        private static float randomRopeDelay;
+        private static GorillaRopeSwing randomRope;
+
+        private static float RopeDelay;
+
+        public static bool instantCreate;
+        public static bool isRightHand;
+        public static int amountPartying;
+        public static bool waitForPlayerJoin;
+
+        public static string partyLastCode;
+        public static float partyTime;
+        public static bool partyKickReconnecting;
+        #endregion
+
+        #region Methods
+        public static void AlwaysGuardian() =>
+            GameModes.BecomeGuardian();
         public static void SetColorSelf(int color) =>
             GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { Networking.LocalPlayer.ActorNumber, color } });
 
@@ -88,16 +312,16 @@ namespace Qubit.Modules.Categories
                 if (PhotonNetwork.IsMasterClient)
                     GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { GetPlayerFromVRRig(gunTarget).ActorNumber, color } });
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             }, new GunLibrary.GunSettings { when = () => Time.time > playerColorDelay });
         }
 
         public static void SetColorAll(int color)
         {
             if (PhotonNetwork.IsMasterClient)
-                GameModes.SetMonkeBallTeams(References.Network.AllNetPlayers.ToDictionary(p => p.ActorNumber, p => color));
+                GameModes.SetMonkeBallTeams(ManagerRegistry.NetworkSystem.AllNetPlayers.ToDictionary(p => p.ActorNumber, p => color));
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
 
         public static void StrobeColorSelf()
@@ -108,7 +332,7 @@ namespace Qubit.Modules.Categories
                 if (Networking.IsMasterClient)
                     SetColorSelf(Time.time % 0.2f > 0.1f ? 1 : 0);
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             }
         }
 
@@ -126,7 +350,7 @@ namespace Qubit.Modules.Categories
                         if (Networking.IsMasterClient)
                             GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { lockTarget.GetPlayer().ActorNumber, Time.time % 0.2f > 0.1f ? 1 : 0 } });
                         else
-                            Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                            Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     }
                 }
                 if (GetGunInput(true))
@@ -156,16 +380,9 @@ namespace Qubit.Modules.Categories
                 if (Networking.IsMasterClient)
                     SetColorAll(Time.time % 0.2f > 0.1f ? 1 : 0);
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
             }
         }
-
-        public static readonly Dictionary<VRRig, int> materialState = new Dictionary<VRRig, int>();
-
-        public static float guardianSpazDelay;
-        public static bool guardianSpazToggle;
-
-        public static float guardianProtectorDelay;
         public static void GuardianProtector()
         {
             if (Networking.InRoom)
@@ -194,8 +411,6 @@ namespace Qubit.Modules.Categories
                 RPCProtection();
             }
         }
-
-        private static float crashAllDelay;
         public static void GuardianKickGun()
         {
             GunLibrary.Target(lockTarget =>
@@ -260,25 +475,18 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static float spazDriverDelay;
-
         public static void BecomeDriver()
         {
             if (PhotonNetwork.IsMasterClient)
-                CustomMapsTerminal.instance.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
+                ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
             else
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 return;
             }
 
-            CustomMapsTerminal.instance.mapTerminalNetworkObject.photonView.OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
+            ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
         }
-
-        public static long? id;
-        public static float setMapDelay;
-
-        public const int ItemCrashCount = 500;
         public static void GameEntityCrash(GameEntityManager manager, object target, Vector3? targetPosition = null)
         {
             if (manager == null)
@@ -300,9 +508,6 @@ namespace Qubit.Modules.Categories
 
             CreateItems(target, ids, positions, rotations, manager: manager);
         }
-
-        public static int masterVisualizationType;
-        public static readonly string[] VisualizationTypeNames = { "Sphere", "Cube", "Tracer" };
         public static void ApplyMasterVisualizationType(int index) => masterVisualizationType = index;
 
         public static void VisualizeMasterClient()
@@ -313,7 +518,7 @@ namespace Qubit.Modules.Categories
             if (Networking.IsMasterClient)
                 return;
 
-            VRRig rig = References.Network.MasterClient.VRRig();
+            VRRig rig = ManagerRegistry.NetworkSystem.MasterClient.VRRig();
             if (rig == null)
                 return;
 
@@ -339,8 +544,6 @@ namespace Qubit.Modules.Categories
                     break;
             }
         }
-
-        private static float reportDelay;
         public static void DelayBanGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -350,19 +553,19 @@ namespace Qubit.Modules.Categories
 
                 if (References.LocalRig.IsTagged())
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must not be tagged.");
+                    Notifications.SendFormat("red", "ERROR", "You must not be tagged.");
                     return;
                 }
 
                 if (!lockTarget.IsTagged())
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> The target must be tagged.");
+                    Notifications.SendFormat("red", "ERROR", "The target must be tagged.");
                     return;
                 }
 
                 if (PhotonNetwork.IsMasterClient)
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must not be master client.");
+                    Notifications.SendFormat("red", "ERROR", "You must not be master client.");
                     return;
                 }
 
@@ -407,13 +610,13 @@ namespace Qubit.Modules.Categories
             {
                 if (References.LocalRig.IsTagged())
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must not be tagged.");
+                    Notifications.SendFormat("red", "ERROR", "You must not be tagged.");
                     return true;
                 }
 
                 if (PhotonNetwork.IsMasterClient)
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must not be master client.");
+                    Notifications.SendFormat("red", "ERROR", "You must not be master client.");
                     return true;
                 }
 
@@ -426,7 +629,7 @@ namespace Qubit.Modules.Categories
                 References.LocalRig.transform.position = new Vector3(99999f, 99999f, 99999f);
                 SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
 
-                foreach (NetPlayer player in References.Network.PlayerListOthers)
+                foreach (NetPlayer player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     VRRig rig = GetVRRigFromPlayer(player);
                     if (!player.IsMasterClient && rig.IsTagged())
@@ -510,7 +713,7 @@ namespace Qubit.Modules.Categories
                 {
                     localLink.TentacleTryCreateLink(remoteLink);
                     References.LocalRig.transform.position = targetTransform;
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>MENU</color><color=grey>]</color> Tried to grab " + rig.GetPlayer().NickName + ".");
+                    Notifications.SendFormat("purple", "MENU", "Tried to grab " + rig.GetPlayer().NickName + ".");
                     grabDelay = remoteLink.rejectGrabsUntilTimestamp > Time.time ? remoteLink.rejectGrabsUntilTimestamp : Time.time + 1f;
                 }
             }
@@ -535,9 +738,6 @@ namespace Qubit.Modules.Categories
                 rig.GetNetView().SendRPC("DroppedByPlayer", rig.GetPlayer(), velocity);
             }
         }
-
-        public static float propHuntSpazDelay;
-        public static bool propHuntSpazMode;
 
         public static void CreateItem(object target, int hash, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angVelocity, long sendData = 0L, GameEntityManager manager = null)
         {
@@ -721,244 +921,6 @@ namespace Qubit.Modules.Categories
                 CreateItem(target, hashes[0], positions[0], rotations[0], Vector3.zero, Vector3.zero, sendData.Length > 0 ? sendData[1] : 0L, manager);
         }
 
-        public static Dictionary<string, bool[][]> Letters = new Dictionary<string, bool[][]> {
-            { "A", new[]
-            {
-                new[] { false, true, true, true, false },
-                new[] { true, false, false, false, true },
-                new[] { true, true, true, true, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-            } },
-            { "B", new[]
-            {
-                new[] { true, true, true, true, false },
-                new[] { true, false, false, false, true },
-                new[] { true, true, true, true, false },
-                new[] { true, false, false, false, true },
-                new[] { true, true, true, true, true },
-            } },
-            { "C", new[]
-            {
-                new[] { false, true, true, true, true },
-                new[] { true, false, false, false, false },
-                new[] { true, false, false, false, false },
-                new[] { true, false, false, false, false },
-                new[] { false, true, true, true, true },
-            } },
-            { "D", new[]
-            {
-                new[] { true, true, true, true, false },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, true, true, true, false },
-            } },
-            { "E", new[]
-            {
-                new[] { true, true, true, true, true },
-                new[] { true, false, false, false, false },
-                new[] { true, true, true, false, false },
-                new[] { true, false, false, false, false },
-                new[] { true, true, true, true, true },
-            } },
-            { "F", new[]
-            {
-                new[] { true, true, true, true, true },
-                new[] { true, false, false, false, false },
-                new[] { true, true, true, false, false },
-                new[] { true, false, false, false, false },
-                new[] { true, false, false, false, false },
-            } },
-            { "G", new[]
-            {
-                new[] { true, true, true, true, true },
-                new[] { true, false, false, false, false },
-                new[] { true, false, false, true, true },
-                new[] { true, false, false, false, true },
-                new[] { true, true, true, true, true },
-            } },
-            { "H", new[]
-            {
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, true, true, true, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-            } },
-            { "I", new[]
-            {
-                new[] { true, true, true, true, true },
-                new[] { false, false, true, false, false },
-                new[] { false, false, true, false, false },
-                new[] { false, false, true, false, false },
-                new[] { true, true, true, true, true },
-            } },
-            { "J", new[]
-            {
-                new[] { false, false, false, false, true },
-                new[] { false, false, false, false, true },
-                new[] { false, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { false, true, true, true, false },
-            } },
-            { "K", new[]
-            {
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, true, false },
-                new[] { true, true, true, false, false },
-                new[] { true, false, false, true, false },
-                new[] { true, false, false, false, true },
-            } },
-            { "L", new[]
-            {
-                new[] { true, false, false, false, false },
-                new[] { true, false, false, false, false },
-                new[] { true, false, false, false, false },
-                new[] { true, false, false, false, false },
-                new[] { true, true, true, true, true },
-            } },
-            { "M", new[]
-            {
-                new[] { true, true, false, true, true },
-                new[] { true, false, true, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-            } },
-            { "N", new[]
-            {
-                new[] { true, false, false, false, true },
-                new[] { true, true, false, false, true },
-                new[] { true, false, true, false, true },
-                new[] { true, false, false, true, true },
-                new[] { true, false, false, false, true },
-            } },
-            { "O", new[]
-            {
-                new[] { false, true, true, true, false },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { false, true, true, true, false },
-            } },
-            { "P", new[]
-            {
-                new[] { true, true, true, true, false },
-                new[] { true, false, false, false, true },
-                new[] { true, true, true, true, false },
-                new[] { true, false, false, false, false },
-                new[] { true, false, false, false, false },
-            } },
-            { "Q", new[]
-            {
-                new[] { false, true, true, true, false },
-                new[] { true, false, false, false, true },
-                new[] { true, false, true, false, true },
-                new[] { true, false, false, true, false },
-                new[] { false, true, true, false, true },
-            } },
-            { "R", new[]
-            {
-                new[] { true, true, true, true, true },
-                new[] { true, false, false, false, true },
-                new[] { true, true, true, true, true },
-                new[] { true, false, false, true, false },
-                new[] { true, false, false, false, true },
-            } },
-            { "S", new[]
-            {
-                new[] { true, true, true, true, true },
-                new[] { true, false, false, false, false },
-                new[] { true, true, true, true, true },
-                new[] { false, false, false, false, true },
-                new[] { true, true, true, true, true },
-            } },
-            { "T", new[]
-            {
-                new[] { true, true, true, true, true },
-                new[] { false, false, true, false, false },
-                new[] { false, false, true, false, false },
-                new[] { false, false, true, false, false },
-                new[] { false, false, true, false, false },
-            } },
-            { "U", new[]
-            {
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { false, true, true, true, false },
-            } },
-            { "V", new[]
-            {
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { false, true, false, true, false },
-                new[] { false, true, false, true, false },
-                new[] { false, false, true, false, false },
-            } },
-            { "W", new[]
-            {
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, false, false, true },
-                new[] { true, false, true, false, true },
-                new[] { false, true, false, true, false },
-            } },
-            { "X", new[]
-            {
-                new[] { true, false, false, false, true },
-                new[] { false, true, false, true, false },
-                new[] { false, false, true, false, false },
-                new[] { false, true, false, true, false },
-                new[] { true, false, false, false, true },
-            } },
-            { "Y", new[]
-            {
-                new[] { true, false, false, false, true },
-                new[] { false, true, false, true, false },
-                new[] { false, false, true, false, false },
-                new[] { false, false, true, false, false },
-                new[] { false, false, true, false, false },
-            } },
-            { "Z", new[]
-            {
-                new[] { true, true, true, true, true },
-                new[] { false, false, false, true, false },
-                new[] { false, false, true, false, false },
-                new[] { false, true, false, false, false },
-                new[] { true, true, true, true, true },
-            } },
-            { ".", new[]
-            {
-                new[] { false, false, false, false, false },
-                new[] { false, false, false, false, false },
-                new[] { false, false, false, false, false },
-                new[] { false, false, false, false, false },
-                new[] { false, false, true, false, false },
-            } },
-            { "/", new[]
-            {
-                new[] { false, false, false, false, true },
-                new[] { false, false, false, true, false },
-                new[] { false, false, true, false, false },
-                new[] { false, true, false, false, false },
-                new[] { true, false, false, false, false },
-            } },
-            { " ", new[]
-            {
-                new[] { false, false, false, false, false },
-                new[] { false, false, false, false, false },
-                new[] { false, false, false, false, false },
-                new[] { false, false, false, false, false },
-                new[] { false, false, false, false, false },
-            } }
-        };
-        public static float textDelay;
-        public static int characterIndex;
-        public static Vector3? basePosition;
-
         public static IEnumerator DrawSmallDelay(Vector3 position, int id, GameEntityManager manager)
         {
             GameObject Temporary = GameObject.CreatePrimitive(PrimitiveType.Sphere);
@@ -970,13 +932,6 @@ namespace Qubit.Modules.Categories
             Object.Destroy(Temporary);
             RPCProtection();
         }
-
-        public static float destroyDelay;
-
-        public static float resourceIncrementDelay;
-
-        public static int? spawnedNetId;
-        public static int spawnedFrame;
 
         public static SIGadgetChargeBlaster GetBlaster()
         {
@@ -1091,9 +1046,6 @@ namespace Qubit.Modules.Categories
             return null;
         }
 
-        public static float blasterDelay;
-        public static Coroutine BlasterCoroutine;
-
         public static void BetaFireBlaster(Vector3 position, Vector3 direction)
         {
             SIGadgetChargeBlaster blaster = GetBlaster();
@@ -1122,8 +1074,6 @@ namespace Qubit.Modules.Categories
 
             RPCProtection();
         }
-
-        public static readonly Dictionary<NetPlayer, float> perPlayerDictionary = new Dictionary<NetPlayer, float>();
         public static void BetaFireBlaster(Vector3 position, Vector3 direction, NetPlayer target, bool ignoreDistnace = false)
         {
             perPlayerDictionary.TryGetValue(target, out float perPlayerDelay);
@@ -1169,17 +1119,6 @@ namespace Qubit.Modules.Categories
 
             RPCProtection();
         }
-
-        public static HalloweenGhostChaser _lucy;
-        public static HalloweenGhostChaser Lucy
-        {
-            get
-            {
-                _lucy ??= GameObject.Find("Environment Objects/05Maze_PersistentObjects/Ghosts/Halloween Ghost/FloatingChaseSkeleton").GetComponent<HalloweenGhostChaser>();
-                return _lucy;
-            }
-            set => _lucy = value;
-        }
         public static HalloweenGhostChaser GetChaser() => Lucy;
 
         
@@ -1194,7 +1133,7 @@ namespace Qubit.Modules.Categories
                 GetNetworkViewFromVRRig(GetVRRigFromPlayer(victim)).SendRPC("DroppedByPlayer", victim, velocity);
             }
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                Notifications.SendFormat("red", "ERROR", "You must be guardian.");
         }
 
         public static void BetaSetVelocityTargetGroup(RpcTarget victim, Vector3 velocity)
@@ -1227,17 +1166,15 @@ namespace Qubit.Modules.Categories
                         }
                     case RpcTarget.MasterClient:
                         {
-                            GetNetworkViewFromVRRig(GetVRRigFromPlayer(References.Network.MasterClient)).SendRPC("GrabbedByPlayer", RpcTarget.Others, true, false, false);
-                            GetNetworkViewFromVRRig(GetVRRigFromPlayer(References.Network.MasterClient)).SendRPC("DroppedByPlayer", RpcTarget.Others, velocity);
+                            GetNetworkViewFromVRRig(GetVRRigFromPlayer(ManagerRegistry.NetworkSystem.MasterClient)).SendRPC("GrabbedByPlayer", RpcTarget.Others, true, false, false);
+                            GetNetworkViewFromVRRig(GetVRRigFromPlayer(ManagerRegistry.NetworkSystem.MasterClient)).SendRPC("DroppedByPlayer", RpcTarget.Others, velocity);
                             break;
                         }
                 }
             }
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                Notifications.SendFormat("red", "ERROR", "You must be guardian.");
         }
-
-        private static float grabDelay = 0;
         public static void GuardianGrabGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -1248,7 +1185,7 @@ namespace Qubit.Modules.Categories
                     RPCProtection();
                 }
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                    Notifications.SendFormat("red", "ERROR", "You must be guardian.");
                 grabDelay = Time.time + 0.1f;
             }, new GunLibrary.GunSettings { when = () => Time.time > grabDelay });
         }
@@ -1267,11 +1204,9 @@ namespace Qubit.Modules.Categories
                     }
                 }
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                    Notifications.SendFormat("red", "ERROR", "You must be guardian.");
             }
         }
-
-        private static float releaseDelay;
         public static void GuardianReleaseGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -1282,7 +1217,7 @@ namespace Qubit.Modules.Categories
                     RPCProtection();
                 }
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                    Notifications.SendFormat("red", "ERROR", "You must be guardian.");
 
                 releaseDelay = Time.time + 0.1f;
             }, new GunLibrary.GunSettings { when = () => Time.time > releaseDelay });
@@ -1302,11 +1237,9 @@ namespace Qubit.Modules.Categories
                     }
                 }
                 else
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                    Notifications.SendFormat("red", "ERROR", "You must be guardian.");
             }
         }
-
-        private static float flingDelay;
         public static void GuardianFlingGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -1350,9 +1283,6 @@ namespace Qubit.Modules.Categories
                 RPCProtection();
             }
         }
-
-
-        private static float antiReportFlingDelay;
         public static void AntiReportFling()
         {
             if (Time.time > antiReportFlingDelay)
@@ -1361,7 +1291,7 @@ namespace Qubit.Modules.Categories
                 {
                     antiReportFlingDelay = Time.time + 0.1f;
                     BetaSetVelocityPlayer(GetPlayerFromVRRig(vrrig), (vrrig.transform.position - position) * 50f);
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been flung.");
+                    Notifications.SendFormat("purple", "ANTI-REPORT", "" + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been flung.");
                 });
             }
         }
@@ -1526,8 +1456,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        private static float thingdeb;
         public static void GuardianGiveFlyGun()
         {
             GunLibrary.Target(lockTarget =>
@@ -1643,9 +1571,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
-        private static float slamDel;
-        private static bool flip;
         public static void GuardianEffectSpamHands()
         {
             if (rightGrab)
@@ -1659,7 +1584,7 @@ namespace Qubit.Modules.Categories
                         flip = !flip;
                     }
                     else
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                        Notifications.SendFormat("red", "ERROR", "You must be guardian.");
 
                     slamDel = Time.time + 0.05f;
                 }
@@ -1675,7 +1600,7 @@ namespace Qubit.Modules.Categories
                         flip = !flip;
                     }
                     else
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                        Notifications.SendFormat("red", "ERROR", "You must be guardian.");
 
                     slamDel = Time.time + 0.05f;
                 }
@@ -1695,7 +1620,7 @@ namespace Qubit.Modules.Categories
                         flip = !flip;
                     }
                     else
-                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be guardian.");
+                        Notifications.SendFormat("red", "ERROR", "You must be guardian.");
 
                     slamDel = Time.time + 0.05f;
                 }
@@ -1709,7 +1634,7 @@ namespace Qubit.Modules.Categories
         {
             return;
             /*
-            if (!NetworkSystem.Instance.InRoom) return;
+            if (!ManagerRegistry.NetworkSystem.InRoom) return;
 
             if (!acklowledgeFreeze)
             {
@@ -1732,15 +1657,13 @@ namespace Qubit.Modules.Categories
             if (Time.time > freezeAllDelay)
             {
                 for (int i = 0; i < eventCount; i++)
-                    PhotonNetwork.NetworkingClient.OpRaiseEvent(200, new object[] { serverLink }, options, SendOptions.SendUnreliable);
+                    PhotonNetwork.NetworkingClient.OpRaiseEvent(200, new object[] { PluginInfo.DiscordInvite }, options, SendOptions.SendUnreliable);
 
                 RPCProtection();
                 freezeAllDelay = Time.time + delay;
             }
             */
         }
-
-        private static float closeRoomDelay;
         public static void CloseRoom()
         {
             if (!Networking.InRoom) return;
@@ -1758,27 +1681,17 @@ namespace Qubit.Modules.Categories
                     CachingOption = EventCaching.AddToRoomCacheGlobal
                 };
                 byte code = 51;
-                PhotonNetwork.RaiseEvent(code, new object[] { serverLink }, options, SendOptions.SendUnreliable);
+                PhotonNetwork.RaiseEvent(code, new object[] { PluginInfo.DiscordInvite }, options, SendOptions.SendUnreliable);
             }
 
             RPCProtection();
         }
-
-        public static float zaWarudoNotificationDelay;
-
-        public static Coroutine ZaWarudo_StartCoroutineVariable;
-        public static Coroutine ZaWarudo_EndCoroutineVariable;
-
-        public static AudioClip ZaWarudo_Start;
-        public static AudioClip ZaWarudo_Stop;
 
         public static void ZaWarudo_enableMethod()
         {
             LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Overpowered/Timestop/start.ogg", "Audio/Mods/Overpowered/Timestop/start.ogg", clip => ZaWarudo_Start = clip);
             LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Overpowered/Timestop/end.ogg", "Audio/Mods/Overpowered/Timestop/end.ogg", clip => ZaWarudo_Stop = clip);
         }
-
-        private static bool zaWarudoTrigger;
         public static void ZaWarudo()
         {
             if (!Networking.InRoom) return;
@@ -1895,51 +1808,13 @@ namespace Qubit.Modules.Categories
 
             ZaWarudo_EndCoroutineVariable = null;
         }
-
-        public static int lagIndex = 2;
-        public static int lagAmount;
-        public static float lagDelay;
-        public static readonly string[] LagPowerNames = { "Light", "Heavy", "Spike", "Stutter", "Freeze" };
-        public static readonly int[] LagAmounts = { 40, 113, 425, 1000, 3800 };
-        public static readonly float[] LagDelays = { 0.1f, 0.25f, 1f, 3f, 8f };
         public static void ApplyLagPower(int index)
         {
             lagIndex = index;
             lagAmount = LagAmounts[index];
             lagDelay = LagDelays[index];
         }
-
-        public static int lagTypeIndex;
-        public static readonly string[] LagTypeNames = { "Default", "Backup" };
         public static void ApplyLagType(int index) => lagTypeIndex = index;
-
-        private static float lagDebounce;
-
-        public static byte LagEvent
-        {
-            get
-            {
-                return lagTypeIndex switch
-                {
-                    0 => 3,
-                    1 => 186,
-                    _ => 3,
-                };
-            }
-        }
-
-        public static object LagData
-        {
-            get
-            {
-                return lagTypeIndex switch
-                {
-                    0 => default,
-                    1 => new object[] { float.NaN },
-                    _ => default,
-                };
-            }
-        }
 
         public static void LagPlayer(object target)
         {
@@ -1980,18 +1855,6 @@ namespace Qubit.Modules.Categories
                 PhotonNetwork.NetworkingClient.OpRaiseEvent(eventIndex, data, raiseEventOptions, sendOptions);
 
             RPCProtection();
-        }
-
-        public static bool GrabStatus
-        {
-            get => HandLinkPatch.enabled;
-            set
-            {
-                HandLinkPatch.enabled = value;
-
-                if (!value && !References.LocalRig.enabled)
-                    References.LocalRig.enabled = true;
-            }
         }
 
         public static void ForceGrabGun()
@@ -2241,7 +2104,7 @@ namespace Qubit.Modules.Categories
                 new object[] { voiceData }
             };
 
-            PhotonVoiceNetwork.Instance.Client.OpRaiseEvent(
+            ManagerRegistry.PhotonVoiceNetwork.Client.OpRaiseEvent(
                 202,
                 eventData,
                 raiseOptions,
@@ -2407,55 +2270,6 @@ namespace Qubit.Modules.Categories
                 SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * 10000f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
         }
 
-        public const int BarrelIndex = 618;
-
-        public static void SendBarrelProjectile(Vector3 pos, Vector3 vel, Quaternion rot, RaiseEventOptions options = null, bool disableCooldown = false)
-        {
-            options ??= new RaiseEventOptions { Receivers = ReceiverGroup.Others };
-
-            int index = BarrelIndex;
-
-            if (Fun.DisableThrowableCoroutine != null)
-                Coroutines.instance.StopCoroutine(Fun.DisableThrowableCoroutine);
-
-            Fun.DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(Fun.DisableThrowable(index));
-            TransferrableObject transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
-
-            if (transferrableObject == null)
-            {
-                if (!CosmeticsOwned.Contains("Lucky Smash Barrel"))
-                {
-                    References.LocalRig.transform.position = TryOnRoom.transform.position;
-                    CosmeticsController.instance.PressWardrobeItemButton(CosmeticsController.instance.allCosmetics.FirstOrDefault(c => string.Equals(c.overrideDisplayName, "Lucky Smash Barrel", StringComparison.OrdinalIgnoreCase)), false, false);
-                }
-                References.LocalRig.SetActiveTransferrableObjectIndex(1, index);
-                transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
-            }
-
-            if (transferrableObject == null)
-            {
-                Logs.LogError("Lucky smash barrel not found, cannot send barrel projectile.");
-                return;
-            }
-
-            DeployableObject barrel = transferrableObject.GetComponent<DeployableObject>();
-            if (!disableCooldown && barrel.m_spamChecker.CanCallNow(Time.unscaledTime))
-            {
-                transferrableObject.currentState = TransferrableObject.PositionState.InRightHand;
-
-                object[] data = {
-                    barrel._deploySignal._signalID,
-                    References.Network.ServerTimestamp,
-                    BitPackUtils.PackWorldPosForNetwork(pos),
-                    BitPackUtils.PackQuaternionForNetwork(rot),
-                    BitPackUtils.PackWorldPosForNetwork(vel)
-                };
-                PhotonNetwork.RaiseEvent(177, data, options, SendOptions.SendReliable);
-                barrel._child.Deploy(barrel, pos, rot, vel);
-                RPCProtection();
-            }
-        }
-
         public static void BarrelKickGun()
         {
             GunLibrary.Aim(GunData =>
@@ -2568,40 +2382,36 @@ namespace Qubit.Modules.Categories
                 SendBarrelProjectile(TargetRig.transform.position + (TargetRig.transform.position - new Vector3(-71.14215f, 13.73829f, -95.17883f)).normalized * 0.1f, (new Vector3(-71.14215f, 13.73829f, -95.17883f) - TargetRig.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
             }
         }
-
-        private static float notifyTime;
         public static bool IsModded(bool notify)
         {
             if (!Networking.InRoom) return false;
-            bool modded = References.Network.GameModeString.Contains("MODDED_");
+            bool modded = ManagerRegistry.NetworkSystem.GameModeString.Contains("MODDED_");
             if (!modded && notify && Time.time > notifyTime)
             {
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in a modded gamemode. Use Utilla to create one, or join an already existing modded room.");
+                Notifications.SendFormat("red", "ERROR", "You are not in a modded gamemode. Use Utilla to create one, or join an already existing modded room.");
                 notifyTime = Time.time + 1;
             }
             return modded;
         }
 
-        public static float delay;
-
         public static void BetaNearbyFollowCommand(GorillaFriendCollider friendCollider, Player player)
         {
-            PhotonNetworkController.Instance.FriendIDList.Add(player.UserId);
+            ManagerRegistry.PhotonNetworkController.FriendIDList.Add(player.UserId);
 
             object[] groupJoinSendData = new object[2];
-            groupJoinSendData[0] = PhotonNetworkController.Instance.shuffler;
-            groupJoinSendData[1] = PhotonNetworkController.Instance.keyStr;
+            groupJoinSendData[0] = ManagerRegistry.PhotonNetworkController.shuffler;
+            groupJoinSendData[1] = ManagerRegistry.PhotonNetworkController.keyStr;
             NetEventOptions netEventOptions = new NetEventOptions { TargetActors = new[] { player.ActorNumber } };
 
             if (friendCollider.playerIDsCurrentlyTouching.Contains(PhotonNetwork.LocalPlayer.UserId) && friendCollider.playerIDsCurrentlyTouching.Contains(player.UserId) && player != PhotonNetwork.LocalPlayer)
                 RoomSystem.SendEvent(4, groupJoinSendData, netEventOptions, false);
             else if (!friendCollider.playerIDsCurrentlyTouching.Contains(PhotonNetwork.LocalPlayer.UserId))
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in stump.");
+                Notifications.SendFormat("red", "ERROR", "You are not in stump.");
         }
 
         public static IEnumerator StumpKickDelay(Action action, Action action2, float extraDelay = 0f, bool changeQueue = false)
         {
-            PhotonNetworkController.Instance.FriendIDList.Clear();
+            ManagerRegistry.PhotonNetworkController.FriendIDList.Clear();
             yield return new WaitForSeconds(extraDelay);
 
             bool joinedRoomPatchEnabled = JoinedRoomPatch.enabled;
@@ -2622,15 +2432,11 @@ namespace Qubit.Modules.Categories
 
             JoinedRoomPatch.enabled = joinedRoomPatchEnabled;
         }
-
-        public static bool kickToPublic;
-        public static bool rejoinOnKick;
-        public static string specificRoom;
         public static void CreateKickRoom()
         {
             if (rejoinOnKick)
             {
-                Important.BroadcastRoom(specificRoom ?? RandomString(), true, PhotonNetworkController.Instance.keyToFollow, PhotonNetworkController.Instance.shuffler);
+                Important.BroadcastRoom(specificRoom ?? RandomString(), true, ManagerRegistry.PhotonNetworkController.keyToFollow, ManagerRegistry.PhotonNetworkController.shuffler);
                 Room.Reconnect();
 
                 return;
@@ -2638,8 +2444,6 @@ namespace Qubit.Modules.Categories
 
             Room.CreateRoom(specificRoom ?? RandomString(), kickToPublic, 0, JoinType.JoinWithNearby);
         }
-
-        private static float kickDelay;
         public static void StumpKickGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -2649,20 +2453,20 @@ namespace Qubit.Modules.Categories
 
                 if (!References.Computer.friendJoinCollider.playerIDsCurrentlyTouching.Contains(player.UserId))
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> The player must be in stump.");
+                    Notifications.SendFormat("red", "ERROR", "The player must be in stump.");
                     return;
                 }
 
-                if (!References.Network.SessionIsPrivate)
+                if (!ManagerRegistry.NetworkSystem.SessionIsPrivate)
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be in a private room.");
+                    Notifications.SendFormat("red", "ERROR", "You must be in a private room.");
                     return;
                 }
 
                 Coroutines.instance.StartCoroutine(StumpKickDelay(() =>
                 {
-                    PhotonNetworkController.Instance.shuffler = Random.Range(0, 99).ToString().PadLeft(2, '0') + Random.Range(0, 99999999).ToString().PadLeft(8, '0');
-                    PhotonNetworkController.Instance.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
+                    ManagerRegistry.PhotonNetworkController.shuffler = Random.Range(0, 99).ToString().PadLeft(2, '0') + Random.Range(0, 99999999).ToString().PadLeft(8, '0');
+                    ManagerRegistry.PhotonNetworkController.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
 
                     BetaNearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(player));
                     RPCProtection();
@@ -2677,16 +2481,16 @@ namespace Qubit.Modules.Categories
         {
             if (Networking.InRoom)
             {
-                if (!References.Network.SessionIsPrivate)
+                if (!ManagerRegistry.NetworkSystem.SessionIsPrivate)
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be in a private room.");
+                    Notifications.SendFormat("red", "ERROR", "You must be in a private room.");
                     return;
                 }
 
                 Coroutines.instance.StartCoroutine(StumpKickDelay(() =>
                 {
-                    PhotonNetworkController.Instance.shuffler = Random.Range(0, 99).ToString().PadLeft(2, '0') + Random.Range(0, 99999999).ToString().PadLeft(8, '0');
-                    PhotonNetworkController.Instance.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
+                    ManagerRegistry.PhotonNetworkController.shuffler = Random.Range(0, 99).ToString().PadLeft(2, '0') + Random.Range(0, 99999999).ToString().PadLeft(8, '0');
+                    ManagerRegistry.PhotonNetworkController.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
 
                     foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && References.Computer.friendJoinCollider.playerIDsCurrentlyTouching.Contains(rig.GetPlayer().UserId)))
                         BetaNearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(rig.GetPlayer()));
@@ -2698,10 +2502,8 @@ namespace Qubit.Modules.Categories
                 }));
             }
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in a room.");
+                Notifications.SendFormat("red", "ERROR", "You are not in a room.");
         }
-
-        private static float elevatorKickDelay;
         public static void ElevatorKickGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -2709,9 +2511,9 @@ namespace Qubit.Modules.Categories
                 elevatorKickDelay = Time.time + 0.5f;
 
                 if (PhotonNetwork.IsMasterClient)
-                    SpecialTimeRPC(GRElevatorManager._instance.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { gunTarget.GetPlayer().ActorNumber } }, (int)GRElevatorManager._instance.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
+                    SpecialTimeRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { gunTarget.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
                 else
-                    GRElevatorManager._instance.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)GRElevatorManager._instance.currentLocation });
+                    ManagerRegistry.GRElevatorManager.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)ManagerRegistry.GRElevatorManager.currentLocation });
 
                 RPCProtection();
             }, new GunLibrary.GunSettings { when = () => Time.time > elevatorKickDelay });
@@ -2720,9 +2522,9 @@ namespace Qubit.Modules.Categories
         public static void ElevatorKickAll()
         {
             if (PhotonNetwork.IsMasterClient)
-                SpecialTimeRPC(GRElevatorManager._instance.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { Receivers = ReceiverGroup.Others }, (int)GRElevatorManager._instance.currentLocation, 2, GRElevatorManager.LowestActorNumberInElevator());
+                SpecialTimeRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { Receivers = ReceiverGroup.Others }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 2, GRElevatorManager.LowestActorNumberInElevator());
             else
-                GRElevatorManager._instance.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)GRElevatorManager._instance.currentLocation });
+                ManagerRegistry.GRElevatorManager.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)ManagerRegistry.GRElevatorManager.currentLocation });
         }
 
         public static void ElevatorKickAura()
@@ -2743,9 +2545,9 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig nearbyPlayer in nearbyPlayers)
                 {
                     if (PhotonNetwork.IsMasterClient)
-                        SpecialTimeRPC(GRElevatorManager._instance.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { nearbyPlayer.GetPlayer().ActorNumber } }, (int)GRElevatorManager._instance.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
+                        SpecialTimeRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { nearbyPlayer.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
                     else
-                        GRElevatorManager._instance.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)GRElevatorManager._instance.currentLocation });
+                        ManagerRegistry.GRElevatorManager.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)ManagerRegistry.GRElevatorManager.currentLocation });
 
                     RPCProtection();
                 }
@@ -2774,9 +2576,9 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig rig in touchedPlayers)
                 {
                     if (PhotonNetwork.IsMasterClient)
-                        SpecialTimeRPC(GRElevatorManager._instance.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { rig.GetPlayer().ActorNumber } }, (int)GRElevatorManager._instance.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
+                        SpecialTimeRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { rig.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
                     else
-                        GRElevatorManager._instance.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)GRElevatorManager._instance.currentLocation });
+                        ManagerRegistry.GRElevatorManager.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)ManagerRegistry.GRElevatorManager.currentLocation });
 
                     RPCProtection();
                 }
@@ -2802,24 +2604,20 @@ namespace Qubit.Modules.Categories
                 photonPeer = PhotonNetwork.NetworkingClient.LoadBalancingPeer,
                 usedTransportProtocol = ConnectionProtocol.Udp
             };
-            References.Network.ReturnToSinglePlayer();
+            ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
         }
 
         public static void BetaShuttleFollowCommand(Player player)
         {
-            PhotonNetworkController.Instance.FriendIDList.Add(player.UserId);
+            ManagerRegistry.PhotonNetworkController.FriendIDList.Add(player.UserId);
 
             object[] groupJoinSendData = new object[2];
-            groupJoinSendData[0] = PhotonNetworkController.Instance.shuffler;
-            groupJoinSendData[1] = PhotonNetworkController.Instance.keyStr;
+            groupJoinSendData[0] = ManagerRegistry.PhotonNetworkController.shuffler;
+            groupJoinSendData[1] = ManagerRegistry.PhotonNetworkController.keyStr;
             NetEventOptions netEventOptions = new NetEventOptions { TargetActors = new[] { player.ActorNumber } };
 
             RoomSystem.SendEvent(11, groupJoinSendData, netEventOptions, false);
         }
-
-        public static float greyZoneDelay;
-
-        public static Coroutine wipeOverride;
         public static IEnumerator ClearOverride()
         {
             yield return new WaitUntil(() => !Networking.InRoom);
@@ -2828,42 +2626,37 @@ namespace Qubit.Modules.Categories
             wipeOverride = null;
         }
 
-        public static float spazGreyDelay;
-        public static bool greyState;
-
         public static void KickAllInParty()
         {
-            if (FriendshipGroupDetection.Instance.IsInParty)
+            if (ManagerRegistry.FriendshipGroupDetection.IsInParty)
             {
                 partyLastCode = PhotonNetwork.CurrentRoom.Name;
                 waitForPlayerJoin = false;
-                PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(Room.RandomRoomName(), JoinType.ForceJoinWithParty);
+                ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(Room.RandomRoomName(), JoinType.ForceJoinWithParty);
                 partyTime = Time.time + 0.25f;
                 partyKickReconnecting = false;
-                amountPartying = FriendshipGroupDetection.Instance.myPartyMemberIDs.Count - 1;
-                Notifications.SendNotification("<color=grey>[</color><color=purple>PARTY</color><color=grey>]</color> Kicking " + amountPartying + " party members, please be patient..");
+                amountPartying = ManagerRegistry.FriendshipGroupDetection.myPartyMemberIDs.Count - 1;
+                Notifications.SendFormat("purple", "PARTY", "Kicking " + amountPartying + " party members, please be patient..");
             }
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in a party.");
+                Notifications.SendFormat("red", "ERROR", "You are not in a party.");
         }
 
         public static void BanAllInParty()
         {
-            if (FriendshipGroupDetection.Instance.IsInParty)
+            if (ManagerRegistry.FriendshipGroupDetection.IsInParty)
             {
                 partyLastCode = PhotonNetwork.CurrentRoom.Name;
                 waitForPlayerJoin = true;
-                PhotonNetworkController.Instance.AttemptToJoinSpecificRoom(References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)], JoinType.ForceJoinWithParty);
+                ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)], JoinType.ForceJoinWithParty);
                 partyTime = Time.time + 0.25f;
                 partyKickReconnecting = false;
-                amountPartying = FriendshipGroupDetection.Instance.myPartyMemberIDs.Count - 1;
-                Notifications.SendNotification("<color=grey>[</color><color=purple>PARTY</color><color=grey>]</color> Banning " + amountPartying + " party members, please be patient..");
+                amountPartying = ManagerRegistry.FriendshipGroupDetection.myPartyMemberIDs.Count - 1;
+                Notifications.SendFormat("purple", "PARTY", "Banning " + amountPartying + " party members, please be patient..");
             }
             else
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in a party.");
+                Notifications.SendFormat("red", "ERROR", "You are not in a party.");
         }
-
-        public static Coroutine partyKickDelayCoroutine;
         public static IEnumerator PartyKickDelay(bool ban)
         {
             yield return new WaitForSeconds(0.25f);
@@ -2878,75 +2671,27 @@ namespace Qubit.Modules.Categories
 
             Coroutines.instance.StopCoroutine(thisCoroutine);
         }
-
-        public static bool previousInParty;
         public static void AutoPartyKick()
         {
-            if (FriendshipGroupDetection.Instance.IsInParty && !previousInParty)
+            if (ManagerRegistry.FriendshipGroupDetection.IsInParty && !previousInParty)
                 partyKickDelayCoroutine ??= Coroutines.instance.StartCoroutine(PartyKickDelay(false));
 
-            previousInParty = FriendshipGroupDetection.Instance.IsInParty;
+            previousInParty = ManagerRegistry.FriendshipGroupDetection.IsInParty;
         }
 
         public static void AutoPartyBan()
         {
-            if (FriendshipGroupDetection.Instance.IsInParty && !previousInParty)
+            if (ManagerRegistry.FriendshipGroupDetection.IsInParty && !previousInParty)
                 partyKickDelayCoroutine ??= Coroutines.instance.StartCoroutine(PartyKickDelay(true));
 
-            previousInParty = FriendshipGroupDetection.Instance.IsInParty;
+            previousInParty = ManagerRegistry.FriendshipGroupDetection.IsInParty;
         }
-
-        private static float breakDelay;
         public static void PartyBreakNetworkTriggers()
         {
-            if (FriendshipGroupDetection.Instance.IsInParty && Time.time > breakDelay)
+            if (ManagerRegistry.FriendshipGroupDetection.IsInParty && Time.time > breakDelay)
             {
                 breakDelay = Time.time + 1f;
-                FriendshipGroupDetection.Instance.photonView.RPC("PartyMemberIsAboutToGroupJoin", RpcTarget.All, Array.Empty<object>());
-            }
-        }
-
-        public static bool legacyKickFreeze;
-
-        /// <summary>
-        /// Indicates whether event optimization is enabled. When enabled, it reduces network load by limiting certain RPC calls and adjusting serialization rates.
-        /// </summary>
-        private static bool _optimizeEvents;
-        public static bool OptimizeEvents
-        {
-            get => _optimizeEvents;
-            set
-            {
-                if (_optimizeEvents != value)
-                {
-                    _optimizeEvents = value;
-                    if (_optimizeEvents)
-                    {
-                        if (legacyKickFreeze)
-                            SerializePatch.OverrideSerialization = () => false;
-                        else
-                        {
-                            PhotonNetwork.SerializationRate = 2;
-                            RPCFilter.FilteredRPCs["OnHandTapRPC"] = () => false;
-                            RPCFilter.FilteredRPCs["RPC_UpdateCosmeticsWithTryonPacked"] = () => false;
-
-                            SerializePatch.OverrideSerialization = () =>
-                            {
-                                References.LocalRig.GetPhotonView().Serialize();
-                                return true;
-                            };
-                        }
-                    }
-                    else
-                    {
-                        if (SerializePatch.OverrideSerialization != null)
-                            SerializePatch.OverrideSerialization = null;
-
-                        PhotonNetwork.SerializationRate = 10;
-                        RPCFilter.FilteredRPCs.Remove("OnHandTapRPC");
-                        RPCFilter.FilteredRPCs.Remove("RPC_UpdateCosmeticsWithTryonPacked");
-                    }
-                }
+                ManagerRegistry.FriendshipGroupDetection.photonView.RPC("PartyMemberIsAboutToGroupJoin", RpcTarget.All, Array.Empty<object>());
             }
         }
 
@@ -2964,10 +2709,10 @@ namespace Qubit.Modules.Categories
                     VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
                     if (gunTarget && !gunTarget.IsLocal())
                     {
-                        if (lockTarget == null && FriendshipGroupDetection.Instance.IsInMyGroup(gunTarget.GetPlayer().UserId))
+                        if (lockTarget == null && ManagerRegistry.FriendshipGroupDetection.IsInMyGroup(gunTarget.GetPlayer().UserId))
                         {
                             for (int i = 0; i < 3970; i++)
-                                FriendshipGroupDetection.Instance.photonView.RPC("RequestPartyGameMode", gunTarget.GetPhotonPlayer(),
+                                ManagerRegistry.FriendshipGroupDetection.photonView.RPC("RequestPartyGameMode", gunTarget.GetPhotonPlayer(),
                                     new object[] { GameMode.gameModeKeyByName.Keys.ToArray()[Random.Range(0, GameMode.gameModeKeyByName.Keys.Count)] });
 
                             RPCProtection();
@@ -2993,14 +2738,14 @@ namespace Qubit.Modules.Categories
             {
                 kickDelay = Time.time + 10f;
                 for (int i = 0; i < 3950; i++)
-                    FriendshipGroupDetection.Instance.photonView.RPC
+                    ManagerRegistry.FriendshipGroupDetection.photonView.RPC
                     (
                         "RequestPartyGameMode",
                         new RaiseEventOptions
                         {
                             TargetActors =
-                            References.Network.PlayerListOthers
-                                .Where(plr => FriendshipGroupDetection.Instance.IsInMyGroup(plr.UserId))
+                            ManagerRegistry.NetworkSystem.PlayerListOthers
+                                .Where(plr => ManagerRegistry.FriendshipGroupDetection.IsInMyGroup(plr.UserId))
                                 .Select(plr => plr.ActorNumber).ToArray()
                         },
                         new object[]
@@ -3032,7 +2777,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig nearbyPlayer in nearbyPlayers)
                 {
                     for (int i = 0; i < 3950; i++)
-                        FriendshipGroupDetection.Instance.photonView.RPC("RequestPartyGameMode", nearbyPlayer.GetPhotonPlayer(),
+                        ManagerRegistry.FriendshipGroupDetection.photonView.RPC("RequestPartyGameMode", nearbyPlayer.GetPhotonPlayer(),
                             new object[] { GameMode.gameModeKeyByName.Keys.ToArray()[Random.Range(0, GameMode.gameModeKeyByName.Keys.Count)] });
 
                     RPCProtection();
@@ -3065,7 +2810,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig rig in touchedPlayers)
                 {
                     for (int i = 0; i < 3950; i++)
-                        FriendshipGroupDetection.Instance.photonView.RPC("RequestPartyGameMode", rig.GetPhotonPlayer(),
+                        ManagerRegistry.FriendshipGroupDetection.photonView.RPC("RequestPartyGameMode", rig.GetPhotonPlayer(),
                             new object[] { GameMode.gameModeKeyByName.Keys.ToArray()[Random.Range(0, GameMode.gameModeKeyByName.Keys.Count)] });
 
                     RPCProtection();
@@ -3074,8 +2819,6 @@ namespace Qubit.Modules.Categories
             else
                 OptimizeEvents = false;
         }
-
-        private static float antiReportLagDelay;
         public static void AntiReportLag()
         {
             if (Time.time > antiReportLagDelay)
@@ -3086,15 +2829,13 @@ namespace Qubit.Modules.Categories
                 {
                     antiReportLagDelay = Time.time + 0.1f;
                     actors.Add(GetPlayerFromVRRig(vrrig).ActorNumber);
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they are being lagged.");
+                    Notifications.SendFormat("purple", "ANTI-REPORT", "" + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they are being lagged.");
                 });
 
                 if (actors.Count > 0)
                     LagPlayer(actors);
             }
         }
-
-        public static float setMasterDelay;
         public static void SetMasterClient(bool skip = false)
         {
             if (Networking.IsMasterClient)
@@ -3102,7 +2843,7 @@ namespace Qubit.Modules.Categories
             if (PhotonNetwork.PlayerList.Length > 5)
             {
                 if (!skip)
-                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> {PhotonNetwork.PlayerList.Length - 5} people must leave for this mod to work.");
+                    Notifications.SendFormat("red", "ERROR", $"{PhotonNetwork.PlayerList.Length - 5} people must leave for this mod to work.");
                 return;
             }
             if (Time.time > setMasterDelay)
@@ -3116,7 +2857,7 @@ namespace Qubit.Modules.Categories
         {
             Dictionary<byte, object> dictionary = new Dictionary<byte, object>
             {
-                { OperationCode.GetProperties, new Hashtable { { GamePropertyKey.IsOpen, status }, { GamePropertyKey.IsVisible, status }, { GamePropertyKey.MaxPlayers, status ? 0 : PhotonNetworkController.Instance.currentJoinTrigger.GetRoomSize(SubscriptionManager.IsLocalSubscribed()) } } },
+                { OperationCode.GetProperties, new Hashtable { { GamePropertyKey.IsOpen, status }, { GamePropertyKey.IsVisible, status }, { GamePropertyKey.MaxPlayers, status ? 0 : ManagerRegistry.PhotonNetworkController.currentJoinTrigger.GetRoomSize(SubscriptionManager.IsLocalSubscribed()) } } },
                 { OperationCode.AuthenticateOnce, null }
             };
 
@@ -3125,7 +2866,7 @@ namespace Qubit.Modules.Categories
                 dictionary,
                 SendOptions.SendReliable
             );
-            GorillaScoreboardTotalUpdater.instance.UpdateActiveScoreboards();
+            ManagerRegistry.GorillaScoreboardTotalUpdater.UpdateActiveScoreboards();
         }
 
         public static void DestroyGun()
@@ -3194,27 +2935,21 @@ namespace Qubit.Modules.Categories
         public static void DestroyPlayer(NetPlayer player) =>
             PhotonNetwork.OpRemoveCompleteCacheOfPlayer(player.ActorNumber);
 
-        public static float rockDebounce;
-
         public static void BetaSetStatus(RoomSystem.StatusEffects state, RaiseEventOptions reo)
         {
             if (!Networking.IsMasterClient)
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
                 object[] statusSendData = new object[1];
                 statusSendData[0] = (int)state;
                 object[] sendEventData = new object[3];
-                sendEventData[0] = References.Network.ServerTimestamp;
+                sendEventData[0] = ManagerRegistry.NetworkSystem.ServerTimestamp;
                 sendEventData[1] = (byte)2;
                 sendEventData[2] = statusSendData;
                 PhotonNetwork.RaiseEvent(Constants.Network.ROOM_SYSTEM, sendEventData, reo, SendOptions.SendUnreliable);
             }
         }
-
-        public static float slowDelay;
-
-        public static float vibrateDelay;
 
         public static void BreakAudioGun()
         {
@@ -3253,8 +2988,6 @@ namespace Qubit.Modules.Categories
                 References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.Others, 111, false, 999999f);
             }
         }
-
-        public static Coroutine RopeCoroutine;
         public static IEnumerator RopeEnableRig()
         {
             yield return new WaitForSeconds(0.3f);
@@ -3265,7 +2998,7 @@ namespace Qubit.Modules.Categories
         {
             Velocity = Velocity.ClampMagnitudeSafe(15f);
 
-            if (RopeSwingManager.instance.ropes.TryGetValue(RopeId, out GorillaRopeSwing Rope))
+            if (ManagerRegistry.RopeSwingManager.ropes.TryGetValue(RopeId, out GorillaRopeSwing Rope))
             {
                 var ClosestNode = Rope.nodes
                     .Skip(1)
@@ -3290,7 +3023,7 @@ namespace Qubit.Modules.Categories
                 }
 
                 if (Vector3.Distance(ServerPos, ClosestNode.transform.position) < 5f)
-                    RopeSwingManager.instance.SendSetVelocity_RPC(RopeId, ClosestNode.index, Velocity, true);
+                    ManagerRegistry.RopeSwingManager.SendSetVelocity_RPC(RopeId, ClosestNode.index, Velocity, true);
                 else
                     RopeDelay = 0f;
 
@@ -3299,21 +3032,16 @@ namespace Qubit.Modules.Categories
         }
 
         public static void BetaSetRopeVelocity(GorillaRopeSwing Rope, Vector3 Velocity) =>
-            BetaSetRopeVelocity(RopeSwingManager.instance.ropes.FirstOrDefault(x => x.Value == Rope).Key, Velocity);
-
-        private static float randomRopeDelay;
-        private static GorillaRopeSwing randomRope;
+            BetaSetRopeVelocity(ManagerRegistry.RopeSwingManager.ropes.FirstOrDefault(x => x.Value == Rope).Key, Velocity);
         public static GorillaRopeSwing GetRandomRope()
         {
             if (Time.time > randomRopeDelay)
             {
                 randomRopeDelay = Time.time + 0.5f;
-                randomRope = RopeSwingManager.instance.ropes.Values.OrderBy(_ => Random.value).FirstOrDefault();
+                randomRope = ManagerRegistry.RopeSwingManager.ropes.Values.OrderBy(_ => Random.value).FirstOrDefault();
             }
             return randomRope;
         }
-
-        private static float RopeDelay;
         public static void JoystickRopeControl()
         {
             Vector2 r = rightJoystick;
@@ -3403,34 +3131,29 @@ namespace Qubit.Modules.Categories
                 BetaSetRopeVelocity(rope, (NewPointer.transform.position - rope.transform.position).normalized * 100f);
             }, new GunLibrary.GunSettings { when = () => Time.time > RopeDelay });
         }
-
-        public static Coroutine CritterCoroutine;
-        public static float critterGrabDelay;
         public static void InstantParty()
         {
             if (Time.time > Fun.instantPartyDelay)
             {
                 Fun.instantPartyDelay = Time.time + 0.1f;
 
-                FriendshipGroupDetection.Instance.suppressPartyCreationUntilTimestamp = 0f;
-                FriendshipGroupDetection.Instance.groupCreateAfterTimestamp = 0f;
+                ManagerRegistry.FriendshipGroupDetection.suppressPartyCreationUntilTimestamp = 0f;
+                ManagerRegistry.FriendshipGroupDetection.groupCreateAfterTimestamp = 0f;
 
-                List<int> provisionalMembers = FriendshipGroupDetection.Instance.playersInProvisionalGroup;
+                List<int> provisionalMembers = ManagerRegistry.FriendshipGroupDetection.playersInProvisionalGroup;
 
                 if (provisionalMembers.Count > 0)
                 {
-                    Color targetColor = GTColor.RandomHSV(FriendshipGroupDetection.Instance.braceletRandomColorHSVRanges);
-                    FriendshipGroupDetection.Instance.myBraceletColor = targetColor;
+                    Color targetColor = GTColor.RandomHSV(ManagerRegistry.FriendshipGroupDetection.braceletRandomColorHSVRanges);
+                    ManagerRegistry.FriendshipGroupDetection.myBraceletColor = targetColor;
 
                     List<int> members = new List<int> { PhotonNetwork.LocalPlayer.ActorNumber };
-                    members.AddRange(from player in PhotonNetwork.PlayerListOthers where FriendshipGroupDetection.Instance.IsInMyGroup(player.UserId) || provisionalMembers.Contains(player.ActorNumber) select player.ActorNumber);
-                    FriendshipGroupDetection.Instance.SendPartyFormedRPC(FriendshipGroupDetection.PackColor(targetColor), members.ToArray(), false);
+                    members.AddRange(from player in PhotonNetwork.PlayerListOthers where ManagerRegistry.FriendshipGroupDetection.IsInMyGroup(player.UserId) || provisionalMembers.Contains(player.ActorNumber) select player.ActorNumber);
+                    ManagerRegistry.FriendshipGroupDetection.SendPartyFormedRPC(FriendshipGroupDetection.PackColor(targetColor), members.ToArray(), false);
                     RPCProtection();
                 }
             }
         }
-
-        public static bool instantCreate;
 
 
         public static void KickToSpecificRoom()
@@ -3440,12 +3163,6 @@ namespace Qubit.Modules.Categories
 
             PromptText("What would you like the room code to be?", () => Overpowered.specificRoom = keyboardInput.ToUpper(), () => Manager.Toggle("Kick to Specific Room"), "Done", "Cancel");
         }
-        public static bool isRightHand;
-        public static int amountPartying;
-        public static bool waitForPlayerJoin;
-
-        public static string partyLastCode;
-        public static float partyTime;
-        public static bool partyKickReconnecting;
+        #endregion
     }
 }

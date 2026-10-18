@@ -178,7 +178,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
 
         public static void SpawnLucyAll()
         {
-            foreach (NetPlayer player in References.Network.PlayerListOthers)
+            foreach (NetPlayer player in ManagerRegistry.NetworkSystem.PlayerListOthers)
             {
                 PhotonNetwork.RaiseEvent(180, new object[] { "SummonLucy", (double)player.ActorNumber }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
                 RPCProtection();
@@ -275,7 +275,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         {
             if (Time.time > crashDelay)
             {
-                foreach (NetPlayer Player in References.Network.PlayerListOthers)
+                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 {
                     CrashPlayer(Player.ActorNumber);
                 }
@@ -292,7 +292,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
                     NetPlayer Player = GetPlayerFromVRRig(vrrig);
                     CrashPlayer(Player.ActorNumber);
                     crashDelay = Time.time + 0.5f;
-                    Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been crashed.");
+                    Notifications.SendFormat("purple", "ANTI-REPORT", "" + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been crashed.");
                 }
             });
         }

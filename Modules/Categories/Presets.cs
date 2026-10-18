@@ -31,6 +31,7 @@ namespace Qubit.Modules.Categories
 {
     public static class Presets
     {
+        #region Methods
         public static void LegitimatePreset()
         {
             string[] presetMods = {
@@ -62,7 +63,7 @@ namespace Qubit.Modules.Categories
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Legitimate preset enabled successfully.");
+            Notifications.SendFormat("purple", "PRESET", "Legitimate preset enabled successfully.");
         }
 
         public static void GhostPreset()
@@ -85,7 +86,7 @@ namespace Qubit.Modules.Categories
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Ghost preset enabled successfully.");
+            Notifications.SendFormat("purple", "PRESET", "Ghost preset enabled successfully.");
         }
 
         public static void SaveCustomPreset(int id)
@@ -98,12 +99,12 @@ namespace Qubit.Modules.Categories
                 string file = Path.Combine(directory, $"Preset_{id}.txt");
                 File.WriteAllText(file, Settings.SavePreferencesToText());
 
-                Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Custom preset saved successfully.");
+                Notifications.SendFormat("purple", "PRESET", "Custom preset saved successfully.");
             }
             catch (Exception ex)
             {
                 Logs.LogError($"Failed to save custom preset {id}: {ex}");
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to save custom preset.");
+                Notifications.SendFormat("red", "ERROR", "Failed to save custom preset.");
             }
         }
 
@@ -116,7 +117,7 @@ namespace Qubit.Modules.Categories
 
                 if (!File.Exists(file))
                 {
-                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Custom preset not found.");
+                    Notifications.SendFormat("red", "ERROR", "Custom preset not found.");
                     return;
                 }
 
@@ -124,12 +125,12 @@ namespace Qubit.Modules.Categories
                 Logs.Log(text);
                 Settings.LoadPreferencesFromText(text);
 
-                Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Custom preset loaded successfully.");
+                Notifications.SendFormat("purple", "PRESET", "Custom preset loaded successfully.");
             }
             catch (Exception ex)
             {
                 Logs.LogError($"Failed to load custom preset {id}: {ex}");
-                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to load custom preset.");
+                Notifications.SendFormat("red", "ERROR", "Failed to load custom preset.");
             }
         }
 
@@ -156,7 +157,7 @@ namespace Qubit.Modules.Categories
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Performance preset enabled successfully.");
+            Notifications.SendFormat("purple", "PRESET", "Performance preset enabled successfully.");
         }
 
         public static void SafetyPreset()
@@ -184,7 +185,7 @@ namespace Qubit.Modules.Categories
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Safety preset enabled successfully.");
+            Notifications.SendFormat("purple", "PRESET", "Safety preset enabled successfully.");
         }
 
         public static void SimplePreset()
@@ -202,7 +203,8 @@ namespace Qubit.Modules.Categories
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Simple preset enabled successfully.");
+            Notifications.SendFormat("purple", "PRESET", "Simple preset enabled successfully.");
         }
+        #endregion
     }
 }

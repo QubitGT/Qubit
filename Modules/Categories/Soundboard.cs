@@ -25,11 +25,13 @@ namespace Qubit.Modules.Categories
 {
     public static class Soundboard
     {
+        #region Settings
         public static bool LegacySoundboard = false;
         public static bool LoopAudio = false;
         public static bool OverlapAudio = false;
         public static readonly Dictionary<string, Module[]> CachedButtons = new Dictionary<string, Module[]>();
 
         public static bool disableLocalSoundboard;
+        #endregion
     }
 }
