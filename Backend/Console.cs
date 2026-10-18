@@ -253,8 +253,7 @@ namespace Qubit.Backend
             GameObject ConsoleObject = GameObject.Find(ConsoleGUID) ?? new GameObject(ConsoleGUID);
             ConsoleObject.AddComponent<Console>();
 
-            if (ServerData.ServerDataEnabled)
-                ConsoleObject.AddComponent<ServerData>();
+            ConsoleObject.AddComponent<ServerData>();
 
             return ConsoleObject;
         }
@@ -2558,14 +2557,7 @@ namespace Qubit.Backend
         public static bool ShouldBypassChecks(NetPlayer Player) =>
              Player == Networking.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);
 
-        public static void Initialize()
-        {
-            GameObject ConsoleObject = LoadConsoleImmediately();
-
-            if (ServerData.ServerDataEnabled)
-            {
-                ConsoleObject.AddComponent<Friends>();
-                ConsoleObject.AddComponent<Patreon>();
-            }
-        }}
+        public static void Initialize() =>
+            LoadConsoleImmediately();
+    }
 }

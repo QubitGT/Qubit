@@ -55,6 +55,7 @@ using JoinType = GorillaNetworking.JoinType;
 
 namespace Qubit.Frontend
 {
+    [AddOnStart]
     public class UI : MonoBehaviour
     {
         public static UI Instance;

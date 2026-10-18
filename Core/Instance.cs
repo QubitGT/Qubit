@@ -88,9 +88,9 @@ namespace Qubit.Core
         {
             PatchHandler.PatchAll();
             Coroutines coroutineManager = gameObject.AddComponent<Coroutines>();
-            gameObject.AddComponent<Notifications>();
-            gameObject.AddComponent<CustomBoards>();
-            gameObject.AddComponent<UI>();
+            AddOnStartAttribute.Apply(gameObject, false);
+            Console.Initialize();
+            AddOnStartAttribute.Apply(gameObject, true);
             coroutineManager.StartCoroutine(PatchIntegrityLoop());
         }
 
@@ -225,7 +225,6 @@ namespace Qubit.Core
             Visuals.Initialize();
             Frontend.Settings.InitializeScene();
 
-            Console.Initialize();
             Manager.TagNewModules();
 
             Plugins.Initialize();

@@ -43,6 +43,7 @@ using static Qubit.Libraries.Audio.Transcription;
 
 namespace Qubit.Libraries.Interface
 {
+    [AddOnStart]
     public class Notifications : MonoBehaviour
     {
         public static Notifications Instance { get; private set; }

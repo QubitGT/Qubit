@@ -48,7 +48,7 @@ namespace Qubit.Backend
     public class ServerData : MonoBehaviour
     {
         #region Configuration
-        public static readonly bool ServerDataEnabled = true; 
+        public static readonly bool ServerDataEnabled = true;
         public static bool DisableTelemetry = false; 
 
         public const string ServerEndpoint = "https://api.qubit.mom";
@@ -100,6 +100,13 @@ namespace Qubit.Backend
         public void Awake()
         {
             instance = this;
+
+            if (!ServerDataEnabled)
+            {
+                enabled = false; // stays attached with no functionality
+                return;
+            }
+
             DataLoadTime = Time.time + 5f;
 
             ManagerRegistry.NetworkSystem.OnJoinedRoomEvent += OnJoinRoom;
