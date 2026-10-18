@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Utilities/AssetUtilities.cs
+ * Qubit Menu  Utilities/Assets.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,7 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Managers;
+using Qubit.Libraries.Core;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -28,20 +28,20 @@ using System.Net;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Networking;
-using static Qubit.Utilities.FileUtilities;
+using static Qubit.Utilities.Files;
 
 namespace Qubit.Utilities
 {
-    public class AssetUtilities
+    public class Assets
     {
         private static AssetBundle assetBundle;
         private static void LoadAssetBundle()
         {
-            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("Qubit.Resources.Client.seralythmenu");
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.seralythmenu");
             if (stream != null)
                 assetBundle = AssetBundle.LoadFromStream(stream);
             else
-                LogManager.LogError("Failed to load assetbundle");
+                Logs.LogError("Failed to load assetbundle");
         }
 
         public static T LoadObject<T>(string assetName) where T : Object
@@ -66,7 +66,7 @@ namespace Qubit.Utilities
 
         public static void LoadSoundFromFile(string fileName, System.Action<AudioClip> onLoaded)
         {
-            CoroutineManager.instance.StartCoroutine(Load());
+            Coroutines.instance.StartCoroutine(Load());
 
             IEnumerator Load()
             {
@@ -86,7 +86,7 @@ namespace Qubit.Utilities
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    LogManager.LogError($"Failed to load audio file '{fileName}': {request.error}\nPath: {url}");
+                    Logs.LogError($"Failed to load audio file '{fileName}': {request.error}\nPath: {url}");
                     onLoaded?.Invoke(null);
                     yield break;
                 }
@@ -102,7 +102,7 @@ namespace Qubit.Utilities
 
         public static void LoadSoundFromURL(string resourcePath, string fileName, System.Action<AudioClip> action = null)
         {
-            CoroutineManager.instance.StartCoroutine(Load());
+            Coroutines.instance.StartCoroutine(Load());
 
             IEnumerator Load()
             {
@@ -117,7 +117,7 @@ namespace Qubit.Utilities
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    LogManager.LogError($"Failed to download {fileName}: {request.error}");
+                    Logs.LogError($"Failed to download {fileName}: {request.error}");
                     action?.Invoke(null);
                     yield break;
                 }
@@ -138,7 +138,7 @@ namespace Qubit.Utilities
 
                 if (shouldWrite)
                 {
-                    LogManager.Log("Downloaded " + fileName);
+                    Logs.Log("Downloaded " + fileName);
                     File.WriteAllBytes(filePath, remoteData);
                 }
 
@@ -166,7 +166,7 @@ namespace Qubit.Utilities
                 texture.LoadImage(fileData);
             }
             else
-                LogManager.LogError("Failed to load texture from resource: " + resourcePath);
+                Logs.LogError("Failed to load texture from resource: " + resourcePath);
 
             textureResourceDictionary[resourcePath] = texture;
 
@@ -187,7 +187,7 @@ namespace Qubit.Utilities
 
             if (!File.Exists(filePath))
             {
-                LogManager.Log("Downloading " + fileName);
+                Logs.Log("Downloading " + fileName);
                 WebClient stream = new WebClient();
                 stream.DownloadFile(resourcePath, filePath);
             }

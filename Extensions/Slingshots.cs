@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Extensions/SlingshotExtensions.cs
+ * Qubit Menu  Extensions/Slingshots.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -23,7 +23,7 @@ using UnityEngine;
 
 namespace Qubit.Extensions
 {
-    public static class SlingshotExtensions
+    public static class Slingshots
     {
         public static Vector3 GetTrueLaunchPosition(this Slingshot slingshot) =>
             slingshot.drawingHand.transform.position +

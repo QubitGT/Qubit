@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Utilities/FileUtilities.cs
+ * Qubit Menu  Utilities/Files.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace Qubit.Utilities
 {
-    public class FileUtilities
+    public class Files
     {
         public static string GetFileExtension(string fileName)
         {

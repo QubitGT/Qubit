@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Extensions/VRRigExtensions.cs
+ * Qubit Menu  Extensions/Players.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,22 +20,134 @@
  */
 
 using GorillaGameModes;
+using GorillaLocomotion;
 using GorillaTagScripts;
 using Photon.Pun;
-using Qubit.Menu;
-using Qubit.Mods;
-using Qubit.Utilities;
+using Photon.Realtime;
+using PlayFab;
+using PlayFab.ClientModels;
+using Qubit.Core;
+using Qubit.Modules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.GameModeUtilities;
+using static Qubit.Extensions.Strings;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Utilities.GameModes;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 namespace Qubit.Extensions
 {
-    public static class VRRigExtensions
+    public static class Players
     {
+        #region NetPlayer
+        public static Player GetPlayer(this NetPlayer self) =>
+            Players.NetPlayerToPlayer(self);
+
+        public static VRRig VRRig(this NetPlayer self) =>
+            Players.GetVRRigFromPlayer(self);
+
+        public static bool InRoom(this NetPlayer self) =>
+            NetworkSystem.Instance.AllNetPlayers.Contains(self);
+
+        public static Hashtable GetCustomProperties(this NetPlayer self) =>
+            self.GetPlayer().CustomProperties;
+        #endregion
+
+        #region Player
+        public static VRRig VRRig(this Player self) =>
+            Players.GetVRRigFromPlayer(self);
+
+        public static bool InRoom(this Player self) =>
+            PhotonNetwork.PlayerList.Contains(self);
+
+        #endregion
+
+        #region GorillaTagger
+        public static bool IsGrounded(this GorillaTagger tagger, float maxDistance = 0.15f) =>
+                Physics.Raycast(tagger.bodyCollider.transform.position - new Vector3(0f, 0.2f, 0f), Vector3.down, maxDistance, GTPlayer.Instance.locomotionEnabledLayers);
+        #endregion
+
+        public static VRRig GetVRRigFromPlayer(NetPlayer p) =>
+            GorillaGameManager.StaticFindRigForPlayer(p);
+
+        public static NetPlayer GetPlayerFromVRRig(VRRig p) =>
+            p.Creator ?? NetworkSystem.Instance.GetPlayer(NetworkSystem.Instance.GetOwningPlayerID(p.rigSerializer.gameObject));
+
+        public static NetPlayer GetPlayerFromID(string id) =>
+            PhotonNetwork.PlayerList.FirstOrDefault(player => player.UserId == id);
+
+        public static Player NetPlayerToPlayer(NetPlayer p) =>
+            p.GetPlayerRef();
+
+        public static Player GetRandomPlayer(bool includeSelf = false) =>
+            includeSelf ?
+            PhotonNetwork.PlayerList[UnityEngine.Random.Range(0, PhotonNetwork.PlayerList.Length)] :
+            PhotonNetwork.PlayerListOthers[UnityEngine.Random.Range(0, PhotonNetwork.PlayerListOthers.Length)];
+
+        private static VRRig rigTarget;
+        private static float rigTargetChange;
+        public static VRRig GetTargetPlayer(float targetChangeDelay = 1f)
+        {
+            if (!(Time.time > rigTargetChange) && rigTarget.Active()) return rigTarget;
+            rigTargetChange = Time.time + targetChangeDelay;
+            rigTarget = GetRandomVRRig();
+
+            return rigTarget;
+        }
+
+        public static VRRig GetRandomVRRig(bool includeSelf = false) =>
+            GetVRRigFromPlayer(GetRandomPlayer(includeSelf));
+
+        public static NetworkView GetNetworkViewFromVRRig(VRRig p) =>
+            p.netView;
+
+        public static PhotonView GetPhotonViewFromVRRig(VRRig p) =>
+            GetNetworkViewFromVRRig(p).GetView;
+
+        public static VRRig GetClosestVRRig() =>
+            global::VRRig.LocalRig.GetClosest();
+
+        public static readonly Dictionary<string, float> waitingForCreationDate = new Dictionary<string, float>();
+        public static readonly Dictionary<string, string> creationDateCache = new Dictionary<string, string>();
+        public static string GetCreationDate(string input, Action<string> onTranslated = null, string format = "MMMM dd, yyyy h:mm tt")
+        {
+            if (creationDateCache.TryGetValue(input, out string date))
+                return date;
+            if (!waitingForCreationDate.ContainsKey(input))
+            {
+                waitingForCreationDate[input] = Time.time + 10f;
+                GetCreationCoroutine(input, onTranslated, format);
+            }
+            else
+            {
+                if (!(Time.time > waitingForCreationDate[input])) return "Loading...";
+                waitingForCreationDate[input] = Time.time + 10f;
+                GetCreationCoroutine(input, onTranslated, format);
+            }
+
+            return "Loading...";
+        }
+
+        public static void GetCreationCoroutine(string userId, Action<string> onTranslated = null, string format = "MMMM dd, yyyy h:mm tt")
+        {
+            if (creationDateCache.TryGetValue(userId, out string date))
+            {
+                onTranslated?.Invoke(date);
+                return;
+            }
+
+            PlayFabClientAPI.GetAccountInfo(new GetAccountInfoRequest { PlayFabId = userId }, delegate (GetAccountInfoResult result) // Who designed this
+            {
+                string creationDate = result.AccountInfo.Created.ToString(format);
+                creationDateCache[userId] = creationDate;
+
+                onTranslated?.Invoke(creationDate);
+            }, delegate { creationDateCache[userId] = "Error"; onTranslated?.Invoke("Error"); });
+        }
+
         public static bool IsLocal(this VRRig rig, bool ghostRig = true) =>
             rig != null && (rig.isLocal || (GhostRig != null && rig == GhostRig));
 
@@ -66,28 +178,27 @@ namespace Qubit.Extensions
         public static float GetRecorderLoudness(this VRRig rig)
         {
             GorillaSpeakerLoudness recorder = rig.GetComponent<GorillaSpeakerLoudness>();
-            if (recorder != null)
-                return recorder.Loudness * 3f;
-            return 0f;
+            return recorder != null ? recorder.Loudness * 3f : 0f;
         }
         public static bool IsBeingTouched(this VRRig rig, VRRig otherRig = null, float distance = 0.35f)
         {
             if (rig == null) return false;
-            VRRig targetRig = otherRig ?? VRRig.LocalRig;
+            VRRig targetRig = otherRig ?? global::VRRig.LocalRig;
             return rig.Distance(targetRig.leftHand.rigTarget.position) <= distance || rig.Distance(targetRig.rightHand.rigTarget.position) <= distance;
         }
 
         public static bool IsNear(this VRRig rig, VRRig otherRig = null, float distance = 3f)
         {
             if (rig == null) return false;
-            VRRig targetRig = otherRig ?? VRRig.LocalRig;
+            VRRig targetRig = otherRig ?? global::VRRig.LocalRig;
             return rig.Distance(targetRig.transform.position) <= distance;
         }
 
         public static bool IsTouchingMe(this VRRig rig, float distance = 0.35f)
         {
-            if (rig == null) return false;
-            return rig.Distance(VRRig.LocalRig.leftHand.rigTarget.position) <= distance || rig.Distance(VRRig.LocalRig.rightHand.rigTarget.position) <= distance;
+            return rig == null
+                ? false
+                : rig.Distance(global::VRRig.LocalRig.leftHand.rigTarget.position) <= distance || rig.Distance(global::VRRig.LocalRig.rightHand.rigTarget.position) <= distance;
         }
 
         public static bool IsTagged(this VRRig rig)
@@ -141,19 +252,17 @@ namespace Qubit.Extensions
                 return result;
             int max = Math.Max(suspiciouslySteam, Math.Max(suspiciouslyPC, suspiciouslyQuest));
 
-            if (suspiciouslySteam == max) return PlatformType.Steam;
-            if (suspiciouslyQuest == max) return PlatformType.Quest;
-            if (suspiciouslyPC == max) return PlatformType.PC;
-
-            return PlatformType.Unknown;
+            return suspiciouslySteam == max
+                ? PlatformType.Steam
+                : suspiciouslyQuest == max ? PlatformType.Quest : suspiciouslyPC == max ? PlatformType.PC : PlatformType.Unknown;
         }
 
         public static string GetCreationDate(this VRRig rig, Action<string> onTranslated = null, string format = "MMMM dd, yyyy h:mm tt") =>
-            RigUtilities.GetCreationDate(rig.Creator.UserId, onTranslated, format);
+            Players.GetCreationDate(rig.Creator.UserId, onTranslated, format);
 
         public static Color GetColor(this VRRig rig)
         {
-            if (Buttons.GetIndex("Follow Player Colors").enabled)
+            if (Manager.GetIndex("Follow Player Colors").enabled)
                 return rig.playerColor;
 
             if (rig.bodyRenderer.cosmeticBodyType == GorillaBodyType.Skeleton)
@@ -210,13 +319,13 @@ namespace Qubit.Extensions
         }
 
         public static string GetName(this VRRig rig) =>
-            RigUtilities.GetPlayerFromVRRig(rig)?.NickName ?? string.Empty;
+            Players.GetPlayerFromVRRig(rig)?.NickName ?? string.Empty;
 
         public static NetPlayer GetPlayer(this VRRig rig) =>
-           RigUtilities.GetPlayerFromVRRig(rig);
+           Players.GetPlayerFromVRRig(rig);
 
         public static Photon.Realtime.Player GetPhotonPlayer(this VRRig rig) =>
-            RigUtilities.NetPlayerToPlayer(RigUtilities.GetPlayerFromVRRig(rig));
+            Players.NetPlayerToPlayer(Players.GetPlayerFromVRRig(rig));
 
         public static NetworkView GetNetView(this VRRig rig) =>
             rig.netView;
@@ -236,7 +345,7 @@ namespace Qubit.Extensions
                 case GameModeType.InfectionCompetitive:
                 case GameModeType.FreezeTag:
                 case GameModeType.PropHunt:
-                    GorillaTagManager tagManager = (GorillaTagManager)GorillaGameManager.instance;
+                    GorillaTagManager tagManager = ManagerRegistry.GorillaTagManager;
                     return tagManager.isCurrentlyTag
                         ? player == tagManager.currentIt
                             ? (new[]
@@ -299,7 +408,7 @@ namespace Qubit.Extensions
 
                     foreach (var rig in VRRigCache.ActiveRigs)
                     {
-                        if (rig != null && !Settings.Blocked.Contains(rig))
+                        if (rig != null && !Modules.Categories.Settings.Blocked.Contains(rig))
                             _rigs.Add(rig);
                     }
                 }
@@ -307,5 +416,16 @@ namespace Qubit.Extensions
                 return _rigs;
             }
         }
+
+        public static string CleanPlayerName(string input, int length = 12)
+        {
+            input = NoRichtextTags(input);
+
+            if (input.Length > length)
+                input = input[..(length - 1)];
+
+            return input;
+        }
+    
     }
 }

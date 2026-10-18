@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Extensions/MiscellaneousExtensions.cs
+ * Qubit Menu  Extensions/Miscellaneous.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,17 +20,19 @@
  */
 
 using Photon.Pun;
-using Qubit.Utilities;
+using Qubit.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using static Qubit.Menu.Main;
+using static Qubit.Extensions.Colors;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Networking.Serialization;
 
 namespace Qubit.Extensions
 {
-    public static class MiscellaneousExtensions
+    public static class Miscellaneous
     {
         public static bool CanCallNow(this FXSystemSettings settings, int index, float? time = null) =>
             settings.GetCallLimiter(index).CanCallNow(time, settings.GetCallLimitType(index).UseNetWorkTime);

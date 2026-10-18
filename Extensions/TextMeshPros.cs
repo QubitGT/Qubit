@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Extensions/TextMeshProExtensions.cs
+ * Qubit Menu  Extensions/TextMeshPros.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,14 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Utilities;
 using System;
 using TMPro;
 using UnityEngine;
 
 namespace Qubit.Extensions
 {
-    public static class TextMeshProExtensions
+    public static class TextMeshPros
     {
         public static void SafeSetText(this TMP_Text tmp, string text)
         {
@@ -106,7 +105,7 @@ namespace Qubit.Extensions
             get
             {
                 if (_tmpShader == null)
-                    _tmpShader = AssetUtilities.LoadAsset<Shader>("TMP_SDF-Mobile Overlay");
+                    _tmpShader = Qubit.Utilities.Assets.LoadAsset<Shader>("TMP_SDF-Mobile Overlay");
 
                 return _tmpShader;
             }

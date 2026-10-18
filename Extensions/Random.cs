@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Utilities/RandomUtilities.cs
+ * Qubit Menu  Extensions/Random.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -21,9 +21,9 @@
 
 using UnityEngine;
 
-namespace Qubit.Utilities
+namespace Qubit.Extensions
 {
-    public class RandomUtilities
+    public class Random
     {
         /// <summary>
         /// Generates a Vector3 with each component set to a random value between -range and range.
@@ -31,9 +31,9 @@ namespace Qubit.Utilities
         /// <param name="range">The maximum absolute value for each component of the generated vector.</param>
         /// <returns>A Vector3 with random x, y, and z components within the specified range.</returns>
         public static Vector3 RandomVector3(float range = 1f) =>
-            new Vector3(Random.Range(-range, range),
-                        Random.Range(-range, range),
-                        Random.Range(-range, range));
+            new Vector3(UnityEngine.Random.Range(-range, range),
+                        UnityEngine.Random.Range(-range, range),
+                        UnityEngine.Random.Range(-range, range));
 
         /// <summary>
         /// Generates a random Quaternion with each Euler angle component in the range [0, range).
@@ -41,9 +41,9 @@ namespace Qubit.Utilities
         /// <param name="range">The upper bound (exclusive) for each Euler angle in degrees. Defaults to 360.</param>
         /// <returns>A Quaternion with random rotation based on the specified range.</returns>
         public static Quaternion RandomQuaternion(float range = 360f) =>
-            Quaternion.Euler(Random.Range(0f, range),
-                        Random.Range(0f, range),
-                        Random.Range(0f, range));
+            Quaternion.Euler(UnityEngine.Random.Range(0f, range),
+                        UnityEngine.Random.Range(0f, range),
+                        UnityEngine.Random.Range(0f, range));
 
         /// <summary>
         /// Generates a random color with each RGB component in the range [0, range) and the specified alpha value.
@@ -52,9 +52,9 @@ namespace Qubit.Utilities
         /// <param name="alpha">The alpha (transparency) value of the generated color.</param>
         /// <returns>A randomly generated Color with the specified range and alpha.</returns>
         public static Color RandomColor(byte range = 255, byte alpha = 255) =>
-            new Color32((byte)Random.Range(0, range),
-                        (byte)Random.Range(0, range),
-                        (byte)Random.Range(0, range),
+            new Color32((byte)UnityEngine.Random.Range(0, range),
+                        (byte)UnityEngine.Random.Range(0, range),
+                        (byte)UnityEngine.Random.Range(0, range),
                         alpha);
 
         /// <summary>
@@ -67,7 +67,7 @@ namespace Qubit.Utilities
             string random = "";
             for (int i = 0; i < length; i++)
             {
-                int rand = Random.Range(0, 36);
+                int rand = UnityEngine.Random.Range(0, 36);
                 char c = rand < 26
                     ? (char)('A' + rand)
                     : (char)('0' + (rand - 26));

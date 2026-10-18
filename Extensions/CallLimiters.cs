@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Extensions/CallLimiterExtensions.cs
+ * Qubit Menu  Extensions/CallLimiters.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,13 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 using Photon.Pun;
-using Qubit.Managers;
+using Qubit.Libraries.Core;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Qubit.Extensions
 {
-    public static class CallLimiterExtensions
+    public static class CallLimiters
     {
         private static readonly ConditionalWeakTable<CallLimiter, CallLimiter> shadows = new ConditionalWeakTable<CallLimiter, CallLimiter>();
 
@@ -63,15 +63,15 @@ namespace Qubit.Extensions
         {
             if (limiter == null)
             {
-                LogManager.LogWarning("CallLimiter is null");
+                Logs.LogWarning("CallLimiter is null");
                 return false;
             }
 
             CallLimiter shadow = shadows.GetValue(limiter, rl => rl.Clone());
 
-            if (usesNetworkTime && NetworkSystem.Instance.IsOnline)
-                return shadow.CheckCallServerTime(time ?? (PhotonNetwork.CurrentTime));
-            return shadow.CheckCallTime((float)(time ?? Time.time));
+            return usesNetworkTime && NetworkSystem.Instance.IsOnline
+                ? shadow.CheckCallServerTime(time ?? (PhotonNetwork.CurrentTime))
+                : shadow.CheckCallTime((float)(time ?? Time.time));
         }
 
         public static void Remove(this CallLimiter limiter)

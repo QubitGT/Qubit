@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Extensions/PhotonViewExtensions.cs
+ * Qubit Menu  Extensions/PhotonViews.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -26,7 +26,7 @@ using System.Linq;
 
 namespace Qubit.Extensions
 {
-    public static class PhotonViewExtensions
+    public static class PhotonViews
     {
         public static void RPC(this PhotonView view, string methodName, object target, params object[] parameters)
         {

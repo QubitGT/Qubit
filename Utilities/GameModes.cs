@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Utilities/GameModeUtilities.cs
+ * Qubit Menu  Utilities/GameModes.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -22,12 +22,18 @@
 using GorillaGameModes;
 using GorillaTagScripts;
 using Photon.Pun;
+using Qubit.Core;
+using Qubit.Libraries.Interface;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
+using static Qubit.Core.Security;
+using static Qubit.Extensions.Players;
+using static Qubit.Utilities.GameObj;
 
 namespace Qubit.Utilities
 {
-    public class GameModeUtilities
+    public class GameModes
     {
         public static List<NetPlayer> InfectedList()
         {
@@ -127,7 +133,7 @@ namespace Qubit.Utilities
 
                 case GameModeType.Paintbrawl:
                     if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
-                        paintbrawlManager.playerLives[plr.ActorNumber] = 0;
+                        SetPaintbrawlHealth(plr.ActorNumber, 0);
 
                     break;
             }
@@ -177,7 +183,7 @@ namespace Qubit.Utilities
 
                 case GameModeType.Paintbrawl:
                     if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
-                        paintbrawlManager.playerLives[plr.ActorNumber] = 3;
+                        SetPaintbrawlHealth(plr.ActorNumber, 3);
 
                     break;
             }
@@ -209,7 +215,7 @@ namespace Qubit.Utilities
 
                 case GameModeType.Paintbrawl:
                     if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
-                        paintbrawlManager.playerLives[plr.ActorNumber] = 0;
+                        SetPaintbrawlHealth(plr.ActorNumber, 0);
 
                     break;
             }
@@ -241,10 +247,181 @@ namespace Qubit.Utilities
 
                 case GameModeType.Paintbrawl:
                     if (GorillaGameManager.instance is GorillaPaintbrawlManager paintbrawlManager && paintbrawlManager.playerLives != null)
-                        paintbrawlManager.playerLives[plr.ActorNumber] = 3;
+                        SetPaintbrawlHealth(plr.ActorNumber, 3);
 
                     break;
             }
         }
-    }
+
+        #region Paintbrawl
+        private static int paintbrawlHitIndex;
+        private static readonly Dictionary<int, float> paintbrawlHitDelays = new Dictionary<int, float>();
+
+        public static void SetPaintbrawlHealth(int actorNumber, int health) =>
+            ManagerRegistry.GorillaPaintbrawlManager.playerLives[actorNumber] = health;
+
+        public static void SetPaintbrawlHealth(NetPlayer target, int health)
+        {
+            if (NetworkSystem.Instance.IsMasterClient)
+            {
+                SetPaintbrawlHealth(target.ActorNumber, health);
+                return;
+            }
+
+            if (ManagerRegistry.GorillaPaintbrawlManager.playerLives.TryGetValue(target.ActorNumber, out int current) && health < current)
+                ReportPaintbrawlHit(target);
+        }
+
+        public static void ReportPaintbrawlHit(NetPlayer target)
+        {
+            if (paintbrawlHitDelays.TryGetValue(target.ActorNumber, out float lastTime))
+            {
+                if (Time.time > lastTime)
+                    return;
+            }
+
+            paintbrawlHitDelays[target.ActorNumber] = Time.time + 3.1f;
+
+            VRRig rig = GetVRRigFromPlayer(target);
+            GameMode.ActiveNetworkHandler.SendRPC("RPC_ReportSlingshotHit", false, NetPlayerToPlayer(target), rig.transform.position, paintbrawlHitIndex);
+            RPCProtection();
+
+            paintbrawlHitIndex++;
+        }
+
+        public static void KillPaintbrawlPlayer(NetPlayer target)
+        {
+            if (!NetworkSystem.Instance.IsMasterClient)
+                ReportPaintbrawlHit(target);
+            else
+                SetPaintbrawlHealth(target.ActorNumber, 0);
+        }
+
+        public static void StartPaintbrawl() =>
+            ManagerRegistry.GorillaPaintbrawlManager.StartBattle();
+
+        public static void EndPaintbrawl() =>
+            ManagerRegistry.GorillaPaintbrawlManager.BattleEnd();
+
+        public static void SetPaintbrawlCooldowns(float hitCooldown, float tagCooldown, float stunGracePeriod)
+        {
+            GorillaPaintbrawlManager brawlManager = ManagerRegistry.GorillaPaintbrawlManager;
+            brawlManager.hitCooldown = hitCooldown;
+            brawlManager.tagCoolDown = tagCooldown;
+            brawlManager.stunGracePeriod = stunGracePeriod;
+        }
+        #endregion
+
+        #region Guardian
+        public static bool IsGuardian(NetPlayer player) =>
+            ManagerRegistry.GorillaGuardianManager.IsPlayerGuardian(player);
+
+        public static void SetGuardian(NetPlayer target)
+        {
+            if (!NetworkSystem.Instance.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (IsGuardian(target))
+                return;
+
+            foreach (TappableGuardianIdol tgi in GetAllType<TappableGuardianIdol>())
+            {
+                if (tgi.manager && tgi.manager.photonView && !tgi.isChangingPositions)
+                {
+                    GorillaGuardianZoneManager zoneManager = tgi.zoneManager;
+                    if (zoneManager.IsZoneValid() && tgi.manager && zoneManager.CurrentGuardian == null)
+                    {
+                        zoneManager.SetGuardian(target);
+                        return;
+                    }
+                }
+            }
+        }
+
+        private static float guardianTapDelay;
+        public static void BecomeGuardian()
+        {
+            if (NetworkSystem.Instance.InRoom)
+            {
+                if (GorillaGameManager.instance.GameType() != GameModeType.Guardian)
+                    return;
+
+                if (NetworkSystem.Instance.IsMasterClient)
+                {
+                    if (!VRRig.LocalRig.enabled)
+                        VRRig.LocalRig.enabled = true;
+                    if (!IsGuardian(PhotonNetwork.LocalPlayer))
+                        SetGuardian(PhotonNetwork.LocalPlayer);
+                }
+                else
+                {
+                    foreach (TappableGuardianIdol tgi in GetAllType<TappableGuardianIdol>())
+                    {
+                        if (tgi.manager && tgi.manager.photonView && !tgi.isChangingPositions)
+                        {
+                            GorillaGuardianZoneManager zoneManager = tgi.zoneManager;
+                            if (!IsGuardian(NetworkSystem.Instance.LocalPlayer) && zoneManager.IsZoneValid() && tgi.manager)
+                            {
+                                VRRig.LocalRig.enabled = false;
+                                VRRig.LocalRig.transform.position = tgi.transform.position;
+                                VRRig.LocalRig.leftHand.rigTarget.transform.position = tgi.transform.position;
+                                VRRig.LocalRig.rightHand.rigTarget.transform.position = tgi.transform.position;
+
+                                if (Time.time > guardianTapDelay)
+                                {
+                                    guardianTapDelay = Time.time + (zoneManager._currentActivationTime >= zoneManager.requiredActivationTime - 1f ? 0f : 0.2f);
+                                    tgi.OnTap(1);
+                                    RPCProtection();
+                                }
+                            }
+                        }
+                        else
+                            VRRig.LocalRig.enabled = true;
+                    }
+                }
+            }
+        }
+        #endregion
+
+        #region Prop Hunt
+        public static void SetPropHuntHandDistance(float distance)
+        {
+            if (NetworkSystem.Instance.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+                ManagerRegistry.GorillaPropHuntGameManager.m_ph_hand_follow_distance = distance;
+        }
+
+        public static void SetPropHuntRoundStart(int millis)
+        {
+            if (NetworkSystem.Instance.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+                ManagerRegistry.GorillaPropHuntGameManager._ph_timeRoundStartedMillis = millis;
+        }
+
+        public static void RandomizePropHuntSeed()
+        {
+            if (NetworkSystem.Instance.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
+                ManagerRegistry.GorillaPropHuntGameManager._ph_randomSeed = UnityEngine.Random.Range(1, int.MaxValue);
+        }
+        #endregion
+
+        #region Monke Ball
+        public static void SetMonkeBallTeams(Dictionary<int, int> colors) // ActorNumber : Team // 0 = Blue, 1 = Red, -1 = None
+        {
+            var filteredPlayers = NetworkSystem.Instance.AllNetPlayers
+                .Where(p => colors.ContainsKey(p.ActorNumber));
+            MonkeBallGame.Instance.photonView.RPC(
+                "RequestSetGameStateRPC",
+                RpcTarget.All,
+                (int)MonkeBallGame.GameState.Playing,
+                PhotonNetwork.Time + (MonkeBallGame.Instance.gameDuration - 1f),
+                filteredPlayers.Select(p => p.ActorNumber).ToArray(),
+                filteredPlayers.Select(p => colors[p.ActorNumber]).ToArray(),
+                new int[MonkeBallGame.Instance.team.Count],
+                MonkeBallGame.Instance.startingBalls
+                    .Select(ball => BitPackUtils.PackHandPosRotForNetwork(ball.transform.position, ball.transform.rotation))
+                    .ToArray(),
+                MonkeBallGame.Instance.startingBalls
+                    .Select(ball => BitPackUtils.PackWorldPosForNetwork(ball.gameBall.GetVelocity()))
+                    .ToArray()
+            );
+        }
+        #endregion
+}
 }

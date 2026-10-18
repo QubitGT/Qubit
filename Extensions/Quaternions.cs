@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Extensions/StringExtensions.cs
+ * Qubit Menu  Extensions/Quaternions.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,26 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.RandomUtilities;
+using UnityEngine;
 
 namespace Qubit.Extensions
 {
-    public static class StringExtensions
+    public static class Quaternions
     {
-        public static string ClearTags(this string input) =>
-            NoRichtextTags(input);
-
-        public static string ToTitleCase(this string input) =>
-            Menu.Main.ToTitleCase(input);
-
-        public static string Hash(this string input) =>
-            GetSHA256(input);
-
-        public static string EnforceLength(this string str, int maxLength) =>
-            str.Length > maxLength ? str[..maxLength] : str;
-
-        public static string Random(this string _, int length) =>
-            RandomString(length);
+        public static Quaternion Lerp(this Quaternion a, Quaternion b, float t) =>
+            Quaternion.Lerp(a, b, t);
     }
 }
