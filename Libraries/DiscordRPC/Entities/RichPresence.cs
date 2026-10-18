@@ -6,17 +6,17 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-    
-
-
+    /// <summary>
+    /// The base rich presence structure
+    /// </summary>
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     [Serializable]
     public class BaseRichPresence
     {
-        
-
-
-
+        /// <summary>
+        /// The user's current <see cref="Party"/> status. For example, "Playing Solo" or "With Friends".
+        /// <para>Max 128 characters</para>
+        /// </summary>
         [JsonProperty("state", NullValueHandling = NullValueHandling.Ignore)]
         public string State
         {
@@ -28,13 +28,13 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             }
         }
 
-        
+        /// <summary>Inernal inner state string</summary>
         protected internal string _state;
 
-        
-
-
-
+        /// <summary>
+        /// URL that is linked to when clicking on the details text in the activity card.
+        /// <para>Max 256 characters</para>
+        /// </summary>
         [JsonProperty("state_url", NullValueHandling = NullValueHandling.Ignore)]
         public string StateUrl
         {
@@ -48,13 +48,13 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                     throw new ArgumentException("Url must be a valid URI");
             }
         }
-        
+        /// <summary>Inernal inner state URL string</summary>
         protected internal string _stateUrl;
 
-        
-
-
-
+        /// <summary>
+        /// What the user is currently doing. For example, "Competitive - Total Mayhem".
+        /// <para>Max 128 characters</para>
+        /// </summary>
         [JsonProperty("details", NullValueHandling = NullValueHandling.Ignore)]
         public string Details
         {
@@ -65,13 +65,13 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                     throw new StringOutOfRangeException(128);
             }
         }
-        
+        /// <summary>Inernal inner detail string</summary>
         protected internal string _details;
 
-        
-
-
-
+        /// <summary>
+        /// URL that is linked to when clicking on the details text in the activity card.
+        /// <para>Max 256 characters</para>
+        /// </summary>
         [JsonProperty("details_url", NullValueHandling = NullValueHandling.Ignore)]
         public string DetailsUrl
         {
@@ -85,79 +85,79 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                     throw new ArgumentException("Url must be a valid URI");
             }
         }
-        
+        /// <summary>Inernal inner detail URL string</summary>
         protected internal string _detailsUrl;
 
-        
-
-
+        /// <summary>
+        /// The time elapsed / remaining time data.
+        /// </summary>
         [JsonProperty("timestamps", NullValueHandling = NullValueHandling.Ignore)]
         public Timestamps Timestamps { get; set; }
 
-        
-
-
+        /// <summary>
+        /// The names of the images to use and the tooltips to give those images.
+        /// </summary>
         [JsonProperty("assets", NullValueHandling = NullValueHandling.Ignore)]
         public Assets Assets { get; set; }
 
-        
-
-
+        /// <summary>
+        /// The party the player is currently in. The <see cref="Party.ID"/> must be set for this to be included in the RichPresence update.
+        /// </summary>
         [JsonProperty("party", NullValueHandling = NullValueHandling.Ignore)]
         public Party Party { get; set; }
 
-        
-
-
-
-
+        /// <summary>
+        /// The secrets used for Joining. Secrets are obfuscated data of your choosing. They could be match ids, player ids, lobby ids, etc. Make this object null if you do not wish too / unable too implement the Join / Request feature.
+        /// <para>To keep security on the up and up, Discord requires that you properly hash/encode/encrypt/put-a-padlock-on-and-swallow-the-key-but-wait-then-how-would-you-open-it your secrets.</para>
+        /// <para>Visit the <see href="https://discordapp.com/developers/docs/rich-presence/how-to#secrets">Rich Presence How-To</see> for more information.</para>
+        /// </summary>
         [JsonProperty("secrets", NullValueHandling = NullValueHandling.Ignore)]
         public Secrets Secrets { get; set; }
 
-        
-
-
+        /// <summary>
+        /// The activity type
+        /// </summary>
         [JsonProperty("type", NullValueHandling = NullValueHandling.Ignore)]
         public ActivityType Type { get; set; }
 
-        
-
-
+        /// <summary>
+        /// The display type for the status
+        /// </summary>
         [JsonProperty("status_display_type", NullValueHandling = NullValueHandling.Ignore)]
         public StatusDisplayType StatusDisplay { get; set; }
 
         #region Has Checks
-        
-
-
-
+        /// <summary>
+        /// Does the Rich Presence have valid timestamps?
+        /// </summary>
+        /// <returns></returns>
         public bool HasTimestamps()
         {
             return Timestamps != null && (Timestamps.Start != null || Timestamps.End != null);
         }
 
-        
-
-
-
+        /// <summary>
+        /// Does the Rich Presence have valid assets?
+        /// </summary>
+        /// <returns></returns>
         public bool HasAssets()
         {
             return Assets != null;
         }
 
-        
-
-
-
+        /// <summary>
+        /// Does the Rich Presence have a valid party?
+        /// </summary>
+        /// <returns></returns>
         public bool HasParty()
         {
             return Party != null && Party.ID != null;
         }
 
-        
-
-
-
+        /// <summary>
+        /// Does the Rich Presence have valid secrets?
+        /// </summary>
+        /// <returns></returns>
         public bool HasSecrets()
         {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -167,61 +167,61 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 
         #endregion
 
-        
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Attempts to call <see cref="StringTools.GetNullOrString(string)"/> on the string and return the result, if its within a valid length.
+        /// </summary>
+        /// <param name="str">The string to check</param>
+        /// <param name="result">The formatted string result</param>
+        /// <param name="useBytes">True if you need to validate the string by byte length</param>
+        /// <param name="length">The maximum number of bytes/characters the string can take up</param>
+        /// <param name="encoding">The encoding to count the bytes with, optional</param>
+        /// <returns>True if the string fits within the number of bytes</returns>
         internal static bool ValidateString(string str, out string result, bool useBytes, int length, Encoding encoding = null)
         {
             result = str;
             if (str == null)
                 return true;
 
-            
+            //Trim the string, for the best chance of fitting
             var s = str.Trim();
 
-            
+            //Make sure it fits
             if (useBytes && !s.WithinLength(length, encoding) || s.Length > length)
                 return false;
 
-            
+            //Make sure its not empty
             result = s.GetNullOrString();
             return true;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Validates URLs.
+        /// </summary>
+        /// <param name="url">The URL to check</param>
+        /// <returns>True if the URL is valid</returns>
         internal static bool ValidateUrl(string url)
         {
             if (string.IsNullOrEmpty(url))
                 return true;
 
-            
+            //Check if the URL is valid
             return Uri.TryCreate(url, UriKind.Absolute, out _);
         }
 
-        
-
-
-
+        /// <summary>
+        /// Operator that converts a presence into a boolean for null checks.
+        /// </summary>
+        /// <param name="presence"></param>
         public static implicit operator bool(BaseRichPresence presence)
         {
             return presence != null;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Checks if the other rich presence differs from the current one
+        /// </summary>
+        /// <param name="other"></param>
+        /// <returns></returns>
         internal virtual bool Matches(RichPresence other)
         {
             if (other == null)
@@ -234,7 +234,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 Type != other.Type)
                 return false;
 
-            
+            //Checks if the timestamps are different
             if (Timestamps != null)
             {
                 if (other.Timestamps == null ||
@@ -247,7 +247,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 return false;
             }
 
-            
+            //Checks if the secrets are different
             if (Secrets != null)
             {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -262,7 +262,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 return false;
             }
 
-            
+            //Checks if the timestamps are different
             if (Party != null)
             {
                 if (other.Party == null ||
@@ -277,7 +277,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 return false;
             }
 
-            
+            //Checks if the assets are different
             if (Assets != null)
             {
                 if (other.Assets == null ||
@@ -297,10 +297,10 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return true;
         }
 
-        
-
-
-
+        /// <summary>
+        /// Converts this BaseRichPresence to RichPresence
+        /// </summary>
+        /// <returns></returns>
         public RichPresence ToRichPresence()
         {
             var presence = new RichPresence
@@ -341,23 +341,23 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
     }
 
-    
-
-
-    
+    /// <summary>
+    /// The Rich Presence structure that will be sent and received by Discord. Use this class to build your presence and update it appropriately.
+    /// </summary>
+    // This is broken up in this way because the response inherits the BaseRichPresence.
     public sealed class RichPresence : BaseRichPresence
     {
-        
-
-
-
+        /// <summary>
+        /// The buttons to display in the presence. 
+        /// <para>Max of 2</para>
+        /// </summary>
         [JsonProperty("buttons", NullValueHandling = NullValueHandling.Ignore)]
         public Button[] Buttons { get; set; }
 
-        
-
-
-
+        /// <summary>
+        /// Does the Rich Presence have any buttons?
+        /// </summary>
+        /// <returns></returns>
         public bool HasButtons()
         {
             return Buttons != null && Buttons.Length > 0;
@@ -365,121 +365,121 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 
 
         #region Builder
-        
-
-
-
-
+        /// <summary>
+        /// Sets the state of the Rich Presence. See also <seealso cref="BaseRichPresence.State"/>.
+        /// </summary>
+        /// <param name="state">The user's current <see cref="Party"/> status.</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithState(string state)
         {
             State = state;
             return this;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Sets the state URL of the Rich Presence. See also <seealso cref="BaseRichPresence.StateUrl"/>.
+        /// </summary>
+        /// <param name="stateUrl">State URL when clicking on the state text.</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithStateUrl(string stateUrl)
         {
             StateUrl = stateUrl;
             return this;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Sets the details of the Rich Presence. See also <seealso cref="BaseRichPresence.Details"/>.
+        /// </summary>
+        /// <param name="details">What the user is currently doing.</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithDetails(string details)
         {
             Details = details;
             return this;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Sets the details URL of the Rich Presence. See also <seealso cref="BaseRichPresence.DetailsUrl"/>.
+        /// </summary>
+        /// <param name="detailsUrl">Details URL when clicking on the details text.</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithDetailsUrl(string detailsUrl)
         {
             DetailsUrl = detailsUrl;
             return this;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Sets the type of the Rich Presence. See also <seealso cref="ActivityType"/>.
+        /// </summary>
+        /// <param name="type">The status type</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithType(ActivityType type)
         {
             Type = type;
             return this;
         }
-        
-
-
-
-
+        /// <summary>
+        /// Sets the display type for the status. See also <seealso cref="StatusDisplayType"/>.
+        /// </summary>
+        /// <param name="statusDisplay"></param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithStatusDisplay(StatusDisplayType statusDisplay)
         {
             StatusDisplay = statusDisplay;
             return this;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Sets the timestamp of the Rich Presence. See also <seealso cref="Timestamps"/>.
+        /// </summary>
+        /// <param name="timestamps">The time elapsed / remaining time data.</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithTimestamps(Timestamps timestamps)
         {
             Timestamps = timestamps;
             return this;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Sets the assets of the Rich Presence. See also <seealso cref="Assets"/>.
+        /// </summary>
+        /// <param name="assets">The names of the images to use and the tooltips to give those images.</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithAssets(Assets assets)
         {
             Assets = assets;
             return this;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Sets the Rich Presence's party. See also <seealso cref="Party"/>.
+        /// </summary>
+        /// <param name="party">The party the player is currently in.</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithParty(Party party)
         {
             Party = party;
             return this;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Sets the Rich Presence's secrets. See also <seealso cref="Secrets"/>.
+        /// </summary>
+        /// <param name="secrets">The secrets used for Joining.</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithSecrets(Secrets secrets)
         {
             Secrets = secrets;
             return this;
         }
 
-        
-
-
-
-
-
+        /// <summary>
+        /// Sets the Rich Presence's buttons.
+        /// </summary>
+        /// <param name="topButton">The top button to display</param>
+        /// <param name="bottomButton">The optional bottom button to display</param>
+        /// <returns>The modified Rich Presence.</returns>
         public RichPresence WithButtons(Button topButton, Button bottomButton = null)
         {
             Buttons = topButton != null && bottomButton != null
@@ -493,10 +493,10 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 
         #region Cloning and Merging 
 
-        
-
-
-
+        /// <summary>
+        /// Clones the presence into a new instance. Used for thread safe writing and reading. This function will ignore properties if they are in a invalid state.
+        /// </summary>
+        /// <returns></returns>
         public RichPresence Clone()
         {
             return new RichPresence
@@ -512,7 +512,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 #pragma warning disable CS0618 // Type or member is obsolete
                 Secrets = !HasSecrets() ? null : new Secrets
                 {
-                    
+                    //MatchSecret = this.Secrets.MatchSecret?.Clone() as string,
                     Join = Secrets.Join != null ? Secrets.Join.Clone() as string : null,
                     SpectateSecret = Secrets.SpectateSecret != null ? Secrets.SpectateSecret.Clone() as string : null
                 },
@@ -544,11 +544,11 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             };
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Merges the passed presence with this one, taking into account the image key to image id annoyance.
+        /// </summary>
+        /// <param name="presence"></param>
+        /// <returns>self</returns>
         internal RichPresence Merge(BaseRichPresence presence)
         {
             _state = presence.State;
@@ -561,24 +561,24 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             Timestamps = presence.Timestamps;
             Secrets = presence.Secrets;
 
-            
+            //If they have assets, we should merge them
             if (presence.HasAssets())
             {
-                
+                //Make sure we actually have assets too
                 if (!HasAssets())
                 {
-                    
+                    //We dont, so we will just use theirs
                     Assets = presence.Assets;
                 }
                 else
                 {
-                    
+                    //We do, so we better merge them!
                     Assets.Merge(presence.Assets);
                 }
             }
             else
             {
-                
+                //They dont have assets, so we will just set ours to null
                 Assets = null;
             }
 
@@ -589,7 +589,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         {
             if (!base.Matches(other)) return false;
 
-            
+            //Check buttons
             if (Buttons == null ^ other.Buttons == null) return false;
             if (Buttons != null)
             {
@@ -608,30 +608,30 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 
         #endregion
 
-        
-
-
-
+        /// <summary>
+        /// Operator that converts a presence into a boolean for null checks.
+        /// </summary>
+        /// <param name="presesnce"></param>
         public static implicit operator bool(RichPresence presesnce)
         {
             return presesnce != null;
         }
     }
 
-    
-
-
+    /// <summary>
+    /// A rich presence that has been parsed from the pipe as a response.
+    /// </summary>
     internal sealed class RichPresenceResponse : BaseRichPresence
     {
-        
-
-
+        /// <summary>
+        /// ID of the client
+        /// </summary>
         [JsonProperty("application_id")]
         public string ClientID { get; private set; }
 
-        
-
-
+        /// <summary>
+        /// Name of the bot
+        /// </summary>
         [JsonProperty("name")]
         public string Name { get; private set; }
 

@@ -407,7 +407,7 @@ namespace Qubit.Utilities
         #endregion
 
         #region Monke Ball
-        public static void SetMonkeBallTeams(Dictionary<int, int> colors) 
+        public static void SetMonkeBallTeams(Dictionary<int, int> colors) // ActorNumber : Team // 0 = Blue, 1 = Red, -1 = None
         {
             var filteredPlayers = ManagerRegistry.NetworkSystem.AllNetPlayers
                 .Where(p => colors.ContainsKey(p.ActorNumber));

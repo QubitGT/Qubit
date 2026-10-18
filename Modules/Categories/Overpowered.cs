@@ -229,9 +229,9 @@ namespace Qubit.Modules.Categories
 
         public static bool legacyKickFreeze;
 
-        
-
-
+        /// <summary>
+        /// Indicates whether event optimization is enabled. When enabled, it reduces network load by limiting certain RPC calls and adjusting serialization rates.
+        /// </summary>
         private static bool _optimizeEvents;
         public static bool OptimizeEvents
         {
@@ -836,7 +836,7 @@ namespace Qubit.Modules.Categories
                     e.typeId == hash &&
                     gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
 
-                if (entities.Count <= 0) 
+                if (entities.Count <= 0) // Desperate measures
                     entities = gameEntityManager.entities.Where(e =>
                     e != null &&
                     e.typeId == hash).ToList();
@@ -1011,7 +1011,7 @@ namespace Qubit.Modules.Categories
                         e.typeId == hash &&
                         gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
 
-                    if (entities.Count <= 0) 
+                    if (entities.Count <= 0) // Desperate measures
                         entities = gameEntityManager.entities.Where(e =>
                         e != null &&
                         e.typeId == hash).ToList();
@@ -1627,9 +1627,9 @@ namespace Qubit.Modules.Categories
             });
         }
 
-        
-        
-        
+        //private static float freezeAllDelay;
+        //public static bool muteOnFreeze;
+        //public static bool acklowledgeFreeze;
         public static void FreezeServer(float delay = 1f, int eventCount = 11, RaiseEventOptions options = null)
         {
             return;

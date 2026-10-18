@@ -27,8 +27,8 @@ namespace Qubit
 {
     public static class Plugin
     {
-        
-        
+        // For SharpMonoInjector usage
+        // Don't merge these methods, it just doesn't work
         public static void Inject()
         {
             var go = new GameObject("Qubit");

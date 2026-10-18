@@ -5,9 +5,9 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Converters
 {
-    
-
-
+    /// <summary>
+    /// Converts enums with the <see cref="EnumValueAttribute"/> into Json friendly terms. 
+    /// </summary>
     internal class EnumSnakeCaseConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
@@ -28,7 +28,7 @@ namespace Qubit.Libraries.DiscordRPC.Converters
             var enumtype = value.GetType();
             var name = Enum.GetName(enumtype, value);
 
-            
+            //Get each member and look for hte correct one
             var members = enumtype.GetMembers(BindingFlags.Public | BindingFlags.Static);
             foreach (var m in members)
             {
@@ -48,19 +48,19 @@ namespace Qubit.Libraries.DiscordRPC.Converters
 
         public bool TryParseEnum(Type enumType, string str, out object obj)
         {
-            
+            //Make sure the string isn;t null
             if (str == null)
             {
                 obj = null;
                 return false;
             }
 
-            
+            //Get the real type
             Type type = enumType;
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 type = type.GetGenericArguments().First();
 
-            
+            //Make sure its actually a enum
             if (!type.IsEnum)
             {
                 obj = null;
@@ -68,7 +68,7 @@ namespace Qubit.Libraries.DiscordRPC.Converters
             }
 
 
-            
+            //Get each member and look for hte correct one
             var members = type.GetMembers(BindingFlags.Public | BindingFlags.Static);
             foreach (var m in members)
             {
@@ -79,7 +79,7 @@ namespace Qubit.Libraries.DiscordRPC.Converters
                 return true;
             }
 
-            
+            //We failed
             obj = null;
             return false;
         }

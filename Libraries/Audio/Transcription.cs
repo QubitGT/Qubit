@@ -40,15 +40,15 @@ namespace Qubit.Libraries.Audio
     public static class Transcription
     {
 
-        
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Generates a text-to-speech audio clip from the provided text using various TTS services and invokes a
+        /// callback with the resulting AudioClip.
+        /// </summary>
+        /// <param name="text">The text to be converted to speech.</param>
+        /// <param name="onComplete">Callback invoked with the generated AudioClip or null if the operation fails.</param>
+        /// <param name="customFileName">Optional custom file name for the generated audio file.</param>
+        /// <param name="customPath">Optional custom directory path for storing the generated audio file.</param>
+        /// <returns>An enumerator for coroutine-based asynchronous execution.</returns>
         public static IEnumerator TranscribeText(string text, Action<AudioClip> onComplete, string customFileName = null, string customPath = null)
         {
             if (Time.time < timeMenuStarted + 5f)
@@ -68,7 +68,7 @@ namespace Qubit.Libraries.Audio
             {
                 switch (narratorIndex)
                 {
-                    
+                    // My endpoint
                     case 0:
                         {
                             string postData = JsonConvert.SerializeObject(new { text });
@@ -95,7 +95,7 @@ namespace Qubit.Libraries.Audio
                             break;
                         }
 
-                    
+                    // Streamlabs TTS voices
                     case 1:
                     case 2:
                     case 3:
@@ -133,7 +133,7 @@ namespace Qubit.Libraries.Audio
                             break;
                         }
 
-                    
+                    // Tiktok TTS Voices
                     case 9:
                     case 10:
                     case 11:
@@ -281,28 +281,28 @@ namespace Qubit.Libraries.Audio
             LoadSoundFromFile($"{directoryPath[$"{PluginInfo.BaseDirectory}/".Length..]}/{fileName}", onComplete);
         }
 
-        
-
-
-
+        /// <summary>
+        /// Initiates narration of the specified text by transcribing it to audio and playing it with adjusted volume.
+        /// </summary>
+        /// <param name="text">The text to be narrated.</param>
         public static void NarrateText(string text) =>
             Coroutines.instance.StartCoroutine(TranscribeText(text, (audio) => Play2DAudio(audio, buttonClickSound / 10f)));
 
 
-        
-
-
-
+        /// <summary>
+        /// Initiates narration of the specified text by transcribing it to audio and playing it through your microphone.
+        /// </summary>
+        /// <param name="text">The text to be narrated.</param>
         public static void SpeakText(string text)
         {
             SpeakText(text, false);
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Initiates narration of the specified text by transcribing it to audio and playing it through your microphone.
+        /// </summary>
+        /// <param name="text">The text to be narrated.</param>
+        /// <param name="disableMicrophone">If you'd like the microphone to stop recording while the audio is being played.</param>
         public static void SpeakText(string text, bool disableMicrophone = false) =>
             Coroutines.instance.StartCoroutine(TranscribeText(text, t => Fun.PlayAudio(t, disableMicrophone)));
         public static string narratorName = "Default";

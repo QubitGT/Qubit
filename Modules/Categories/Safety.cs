@@ -799,7 +799,7 @@ namespace Qubit.Modules.Categories
             SerializePatch.OverrideSerialization = () =>
             {
                 SendSerialize(References.LocalRig.GetPhotonView());
-                
+                //SendSerialize(References.Tagger.myVRRig.reliableView);
                 return false;
             };
         }

@@ -56,14 +56,14 @@ namespace Qubit.Libraries.Networking
         public static void OnPlayerSerialize(VRRig rig) =>
             playerPing[rig] = rig.GetTruePing();
 
-        
-
-
-
-
-
-
-
+        /// <summary>
+        /// Serializes multiple PhotonViews owned by the local player, with optional filtering and timing adjustments.
+        /// </summary>
+        /// <param name="exclude">If true, serializes all owned PhotonViews except those in the viewFilter; if false, serializes only those in
+        /// the viewFilter.</param>
+        /// <param name="viewFilter">An array of PhotonViews to include or exclude from serialization, depending on the exclude parameter.</param>
+        /// <param name="timeOffset">An integer offset to apply to the serialization time.</param>
+        /// <param name="delay">A delay in seconds before serialization is sent.</param>
         public static void MassSerialize(bool exclude = false, PhotonView[] viewFilter = null, int timeOffset = 0, float delay = 0f)
         {
             if (!Qubit.Core.Networking.InRoom)
@@ -97,14 +97,14 @@ namespace Qubit.Libraries.Networking
                 SendSerialize(view, null, timeOffset, delay);
         }
 
-        
-
-
-
-
-
-
-
+        /// <summary>
+        /// Serializes and sends the state of a PhotonView to other clients in the room, with optional event options,
+        /// time offset, and delay.
+        /// </summary>
+        /// <param name="pv">The PhotonView to serialize and send.</param>
+        /// <param name="options">Optional RaiseEventOptions to customize event sending.</param>
+        /// <param name="timeOffset">Optional time offset to apply to the event timestamp.</param>
+        /// <param name="delay">Optional delay in seconds before sending the event.</param>
         public static void SendSerialize(PhotonView pv, RaiseEventOptions options = null, int timeOffset = 0, float delay = 0f)
         {
             if (!Qubit.Core.Networking.InRoom)

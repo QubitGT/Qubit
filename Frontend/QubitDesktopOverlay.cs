@@ -39,7 +39,7 @@ namespace Qubit.Frontend
 {
     public sealed class QubitDesktopOverlay : MonoBehaviour
     {
-        
+        private static AssetBundle bundle;
         private static QubitDesktopOverlay current;
         private static Sprite roundedSprite;
         private InputField roomCode, playerName, red, green, blue;
@@ -64,7 +64,17 @@ namespace Qubit.Frontend
             GameObject instance = null;
             try
             {
-                instance = Instantiate(Qubit.Frontend.Resources.QubitAssets.Load<GameObject>("QubitDesktopOverlay"), parent, false);
+                if (bundle == null)
+                {
+                    using (var stream = typeof(QubitDesktopOverlay).Assembly.GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.qubitdesktop"))
+                    using (var memory = new MemoryStream())
+                    {
+                        if (stream == null) throw new InvalidOperationException("Desktop overlay resource is missing.");
+                        stream.CopyTo(memory);
+                        bundle = AssetBundle.LoadFromMemory(memory.ToArray());
+                    }
+                }
+                instance = Instantiate(bundle.LoadAsset<GameObject>("QubitDesktopOverlay"), parent, false);
                 var overlay = instance.AddComponent<QubitDesktopOverlay>();
                 overlay.Bind();
                 current = overlay;
@@ -122,7 +132,6 @@ namespace Qubit.Frontend
                 feedback.text = "Player color updated.";
             });
             ApplyLayout(setName);
-            StyleRoomJoiner();
             if (EventSystem.current == null)
             {
                 var events = new GameObject("Qubit Overlay Events", typeof(EventSystem), typeof(InputSystemUIInputModule));
@@ -246,111 +255,6 @@ namespace Qubit.Frontend
                     image.name.IndexOf("Background", StringComparison.OrdinalIgnoreCase) >= 0)
                     Round(image);
             }
-        }
-
-        private void StyleRoomJoiner()
-        {
-            SetSize(roomPanel, 360, 326);
-            var panel = roomPanel.GetComponent<Image>();
-            panel.color = new Color32(27, 31, 51, 250);
-            var border = roomPanel.GetComponent<Outline>();
-            if (border != null)
-            {
-                border.effectColor = new Color32(146, 136, 193, 100);
-                border.effectDistance = new Vector2(1, -1);
-            }
-            foreach (Text label in roomPanel.GetComponentsInChildren<Text>(true))
-            {
-                label.color = new Color32(237, 237, 249, 255);
-                label.resizeTextForBestFit = false;
-                label.raycastTarget = false;
-            }
-
-            RoomRect("Eyebrow", 76, 23, 260, 18);
-            RoomLabel("Eyebrow", "QUBIT", 12, true);
-            RoomRect("Title", 76, 44, 260, 32);
-            RoomLabel("Title", "Room joiner", 24, true);
-            var logo = new GameObject("SessionLogo", typeof(RectTransform), typeof(Image));
-            logo.transform.SetParent(roomPanel, false);
-            var logoImage = logo.GetComponent<Image>();
-            logoImage.sprite = brand.transform.Find("Logo").GetComponent<Image>().sprite;
-            logoImage.preserveAspect = true;
-            logoImage.raycastTarget = false;
-            RoomRect("SessionLogo", 24, 28, 36, 36);
-
-            RoomRect("RoomStatus", 24, 91, 312, 24);
-            roomStatus.fontSize = 13;
-            roomStatus.color = new Color32(181, 184, 211, 255);
-            RoomRect("CodeLabel", 24, 137, 312, 18);
-            RoomLabel("CodeLabel", "ROOM CODE", 11, true);
-            RoomField(roomCode, 24, 162, 312, 50, 20);
-            RoomButton(join, 24, 226, 184, 44, true);
-            RoomButton(disconnect, 220, 226, 116, 44, false);
-            RoomRect("Feedback", 24, 279, 312, 38);
-            feedback.fontSize = 12;
-            feedback.color = new Color32(194, 181, 233, 255);
-            feedback.horizontalOverflow = HorizontalWrapMode.Wrap;
-
-            foreach (string name in new[] { "PlayerLabel", "PlayerName", "SetName", "Red", "Green", "Blue", "SetColor" })
-                roomPanel.Find(name).gameObject.SetActive(false);
-        }
-
-        private void RoomRect(string name, float x, float y, float width, float height)
-        {
-            var rect = (RectTransform)roomPanel.Find(name);
-            PlaceAt(rect, new Vector2(0, 1), new Vector2(x, -y));
-            SetSize(rect, width, height);
-        }
-
-        private void RoomLabel(string name, string value, int size, bool bold)
-        {
-            var label = roomPanel.Find(name).GetComponent<Text>();
-            label.text = value;
-            label.fontSize = size;
-            label.fontStyle = bold ? FontStyle.Bold : FontStyle.Normal;
-            if (size < 16) label.color = new Color32(177, 157, 225, 255);
-        }
-
-        private static void StretchRoomText(RectTransform rect, float padding)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = new Vector2(padding, 0);
-            rect.offsetMax = new Vector2(-padding, 0);
-        }
-
-        private void RoomField(InputField field, float x, float y, float width, float height, int fontSize)
-        {
-            RoomRect(field.name, x, y, width, height);
-            field.GetComponent<Image>().color = new Color32(42, 46, 70, 255);
-            field.textComponent.fontSize = fontSize;
-            field.textComponent.alignment = TextAnchor.MiddleLeft;
-            StretchRoomText(field.textComponent.rectTransform, 14);
-            var placeholder = (Text)field.placeholder;
-            placeholder.fontSize = 14;
-            placeholder.color = new Color32(146, 151, 180, 255);
-            placeholder.alignment = TextAnchor.MiddleLeft;
-            StretchRoomText(placeholder.rectTransform, 14);
-            field.caretColor = new Color32(196, 164, 255, 255);
-            field.selectionColor = new Color32(157, 117, 235, 90);
-        }
-
-        private void RoomButton(Button button, float x, float y, float width, float height, bool primary)
-        {
-            RoomRect(button.name, x, y, width, height);
-            button.GetComponent<Image>().color = Color.white;
-            var colors = button.colors;
-            colors.normalColor = primary ? new Color32(157, 117, 235, 255) : new Color32(57, 61, 89, 255);
-            colors.highlightedColor = primary ? new Color32(178, 143, 250, 255) : new Color32(76, 79, 111, 255);
-            colors.selectedColor = colors.highlightedColor;
-            colors.pressedColor = primary ? new Color32(128, 90, 207, 255) : new Color32(43, 47, 72, 255);
-            colors.disabledColor = new Color32(41, 44, 65, 180);
-            colors.fadeDuration = .12f;
-            button.colors = colors;
-            var label = button.GetComponentInChildren<Text>();
-            label.fontSize = primary ? 15 : 13;
-            label.fontStyle = primary ? FontStyle.Bold : FontStyle.Normal;
-            StretchRoomText(label.rectTransform, 6);
         }
 
         private void HideModsHeaders()

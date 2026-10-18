@@ -3,20 +3,20 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.RPC.Payload
 {
-    
-
-
+    /// <summary>
+    /// Base Payload that is received by both client and server
+    /// </summary>
     internal abstract class IPayload
     {
-        
-
-
+        /// <summary>
+        /// The type of payload
+        /// </summary>
         [JsonProperty("cmd"), JsonConverter(typeof(EnumSnakeCaseConverter))]
         public Command Command { get; set; }
 
-        
-
-
+        /// <summary>
+        /// A incremental value to help identify payloads
+        /// </summary>
         [JsonProperty("nonce")]
         public string Nonce { get; set; }
 

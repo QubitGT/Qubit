@@ -22,7 +22,7 @@
 using Qubit;
 
 #pragma warning disable IDE0130 // Namespace does not match folder structure [for legacy compatibility with default SMI settings]
-
+// ReSharper disable once CheckNamespace
 namespace Loading
 #pragma warning restore IDE0130 // Namespace does not match folder structure [for legacy compatibility with default SMI settings]
 {

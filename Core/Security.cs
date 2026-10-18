@@ -30,9 +30,9 @@ namespace Qubit.Core
     public static class Security
     {
 
-        
-
-
+        /// <summary>
+        /// Flushes/sends any queued RPCs to the server to combat disconnection from RPC limits.
+        /// </summary>
         public static void RPCProtection()
         {
             if (!Networking.InRoom)
@@ -54,11 +54,11 @@ namespace Qubit.Core
         }
 
 
-        
-
-
-
-
+        /// <summary>
+        /// Returns the given URL's raw output as a string.
+        /// </summary>
+        /// <param name="url">URL</param>
+        /// <returns>Website Data</returns>
         public static string GetHttp(string url)
         {
             WebRequest request = WebRequest.Create(url);
@@ -73,10 +73,10 @@ namespace Qubit.Core
             return html;
         }
 
-        
-
-
-
+        /// <summary>
+        /// Returns the current UTC timestamp formatted as an ISO 8601 string.
+        /// </summary>
+        /// <returns>A string representing the current UTC date and time in ISO 8601 format.</returns>
         public static string CurrentTimestamp()
         {
             DateTime utcNow = DateTime.UtcNow;

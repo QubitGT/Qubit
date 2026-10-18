@@ -185,7 +185,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
             }
         }
 
-        
+        // I don't know who made this
         public static float crashDelay;
         public static void CrashPlayer(int ActorNumber)
         {

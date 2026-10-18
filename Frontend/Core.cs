@@ -264,20 +264,20 @@ namespace Qubit.Frontend
                 #endregion
 
                 #region Menu Features
-                
+                // Update watches
                 Watches.ForEach(watch => watch.Update());
 
-                
+                // Load projectiles
                 Projectiles.LoadProjectileCache();
 
-                
+                // Fix for disorganized menu
                 if (disorganized && Manager.CurrentCategoryName != "Main")
                 {
                     Manager.CurrentCategoryName = "Main";
                     ReloadMenu();
                 }
 
-                
+                // Fix for long menu
                 if (longmenu && pageNumber != 0)
                 {
                     pageNumber = 0;
@@ -286,7 +286,7 @@ namespace Qubit.Frontend
 
                 VR.UpdatePhysicalReference();
 
-                
+                // Bad apple theme
                 if (themeType == 61)
                 {
                     if (menu != null)
@@ -313,7 +313,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                
+                // Gun sounds
                 try
                 {
                     if (GunSounds)
@@ -370,7 +370,7 @@ namespace Qubit.Frontend
                 }
                 catch { }
 
-                
+                // Gun Vibrations
                 try
                 {
                     if (GunVibrations)
@@ -410,7 +410,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                
+                // Party kick code (to return back to the main lobby when you're done)
                 if (Networking.InRoom)
                 {
                     if (partyKickReconnecting)
@@ -452,7 +452,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                
+                // Recover from playing sound on soundboard code
                 try
                 {
                     if (!RecorderPatch.enabled)
@@ -679,7 +679,7 @@ namespace Qubit.Frontend
                 #region Mod Bindings
                 try
                 {
-                    
+                    // Custom mod binds
                     Inputs["A"] = rightPrimary;
                     Inputs["B"] = rightSecondary;
                     Inputs["X"] = leftPrimary;
@@ -786,7 +786,7 @@ namespace Qubit.Frontend
                 return false;
             }
         }
-        private static void AddButton(float offset, int buttonIndex, Module method)
+        internal static void AddButton(float offset, int buttonIndex, Module method)
         {
             bool shouldCreate = false;
 #if LEGAL || LEGAL_DEBUG
@@ -817,9 +817,9 @@ namespace Qubit.Frontend
                 buttonObject.transform.localPosition = new Vector3(0.56f, 0f, 0.28f - offset);
                 if (checkMode && buttonIndex > -1)
                 {
-                    
-                    
-                    
+                    // The Checkbox Theorem ; TO BE THE SQUARE, YOU MUST circumvent the inconvenient menu localScale parameter
+                    // Variable calculations: (menu scale y)0.3825 / (menu scale z)0.3 = 1.275 = Y
+                    // 0.08 x Y = 0.102
 
                     buttonObject.transform.localScale = new Vector3(0.09f, 0.102f, 0.08f);
                     buttonObject.transform.localPosition = thinMenu ? new Vector3(0.56f, 0.399f, 0.28f - offset) : new Vector3(0.56f, 0.599f, 0.28f - offset);
@@ -924,7 +924,7 @@ namespace Qubit.Frontend
                 };
 
                 buttonSpriteSheet.spriteInfoList = new List<TMP_Sprite>();
-                Traverse.Create(buttonSpriteSheet).Field("m_Version").SetValue("1.1.0"); 
+                Traverse.Create(buttonSpriteSheet).Field("m_Version").SetValue("1.1.0"); // TextMeshPro kills itself unless this is set.
 
                 buttonSpriteSheet.spriteGlyphTable.Clear();
                 for (int i = 0; i < spriteDataList.Count; i++)
@@ -972,7 +972,7 @@ namespace Qubit.Frontend
             }
         }
 
-        private static void AddDebugButton()
+        internal static void AddDebugButton()
         {
             bool infoScreenEnabled = Manager.GetIndex("Info Screen").enabled;
 
@@ -1070,7 +1070,7 @@ namespace Qubit.Frontend
             FollowMenuSettings(donateImage);
         }
 
-        private static void AddUpdateButton()
+        internal static void AddUpdateButton()
         {
             GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             if (!UI.IsKeyboardActive())
@@ -1118,7 +1118,7 @@ namespace Qubit.Frontend
             FollowMenuSettings(updateImage);
         }
 
-        private static void AddReturnButton(bool offcenteredPosition)
+        internal static void AddReturnButton(bool offcenteredPosition)
         {
             GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
             if (!UI.IsKeyboardActive())
@@ -1305,685 +1305,6 @@ result = result.Where(b => b.legal || b.label);
                   result = result.OrderBy(b => (b.overlapText ?? b.buttonText).ClearTags());
     return result.ToArray();
  }
-        public static GameObject CreateLegacyMenu()
-        {
-            if (clickGUI)
-            {
-                menu = LoadObject<GameObject>("ClickGUI");
-                menu.transform.localScale *= (menuScale * (scaleWithPlayer ? References.Player.scale : 1f));
-
-                Modules.Categories.Settings.InitializeClickGUI();
-
-                RecenterMenu();
-
-                return menu;
-            }
-
-            menu = GameObject.CreatePrimitive(PrimitiveType.Cube);
-
-            Destroy(menu.GetComponent<BoxCollider>());
-            Destroy(menu.GetComponent<Renderer>());
-
-            menu.transform.localScale = new Vector3(0.1f, 0.3f, 0.3825f);
-
-            if (annoyingMode)
-            {
-                menu.transform.localScale = new Vector3(0.1f, Random.Range(10f, 40f) / 100f, 0.3825f);
-                backgroundColor = new ExtGradient { colors = ExtGradient.GetSimpleGradient(RandomColor(), RandomColor()) };
-
-                buttonColors[0] = new ExtGradient { colors = ExtGradient.GetSimpleGradient(RandomColor(), RandomColor()) };
-                buttonColors[1] = new ExtGradient { colors = ExtGradient.GetSimpleGradient(RandomColor(), RandomColor()) };
-
-                textColors[0] = new ExtGradient { colors = ExtGradient.GetSimpleGradient(RandomColor(), RandomColor()) };
-                textColors[1] = new ExtGradient { colors = ExtGradient.GetSimpleGradient(RandomColor(), RandomColor()) };
-                textColors[2] = new ExtGradient { colors = ExtGradient.GetSimpleGradient(RandomColor(), RandomColor()) };
-            }
-
-            /*
-            if (themeType == 6)
-            {
-                GameObject coneBackground = LoadObject<GameObject>("Cone");
-
-                coneBackground.transform.parent = menu.transform;
-                coneBackground.transform.localPosition = Vector3.zero;
-                coneBackground.transform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            }
-            else
-            {
-            */
-            menuBackground = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            Destroy(menuBackground.GetComponent<BoxCollider>());
-
-            menuBackground.transform.parent = menu.transform;
-            menuBackground.transform.localPosition = new Vector3(0.50f, 0f, 0f);
-            menuBackground.transform.rotation = Quaternion.identity;
-
-            
-            menuBackground.transform.localScale = thinMenu ? new Vector3(0.1f, 1f, 1f) : new Vector3(0.1f, 1.5f, 1f);
-
-            if (innerOutline || themeType == 32)
-            {
-                GameObject innerOutlineSegment = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Destroy(innerOutlineSegment.GetComponent<BoxCollider>());
-                innerOutlineSegment.transform.parent = menuBackground.transform;
-                innerOutlineSegment.transform.rotation = Quaternion.identity;
-                innerOutlineSegment.transform.localPosition = new Vector3(0f, -0.4840625f, 0f);
-                innerOutlineSegment.transform.localScale = new Vector3(1.025f, 0.0065f, 0.98f);
-
-                ObjectColors colorChanger = innerOutlineSegment.AddComponent<ObjectColors>();
-                colorChanger.colors = buttonColors[1];
-
-                innerOutlineSegment = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Destroy(innerOutlineSegment.GetComponent<BoxCollider>());
-                innerOutlineSegment.transform.parent = menuBackground.transform;
-                innerOutlineSegment.transform.rotation = Quaternion.identity;
-                innerOutlineSegment.transform.localPosition = new Vector3(0f, 0.4840625f, 0f);
-                innerOutlineSegment.transform.localScale = new Vector3(1.025f, 0.0065f, 0.98f);
-
-                colorChanger = innerOutlineSegment.AddComponent<ObjectColors>();
-                colorChanger.colors = buttonColors[1];
-
-                innerOutlineSegment = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Destroy(innerOutlineSegment.GetComponent<BoxCollider>());
-                innerOutlineSegment.transform.parent = menuBackground.transform;
-                innerOutlineSegment.transform.rotation = Quaternion.identity;
-                innerOutlineSegment.transform.localPosition = new Vector3(0f, 0f, -0.4875f);
-                innerOutlineSegment.transform.localScale = new Vector3(1.025f, 0.968125f, 0.005f);
-
-                colorChanger = innerOutlineSegment.AddComponent<ObjectColors>();
-                colorChanger.colors = buttonColors[1];
-
-                innerOutlineSegment = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                Destroy(innerOutlineSegment.GetComponent<BoxCollider>());
-                innerOutlineSegment.transform.parent = menuBackground.transform;
-                innerOutlineSegment.transform.rotation = Quaternion.identity;
-                innerOutlineSegment.transform.localPosition = new Vector3(0f, 0f, 0.4875f);
-                innerOutlineSegment.transform.localScale = new Vector3(1.025f, 0.968125f, 0.005f);
-
-                colorChanger = innerOutlineSegment.AddComponent<ObjectColors>();
-                colorChanger.colors = buttonColors[1];
-            }
-
-            if (themeType == 23 || themeType == 24 || themeType == 25 || themeType == 61)
-            {
-                Renderer menuBackgroundRenderer = menuBackground.GetComponent<Renderer>();
-                switch (themeType)
-                {
-                    case 23:
-                        if (pride == null)
-                        {
-                            pride = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Themes/pride.png", "Images/Themes/pride.png");
-                            pride.filterMode = FilterMode.Point;
-                            pride.wrapMode = TextureWrapMode.Clamp;
-                        }
-                        menuBackgroundRenderer.material.shader = Shader.Find("Universal Render Pipeline/Unlit");
-                        menuBackgroundRenderer.material.color = Color.white;
-                        menuBackgroundRenderer.material.mainTexture = pride;
-                        break;
-                    case 24:
-                        if (trans == null)
-                        {
-                            trans = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Themes/trans.png", "Images/Themes/trans.png");
-                            trans.filterMode = FilterMode.Point;
-                            trans.wrapMode = TextureWrapMode.Clamp;
-                        }
-                        menuBackgroundRenderer.material.shader = Shader.Find("Universal Render Pipeline/Unlit");
-                        menuBackgroundRenderer.material.color = Color.white;
-                        menuBackgroundRenderer.material.mainTexture = trans;
-                        break;
-                    case 25:
-                        if (gay == null)
-                        {
-                            gay = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Themes/mlm.png", "Images/Themes/mlm.png");
-                            gay.filterMode = FilterMode.Point;
-                            gay.wrapMode = TextureWrapMode.Clamp;
-                        }
-                        menuBackgroundRenderer.material.shader = Shader.Find("Universal Render Pipeline/Unlit");
-                        menuBackgroundRenderer.material.color = Color.white;
-                        menuBackgroundRenderer.material.mainTexture = gay;
-                        break;
-                    case 61:
-                        if (videoPlayer == null)
-                        {
-                            videoPlayer = new GameObject("Qubit_VideoPlayer").AddComponent<VideoPlayer>();
-                            videoPlayer.playOnAwake = true;
-                            videoPlayer.isLooping = true;
-                            videoPlayer.url = $"{PluginInfo.ServerResourcePath}/Videos/Themes/badapple.mp4";
-
-                            RenderTexture rt = new RenderTexture(192, 144, 0);
-                            rt.Create();
-
-                            videoPlayer.targetTexture = rt;
-                        }
-
-                        menuBackgroundRenderer.material.shader = Shader.Find("Universal Render Pipeline/Unlit");
-                        menuBackgroundRenderer.material.color = Color.white;
-                        menuBackgroundRenderer.material.SetTexture("_BaseMap", videoPlayer.targetTexture);
-
-                        videoPlayer.time = badAppleTime;
-
-                        break;
-                }
-            }
-            else
-            {
-                if (doCustomMenuBackground)
-                {
-                    menuBackground.GetComponent<Renderer>().material.shader = Shader.Find("Universal Render Pipeline/Unlit");
-                    menuBackground.GetComponent<Renderer>().material.color = Color.white;
-                    menuBackground.GetComponent<Renderer>().material.mainTexture = customMenuBackgroundImage;
-                }
-                else
-                {
-                    ObjectColors colorChanger = menuBackground.AddComponent<ObjectColors>();
-                    colorChanger.colors = menuBackgroundColor;
-                }
-            }
-
-            FollowMenuSettings(menuBackground, false);
-
-            canvasObj = new GameObject();
-            canvasObj.transform.parent = menu.transform;
-
-            Canvas canvas = canvasObj.AddComponent<Canvas>();
-            if (hideTextOnCamera)
-                canvasObj.layer = 19;
-
-            CanvasScaler canvasScaler = canvasObj.AddComponent<CanvasScaler>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvasScaler.dynamicPixelsPerUnit = 2500f;
-
-            canvasObj.AddComponent<GraphicRaycaster>();
-
-            if (!hidetitle)
-            {
-                title = new GameObject
-                {
-                    transform =
-                    {
-                        parent = canvasObj.transform
-                    }
-                }.AddComponent<TextMeshPro>();
-                title.font = activeFont;
-                title.text = translate ? "Qubit" : "<b>Qubit</b>";
-
-                if (doCustomName)
-                    title.text = customMenuName;
-
-                if (annoyingMode)
-                {
-                    string[] randomMenuNames = {
-                    "ModderX",
-                    "ShibaGT Gold",
-                    "Kman Menu",
-                    "WM TROLLING MENU",
-                    "ShibaGT Dark",
-                    "ShibaGT-X v5.5",
-                    "ii stupid",
-                    "ii's <b>Stupid</b> Menu",
-                    "bvunt menu",
-                    "GorillaTaggingKid Menu",
-                    "fart",
-                    "steal.lol",
-                    "Unttile menu"
-                };
-
-                    if (Random.Range(1, 5) == 2)
-                        title.text = randomMenuNames[Random.Range(0, randomMenuNames.Length)] + " v" + Random.Range(8, 159);
-                }
-
-                title.text = Strings.FollowMenuSettings(title.text, !doCustomName, true);
-
-                if (!noPageNumber)
-                    title.text += $" <color=grey>[</color><color=white>{(pageScrolling ? pageOffset : pageNumber) + 1}</color><color=grey>]</color>";
-
-                if (gradientTitle)
-                    title.text = RichtextGradient(NoRichtextTags(title.text),
-                        new[]
-                        {
-                            new GradientColorKey(BrightenColor(buttonColors[0].GetColor(0)), 0f),
-                            new GradientColorKey(BrightenColor(buttonColors[0].GetColor(0), 0.95f), 0.5f),
-                            new GradientColorKey(BrightenColor(buttonColors[0].GetColor(0)), 1f)
-                        });
-
-                if (animatedTitle)
-                {
-                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Qubit Menu";
-                    int length = (int)Mathf.PingPong(Time.time / 0.25f, targetString.Length);
-                    title.text = length > 0 ? targetString[..length] : "";
-                }
-
-                title.fontSize = 1;
-                title.AddComponent<UIColors>().colors = textColors[0];
-
-                title.richText = true;
-                title.fontStyle = activeFontStyle;
-                title.alignment = TextAlignmentOptions.Center;
-                title.enableAutoSizing = true;
-                title.fontSizeMin = 0;
-                RectTransform component = title.GetComponent<RectTransform>();
-                component.localPosition = Vector3.zero;
-                component.sizeDelta = new Vector2(0.28f, 0.05f);
-                if (NoAutoSizeText)
-                    component.sizeDelta = new Vector2(0.28f, 0.015f);
-
-                if (hideTextOnCamera)
-                    component.gameObject.layer = 19;
-
-                component.localPosition = new Vector3(0.06f, 0f, 0.165f);
-                component.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
-
-                FollowMenuSettings(title);
-            }
-
-            if (!backgroundColor.transparent)
-            {
-                TextMeshPro buildLabel = new GameObject
-                {
-                    transform =
-                    {
-                        parent = canvasObj.transform
-                    }
-                }.AddComponent<TextMeshPro>();
-                buildLabel.font = activeFont;
-
-#if LEGAL
-                buildLabel.text = $"Build {PluginInfo.Version} Legal";
-#elif DEBUG
-                buildLabel.text = $"Build {PluginInfo.Version} Debug";
-#elif LEGAL_DEBUG
-                buildLabel.text = $"Build {PluginInfo.Version} Legal, Debug";
-#else
-                buildLabel.text = $"Build {PluginInfo.Version}";
-#endif
-
-                buildLabel.text = Strings.FollowMenuSettings(buildLabel.text);
-
-                buildLabel.fontSize = 1;
-                buildLabel.AddComponent<UIColors>().colors = textColors[0];
-                buildLabel.richText = true;
-                buildLabel.fontStyle = activeFontStyle;
-                buildLabel.alignment = TextAlignmentOptions.Right;
-                buildLabel.enableAutoSizing = true;
-                buildLabel.fontSizeMin = 0;
-
-                RectTransform component = buildLabel.GetComponent<RectTransform>();
-                component.localPosition = Vector3.zero;
-                component.sizeDelta = new Vector2(0.28f, 0.02f);
-                component.position = thinMenu ? new Vector3(0.04f, 0.0f, -0.17f) : new Vector3(0.04f, 0.07f, -0.17f);
-                component.rotation = Quaternion.Euler(new Vector3(0f, 90f, 90f));
-
-                FollowMenuSettings(buildLabel);
-
-                if (!disableWatermark)
-                {
-                    watermarkImage = new GameObject
-                    {
-                        transform =
-                        {
-                            parent = canvasObj.transform
-                        }
-                    }.AddComponent<Image>();
-
-                    if (watermarkMat == null)
-                        watermarkMat = new Material(watermarkImage.material);
-
-                    watermarkImage.material = watermarkMat;
-                    watermarkImage.material.SetTexture("_MainTex", customWatermark ?? LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.icon.png"));
-
-                    RectTransform imageTransform = watermarkImage.GetComponent<RectTransform>();
-                    imageTransform.localPosition = Vector3.zero;
-                    imageTransform.sizeDelta = new Vector2(.15f, .15f);
-
-                    imageTransform.localPosition = new Vector3(0.04f, 0f, 0f);
-
-                    FollowMenuSettings(watermarkImage);
-
-                    imageTransform.localRotation = Quaternion.Euler(new Vector3(0f, 90f, 90f - (rockWatermark ? (Mathf.Sin(Time.time * 2f) * 10f) : 0f)));
-
-                    if (customWatermark == null)
-                        watermarkImage.AddComponent<UIColors>().colors = textColors[0];
-                    else
-                        watermarkImage.material.color = Color.white;
-                }
-            }
-
-            if (!disableFpsCounter)
-            {
-                TextMeshPro fps = new GameObject
-                {
-                    transform =
-                    {
-                        parent = canvasObj.transform
-                    }
-                }.AddComponent<TextMeshPro>();
-                fps.font = activeFont;
-
-                string textToSet = ftCount ? $"FT: {Mathf.Floor(1f / lastDeltaTime * 10000f) / 10f} ms" : $"FPS: {lastDeltaTime}";
-                if (hidetitle && !noPageNumber) textToSet += "      ";
-                if (hidetitle && !noPageNumber) textToSet += "Page " + (pageNumber + 1);
-
-                fps.text = Strings.FollowMenuSettings(textToSet, false);
-
-                fps.AddComponent<UIColors>().colors = textColors[0];
-                fpsCount = fps;
-                fps.fontSize = 1;
-                fps.richText = true;
-                fps.SafeSetFontStyle(activeFontStyle);
-                fps.SafeSetAlignment(TextAlignmentOptions.Center);
-                fps.SafeSetOverflowMode(TextOverflowModes.Overflow);
-                fps.enableAutoSizing = true;
-                fps.fontSizeMin = 0;
-                RectTransform fpsTransform = fps.GetComponent<RectTransform>();
-                fpsTransform.sizeDelta = NoAutoSizeText ? new Vector2(9f, 0.015f) : new Vector2(0.28f, 0.02f);
-                fpsTransform.localPosition = new Vector3(0.06f, 0f, hidetitle ? 0.175f : 0.135f);
-                fpsTransform.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
-
-                if (hideTextOnCamera)
-                    fpsTransform.gameObject.layer = 19;
-
-                FollowMenuSettings(fps);
-            }
-
-            float hkbStartTime = -0.3f;
-            if (!disableDisconnectButton)
-            {
-                AddButton(-0.3f, -1, Manager.GetIndex("Disconnect"));
-                hkbStartTime -= ButtonDistance;
-            }
-
-            if (quickActions.Count > 0)
-            {
-                foreach (string action in quickActions.ToList())
-                {
-                    Module button = Manager.GetIndex(action);
-                    if (button == null)
-                    {
-                        quickActions.Remove(action);
-                        continue;
-                    }
-
-                    AddButton(hkbStartTime, -1, button);
-                    hkbStartTime -= ButtonDistance;
-                }
-            }
-
-            
-            if (!disableSearchButton)
-            {
-                AddSearchButton();
-                if (!disableReturnButton && Manager.CurrentCategoryName != "Main")
-                    AddReturnButton(true);
-            }
-            else
-            {
-                if (!disableReturnButton && Manager.CurrentCategoryName != "Main")
-                    AddReturnButton(false);
-            }
-
-            if (enableDebugButton)
-                AddDebugButton();
-            else
-            {
-                if (ServerData.OutdatedVersion)
-                    AddUpdateButton();
-            }
-
-            if (!disablePageButtons && CurrentPrompt == null && !pageScrolling)
-                AddPageButtons();
-
-            if (inTextInput)
-            {
-                GameObject searchBoxObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                if (!UI.IsKeyboardActive())
-                    searchBoxObject.layer = 2;
-
-                searchBoxObject.GetComponent<BoxCollider>().isTrigger = true;
-                searchBoxObject.transform.parent = menu.transform;
-                searchBoxObject.transform.rotation = Quaternion.identity;
-
-                searchBoxObject.transform.localScale = thinMenu ? new Vector3(0.09f, 0.9f, ButtonDistance * 0.8f) : new Vector3(0.09f, 1.3f, ButtonDistance * 0.8f);
-
-                searchBoxObject.transform.localPosition = new Vector3(0.56f, 0f, 0.28f - buttonOffset * ButtonDistance);
-
-                ObjectColors colorChanger = searchBoxObject.AddComponent<ObjectColors>();
-                colorChanger.colors = buttonColors[0];
-
-                FollowMenuSettings(searchBoxObject);
-
-                keyboardInputObject = new GameObject
-                {
-                    transform =
-                        {
-                            parent = canvasObj.transform
-                        }
-                }.AddComponent<TextMeshPro>();
-
-                keyboardInputObject.font = activeFont;
-                keyboardInputObject.text = Strings.FollowMenuSettings(keyboardInput, false) + ((Time.time % 1f) > 0.5f ? "|" : "");
-
-                keyboardInputObject.richText = true;
-                keyboardInputObject.fontSize = 1;
-
-                if (joystickMenu && joystickButtonSelected == 0 && themeType == 29)
-                    keyboardInputObject.color = Color.red;
-                else
-                    keyboardInputObject.AddComponent<UIColors>().colors = textColors[1];
-
-                keyboardInputObject.alignment = TextAlignmentOptions.Center;
-                keyboardInputObject.fontStyle = activeFontStyle;
-                keyboardInputObject.enableAutoSizing = true;
-                keyboardInputObject.fontSizeMin = 0;
-
-                RectTransform textTransform = keyboardInputObject.GetComponent<RectTransform>();
-                textTransform.localPosition = Vector3.zero;
-                textTransform.sizeDelta = new Vector2(.2f, .03f * (ButtonDistance / 0.1f));
-                if (NoAutoSizeText)
-                    textTransform.sizeDelta = new Vector2(9f, 0.015f);
-
-                if (hideTextOnCamera)
-                    textTransform.gameObject.layer = 19;
-
-                textTransform.localPosition = new Vector3(.064f, 0, .111f - buttonOffset * ButtonDistance / 2.6f);
-                textTransform.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
-
-                FollowMenuSettings(keyboardInputObject);
-            }
-
-            if (promptVideoPlayer != null)
-            {
-                promptVideoPlayer.Stop();
-                promptVideoPlayer.gameObject.Destroy();
-                promptVideoPlayer = null;
-            }
-
-            if (CurrentPrompt != null)
-                RenderPrompt();
-            else
-            {
-                
-                int buttonIndexOffset = 0;
-                Module[] renderButtons;
-
-                try
-                {
-                    if (isSearching)
-                    {
-                        List<Module> searchedMods = new List<Module>();
-
-                        if (nonGlobalSearch && Manager.CurrentCategoryName != "Main")
-                        {
-                            foreach (Module v in Manager.modules[Manager.CurrentCategoryName])
-                            {
-                                try
-                                {
-                                    List<string> texts = v.aliases == null ? new List<string>() : v.aliases.ToList();
-                                    texts.Add(v.overlapText ?? v.buttonText);
-
-                                    if (texts.Any(buttonText => buttonText.ClearTags().Replace(" ", "").ToLower().Contains(keyboardInput.Replace(" ", "").ToLower())))
-                                        searchedMods.Add(v);
-                                }
-                                catch { }
-                            }
-                        }
-                        else
-                        {
-                            foreach (KeyValuePair<string, Module[]> categoryEntry in Manager.modules)
-                            {
-                                Module[] buttonlist = categoryEntry.Value;
-                                foreach (Module v in buttonlist)
-                                {
-                                    try
-                                    {
-                                        if (((categoryEntry.Key.Contains("Admin") ||
-                                            categoryEntry.Key == "Mod Givers") &&
-                                            !isAdmin)
-                                            || (v.detected && !allowDetected))
-                                            continue;
-
-                                        List<string> texts = v.aliases == null ? new List<string>() : v.aliases.ToList();
-                                        texts.Add(v.overlapText ?? v.buttonText);
-
-                                        if (texts.Any(buttonText => buttonText.ClearTags().Replace(" ", "").ToLower().Contains(keyboardInput.Replace(" ", "").ToLower())))
-                                            searchedMods.Add(v);
-                                    }
-                                    catch { }
-                                }
-                            }
-                        }
-
-                        buttonIndexOffset += 1;
-                        renderButtons = searchedMods.ToArray();
-                    }
-                    else if (annoyingMode && Random.Range(1, 5) == 3)
-                    {
-                        Module disconnectButton = Manager.GetIndex("Disconnect");
-                        renderButtons = Enumerable.Repeat(disconnectButton, 15).ToArray();
-                    }
-                    else switch (Manager.CurrentCategoryName)
-                        {
-                            case "Main":
-                                {
-                                    List<Module> buttons = new List<Module>();
-                                    foreach (var button in Manager.modules[Manager.CurrentCategoryName])
-                                    {
-                                        if (!skipButtons.Contains(button.buttonText))
-                                            buttons.Add(button);
-                                    }
-                                    renderButtons = buttons.ToArray();
-                                    break;
-                                }
-                            case "Favorite Mods":
-                                {
-                                    foreach (var favoriteMod in favorites.Where(favoriteMod => Manager.GetIndex(favoriteMod) == null).ToList())
-                                        favorites.Remove(favoriteMod);
-
-                                    renderButtons = StringsToInfos(favorites.ToArray());
-                                    break;
-                                }
-                            case "Enabled Mods":
-                                {
-                                    List<Module> enabledMods = new List<Module>();
-                                    foreach (KeyValuePair<string, Module[]> categoryEntry in Manager.modules)
-                                    {
-                                        Module[] buttonList = categoryEntry.Value;
-                                        enabledMods.AddRange(buttonList.Where(v => v.enabled && (!hideSettings || !categoryEntry.Key.Contains("Settings")) && (!hideMacros || !categoryEntry.Key.Contains("Macro"))));
-                                    }
-                                    enabledMods = enabledMods.OrderBy(v => v.buttonText).ToList();
-                                    enabledMods.Insert(0, Manager.GetIndex("Exit Enabled Mods"));
-
-                                    renderButtons = enabledMods.ToArray();
-                                    break;
-                                }
-                            default:
-                                renderButtons = Manager.modules[Manager.CurrentCategoryName];
-                                break;
-                        }
-
-#if LEGAL || LEGAL_DEBUG
-                    renderButtons = renderButtons.Where(b => b.legal || b.label).ToArray();
-#endif
-
-                    if (renderButtons.Length == 0 || (renderButtons.Length == 1 && renderButtons.FirstOrDefault().toolTip.Contains("Returns you back to the")))
-                    {
-                        renderButtons = renderButtons.AddToArray(
-                            new Module
-                            {
-                                buttonText = "This category seems to be empty.",
-                                legal = true,
-                                label = true
-                            }
-                        );
-                    }
-
-
-                    if (Manager.GetIndex("Alphabetize Menu").enabled || isSearching)
-                        renderButtons = StringsToInfos(Alphabetize(InfosToStrings(renderButtons)));
-
-                    if (!longmenu)
-                        renderButtons = renderButtons
-                            .Skip(pageNumber * (PageSize - buttonIndexOffset) + pageOffset)
-                            .Take(PageSize - buttonIndexOffset)
-                            .ToArray();
-
-                    for (int i = 0; i < renderButtons.Length; i++)
-                        AddButton((i + buttonIndexOffset + buttonOffset) * ButtonDistance, i, renderButtons[i]);
-                }
-                catch (Exception ex)
-                {
-                    Logs.Log($"Menu draw is erroring, returning to home page\nException: {ex}");
-                    Manager.CurrentCategoryName = "Main";
-                }
-            }
-
-            RecenterMenu();
-
-            if (themeType == 48)
-            {
-                for (int i = 0; i < 15; i++)
-                {
-                    GameObject particle = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    particle.transform.position = menuBackground.transform.position;
-                    particle.transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
-
-                    Destroy(particle.GetComponent<BoxCollider>());
-                    Destroy(particle, 2f);
-
-                    particle.GetComponent<Renderer>().material.shader = Shader.Find("Universal Render Pipeline/Unlit");
-                    particle.GetComponent<Renderer>().material.color = Color.white;
-
-                    if (cannabisMat == null)
-                    {
-                        cannabisMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
-                        {
-                            color = Color.white
-                        };
-
-                        if (cann == null)
-                            cann = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Themes/cannabis.png", "Images/Themes/cannabis.png");
-
-                        cannabisMat.mainTexture = cann;
-
-                        cannabisMat.SetFloat("_Surface", 1);
-                        cannabisMat.SetFloat("_Blend", 0);
-                        cannabisMat.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
-                        cannabisMat.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
-                        cannabisMat.SetFloat("_ZWrite", 0);
-                        cannabisMat.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
-                        cannabisMat.renderQueue = (int)RenderQueue.Transparent;
-                    }
-                    particle.GetComponent<Renderer>().material = cannabisMat;
-
-                    Rigidbody comp = particle.AddComponent(typeof(Rigidbody)) as Rigidbody;
-                    comp.position = menuBackground.transform.position;
-                    comp.linearVelocity = new Vector3(Random.Range(-3f, 3f), Random.Range(3f, 5f), Random.Range(-3f, 3f));
-                    comp.angularVelocity = new Vector3(Random.Range(-3f, 3f), Random.Range(-3f, 3f), Random.Range(-3f, 3f));
-                }
-            }
-
-            menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? References.Player.scale * menuScale : menuScale;
-            return menu;
-        }
 
         private static Vector3? recenterPosition;
         private static Quaternion? recenterRotation;
@@ -2224,7 +1545,7 @@ result = result.Where(b => b.legal || b.label);
             }
         }
 
-        private static void AddPageButtons()
+        internal static void AddPageButtons()
         {
             ExtGradient Gradient = buttonColors[swapButtonColors ? 1 : 0];
 
@@ -2342,18 +1663,18 @@ result = result.Where(b => b.legal || b.label);
             return button;
         }
 
-        
-
-
-
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Applies or removes an outline effect to the specified menu object, adjusting its appearance based on the
+        /// provided state.
+        /// </summary>
+        /// <remarks>If the specified object is not a direct child of the menu, the outline effect is
+        /// applied using a general method. For menu child objects, a new primitive is created and styled to visually
+        /// represent the outline. The appearance of the outline may vary depending on the value of shouldBeEnabled and
+        /// the configuration of the menu. This method does not modify the original object's geometry or
+        /// components.</remarks>
+        /// <param name="toOut">The GameObject to which the outline effect will be applied or removed. Must not be null.</param>
+        /// <param name="shouldBeEnabled">A value indicating whether the outline effect should be enabled (<see langword="true"/>) or removed (<see
+        /// langword="false"/>).</param>
         public static void OutlineMenuObject(GameObject toOut, bool shouldBeEnabled)
         {
             if (toOut.transform.parent != menu?.transform)
@@ -2377,16 +1698,16 @@ result = result.Where(b => b.legal || b.label);
                 RoundMenuObject(gameObject, 0.024f);
         }
 
-        
-
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Creates an outline effect around the specified GameObject to visually indicate its enabled or disabled
+        /// state.
+        /// </summary>
+        /// <remarks>The outline is created as a separate GameObject, matching the position, rotation, and
+        /// scale of the target object. The outline color reflects the enabled or disabled state as determined by the
+        /// application's color settings. This method does not modify the original GameObject.</remarks>
+        /// <param name="toOut">The GameObject to outline. Cannot be null.</param>
+        /// <param name="shouldBeEnabled">A value indicating whether the outline should represent the enabled (<see langword="true"/>) or disabled
+        /// (<see langword="false"/>) state.</param>
         public static void OutlineObject(GameObject toOut, bool shouldBeEnabled)
         {
             GameObject gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -2402,35 +1723,35 @@ result = result.Where(b => b.legal || b.label);
             colorChanger.colors = buttonColors[shouldBeEnabled ? 1 : 0];
         }
 
-        
-
-
-
-
-
-
-
+        /// <summary>
+        /// Adds a black outline effect to the specified UI canvas object.
+        /// </summary>
+        /// <remarks>This method adds a Unity UI Outline component to the target object's GameObject,
+        /// configuring it with a thin black outline. If the object already has an Outline component, an additional one
+        /// will be added, which may result in multiple outlines. The outline uses the graphic's alpha
+        /// channel.</remarks>
+        /// <param name="canvasObject">The UI element to which the outline effect will be applied. Must not be null.</param>
         public static void OutlineCanvasObject(MaskableGraphic canvasObject)
         {
-            
+            // Creds: libyyyreal for optimization tech
             Outline outline = canvasObject.gameObject.AddComponent<Outline>();
             outline.effectColor = Color.black;
             outline.effectDistance = new Vector2(0.001f, 0.001f);
             outline.useGraphicAlpha = true;
         }
 
-        
-
-
-
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Replaces a menu object's appearance with a rounded version by constructing beveled edges and rounded corners
+        /// around the specified GameObject.
+        /// </summary>
+        /// <remarks>If the specified GameObject is not a direct child of the menu, only a basic rounding
+        /// operation is performed. When applied to a menu child, the method disables the original renderer and
+        /// constructs new primitives to visually represent a rounded, beveled menu item. The method also ensures that
+        /// color and transparency settings are preserved by copying relevant components.</remarks>
+        /// <param name="toRound">The GameObject to be visually rounded. Must be a child of the menu GameObject to receive the full rounded
+        /// treatment; otherwise, a standard rounding is applied.</param>
+        /// <param name="Bevel">The width of the bevel applied to the edges and corners, in Unity units. Must be a positive value. The
+        /// default is 0.02.</param>
         public static void RoundMenuObject(GameObject toRound, float Bevel = 0.02f)
         {
             if (toRound.transform.parent != menu?.transform)
@@ -2520,17 +1841,17 @@ result = result.Where(b => b.legal || b.label);
                 colorChanger.overrideTransparency = false;
         }
 
-        
-
-
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Replaces the specified GameObject with a visually rounded version by constructing a composite of primitive
+        /// shapes with beveled edges.
+        /// </summary>
+        /// <remarks>This method disables the original object's Renderer and creates new child primitives
+        /// to approximate a rounded appearance. The original object's ColorChanger component, if present, will have its
+        /// overrideTransparency property set to false. The method does not modify the original object's collider or
+        /// mesh, and is intended for visual effects only.</remarks>
+        /// <param name="toRound">The GameObject to be visually rounded. Must have a Renderer component attached.</param>
+        /// <param name="bevel">The width, in world units, of the bevel applied to the object's edges. Must be non-negative. The default
+        /// value is 0.02.</param>
         public static void RoundObject(GameObject toRound, float bevel = 0.02f)
         {
             static GameObject CreatePrimitive(PrimitiveType type, Transform parent, bool rendererEnabled)
@@ -2669,13 +1990,13 @@ result = result.Where(b => b.legal || b.label);
             colorChanger.colors = gradient;
         }
 
-        
-
-
-
-
-
-
+        /// <summary>
+        /// Applies menu appearance settings to the specified game object, such as outlining and rounding, based on
+        /// current configuration.
+        /// </summary>
+        /// <param name="gameObject">The game object to which the menu appearance settings will be applied.</param>
+        /// <param name="shouldBeEnabled">A value indicating whether outlining should be enabled for the game object. The default is <see
+        /// langword="true"/>.</param>
         public static void FollowMenuSettings(GameObject gameObject, bool shouldBeEnabled = true)
         {
             if (shouldOutline)
@@ -2685,11 +2006,11 @@ result = result.Where(b => b.legal || b.label);
                 RoundMenuObject(gameObject);
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Applies menu appearance settings to the specified canvas object, such as outlining, based on
+        /// current configuration.
+        /// </summary>
+        /// <param name="tmp">The canvas object to which the menu appearance settings will be applied.</param>
         public static void FollowMenuSettings(TMP_Text tmp, float? overlapTargetSpacing = null)
         {
             if (tmp == null)
@@ -2735,11 +2056,11 @@ result = result.Where(b => b.legal || b.label);
                 tmp.fontStyle = targetStyle;
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Applies menu appearance settings to the specified canvas object, such as outlining, based on
+        /// current configuration.
+        /// </summary>
+        /// <param name="canvasObject">The canvas object to which the menu appearance settings will be applied.</param>
         public static void FollowMenuSettings(MaskableGraphic canvasObject)
         {
             if (outlineText)
@@ -2912,7 +2233,7 @@ result = result.Where(b => b.legal || b.label);
         public static Texture2D donateIcon;
         public static Texture2D updateIcon;
 
-        public static bool toggleDebugEchoMode; 
+        public static bool toggleDebugEchoMode; // Build with this enabled for a surprise
         public static readonly string[] facts = {
             "The honeybee is the only insect that produces food eaten by humans.",
             "Bananas are berries, but strawberries aren't.",
@@ -2948,7 +2269,7 @@ result = result.Where(b => b.legal || b.label);
 
     public static class Settings
     {
-        
+        // The variable warehouse
 
         public static bool isOnPC;
         public static bool IsSteam = true;
@@ -3214,13 +2535,13 @@ result = result.Where(b => b.legal || b.label);
         };
 
         public static ExtGradient[] buttonColors = {
-            new ExtGradient 
+            new ExtGradient // Released
             {
                 colors = ExtGradient.GetSolidGradient(
                     new Color32(118, 6, 252, 255)
                 )
             },
-            new ExtGradient 
+            new ExtGradient // Pressed
             {
                 colors = ExtGradient.GetSolidGradient(
                     new Color32(88, 6, 186, 255)
@@ -3229,15 +2550,15 @@ result = result.Where(b => b.legal || b.label);
         };
 
         public static ExtGradient[] textColors = {
-            new ExtGradient 
+            new ExtGradient // Title
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             },
-            new ExtGradient 
+            new ExtGradient // Button Released
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             },
-            new ExtGradient 
+            new ExtGradient // Button Clicked
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             }

@@ -770,8 +770,8 @@ namespace Qubit.Modules.Categories
                     ToRig = (rig.transform.position - head.position).normalized,
                     Distance = Vector3.Distance(head.position, rig.transform.position)
                 })
-                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig)) 
-                .ThenBy(x => x.Distance) 
+                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig)) // only angle matters
+                .ThenBy(x => x.Distance) // tiebreaker if multiple at same angle
                 .Select(x => x.Rig)
                 .FirstOrDefault();
 

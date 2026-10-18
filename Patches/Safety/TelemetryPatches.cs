@@ -29,7 +29,7 @@ using static Qubit.Patches.PatchHandler;
 
 namespace Qubit.Patches.Safety
 {
-    
+    // This is used to block out Gorilla Tag's analytics / tracking data.
     public class TelemetryPatches
     {
         public static bool enabled = true;

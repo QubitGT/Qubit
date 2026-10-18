@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Backend;
 using Qubit.Libraries.Audio;
 using Qubit.Core;
 using ExitGames.Client.Photon;
@@ -42,6 +43,7 @@ using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Libraries.Networking
 {
+    [AddOnStart(AttachTo = typeof(ServerData))]
     public class Patreon : MonoBehaviour
     {
         public static Patreon instance = null;
@@ -49,6 +51,13 @@ namespace Qubit.Libraries.Networking
         public void Awake()
         {
             instance = this;
+
+            if (!ServerData.ServerDataEnabled)
+            {
+                enabled = false; // stays attached with no functionality
+                return;
+            }
+
             PhotonNetwork.NetworkingClient.EventReceived += EventReceived;
         }
 
@@ -130,7 +139,7 @@ namespace Qubit.Libraries.Networking
                     }
 
                     playerIndicator.GetComponent<Renderer>().material = iconMaterial;
-                    playerIndicator.GetComponent<Renderer>().material.mainTexture = LoadTextureFromURL(member.Value.IconURL, $"Images/Patreon/{member.Key.UserId}.{Files.GetFileExtension(member.Value.IconURL)}"); 
+                    playerIndicator.GetComponent<Renderer>().material.mainTexture = LoadTextureFromURL(member.Value.IconURL, $"Images/Patreon/{member.Key.UserId}.{Files.GetFileExtension(member.Value.IconURL)}"); // errors?
                     playerIndicator.GetComponent<Renderer>().material.color = Color.white;
 
                     GameObject go = new GameObject("Qubit_Nametag");

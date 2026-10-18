@@ -55,6 +55,7 @@ using JoinType = GorillaNetworking.JoinType;
 
 namespace Qubit.Frontend
 {
+    [AddOnStart]
     public class UI : MonoBehaviour
     {
         public static UI Instance;
@@ -229,6 +230,9 @@ namespace Qubit.Frontend
             if (isOpen)
             {
                 uiPrefab.SetActive(true);
+
+                if (UnityEngine.InputSystem.Keyboard.current?.backquoteKey.wasPressedThisFrame == true)
+                    ToggleDebug();
 
                 if (desktopOverlay != null)
                 {
@@ -586,7 +590,7 @@ namespace Qubit.Frontend
             }
         }
 
-        private void OnGUI() 
+        private void OnGUI() // Legacy plugin OnGUI compatibility
         {
             if (isOpen)
                 Plugins.ExecuteOnGUI();

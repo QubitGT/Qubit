@@ -162,7 +162,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Long Menu", enableMethod =() => longmenu = true, disableMethod =() => longmenu = false, toolTip = "Makes the menu long.", legal = true},
                 new Module { buttonText = "Flip Menu", enableMethod =() => flipMenu = true, disableMethod =() => flipMenu = false, toolTip = "Flips the menu to the back of your hand.", legal = true},
 
-                new Module { buttonText = "Legacy Menu", enableMethod =() => QubitMenuBody.qubitLoadFailed = true, disableMethod =() =>  QubitMenuBody.qubitLoadFailed = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
+                new Module { buttonText = "Legacy Menu", enableMethod =() => Legacy.Enabled = true, disableMethod =() => Legacy.Enabled = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
 
                 new Module { buttonText = "Round Menu", enableMethod =() => shouldRound = true, disableMethod =() => shouldRound = false, toolTip = "Makes the menu objects round.", legal = true},
                 new Module { buttonText = "Outline Menu", enableMethod =() => shouldOutline = true, disableMethod =() => shouldOutline = false, toolTip = "Gives the menu objects an outline.", legal = true},
@@ -201,7 +201,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Voice Commands", enableMethod = Modules.Categories.Settings.VoiceRecognitionOn, method = Modules.Categories.Settings.CheckFocus, disableMethod = Modules.Categories.Settings.VoiceRecognitionOff, toolTip = "Enable and disable mods using your voice. Activate it like how you would any other voice assistant, such as \"Jarvis, Platforms\".", legal = true},
                 new Module { buttonText = "Chain Voice Commands", toolTip = "Makes voice commands chain together, so you don't have to repeatedly ask it to listen to you.", legal = true},
                 new Module { buttonText = "AI Assistant", enableMethod =() => Coroutines.instance.StartCoroutine(Modules.Categories.Settings.DictationOn()), method = Modules.Categories.Settings.CheckFocus, disableMethod = Modules.Categories.Settings.DictationOff, toolTip = "A voice assistant with artificial intelligence capabilities.", legal = true},
-                
+                //new ButtonInfo { buttonText = "Click GUI", enableMethod = Settings.EnableClickGUI, method = Settings.ClickGUI, disableMethod = Settings.DisableClickGUI, toolTip = "A modern version of the menu."},
 
                 new Module { buttonText = "Narrate Assistant", toolTip = "Narrates what the voice assistant says locally.", legal = true},
                 new Module { buttonText = "Global Narrate Assistant", toolTip = "Narrates what the voice assistant says globally.", legal = true},
@@ -215,7 +215,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Reset System Prompt", method = Modules.Categories.Settings.ResetSystemPrompt, isTogglable = false, toolTip = "Resets the system prompt for the AI Assistant.", legal = true},
 
                 new Module { buttonText = "Player Select", method = Modules.Categories.Settings.PlayerSelect, toolTip = "Spawns a line in your hand when moving your hand away from the menu that you can select players with.", legal = true},
-                
+                //new ButtonInfo { buttonText = "Menu Intro", enableMethod = Settings.MenuIntro, toolTip = "Plays an intro for the menu."},
 
                 new Module { buttonText = "Annoying Mode", enableMethod =() => annoyingMode = true, disableMethod = Modules.Categories.Settings.AnnoyingModeOff, toolTip = "Turns on the April Fools 2024 settings.", legal = true},
                 new Module { buttonText = "Lowercase Mode", enableMethod =() => lowercaseMode = true, disableMethod =() => lowercaseMode = false, toolTip = "Makes the entire menu's text lowercase.", legal = true},
@@ -472,7 +472,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Room Creator", method = Room.RoomCreator, isTogglable = false, toolTip = "Create your own custom room!"},
 
-                new Module { buttonText = "Disconnect", method =() => ManagerRegistry.NetworkSystem.ReturnToSinglePlayer(), isTogglable = false, toolTip = "Disconnects you from the the room.", legal = true}, 
+                new Module { buttonText = "Disconnect", method =() => ManagerRegistry.NetworkSystem.ReturnToSinglePlayer(), isTogglable = false, toolTip = "Disconnects you from the the room.", legal = true}, // I'm keeping this legal because Developer9998's InfoWatch mod has it.
                 new Module { buttonText = "Reconnect", aliases = new[] { "Rejoin" }, method = Room.Reconnect, isTogglable = false, toolTip = "Reconnects you from and to the the room.", legal = true},
 
                 new Module { buttonText = "Cancel Reconnect", method = Room.CancelReconnect, isTogglable = false, toolTip = "Cancels the reconnection loop.", legal = true},
@@ -1187,7 +1187,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Camera FOV", postMethod = Fun.CameraFOV, disableMethod = Fun.FixCameraFOV, toolTip = "Changes the FOV of your PC camera.", legal = true},
                 new Module { buttonText = "Spectate Gun", postMethod = Fun.SpectateGun, disableMethod = Fun.DisableFreecam, toolTip = "Lets you see through the eyes of whoever your hand desires."},
 
-                
+                //new ButtonInfo { buttonText = "Echolocation", enableMethod = Fun.EcholocationOn, method = Fun.Echolocation, disableMethod = Fun.EcholocationOff, toolTip = "Blinds your vision, only showing a player whenever they speak."},
 
                 new Module { buttonText = "Nausea", aliases = new[] { "Sick", "Nautious", "Drunk" }, postMethod = Fun.Nausea, disableMethod = Fun.DisableFreecam, toolTip = "Gives you the Nausea effect from Minecraft."},
                 new Module { buttonText = "LSD", aliases = new[] { "Drugs", "High" }, method =() => { Color rgb = Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f); Fun.HueShift(new Color(rgb.r, rgb.g, rgb.b, 0.1f)); }, disableMethod =() => Fun.HueShift(Color.clear), toolTip = "Hue shifts your game to a rainbow color.", legal = true},
@@ -1281,14 +1281,14 @@ namespace Qubit.Modules
                 new Module { buttonText = "Get Builder Watch", method = Blocks.GiveBuilderWatch, isTogglable = false, toolTip = "Gives you the builder watch without needing to be in attic."},
                 new Module { buttonText = "Remove Builder Watch", method = Blocks.RemoveBuilderWatch, isTogglable = false, toolTip = "Disables the builder watch."},
 
-                
+                //new ButtonInfo { buttonText = "Joystick Rope Control <color=grey>[</color><color=green>J</color><color=grey>]</color>", method = Overpowered.JoystickRopeControl, toolTip = "Control the ropes in the direction of your joystick."},
 
-                
-                
-                
+                //new ButtonInfo { buttonText = "Broken Ropes", method = Overpowered.SpazGrabbedRopes, toolTip = "Gives any ropes currently being held onto a seizure."},
+                //new ButtonInfo { buttonText = "Spaz Rope Gun", method = Overpowered.SpazRopeGun, toolTip = "Gives whatever rope your hand desires a seizure."},
+                //new ButtonInfo { buttonText = "Spaz All Ropes <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.SpazAllRopes, toolTip = "Gives every rope a seizure when holding <color=green>trigger</color>."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Fling Rope Gun", method = Overpowered.FlingRopeGun, toolTip = "Flings whatever rope your hand desires away from you."},
+                //new ButtonInfo { buttonText = "Fling All Ropes Gun", method = Overpowered.FlingAllRopesGun, toolTip = "Flings every rope in whatever direction your hand desires."},
 
                 new Module { buttonText = "Fast Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.5f, 0.5f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders fast."},
                 new Module { buttonText = "Slow Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.05f, 0.05f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders slow."},
@@ -1930,21 +1930,21 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Guardian Spaz", method = Master.GuardianSpaz, toolTip = "Spams the guardian position for everyone in the room."},
 
-                
-                
-                
+                //new ButtonInfo { buttonText = "Red Color Self", method =() => Overpowered.SetColorSelf(1), isTogglable = false, toolTip = "Changes your color to red."},
+                //new ButtonInfo { buttonText = "Red Color Gun", method =() => Overpowered.SetColorGun(1), toolTip = "Changes whoever your hand desires' color to red."},
+                //new ButtonInfo { buttonText = "Red Color All", method =() => Overpowered.SetColorAll(1), isTogglable = false, toolTip = "Changes everyone in the room's color to red."},
 
-                
-                
-                
+                //new ButtonInfo { buttonText = "Blue Color Self", method =() => Overpowered.SetColorSelf(0), isTogglable = false, toolTip = "Changes your color to blue."},
+                //new ButtonInfo { buttonText = "Blue Color Gun", method =() => Overpowered.SetColorGun(0), toolTip = "Changes whoever your hand desires' color to blue."},
+                //new ButtonInfo { buttonText = "Blue Color All", method =() => Overpowered.SetColorAll(0), isTogglable = false, toolTip = "Changes everyone in the room's color to blue."},
 
-                
-                
-                
+                //new ButtonInfo { buttonText = "Reset Color Self", method =() => Overpowered.SetColorSelf(-1), isTogglable = false, toolTip = "Resets your color back to what it was."},
+                //new ButtonInfo { buttonText = "Reset Color Gun", method =() => Overpowered.SetColorGun(-1), toolTip = "Resets whoever your hand desires' color back to what it was."},
+                //new ButtonInfo { buttonText = "Reset Color All", method =() => Overpowered.SetColorAll(-1), isTogglable = false, toolTip = "Resets everyone in the room's color back to what it was."},
 
-                
-                
-                
+                //new ButtonInfo { buttonText = "Strobe Color Self", method = Overpowered.StrobeColorSelf, toolTip = "Flashes your color between red and blue."},
+                //new ButtonInfo { buttonText = "Strobe Color Gun", method = Overpowered.StrobeColorGun, toolTip = "Flashes whoever your hand desires' color between red and blue."},
+                //new ButtonInfo { buttonText = "Strobe Color All", method = Overpowered.StrobeColorAll, toolTip = "Flashes everyone in the room's color between red and blue."},
 
                 new Module { buttonText = "Material Self", method =() => { if (!(Time.time > Master.materialDelay)) return; Master.MaterialTarget(References.LocalRig); Master.materialDelay = Time.time + 0.1f; }, toolTip = "Flashes the materials of yourself."},
                 new Module { buttonText = "Material Gun", method = Master.MaterialGun, toolTip = "Flashes the materials of whoever your hand desires."},
@@ -2002,8 +2002,8 @@ namespace Qubit.Modules
                 new Module { buttonText = "Empty Lava", method =() => Master.ChangeLavaState(InfectionLavaController.RisingLavaState.Drained), isTogglable = false, toolTip = "Makes the lava in the forest lava map drained."},
                 new Module { buttonText = "Erupt Lava", method =() => Master.ChangeLavaState(InfectionLavaController.RisingLavaState.Erupting), isTogglable = false, toolTip = "Erupts the lava in the forest lava map."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Lava Swim Gun", method = Overpowered.LavaSwimGun, toolTip = "Allows whoever your hand desires to swim in lava."},
+                //new ButtonInfo { buttonText = "Lava Swim All", method = Overpowered.LavaSwimGun, toolTip = "Makes everyone swim in lava."},
 
                 new Module { buttonText = "Kill Self", method =() => Master.SetStateSelf(1), isTogglable = false, toolTip = "Turns you into a ghost."},
                 new Module { buttonText = "Kill Gun", method =() => Master.SetStateGun(1), toolTip = "Turns whoever your hand desires into a ghost."},
@@ -2162,39 +2162,39 @@ namespace Qubit.Modules
                 new Module { buttonText = "Guardian Freeze Gun", method = Overpowered.GuardianPhysicalFreezeGun, toolTip = "Freezes whoever your hand desires." },
                 new Module { buttonText = $"Guardian Freeze All {Bracket("green", "T")}", method = Overpowered.GuardianPhysicalFreezeAll, toolTip = "Freezes everyone in the room when holding <color=green>trigger</color>." },
 
-                
-                
+                //new ButtonInfo { buttonText = "Guardian Kick Gun", method = Overpowered.GuardianKickGun, toolTip = "Kicks whoever your hand desires." },
+                //new ButtonInfo { buttonText = "Guardian Kick All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianKickAll, toolTip = "Kicks everyone in the room when holding <color=green>trigger</color>." },
 
-                
-                
+                //new ButtonInfo { buttonText = "Guardian Crash Gun", method = Overpowered.GuardianCrashGun, toolTip = "Crashes whoever your hand desires." },
+                //new ButtonInfo { buttonText = "Guardian Crash All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method = Overpowered.GuardianCrashAll, toolTip = "Crashes everyone in the room." },
 
                 new Module { buttonText = "Delay Ban Gun", method = Overpowered.DelayBanGun, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Delay bans whoever your hand desires."},
                 new Module { buttonText = "Delay Ban All", enableMethod = Overpowered.DelayBanAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Delay bans everyone in the room."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Kick Gun", method =() => Overpowered.KickGun(), disableMethod =() => Overpowered.DisableKick(), toolTip = "Kicks whoever your hand desires."},
+                //new ButtonInfo { buttonText = "Kick All", enableMethod =() => Overpowered.KickAll(), disableMethod =() => Overpowered.DisableKick(), toolTip = "Kicks everyone in the room."},
 
                 new Module { buttonText = "Force Grab", method =()=> Overpowered.ForceGrab(References.LocalRig.transform.position), toolTip = "Attempts to grab the hand of anyone who presses their grips." },
                 new Module { buttonText = "Force Grab Gun", postMethod = Overpowered.ForceGrabGun, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Forcibly grab whoever your hand desires." },
                 new Module { buttonText = "Fling on Grab", method = Overpowered.FlingOnGrab, toolTip = "Flings the player when they grab you." },
                 new Module { buttonText = "Give Fly on Grab", method = Overpowered.GiveFlyOnGrab, toolTip = "When someone is holding you, they can fly by pressing their trigger." },
 
-                
-                
-                
-                
+                //new ButtonInfo { buttonText = "Lag Server", method =() => Overpowered.FreezeServer(1f, 11), toolTip = "Lags the room." },
+                //new ButtonInfo { buttonText = "Freeze Server", enableMethod =() => SerializePatch.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Freezes the room." },
+                //new ButtonInfo { buttonText = "Crash Server", enableMethod =() => SerializePatch.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(0.5f, 40), disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes the room." },
+                //new ButtonInfo { buttonText = "Za Warudo <color=grey>[</color><color=green>T</color><color=grey>]</color>", enableMethod = Overpowered.ZaWarudo_enableMethod, method = Overpowered.ZaWarudo, toolTip = "Freeze all, but with special effects." },
 
                 new Module { buttonText = $"Anti Report {Bracket("green", "Fling")}", method = Overpowered.AntiReportFling, toolTip = "Flings whoever tries to report you."},
 
                 new Module { buttonText = "Grab Fling Gun", enableMethod =() => Overpowered.GrabStatus = true, method = Overpowered.GrabFlingGun, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to fling whoever your hand desires."},
                 new Module { buttonText = "Grab Fling All", enableMethod =() => Overpowered.GrabStatus = true, postMethod = Overpowered.GrabFlingAll, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to fling everyone in the room."},
 
-                
-                
-                
+                //new ButtonInfo { buttonText = "Grab Bring Player Gun", enableMethod =() => Overpowered.GrabStatus = true, postMethod = Overpowered.BringPlayerGun, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to bring whoever your hand desires to you."},
+                //new ButtonInfo { buttonText = "Grab Bring All Players", enableMethod =() => Overpowered.GrabStatus = true, postMethod = Overpowered.BringAllPlayers, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to bring everyone in the room to you."},
+                //new ButtonInfo { buttonText = "Grab Push Player Gun", enableMethod =() => Overpowered.GrabStatus = true, postMethod = Overpowered.PushPlayerGun, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to push whoever your hand desires away from you."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Grab Crash Gun", enableMethod =() => Overpowered.GrabStatus = true, postMethod = Overpowered.GrabCrashGun, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to crash whoever your hand desires."},
+                //new ButtonInfo { buttonText = "Grab Crash All", enableMethod =() => Overpowered.GrabStatus = true, postMethod = Overpowered.GrabCrashAll, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to crash everyone in the room."},
 
 
                 new Module { buttonText = "Lag Gun", method = Overpowered.LagGun, toolTip = "Lags whoever your hand desires."},
@@ -2206,27 +2206,27 @@ namespace Qubit.Modules
                 new Module { buttonText = "Deafen Gun", method = Overpowered.DeafenGun, toolTip = "Makes whoever your hand deseries not be able to hear anyone else."},
                 new Module { buttonText = "Deafen All", method = Overpowered.DeafenAll, toolTip = "Makes everyone not be able to hear anyone except you."},
 
-                
+                //new ButtonInfo { buttonText = "Anti Report <color=grey>[</color><color=green>Lag</color><color=grey>]</color>", method = Overpowered.AntiReportLag, toolTip = "Lags whoever tries to report you."},
 
-                
+                //new ButtonInfo { buttonText = "Barrel Punch Mod", method = Overpowered.BarrelPunchMod, toolTip = "Flings people when you punch them."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Barrel Fling Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingGun, toolTip = "Flings whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Fling All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Barrel Fling Towards Gun", overlapText = "Barrel Bring Gun", aliases = new[] { "Barrel Fling Towards Gun" }, enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsGun, toolTip = "Flings whoever your hand desires using the barrels towards you."},
+                //new ButtonInfo { buttonText = "Barrel Fling Towards All", overlapText = "Barrel Bring All", aliases = new[] { "Barrel Fling Towards All" }, enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelFlingTowardsAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Flings everyone in the room using the barrels towards you."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Barrel Kick Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickGun, toolTip = "Kicks whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Kick All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelKickAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Kicks everyone in the room using the barrels."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Barrel Crash Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashGun, toolTip = "Crashes whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Crash All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelCrashAll, disableMethod =() => SerializePatch.OverrideSerialization = null, toolTip = "Crashes everyone in the room using the barrels."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Barrel Obliterate Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateGun, toolTip = "Obliterates whoever your hand desires using the barrels."},
+                //new ButtonInfo { buttonText = "Barrel Obliterate All", enableMethod =() => Projectiles.CheckOwnedThrowable(Overpowered.BarrelIndex), method = Overpowered.BarrelObliterateAll, toolTip = "Obliterates everyone in the room using the barrels."},
 
-                
-                
+                //new ButtonInfo { buttonText = "Barrel City Kick Gun", method = Overpowered.CityKickGun, toolTip = "Flings whoever your hand desires using the barrels into the clouds map to kick them."},
+                //new ButtonInfo { buttonText = "Barrel City Kick All", method = Overpowered.CityKickAll, toolTip = "Flings everyone in the room using the barrels into the clouds map to kick them."},
 
                 new Module { buttonText = "Lock Room", method =() => Overpowered.SetRoomStatus(false), isTogglable = false, toolTip = "Locks the room so no one else can join."},
                 new Module { buttonText = "Unlock Room", method =() => Overpowered.SetRoomStatus(true), isTogglable = false, toolTip = "Unlocks the room so anyone can join."},
@@ -2613,7 +2613,7 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Better FPS Boost", enableMethod = Experimental.BetterFPSBoost, disableMethod = Experimental.DisableBetterFPSBoost, toolTip = "Makes everything one color, boosting your FPS."},
 
-                
+                //new ButtonInfo { buttonText = "Replay Tutorial", method = Settings.ShowTutorial, isTogglable = false, toolTip = "Replays the tutorial video."},
                 new Module { buttonText = "Disorganize Menu", method = Experimental.DisorganizeMenu, isTogglable = false, toolTip = "Disorganizes the entire menu. This cannot be undone."},
             },
 
@@ -2656,8 +2656,8 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Graphic Punch Mod", toolTip = "Spawns blood projectiles when hitting other players with the allowed punch mods."},
 
-                
-                
+                //new ButtonInfo { buttonText = "No Freeze Za Warudo", toolTip = "Disables the freezing on the \"Za Warudo\" mod, turning it into a fun mod." },
+                //new ButtonInfo { buttonText = "Legacy Kick Freeze", enableMethod =() => Overpowered.legacyKickFreeze = true, disableMethod =() => Overpowered.legacyKickFreeze = false, toolTip = "Makes call overflow related kick methods freeze the rig instead of putting it in the low event state." },
 
                 ButtonHelper.Create("Change Lag Power", () => Overpowered.LagPowerNames, Overpowered.lagIndex, Overpowered.ApplyLagPower, "Changes the power of the lag mods."),
                 ButtonHelper.Create("Change Lag Type", () => Overpowered.LagTypeNames, Overpowered.lagTypeIndex, Overpowered.ApplyLagType, "Changes the method used to lag players."),
@@ -2671,7 +2671,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Fast Kick", enableMethod =() => Overpowered.instantCreate = true, disableMethod =() => Overpowered.instantCreate = false, toolTip = "Instantly creates a room instead of checking if one already exists." },
                 new Module { buttonText = "Kick Fix", enableMethod =() => JoinPatch.enabled = true, disableMethod =() => JoinPatch.enabled = false, toolTip = "Stops the super infection, virtual stump, and other kick mods from breaking." },
 
-                
+                //new ButtonInfo { buttonText = "Mute All on Freeze", enableMethod =() => Overpowered.muteOnFreeze = true, disableMethod =() => Overpowered.muteOnFreeze = false, toolTip = "Whenever you freeze the server, everyone will be muted along with it" },
             },
 
             ["Keybind Settings"] = new[]
@@ -2764,10 +2764,10 @@ namespace Qubit.Modules
             {
                 new Module { buttonText = "Exit Credits", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { buttonText = "Twig", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twig is the current lead of developmetal ideas for Qubit and Qubit Menu, previously a developer of Qubit. Twig is also one of the main owners of Console, the admin system in the menu. He helps with asset ideas, moderate users, contributed to the menu, and much more." },
+                new Module { buttonText = "Twig", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twig is the current owner of Qubit and Qubit Menu, previously a developer of Qubit." },
                 new Module { buttonText = "Kingofnetflix", isTogglable = false, toolTip = "Kingofnetflix is the creator of <b>Qubit (Menu)</b>, and was a developer for ii's <b>Stupid</b> Menu. Quit modding and the modding community August 2026." },
                 new Module { buttonText = "iiDk", method =() => Files.Start("https://tianjo.cc/iidk"), isTogglable = false, toolTip = "iiDk is the creator of ii's <b>Stupid</b> Menu (which this menu is forked from), and was working on it since 2023. He was also the owner of ii's Stupid Mods. Both have shut down ever since 2/24/2026.", legal = true},
-                new Module { buttonText = "Lerpy", method =() => Files.Start("https://github.com/kinetic-csharp"), isTogglable = false, toolTip = "Lerpy is the current lead developer of Qubit and Qubit menu. He had build the Seralyth discord server, pitched ideas and contributed to ii's Stupid Menu. ", legal = true},
+                new Module { buttonText = "Twigcore", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twigcore is one of the main owners of Console, the admin system in the menu. He helps with asset ideas, moderate users, contributed to the menu, and much more."},
 
                 new Module { buttonText = "Cha554", method =() => Files.Start("https://github.com/Cha554"), isTogglable = false, toolTip = "Cha554 helped me make the menu work, and develop it."},
                 new Module { buttonText = "Ghydric", method =() => Files.Start("https://github.com/klintevej"), isTogglable = false, toolTip = "Klintevej is the administrator of the Discord bot and admin server."},
@@ -2960,9 +2960,9 @@ namespace Qubit.Modules
         private static string _currentCategoryName = "Main";
         public static event Action OnCategoryChanged;
 
-        
-
-
+        /// <summary>
+        /// Name of the category that is currently open.
+        /// </summary>
         public static string CurrentCategoryName
         {
             get => _currentCategoryName;
@@ -2978,10 +2978,10 @@ namespace Qubit.Modules
 
         private static readonly Dictionary<string, (string Category, int Index)> cacheGetIndex = new Dictionary<string, (string Category, int Index)>();
 
-        
-
-
-
+        /// <summary>
+        /// Returns the module with the given button text, or null if there is none.
+        /// </summary>
+        /// <param name="buttonText">Button Text</param>
         public static Module GetIndex(string buttonText)
         {
             if (modules == null)
@@ -3024,26 +3024,26 @@ namespace Qubit.Modules
             return null;
         }
 
-        
-
-
-
+        /// <summary>
+        /// Adds a new empty category.
+        /// </summary>
+        /// <param name="categoryName">Category Name</param>
         public static void AddCategory(string categoryName) =>
             modules.Add(categoryName, new Module[] { });
 
-        
-
-
-
+        /// <summary>
+        /// Removes the specified category.
+        /// </summary>
+        /// <param name="categoryName">Category Name</param>
         public static void RemoveCategory(string categoryName) =>
             modules.Remove(categoryName);
 
-        
-
-
-
-
-
+        /// <summary>
+        /// Adds a module to the specified category.
+        /// </summary>
+        /// <param name="category">Category Name</param>
+        /// <param name="module">Module</param>
+        /// <param name="index">Index Position</param>
         public static void AddModule(string category, Module module, int index = -1)
         {
             List<Module> moduleList = modules[category].ToList();
@@ -3055,12 +3055,12 @@ namespace Qubit.Modules
             modules[category] = moduleList.ToArray();
         }
 
-        
-
-
-
-
-
+        /// <summary>
+        /// Adds multiple modules to the specified category.
+        /// </summary>
+        /// <param name="category">Category Name</param>
+        /// <param name="modulesToAdd">Modules</param>
+        /// <param name="index">Index Position</param>
         public static void AddModules(string category, Module[] modulesToAdd, int index = -1)
         {
             List<Module> moduleList = modules[category].ToList();
@@ -3075,12 +3075,12 @@ namespace Qubit.Modules
             modules[category] = moduleList.ToArray();
         }
 
-        
-
-
-
-
-
+        /// <summary>
+        /// Removes a module from the specified category.
+        /// </summary>
+        /// <param name="category">Category Name</param>
+        /// <param name="name">Button Name</param>
+        /// <param name="index">Index Position</param>
         public static void RemoveModule(string category, string name, int index = -1)
         {
             List<Module> moduleList = modules[category].ToList();
@@ -3186,27 +3186,22 @@ namespace Qubit.Modules
             leftJoystickClick = _leftJoystickClick; rightJoystickClick = _rightJoystickClick;
         }
 
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Toggles the state or performs the associated action for the specified button, such as navigating pages,
+        /// toggling mods, or updating quick actions and favorites.
+        /// </summary>
+        /// <remarks>This method supports a variety of button actions, including page navigation
+        /// ("PreviousPage", "NextPage"), toggling mod states, managing quick actions and favorites, and handling custom
+        /// bindings. Some actions may trigger notifications or require specific permissions, especially when invoked
+        /// from the menu. If the specified button text does not correspond to a known button, an error is
+        /// logged.</remarks>
+        /// <param name="buttonText">The text identifier of the button to toggle or activate. This determines which action or toggle operation is
+        /// performed.</param>
+        /// <param name="fromMenu">true to indicate the toggle was initiated from the menu interface; otherwise, false. Affects notification
+        /// display and certain toggle behaviors.</param>
+        /// <param name="ignoreForce">true to bypass force-related checks and restrictions during the toggle operation; otherwise, false.</param>
         public static void Toggle(string buttonText, bool fromMenu = false, bool ignoreForce = false)
         {
-            if (CurrentPrompt != null && qubitFront != null && (buttonText == "NextPage" || buttonText == "PreviousPage"))
-            {
-                qubitFront.Find("Prompt").GetComponent<QubitPromptView>()?.Browse(buttonText == "NextPage" ? 1 : -1);
-                return;
-            }
             if (fromMenu && QubitDetails.Preview(buttonText, true)) return;
             if (fromMenu) QubitDetails.Inspect(buttonText);
             switch (buttonText)
@@ -3441,26 +3436,26 @@ namespace Qubit.Modules
                 ReloadMenu();
         }
 
-        
-
-
-
-
-
-
-
+        /// <summary>
+        /// Toggles the state of the specified button using the provided button information.
+        /// </summary>
+        /// <param name="buttonInfo">An object containing information about the button to toggle. Cannot be null.</param>
+        /// <param name="fromMenu">Indicates whether the toggle action was initiated from a menu. Set to <see langword="true"/> if triggered
+        /// from a menu; otherwise, <see langword="false"/>.</param>
+        /// <param name="ignoreForce">Indicates whether to ignore any force constraints when toggling the button. Set to <see langword="true"/> to
+        /// ignore force constraints; otherwise, <see langword="false"/>.</param>
         public static void Toggle(Module buttonInfo, bool fromMenu = false, bool ignoreForce = false) =>
             Toggle(buttonInfo.buttonText, fromMenu, ignoreForce);
 
-        
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Toggles the incremental or decremental state of a button and updates its associated UI and behavior
+        /// accordingly.
+        /// </summary>
+        /// <remarks>This method updates the button's visual indicator and triggers the corresponding
+        /// enable or disable method for the button. If certain boost conditions are met, the action may be performed
+        /// multiple times. A notification is displayed to inform the user of the action taken.</remarks>
+        /// <param name="buttonText">The text label of the button to be toggled. This is used to identify the target button.</param>
+        /// <param name="increment">true to apply the incremental action; false to apply the decremental action.</param>
         public static void ToggleIncremental(string buttonText, bool increment, bool reload = true, bool ignoreForce = false)
         {
             if (!Preferences.IsApplyingPreferences && QubitDetails.Preview(buttonText, increment)) return;
@@ -3664,9 +3659,9 @@ namespace Qubit.Modules
                 ReloadMenu();
         }
 
-        
-
-
+        /// <summary>
+        /// Runs on first frame of <see cref="GTPlayer.LateUpdate"/> after menu is launched
+        /// </summary>
         public static void Prefix()
         {
             if (!HasLoaded)
@@ -3689,10 +3684,10 @@ namespace Qubit.Modules
             try
             {
                 #region Execute Mods
-                
+                // Plugins
                 Plugins.ExecuteUpdate();
 
-                
+                // Menu
                 foreach (Module[] buttonList in Manager.modules.Values)
                 {
                     foreach (Module button in buttonList)

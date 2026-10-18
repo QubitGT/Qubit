@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
-
-
+// Written with love by kingofnetflix </3
+// For anyone else snooping in this class hoping to use it, you need to make sure that your recorder source type is a Factory and that the Factory is a new instance of this class.
+// You may use VoiceManager.Get()
 using Photon.Voice;
 using Qubit.Libraries.Core;
 using Qubit.Modules.Categories;
@@ -108,9 +108,9 @@ namespace Qubit.Libraries.Audio
             StartRecording(device);
         }
 
-        
-
-
+        /// <summary>
+        /// A read-only list of AudioClips currently playing.
+        /// </summary>
         public IReadOnlyList<Clip> AudioClips
         {
             get
@@ -122,18 +122,18 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the microphone's recording status. This does not stop the pushed AudioClip from playing.
+        /// </summary>
         public bool MuteMicrophone
         {
             get { return muteMicrophone; }
             set { muteMicrophone = value; }
         }
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the microphone sampling rate. Setting a value restarts the microphone.
+        /// </summary>
         public int SamplingRate
         {
             get { return samplingRate; }
@@ -144,9 +144,9 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the output rate used for AudioClip samples.
+        /// </summary>
         public int OutputRate
         {
             get { return outputRate; }
@@ -157,50 +157,50 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the microphone gain multiplier.
+        /// </summary>
         public float Gain
         {
             get { return gain; }
             set { gain = Mathf.Max(0f, value); }
         }
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the default AudioClip gain multiplier for the Instance.
+        /// </summary>
         public float ClipVolume
         {
             get { return clipVolume; }
             set { clipVolume = Mathf.Max(0f, value); }
         }
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the pitch. Lowest possible value can be 0.1f.
+        /// </summary>
         public float Pitch
         {
             get => pitch;
             set => pitch = Mathf.Max(0.1f, value);
         }
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the default clip speed. Lowest possible value can be 0.1f.
+        /// </summary>
         public float ClipSpeed
         {
             get => clipSpeed;
             set => clipSpeed = Mathf.Max(0.1f, value);
         }
 
-        
-
-
+        /// <summary>
+        /// A list of post processors that can be used to edit the buffer after all the audio data is compiled.
+        /// </summary>
         public readonly Dictionary<string, Action<float[]>> PostProcessors = new Dictionary<string, Action<float[]>>();
 
-        
-
-
+        /// <summary>
+        /// Gets or sets the decision on if the post processing should affect the applied Audio Clip or not.
+        /// </summary>
         public bool PostProcessClip { get; set; }
 
         public int Channels => 2;
@@ -209,20 +209,20 @@ namespace Qubit.Libraries.Audio
 
         public static Voices Instance { get; private set; }
 
-        
-
-
-
-
+        /// <summary>
+        /// Returns a valid Voices instance. If the Instance variable is null, it will create a new Voices.
+        /// </summary>
+        /// <param name="loopLength">Length (in seconds) of the looping mic buffer.</param>
+        /// <param name="device">The microphone device to be used in recording.</param>
         public static Voices Get(int loopLength = 1, string device = null)
         {
             return Instance ??= new Voices(loopLength, device);
         }
 
-        
-
-
-
+        /// <summary>
+        /// Starts the microphone recording.
+        /// </summary>
+        /// <param name="device">Microphone device name to be used. If empty, the default microphone is selected.</param>
         public bool StartRecording(string device = null)
         {
             error = null;
@@ -276,9 +276,9 @@ namespace Qubit.Libraries.Audio
             return true;
         }
 
-        
-
-
+        /// <summary>
+        /// Stops the microphone recording.
+        /// </summary>
         public bool StopRecording()
         {
             if (!string.IsNullOrEmpty(currentDevice) && Microphone.IsRecording(currentDevice))
@@ -290,21 +290,21 @@ namespace Qubit.Libraries.Audio
             return true;
         }
 
-        
-
-
+        /// <summary>
+        /// Switches the microphone device and restarts recording.
+        /// </summary>
         public bool SwitchMicrophone(string device)
             => StopRecording() && StartRecording(device);
 
-        
-
-
+        /// <summary>
+        /// Restarts the microphone using the current device, or the default if none is set.
+        /// </summary>
         public bool RestartMicrophone()
             => StopRecording() && StartRecording(currentDevice);
 
-        
-
-
+        /// <summary>
+        /// Pushes an AudioClip into the output stream.
+        /// </summary>
         public Clip AudioClip(AudioClip audioClip, bool disableMicrophone = false)
         {
             if (audioClip == null)
@@ -354,9 +354,9 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-        
-
-
+        /// <summary>
+        /// Resamples a raw float array to the target sample rate.
+        /// </summary>
         public static float[] Resample(float[] source, int sourceRate, int targetRate, int channels)
         {
             if (source == null || source.Length == 0 || sourceRate <= 0 || sourceRate == targetRate)
@@ -397,9 +397,9 @@ namespace Qubit.Libraries.Audio
             return target;
         }
 
-        
-
-
+        /// <summary>
+        /// Stops the specified AudioClip from playing.
+        /// </summary>
         public bool StopAudioClip(Clip clip)
         {
             if (clip == null) return false;
@@ -407,19 +407,19 @@ namespace Qubit.Libraries.Audio
                 return audioClips.Remove(clip);
         }
 
-        
-
-
+        /// <summary>
+        /// Stops all currently playing audio clips.
+        /// </summary>
         public void StopAudioClips()
         {
             lock (audioClipsLock)
                 audioClips.Clear();
         }
 
-        
-
-
-
+        /// <summary>
+        /// Used to pull the next chunk of audio samples.
+        /// Automatically called by Photon.
+        /// </summary>
         public bool Read(float[] buffer)
         {
             if (buffer == null || buffer.Length == 0)

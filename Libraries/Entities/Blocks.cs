@@ -613,7 +613,7 @@ namespace Qubit.Libraries.Entities
             CreatePatch.enabled = false;
             CreatePatch.pieceTypeSearch = 0;
 
-            onComplete?.Invoke(ManagerRegistry.BuilderTable.GetPiece(pieceId)); 
+            onComplete?.Invoke(ManagerRegistry.BuilderTable.GetPiece(pieceId)); // so bad
         }
 
         public static IEnumerator CreateShotgun()

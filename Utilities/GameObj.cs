@@ -36,15 +36,15 @@ namespace Qubit.Utilities
         public static readonly Dictionary<Type, object[]> typePool = new Dictionary<Type, object[]>();
         private static readonly Dictionary<Type, float> receiveTypeDelay = new Dictionary<Type, float>();
 
-        
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Gets all objects of type <typeparamref name="T"/> in the scene using
+        /// <see cref="UnityEngine.Object.FindObjectsByType{T}
+        /// (UnityEngine.FindObjectsInactive, UnityEngine.FindObjectsSortMode)"/>
+        /// with caching to reduce performance overhead.
+        /// </summary>
+        /// <typeparam name="T">The Unity object type to find</typeparam>
+        /// <param name="decayTime">How long the cached results remain valid</param>
+        /// <returns>An array of all instances of <typeparamref name="T"/></returns>
         public static T[] GetAllType<T>(float decayTime = 5f) where T : Object
         {
             Type type = typeof(T);
@@ -66,13 +66,13 @@ namespace Qubit.Utilities
         private static float randomIndex;
         private static float randomDecayTime;
 
-        
-
-
-
-
-
-
+        /// <summary>
+        /// Returns a random instance of <typeparamref name="T"/> from the scene,
+        /// using the cached results from <see cref="GetAllType{T}(float)"/>.
+        /// </summary>
+        /// <typeparam name="T">The Unity object type to retrieve</typeparam>
+        /// <param name="decayTime">How long the random selection remains unchanged</param>
+        /// <returns>A random instance of <typeparamref name="T"/></returns>
         public static T GetRandomType<T>(float decayTime = 0f) where T : Object
         {
             T[] allOfType = GetAllType<T>();
@@ -84,11 +84,11 @@ namespace Qubit.Utilities
             return allOfType[(int)(randomIndex * allOfType.Length)];
         }
 
-        
-
-
-
-
+        /// <summary>
+        /// Clears the cached results created by <see cref="GetAllType{T}(float)"/>
+        /// for the specified type.
+        /// </summary>
+        /// <typeparam name="T">The Unity object type to clear from the cache</typeparam>
         public static void ClearType<T>() where T : Object
         {
             Type type = typeof(T);
@@ -98,21 +98,21 @@ namespace Qubit.Utilities
 
         private static readonly Dictionary<string, GameObject> objectPool = new Dictionary<string, GameObject>();
 
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        /// <summary>
+        /// Retrieves a GameObject by name, using a cache to avoid repeated scene searches.
+        /// </summary>
+        /// <param name="find">
+        /// The name of the GameObject to locate in the scene.
+        /// </param>
+        /// <returns>
+        /// The found GameObject if it exists; otherwise, null.
+        /// </returns>
+        /// <remarks>
+        /// The method first checks an internal object pool for a cached reference.
+        /// If not found, it falls back to <see cref="GameObject.Find"> and caches the result
+        /// for future lookups. This reduces the performance cost of repeated
+        /// <see cref="GameObject.Find"/> calls.
+        /// </remarks>
         public static GameObject GetObject(string find)
         {
             if (objectPool.TryGetValue(find, out GameObject go))

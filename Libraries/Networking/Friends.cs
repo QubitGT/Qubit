@@ -71,6 +71,7 @@ using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Libraries.Networking
 {
+    [AddOnStart(AttachTo = typeof(ServerData))]
     public class Friends : MonoBehaviour
     {
         #region Friend Manager Code
@@ -105,6 +106,13 @@ namespace Qubit.Libraries.Networking
         public void Awake()
         {
             instance = this;
+
+            if (!ServerData.ServerDataEnabled)
+            {
+                enabled = false; // stays attached with no functionality
+                return;
+            }
+
             UpdateTime = Time.time + 5f;
 
             gameObject.AddComponent<FriendWebSocket>();
