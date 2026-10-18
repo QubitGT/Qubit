@@ -200,6 +200,11 @@ namespace Qubit.Core
             get => CustomMapsTerminal.instance;
         }
 
+        public static VirtualStumpSerializer VirtualStumpSerializer
+        {
+            get => VirtualStumpSerializer.Instance;
+        }
+
         public static GreyZoneManager GreyZoneManager
         {
             get => GreyZoneManager.Instance;

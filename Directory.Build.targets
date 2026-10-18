@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <Project>
   <PropertyGroup>
-    <IsMainProject Condition="'$(MSBuildProjectName)' == 'QubitMenu'">true</IsMainProject>
+    <IsMainProject Condition="'$(MSBuildProjectName)' == 'Qubit'">true</IsMainProject>
   </PropertyGroup>
 
   <!-- Update Game References -->

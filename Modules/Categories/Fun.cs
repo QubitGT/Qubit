@@ -350,14 +350,14 @@ namespace Qubit.Modules.Categories
 
         public static bool tinnitusSelf;
 
-        public static Dictionary<string, int> ObjectByName { get => ManagerRegistry.GhostReactor.GameEntityManager.itemPrefabFactory.ToDictionary(prefab => prefab.Value.name, prefab => prefab.Key); }
+        public static Dictionary<string, int> ObjectByName { get => GameEntityManager.itemPrefabFactory.ToDictionary(prefab => prefab.Value.name, prefab => prefab.Key); }
 
         public static string textToRender;
 
         public static Dictionary<string, int> GadgetByName
         {
             get =>
-                ManagerRegistry.SuperInfection.GameEntityManager.itemPrefabFactory
+                GameEntityManager.itemPrefabFactory
                 .ToDictionary(prefab => prefab.Value.name, prefab => prefab.Key);
         }
 

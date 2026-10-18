@@ -1100,7 +1100,7 @@ namespace Qubit.Modules.Categories
         public static void DriverStatus(bool locked)
         {
             if (PhotonNetwork.IsMasterClient)
-                ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, locked, PhotonNetwork.LocalPlayer.ActorNumber);
+                ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, locked, PhotonNetwork.LocalPlayer.ActorNumber);
             else
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
@@ -1111,8 +1111,8 @@ namespace Qubit.Modules.Categories
                 if (Time.time > Overpowered.spazDriverDelay)
                 {
                     Overpowered.spazDriverDelay = Time.time + 0.1f;
-                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
-                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, false, PhotonNetwork.LocalPlayer.ActorNumber);
+                    ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
+                    ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, false, PhotonNetwork.LocalPlayer.ActorNumber);
                 }
             }
         }
@@ -1122,7 +1122,7 @@ namespace Qubit.Modules.Categories
             GunLibrary.Target(lockTarget =>
             {
                 if (PhotonNetwork.IsMasterClient)
-                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, locked, lockTarget.GetPlayer().ActorNumber);
+                    ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, locked, lockTarget.GetPlayer().ActorNumber);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
@@ -1135,8 +1135,8 @@ namespace Qubit.Modules.Categories
                     if (Time.time > Overpowered.spazDriverDelay)
                     {
                         Overpowered.spazDriverDelay = Time.time + 0.1f;
-                        ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, lockTarget.GetPlayer().ActorNumber);
-                        ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, false, lockTarget.GetPlayer().ActorNumber);
+                        ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, true, lockTarget.GetPlayer().ActorNumber);
+                        ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, false, lockTarget.GetPlayer().ActorNumber);
                     }
                 }
             }, new GunLibrary.GunSettings { locks = true });
@@ -1171,7 +1171,7 @@ namespace Qubit.Modules.Categories
                 {
                     Overpowered.id = CustomMaps.Manager.currentMapId == 4977315 ? 5024157 : 4977315;
 
-                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.RPC("UpdateScreen_RPC", lockTarget.GetPhotonPlayer(), new object[]
+                    ManagerRegistry.VirtualStumpSerializer.photonView.RPC("UpdateScreen_RPC", lockTarget.GetPhotonPlayer(), new object[]
                     {
                         6,
                         Overpowered.id,
@@ -1187,7 +1187,7 @@ namespace Qubit.Modules.Categories
             {
                 GunLibrary.Target(gunTarget =>
                 {
-                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.RPC("SetRoomMap_RPC", lockTarget.GetPhotonPlayer(), Overpowered.id.Value);
+                    ManagerRegistry.VirtualStumpSerializer.photonView.RPC("SetRoomMap_RPC", lockTarget.GetPhotonPlayer(), Overpowered.id.Value);
                 });
             }
         }
@@ -1222,7 +1222,7 @@ namespace Qubit.Modules.Categories
                 {
                     Overpowered.id = CustomMaps.Manager.currentMapId == 4977315 ? 5024157 : 4977315;
 
-                    ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.RPC("UpdateScreen_RPC", RpcTarget.Others, new object[]
+                    ManagerRegistry.VirtualStumpSerializer.photonView.RPC("UpdateScreen_RPC", RpcTarget.Others, new object[]
                     {
                         6,
                         Overpowered.id,
@@ -1234,7 +1234,7 @@ namespace Qubit.Modules.Categories
                     Notifications.SendFormat("red", "ERROR", "Please temporarily enter the Virtual Stump.");
             }
 
-            ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.RPC("SetRoomMap_RPC", RpcTarget.Others, Overpowered.id.Value);
+            ManagerRegistry.VirtualStumpSerializer.photonView.RPC("SetRoomMap_RPC", RpcTarget.Others, Overpowered.id.Value);
 
             Notifications.SendFormat("green", "SUCCESS", "Successfully kicked others.");
             Toggle("Virtual Stump Kick All");

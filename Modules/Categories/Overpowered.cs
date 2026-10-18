@@ -478,14 +478,14 @@ namespace Qubit.Modules.Categories
         public static void BecomeDriver()
         {
             if (PhotonNetwork.IsMasterClient)
-                ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
+                ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
             else
             {
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 return;
             }
 
-            ManagerRegistry.CustomMapsTerminal.mapTerminalNetworkObject.photonView.OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
+            ManagerRegistry.VirtualStumpSerializer.photonView.OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
         }
         public static void GameEntityCrash(GameEntityManager manager, object target, Vector3? targetPosition = null)
         {
@@ -494,7 +494,7 @@ namespace Qubit.Modules.Categories
 
             targetPosition ??= References.BodyCollider.transform.position;
 
-            int[] objectIds = manager.itemPrefabFactory.Keys.ToArray();
+            int[] objectIds = GameEntityManager.itemPrefabFactory.Keys.ToArray();
             int[] ids = new int[ItemCrashCount];
             Vector3[] positions = new Vector3[ItemCrashCount];
             Quaternion[] rotations = new Quaternion[ItemCrashCount];
