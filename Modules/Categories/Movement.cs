@@ -5561,7 +5561,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        [RunOnLaunch(11)]
+        [RunOnLaunch(LaunchPriority.Macros)]
         public static void Initialize()
         {
             try

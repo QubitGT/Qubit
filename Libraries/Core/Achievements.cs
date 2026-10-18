@@ -130,7 +130,7 @@ namespace Qubit.Libraries.Core
             };
         }
 
-        [RunOnLaunch(14)]
+        [RunOnLaunch(LaunchPriority.Achievements)]
         public static void CheckVeteran()
         {
             if (new DirectoryInfo(Path.Combine(Files.GetGamePath(), PluginInfo.ClientResourcePath)).CreationTime >= DateTime.Now.AddYears(1))

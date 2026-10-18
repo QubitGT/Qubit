@@ -14,10 +14,10 @@
 
 ---
 
-# Qubit Menu  
+# Qubit  
 <sub>Forked from ii's Stupid Menu</sub>
 
-Qubit Menu is a **feature-packed** mod menu for Gorilla Tag, built by the community, for the community. Whether you just want mods, are a developer, or anything inbetween, this menu has you covered. Designed to be **as useful as possible**, it includes a variety of features and options that let you customize your modding experience to your heart’s content.  
+Qubit is a **feature-packed** mod menu for Gorilla Tag, built by the community, for the community. Whether you just want mods, are a developer, or anything inbetween, this menu has you covered. Designed to be **as useful as possible**, it includes a variety of features and options that let you customize your modding experience to your heart’s content.  
 
 <details>
   <summary><b>💡 Why open-source?</b></summary>
@@ -120,7 +120,6 @@ If you wish to support us, here are some of the ways you can!
 </details>
 
 > [!NOTE] 
-> This product is not affiliated with Gorilla Tag or Another Axiom LLC and is not endorsed or otherwise sponsored by Another Axiom LLC. Portions of the materials contained herein are property of Another Axiom LLC. © 2026 Another Axiom LLC.<br>
 > Menu sends requests to https://api.qubit.mom for telemetry, administrative, and TTS (text to speech) purposes.<br>
 > Menu sends requests to https://text.pollinations.ai for the mod **AI Assistant**. (when enabled)<br>
 > Menu sends requests to https://lazypy.ro for many TTS voices.<br>
@@ -147,9 +146,7 @@ If you wish to support us, here are some of the ways you can!
 > You should have received a copy of the GNU General Public License
 > along with this program.  If not, see <https://www.gnu.org/licenses>.
 
-> This product is not affiliated with Another Axiom Inc. or its videogames Gorilla Tag and Orion Drift and is not endorsed or otherwise sponsored by Another Axiom. Portions of the materials contained herein are property of Another Axiom. ©2021 Another Axiom Inc.
-
-> The names "Qubit", "Qubit Software", logos, artwork, and branding are not covered by this license.
+> This product is not affiliated with Another Axiom Inc. or its videogames Gorilla Tag and Orion Drift and is not endorsed or otherwise sponsored by Another Axiom. Portions of the materials contained herein are property of Another Axiom. ©2026 Another Axiom Inc.
 
 <p align="center">
   <b>QUBIT</b><br>

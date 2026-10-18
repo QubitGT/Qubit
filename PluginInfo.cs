@@ -26,7 +26,7 @@ namespace Qubit
         public const string GUID = "org.qubit.gorillatag.qubitmenu";
         public const string Name = "Qubit";
         public const string Description = "Community powered mod menu for Gorilla Tag.";
-        public const string BuildTimestamp = "2026-10-18T21:21:50Z";
+        public const string BuildTimestamp = "2026-10-18T21:29:49Z";
         public const string Version = "5.0.2";
 
         public const string BaseDirectory =
@@ -36,6 +36,7 @@ namespace Qubit
             "Qubit";
 #endif
         public static string GitMaster = "https://github.com/QubitGT/Qubit";
+        public static string GeneratedFileFooter => $"Text file generated with Qubit || {GitMaster}";
         public static string DiscordInvite = "https://discord.gg/FXja6thKZC";
         public const string ClientResourcePath = "Qubit.Resources.Client";
         public static string ServerResourcePath => GitMaster.Replace("github.com", "raw.githubusercontent.com") + "/master/Resources/Server";

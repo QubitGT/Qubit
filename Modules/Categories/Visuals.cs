@@ -1067,7 +1067,7 @@ namespace Qubit.Modules.Categories
                 string watchText = "";
 
                 if (infoWatchMenuName || defaultWatch)
-                    watchText = (doCustomName ? NoRichtextTags(customMenuName) : "Qubit Menu") + "\n<color=grey>";
+                    watchText = (doCustomName ? NoRichtextTags(customMenuName) : "Qubit") + "\n<color=grey>";
                 else if (!infoWatchMenuName && !defaultWatch)
                     watchText = "<color=grey>";
 
@@ -5898,7 +5898,7 @@ namespace Qubit.Modules.Categories
             Manager.CurrentCategoryName = "Temporary Category";
         }
 
-        [RunOnLaunch(6)]
+        [RunOnLaunch(LaunchPriority.Visuals)]
         public static void Initialize()
         {
             for (int i = 0; i < 2; i++)

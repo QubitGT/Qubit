@@ -397,7 +397,7 @@ namespace Qubit.Libraries.Entities
                 catch { Logs.Log("Failed to log hat"); }
             }
             text += "\n====================================\n";
-            text += "Text file generated with Qubit Menu";
+            text += PluginInfo.GeneratedFileFooter;
             string fileName = $"{PluginInfo.BaseDirectory}/CosmeticData.txt";
 
             File.WriteAllText(fileName, text);

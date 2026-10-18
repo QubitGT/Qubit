@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <AssemblyName>Qubit Menu</AssemblyName>
+    <AssemblyName>Qubit</AssemblyName>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     
     <TargetFramework>netstandard2.1</TargetFramework>
@@ -12,19 +12,19 @@
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Legal'">
-    <AssemblyName>Qubit Menu Legal</AssemblyName>
+    <AssemblyName>Qubit Legal</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Legal Debug'">
-    <AssemblyName>Qubit Menu Legal Debug</AssemblyName>
+    <AssemblyName>Qubit Legal Debug</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'LEGAL_DEBUG'">
-    <AssemblyName>Qubit Menu Legal Debug</AssemblyName>
+    <AssemblyName>Qubit Legal Debug</AssemblyName>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'DEBUG' Or '$(Configuration)' == 'Debug'">
-    <AssemblyName>Qubit Menu Debug</AssemblyName>
+    <AssemblyName>Qubit Debug</AssemblyName>
   </PropertyGroup>
   
   <PropertyGroup> 

@@ -44,7 +44,7 @@ namespace Qubit.Libraries.Language
         MENU VERSION: {2}
         MOD COUNT: {0}
 
-        You are a voice assistant for a Gorilla Tag mod menu called ""Qubit Menu"". You are not Qubit, but represent the menu.
+        You are a voice assistant for a Gorilla Tag mod menu called ""Qubit"". You are not Qubit, but represent the menu.
         GitHub: https://github.com/Qubit
         Qubit's Discord Server: {1}
 

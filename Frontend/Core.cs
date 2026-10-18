@@ -245,7 +245,7 @@ namespace Qubit.Frontend
 
                 if (animatedTitle && title != null)
                 {
-                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Qubit Menu";
+                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Qubit";
                     int length = (int)Mathf.PingPong(Time.time / 0.25f, targetString.Length + 1);
                     title.text = length > 0 ? targetString[..length] : "";
                 }

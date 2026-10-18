@@ -337,7 +337,7 @@ namespace Qubit.Libraries.Core
             Manager.modules["Temporary Category"] = buttonInfos.ToArray();
             Manager.CurrentCategoryName = "Temporary Category";
         }
-        [RunOnLaunch(9)]
+        [RunOnLaunch(LaunchPriority.Plugins)]
         #endregion
     
 

@@ -2718,7 +2718,7 @@ namespace Qubit.Modules.Categories
             string version = PluginInfo.Version;
             if (PluginInfo.BetaBuild) version = "<color=blue>Beta</color> " + version;
             Manager.AddModule(category, new Module { buttonText = "Exit Info Screen", method = () => Toggle("Info Screen"), isTogglable = false, toolTip = "Returns you back to the main page." });
-            Manager.AddModule(category, new Module { buttonText = "DebugMenuName", overlapText = "<color=grey><b>Qubit Menu </b></color>" + version, label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugMenuName", overlapText = "<color=grey><b>Qubit </b></color>" + version, label = true });
             Manager.AddModule(category, new Module { buttonText = "DebugColor", overlapText = "Loading...", label = true });
             Manager.AddModule(category, new Module { buttonText = "DebugName", overlapText = "Loading...", label = true });
             Manager.AddModule(category, new Module { buttonText = "DebugId", overlapText = "Loading...", label = true });
@@ -3255,7 +3255,7 @@ namespace Qubit.Modules.Categories
                             logoLines += Environment.NewLine + @" ""    " + line + @" """;
 
                         string updateScript = @"@echo off
-title Qubit Menu Updater
+title Qubit Updater
 color 5
 setlocal
 
@@ -3998,7 +3998,7 @@ exit 0";
                     {
                         File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt", keyboardInput);
                         Apply();
-                        PromptSingle("You can always change this again by re-enabling the mod or changing it in the QubitMenu folder! (located in the Gorilla Tag installation folder)");
+                        PromptSingle("You can always change this again by re-enabling the mod or changing it in the Qubit folder! (located in the Gorilla Tag installation folder)");
                     });
                 }, Apply);
 
@@ -5730,7 +5730,7 @@ exit 0";
             body.SafeSetText(text);
         }
 
-        [RunOnLaunch(13)]
+        [RunOnLaunch(LaunchPriority.PCControls)]
         public static void InitializePCControls()
         {
             try

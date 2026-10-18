@@ -283,7 +283,7 @@ namespace Qubit.Modules.Categories
                 .Aggregate("", (current, line) => current + (Environment.NewLine + "echo      " + line));
 
             string restartScript = @"@echo off
-title Qubit Menu - Restarting Gorilla Tag
+title Qubit - Restarting Gorilla Tag
 color 5
 
 cls
@@ -357,7 +357,7 @@ exit";
                     Assets = new Libraries.DiscordRPC.Entities.Assets
                     {
                         LargeImageKey = "cone",
-                        LargeImageText = "Qubit Menu",
+                        LargeImageText = "Qubit",
                         SmallImageKey = inRoom ? "online" : "offline",
                         SmallImageText = inRoom ? "Online" : "Offline"
                     },

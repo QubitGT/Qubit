@@ -107,7 +107,7 @@ namespace Qubit.Modules.Classes
                 if (featuredMapText != null)
                 {
                     oldText = featuredMapText.text;
-                    featuredMapText.text = "<b><color=#7C00FA>Qubit Menu</color></b>";
+                    featuredMapText.text = "<b><color=#7C00FA>Qubit</color></b>";
                     MapInfoText.SetActive(true);
                 }
 

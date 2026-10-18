@@ -294,7 +294,7 @@ qubitFront = null;
    }
        qubitPrefab = qubitBundle.LoadAsset<GameObject>("QubitMenu");
                   }
-    menu = new GameObject("Qubit Menu");
+    menu = new GameObject("Qubit");
  menu.transform.localScale = new Vector3(.1f, .3f, .3825f);
             menuBackground = new GameObject("Menu Background Anchor");
    menuBackground.transform.SetParent(menu.transform, false);

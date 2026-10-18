@@ -43,18 +43,39 @@ using Console = Qubit.Backend.Console;
 
 namespace Qubit.Core
 {
+    /// <summary>Launch order for <see cref="RunOnLaunchAttribute"/>: members run top to bottom, so add new ones where they should run.</summary>
+    public enum LaunchPriority
+    {
+        Settings,
+        Fonts,
+        Details,
+        DonationState,
+        Rooms,
+        Serialization,
+        Visuals,
+        Scene,
+        ModuleTags,
+        Plugins,
+        Sound,
+        Macros,
+        Preferences,
+        PCControls,
+        Achievements,
+        PatchReport,
+    }
+
     /// <summary>
     /// Runs the static, parameterless method once when the menu launches.
-    /// Lower <see cref="Priority"/> runs first (0, then 1, ...); methods without one run after all prioritised methods.
+    /// Methods run in <see cref="LaunchPriority"/> order (first member first); methods without one run after all prioritised methods.
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     public sealed class RunOnLaunchAttribute : Attribute
     {
-        public int? Priority { get; }
+        public LaunchPriority? Priority { get; }
 
         public RunOnLaunchAttribute() { }
 
-        public RunOnLaunchAttribute(int priority) =>
+        public RunOnLaunchAttribute(LaunchPriority priority) =>
             Priority = priority;
     }
 
@@ -240,7 +261,7 @@ namespace Qubit.Core
                 .SelectMany(type => type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
                 .Select(method => (method, attribute: method.GetCustomAttribute<RunOnLaunchAttribute>()))
                 .Where(entry => entry.attribute != null)
-                .OrderBy(entry => entry.attribute.Priority ?? int.MaxValue); // OrderBy is stable, unprioritised methods run last
+                .OrderBy(entry => (int?)entry.attribute.Priority ?? int.MaxValue); // OrderBy is stable, unprioritised methods run last
 
             foreach (var (method, _) in launchMethods)
             {

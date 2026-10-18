@@ -469,7 +469,7 @@ namespace Qubit.Frontend
                 else
                 {
                     if (!File.Exists(hideGUIPath))
-                        File.WriteAllText(hideGUIPath, "Text file generated with Qubit Menu");
+                        File.WriteAllText(hideGUIPath, PluginInfo.GeneratedFileFooter);
                 }
             }
             catch { }

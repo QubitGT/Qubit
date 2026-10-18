@@ -119,7 +119,7 @@ namespace Qubit.Patches.Safety.Web
                 shouldLog = notifiedAssemblies.Add(assemblyName);
 
             if (shouldLog)
-                Logs.Log($"HEY!! Qubit Menu blocked a potentionally DANGEROUS REQUEST to: {url} | Reason: {reason} | Assumed Assembly: {assemblyName} | Assumed File: {fileName}");
+                Logs.Log($"HEY!! Qubit blocked a potentionally DANGEROUS REQUEST to: {url} | Reason: {reason} | Assumed Assembly: {assemblyName} | Assumed File: {fileName}");
         }
 
         internal static string NormalizeHost(string host)

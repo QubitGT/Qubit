@@ -66,7 +66,7 @@ namespace Qubit.Frontend
         private readonly System.Collections.Generic.Dictionary<Image, Image.Type> originalTypes = new System.Collections.Generic.Dictionary<Image, Image.Type>();
         private float refreshAt;
 
-        [RunOnLaunch(2)]
+        [RunOnLaunch(LaunchPriority.Details)]
         public static void Register()
         {
             dotVisible = Setting("Qubit Pointer Dot", "Shows the small dot at the pointer hit position.", true);

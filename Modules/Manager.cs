@@ -319,7 +319,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "No Prefix Narration", enableMethod =() => Notifications.noPrefix = true, disableMethod =() => Notifications.noPrefix = false, toolTip = "Stops the prefix on notifications from narrating itself.", legal = true},
                 new Module { buttonText = "Hide Notification Brackets", enableMethod =() => hideBrackets = true, disableMethod =() => hideBrackets = false, toolTip = "Hides brackets on all notifications.", legal = true},
 
-                new Module { buttonText = "Conduct Notifications", enableMethod =() => { GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>().text = "Qubit Menu"; GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().richText = true; }, method =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().text = Notifications.notificationText.text, toolTip = "Shows notifications on the code of conduct instead.", legal = true},
+                new Module { buttonText = "Conduct Notifications", enableMethod =() => { GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>().text = "Qubit"; GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().richText = true; }, method =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().text = Notifications.notificationText.text, toolTip = "Shows notifications on the code of conduct instead.", legal = true},
                 new Module { buttonText = "Disable Notification Rich Text", enableMethod =() => Notifications.noRichText = true, disableMethod =() => Notifications.noRichText = false, toolTip = "Removes rich text from notifications.", legal = true},
 
                 new Module { buttonText = "Disable RPC Protection", enableMethod =() => Qubit.Patches.Safety.RPC.OpRaiseEventPatch.enabled = false, disableMethod =() => Qubit.Patches.Safety.RPC.OpRaiseEventPatch.enabled = true, toolTip = "Disables the client-side protection limiting you to sending 500 RPCs a second.", legal = true},
@@ -499,7 +499,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Create Private", method =() => Room.CreateRoom(Room.RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
 
                 new Module { buttonText = "Fast Disconnect", method =() => SinglePlayer.enabled = true, disableMethod =() =>  SinglePlayer.enabled = false, toolTip = "Uses the fastest method of disconnecting possible.", legal = true},
-                new Module { buttonText = "Join Menu Room", method =() => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom($"<$Qubit_{PluginInfo.Version}>", JoinType.Solo), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Qubit Menu</b> users.", legal = true},
+                new Module { buttonText = "Join Menu Room", method =() => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom($"<$Qubit_{PluginInfo.Version}>", JoinType.Solo), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Qubit</b> users.", legal = true},
 
                 new Module { buttonText = "Bypass Join Room Type", enableMethod =() => JoinedRoom.enabled = true, disableMethod =() => JoinedRoom.enabled = false, toolTip = "Bypasses the immediate disconnection when trying to join a room that is in another map."},
 
@@ -549,7 +549,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Restart Gorilla Tag", aliases = new[] { "Restart Game", "Restart App" }, method = () => Prompt("Are you sure you want to restart Gorilla Tag?", Important.RestartGame), isTogglable = false, toolTip = "Restarts Gorilla Tag.", legal = true},
                 new Module { buttonText = "Open Gorilla Tag Folder", method = Important.OpenGorillaTagFolder, isTogglable = false, toolTip = "Opens the folder in which your game is located.", legal = true},
 
-                new Module { buttonText = "Discord RPC", aliases = new[] { "Self Tracker" }, method = Important.DiscordRPC, disableMethod = Important.DisableDiscordRPC, toolTip = "Gives you a indicator on Discord that you are using Qubit Menu.", legal = true},
+                new Module { buttonText = "Discord RPC", aliases = new[] { "Self Tracker" }, method = Important.DiscordRPC, disableMethod = Important.DisableDiscordRPC, toolTip = "Gives you a indicator on Discord that you are using Qubit.", legal = true},
                 new Module { buttonText = "Media Integration", aliases = new[] { "Spotify" }, enableMethod = Important.EnsureIntegrationProgram, method = Important.MediaIntegration, disableMethod = Important.DisableMediaIntegration, toolTip = "Shows you what media you are watching/listening to in the top left. To switch media, open the menu and use your left joystick.", legal = true},
 
                 new Module { buttonText = "Anti Hand Tap", enableMethod =() => HandTaps.enabled = true, disableMethod =() => HandTaps.enabled = false, toolTip = "Stops all hand tap sounds from being played."},
@@ -2779,7 +2779,7 @@ namespace Qubit.Modules
             {
                 new Module { buttonText = "Exit Credits", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { buttonText = "Twig", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twig is the current owner of Qubit and Qubit Menu, previously a developer of Qubit." },
+                new Module { buttonText = "Twig", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twig is the current owner of Qubit, previously a developer of Qubit." },
                 new Module { buttonText = "Kingofnetflix", isTogglable = false, toolTip = "Kingofnetflix is the creator of <b>Qubit (Menu)</b>, and was a developer for ii's <b>Stupid</b> Menu. Quit modding and the modding community August 2026." },
                 new Module { buttonText = "iiDk", method =() => Files.Start("https://tianjo.cc/iidk"), isTogglable = false, toolTip = "iiDk is the creator of ii's <b>Stupid</b> Menu (which this menu is forked from), and was working on it since 2023. He was also the owner of ii's Stupid Mods. Both have shut down ever since 2/24/2026.", legal = true},
                 new Module { buttonText = "Twigcore", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twigcore is one of the main owners of Console, the admin system in the menu. He helps with asset ideas, moderate users, contributed to the menu, and much more."},
@@ -3756,7 +3756,7 @@ namespace Qubit.Modules
         public static bool OverwriteKeybinds;
         public static bool disableFavoritingKeybind;
 
-        [RunOnLaunch(8)]
+        [RunOnLaunch(LaunchPriority.ModuleTags)]
         public static void TagNewModules()
         {
             try

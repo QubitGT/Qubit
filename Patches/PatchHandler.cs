@@ -330,7 +330,7 @@ namespace Qubit.Patches
         internal static HarmonyLib.Harmony instance;
         public const string InstanceId = PluginInfo.GUID;
 
-        [RunOnLaunch(15)]
+        [RunOnLaunch(LaunchPriority.PatchReport)]
         public static void ReportErrors()
         {
             if (PatchErrors > 0)

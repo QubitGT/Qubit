@@ -172,7 +172,7 @@ namespace Qubit.Libraries.Networking
             action?.Invoke();
         }
 
-        [RunOnLaunch(5)]
+        [RunOnLaunch(LaunchPriority.Serialization)]
         public static void Initialize()
         {
             ViewSerialization.OnSerialize += OnSerialize;

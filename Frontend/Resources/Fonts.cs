@@ -238,7 +238,7 @@ namespace Qubit.Frontend.Resources
             };
         }
 
-        [RunOnLaunch(1)]
+        [RunOnLaunch(LaunchPriority.Fonts)]
         public static void Initialize()
         {
             Register();

@@ -157,7 +157,7 @@ namespace Qubit.Modules.Categories
                 i++;
             }
             text += "\n====================================\n";
-            text += "Text file generated with Qubit Menu";
+            text += PluginInfo.GeneratedFileFooter;
             string fileName = $"{PluginInfo.BaseDirectory}/SoundData.txt";
 
             File.WriteAllText(fileName, text);
@@ -181,7 +181,7 @@ namespace Qubit.Modules.Categories
                 i++;
             }
             text += "\n====================================\n";
-            text += "Text file generated with Qubit Menu";
+            text += PluginInfo.GeneratedFileFooter;
             string fileName = $"{PluginInfo.BaseDirectory}/RPCData.txt";
 
             File.WriteAllText(fileName, text);

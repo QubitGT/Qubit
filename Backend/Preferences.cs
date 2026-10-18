@@ -518,7 +518,7 @@ namespace Qubit.Backend
         public static bool backupPreferences;
         public static int preferenceBackupCount;
 
-        [RunOnLaunch(12)]
+        [RunOnLaunch(LaunchPriority.Preferences)]
         public static void LoadWithRetry()
         {
             loadPreferencesTime = Time.time;
@@ -579,7 +579,7 @@ namespace Qubit.Backend
             catch { }
         }
 
-        [RunOnLaunch(3)]
+        [RunOnLaunch(LaunchPriority.DonationState)]
         public static void LoadDonationState()
         {
             if (!Bootstrapper.FirstLaunch)

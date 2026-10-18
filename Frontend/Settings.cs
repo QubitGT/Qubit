@@ -296,7 +296,7 @@ namespace Qubit.Frontend
 #if LEGAL
             "<b>Qubit</b> Legal";
 #else
-            "<b>Qubit</b> Menu";
+            "<b>Qubit</b>";
 #endif
 
         public static int? fullModAmount;
@@ -391,14 +391,14 @@ namespace Qubit.Frontend
 
         public static bool annoyingMode;
 
-        [RunOnLaunch(0)]
+        [RunOnLaunch(LaunchPriority.Settings)]
         public static void Initialize()
         {
             timeMenuStarted = Time.time;
             IsSteam = ManagerRegistry.PlayFabAuthenticator.platform;
         }
 
-        [RunOnLaunch(7)]
+        [RunOnLaunch(LaunchPriority.Scene)]
         public static void InitializeScene()
         {
             CrystalMaterial = GameObj.GetObject("Environment Objects/LocalObjects_Prefab/ForestToCave/C_Crystal_Chunk")?.GetComponent<Renderer>()?.material;

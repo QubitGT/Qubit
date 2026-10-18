@@ -768,7 +768,7 @@ namespace Qubit.Modules.Categories
 
         public static void CustomSoundSpam() => SoundSpam(soundId);
 
-        [RunOnLaunch(10)]
+        [RunOnLaunch(LaunchPriority.Sound)]
         public static void Initialize()
         {
             try

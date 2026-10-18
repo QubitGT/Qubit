@@ -1,6 +1,6 @@
 <p align="center">
   <a href="https://github.com/QubitManagement/Qubit-Menu">
-    <img src="Resources/GitHub/banner.svg" width="100%" alt="Qubit Menu" />
+    <img src="Resources/GitHub/banner.svg" width="100%" alt="Qubit" />
   </a>
 </p>
 
@@ -64,7 +64,7 @@
 
 ## ⚡ About Qubit
 
-**Qubit Menu** is a community-driven mod menu for Gorilla Tag.
+**Qubit** is a community-driven mod menu for Gorilla Tag.
 
 It is designed to provide a clean, flexible, and accessible platform for experimenting with features, customizing your experience, and contributing to the Gorilla Tag modding community.
 
@@ -469,7 +469,7 @@ If the issue continues, create a bug report with your logs.
 
 ## ⚠️ Disclaimer
 
-Qubit Menu is an independent community project.
+Qubit is an independent community project.
 
 It is not affiliated with Gorilla Tag, Another Axiom LLC, or any of their associated products. Gorilla Tag and related trademarks belong to their respective owners.
 
@@ -479,7 +479,7 @@ Use modifications responsibly and follow the rules of the communities and games 
 
 ## 📄 License
 
-Qubit Menu is licensed under the **GNU General Public License v3.0**.
+Qubit is licensed under the **GNU General Public License v3.0**.
 
 ```text
 Copyright (C) 2026 Qubit
@@ -498,7 +498,7 @@ You should have received a copy of the GNU General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 ```
 
-The names **Qubit**, **Qubit Menu**, the Qubit logo, artwork, and branding are not covered by the GPL-3.0 License.
+The names **Qubit**, the Qubit logo, artwork, and branding are not covered by the GPL-3.0 License.
 
 <img src="Resources/GitHub/footer.svg" width="100%" alt="Qubit footer" />
 

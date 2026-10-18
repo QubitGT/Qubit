@@ -3407,7 +3407,7 @@ namespace Qubit.Modules.Categories
                 catch { Logs.Log("Failed to log player"); }
             }
             text += "\n====================================\n";
-            text += "Text file generated with Qubit Menu";
+            text += PluginInfo.GeneratedFileFooter;
             string fileName = $"{PluginInfo.BaseDirectory}/PlayerInfo/" + PhotonNetwork.CurrentRoom.Name + ".txt";
 
             File.WriteAllText(fileName, text);

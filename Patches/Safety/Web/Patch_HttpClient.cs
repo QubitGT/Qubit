@@ -47,7 +47,7 @@ namespace Qubit.Patches.Safety.Web
 
                 var response = new HttpResponseMessage(HttpStatusCode.Forbidden)
                 {
-                    Content = new StringContent("This request has been blocked by Qubit Menu, as it has been marked as a unsafe site.")
+                    Content = new StringContent("This request has been blocked by Qubit, as it has been marked as a unsafe site.")
                 };
 
                 __result = Task.FromResult(response);
