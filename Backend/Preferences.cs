@@ -278,6 +278,25 @@ namespace Qubit.Backend
             catch (Exception e) { Logs.Log("Error importing preferences from text: " + e.Message); }
         }
 
+        /// <summary>
+        /// Reads a button's saved on/off state straight from disk, for code that runs before the menu (and its modules) is loaded.
+        /// </summary>
+        public static bool IsSavedEnabled(string buttonText)
+        {
+            try
+            {
+                if (File.Exists(JsonPath))
+                    return JsonConvert.DeserializeObject<PreferencesData>(File.ReadAllText(JsonPath))
+                        ?.buttons?.TryGetValue(buttonText, out SavedButtonState state) == true && state.enabled == true;
+
+                if (File.Exists(LegacyPath))
+                    return File.ReadLines(LegacyPath).First().Split(";;").Contains(buttonText);
+            }
+            catch (Exception e) { Logs.Log($"Error reading saved state of {buttonText}: {e.Message}"); }
+
+            return false;
+        }
+
         public static void Load()
         {
             try

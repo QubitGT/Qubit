@@ -70,15 +70,7 @@ namespace Qubit.Core
                     Directory.CreateDirectory(target);
             }
             PatchHandler.PatchAll(true);
-            if (File.Exists($"{PluginInfo.BaseDirectory}/Qubit_Preferences.txt"))
-            {
-                if (File.ReadAllLines($"{PluginInfo.BaseDirectory}/Qubit_Preferences.txt")[0]
-                    .Split(";;")
-                    .Contains("Accept TOS"))
-                {
-                    TOSPatches.enabled = true;
-                }
-            }
+            TOSPatches.enabled = Preferences.IsSavedEnabled(TOSPatches.ButtonName);
             if (File.Exists($"{PluginInfo.BaseDirectory}/Qubit_DisableTelemetry.txt"))
                 ServerData.DisableTelemetry = true;
             GorillaTagger.OnPlayerSpawned(LoadMenu);
