@@ -3272,7 +3272,7 @@ set ""MODS_PATH=%BASE_DIR%Mods""
 
 set ""MENU_FILE=""
 
-for %%F in (""%PLUGIN_PATH%\*Qubit*Menu*.dll"" ""%MODS_PATH%\*Qubit*Menu*.dll"") do (
+for %%F in (""%PLUGIN_PATH%\*Qubit*.dll"" ""%MODS_PATH%\*Qubit*.dll"") do (
     if exist ""%%~fF"" (
         set ""MENU_FILE=%%~fF""
         goto update
@@ -3285,9 +3285,9 @@ goto restart
 :update
 echo Found menu file: ""%MENU_FILE%""
 
-set ""DOWNLOAD_NAME=Qubit-Menu""
+set ""DOWNLOAD_NAME=Qubit""
 echo %MENU_FILE% | find /I ""Legal"" >nul
-if %ERRORLEVEL%==0 set ""DOWNLOAD_NAME=Qubit-Menu-Legal""
+if %ERRORLEVEL%==0 set ""DOWNLOAD_NAME=Qubit-Legal""
 
 echo Downloading latest release of %DOWNLOAD_NAME%...
 
@@ -3335,7 +3335,7 @@ MODS_PATH=""$BASE_DIR/Mods""
 
 MENU_FILE=""""
 
-for f in ""$PLUGIN_PATH""/*Qubit*Menu*.dll ""$MODS_PATH""/*Qubit*Menu*.dll; do
+for f in ""$PLUGIN_PATH""/*Qubit*.dll ""$MODS_PATH""/*Qubit*.dll; do
     if [ -f ""$f"" ]; then
         MENU_FILE=""$f""
         break
@@ -3347,9 +3347,9 @@ if [ -z ""$MENU_FILE"" ]; then
 else
     echo ""Found menu file: $MENU_FILE""
 
-    DOWNLOAD_NAME=""Qubit-Menu""
+    DOWNLOAD_NAME=""Qubit""
     if echo ""$MENU_FILE"" | grep -qi ""Legal""; then
-        DOWNLOAD_NAME=""Qubit-Menu-Legal""
+        DOWNLOAD_NAME=""Qubit-Legal""
     fi
 
     echo ""Downloading latest release of $DOWNLOAD_NAME...""

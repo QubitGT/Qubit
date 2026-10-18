@@ -8,7 +8,7 @@
 
 <p align="center">
 	<a href="https://github.com/QubitGT/Qubit/releases"><img src="https://img.shields.io/github/v/release/QubitGT/Qubit?label=version&style=for-the-badge"></a>
-	<a href="https://github.com/QubitGT/Qubit/releases/latest"><img src="https://img.shields.io/github/downloads/QubitGT/Qubit/latest/Qubit.Menu.dll?style=for-the-badge"></a>
+	<a href="https://github.com/QubitGT/Qubit/releases/latest"><img src="https://img.shields.io/github/downloads/QubitGT/Qubit/latest/Qubit.dll?style=for-the-badge"></a>
 	<a href="https://discord.gg/qubit"><img src="https://img.shields.io/discord/1500168360787447909?label=discord&style=for-the-badge&color=blueviolet"></a>
 </p>
 
@@ -49,7 +49,7 @@ Let's bring back the collaboration of modding. No paywalls, no secrets, no malwa
   <summary><b>💾 Installation</b></summary>
 	
 1. **Download** the latest release **[here](https://github.com/QubitGT/Qubit/releases/latest)**
-2. **Drag & Drop** `Qubit-Menu.dll` into your plugins folder  
+2. **Drag & Drop** `Qubit.dll` into your plugins folder  
 3. **Launch** Gorilla Tag and enjoy!
 
 **🧱 From Source Code (for developers!)**
