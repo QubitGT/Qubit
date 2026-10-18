@@ -24,8 +24,8 @@ using Qubit.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.GameModeUtilities;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Utilities.GameModes;
 
 namespace Qubit.Patches.Menu
 {
@@ -42,7 +42,7 @@ namespace Qubit.Patches.Menu
                     return;
 
                 List<NetPlayer> infected = InfectedList();
-                List<VRRig> rigs = VRRigExtensions.ActiveRigs
+                List<VRRig> rigs = Players.ActiveRigs
                     .Where(rig => !rig.isLocal)
                     .Where(rig => !infected.Contains(rig.GetPlayer()))
                     .ToList();

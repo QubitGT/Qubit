@@ -21,7 +21,6 @@
 
 using HarmonyLib;
 using Qubit.Extensions;
-using Qubit.Menu;
 
 namespace Qubit.Patches.Menu
 {
@@ -40,11 +39,11 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                string targetName = Main.CleanPlayerName(__instance.linePlayer.NickName) + " ERR";
+                string targetName = Players.CleanPlayerName(__instance.linePlayer.NickName) + " ERR";
                 try
                 {
                     VRRig rig = __instance.linePlayer.VRRig();
-                    targetName = $"{Main.CleanPlayerName(__instance.linePlayer.NickName)}<size=50> <sprite name=\"{rig.GetPlatform()}\"> <sprite name=\"Ping{GetPing(rig)}\">{rig.GetFPS()}</size>";
+                    targetName = $"{Players.CleanPlayerName(__instance.linePlayer.NickName)}<size=50> <sprite name=\"{rig.GetPlatform()}\"> <sprite name=\"Ping{GetPing(rig)}\">{rig.GetFPS()}</size>";
                 }
                 catch { }
                 __instance.playerNameVisible = targetName;

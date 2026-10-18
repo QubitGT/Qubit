@@ -20,8 +20,8 @@
  */
 
 using HarmonyLib;
-using Qubit.Menu;
-using Qubit.Utilities;
+using Qubit.Backend;
+using Qubit.Extensions;
 
 namespace Qubit.Patches.Menu
 {
@@ -30,8 +30,8 @@ namespace Qubit.Patches.Menu
     {
         public static bool Prefix(VRRig __instance, float red, float green, float blue, PhotonMessageInfoWrapped info)
         {
-            NetPlayer player = RigUtilities.GetPlayerFromVRRig(__instance) ?? null;
-            if (player != null && Main.ShouldBypassChecks(player))
+            NetPlayer player = Players.GetPlayerFromVRRig(__instance) ?? null;
+            if (player != null && Console.ShouldBypassChecks(player))
             {
                 if (info.senderID == NetworkSystem.Instance.GetOwningPlayerID(__instance.rigSerializer.gameObject))
                     __instance.InitializeNoobMaterialLocal(red, green, blue);

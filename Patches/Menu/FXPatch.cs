@@ -20,7 +20,7 @@
  */
 
 using HarmonyLib;
-using Qubit.Menu;
+using Qubit.Backend;
 
 namespace Qubit.Patches.Menu
 {
@@ -30,7 +30,7 @@ namespace Qubit.Patches.Menu
         public static bool Prefix(FXType fxType, IFXContext context, PhotonMessageInfoWrapped info = default(PhotonMessageInfoWrapped))
         {
             NetPlayer player = info.Sender;
-            if (player != null && Main.ShouldBypassChecks(player))
+            if (player != null && Console.ShouldBypassChecks(player))
             {
                 context.OnPlayFX();
                 return false;

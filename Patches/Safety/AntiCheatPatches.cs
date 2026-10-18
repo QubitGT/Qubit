@@ -21,7 +21,7 @@
 
 using HarmonyLib;
 using Photon.Pun;
-using Qubit.Managers;
+using Qubit.Libraries.Interface;
 using UnityEngine;
 using static Qubit.Patches.PatchHandler;
 
@@ -46,19 +46,19 @@ namespace Qubit.Patches.Safety
                 if (AntiCheatSelf || AntiCheatAll)
                 {
                     if (susId == PhotonNetwork.LocalPlayer.UserId)
-                        NotificationManager.SendNotification($"<color=grey>[</color><color=green>ANTI-CHEAT</color><color=grey>]</color> You have been reported for {(AntiCheatReasonHide ? "hidden reason" : susReason)}.");
+                        Notifications.SendNotification($"<color=grey>[</color><color=green>ANTI-CHEAT</color><color=grey>]</color> You have been reported for {(AntiCheatReasonHide ? "hidden reason" : susReason)}.");
                     else
                     {
                         if (AntiCheatAll)
-                            NotificationManager.SendNotification($"<color=grey>[</color><color=green>ANTI-CHEAT</color><color=grey>]</color> {susNick} was reported for {(AntiCheatReasonHide ? "hidden reason" : susReason)}.");
+                            Notifications.SendNotification($"<color=grey>[</color><color=green>ANTI-CHEAT</color><color=grey>]</color> {susNick} was reported for {(AntiCheatReasonHide ? "hidden reason" : susReason)}.");
                     }
                 }
 
                 if (AntiACReport)
                 {
-                    Mods.Safety.AntiReportFRT(PhotonNetwork.LocalPlayer);
-                    NotificationManager.ClearAllNotifications();
-                    NotificationManager.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> The anti cheat attempted to report you, you have been disconnected.");
+                    Modules.Categories.Safety.AntiReportFRT(PhotonNetwork.LocalPlayer);
+                    Notifications.ClearAllNotifications();
+                    Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> The anti cheat attempted to report you, you have been disconnected.");
                 }
 
                 return false;

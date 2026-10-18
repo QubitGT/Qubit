@@ -22,7 +22,7 @@
 using HarmonyLib;
 using Photon.Voice;
 using Photon.Voice.Unity;
-using Qubit.Managers;
+using Qubit.Libraries.Audio;
 
 namespace Qubit.Patches.Menu
 {
@@ -47,7 +47,7 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                __result = () => VoiceManager.Get();
+                __result = () => Voices.Get();
                 return false;
             }
             return true;
@@ -59,7 +59,7 @@ namespace Qubit.Patches.Menu
             if (enabled)
             {
                 __instance.SourceType = Recorder.InputSourceType.Factory;
-                __instance.InputFactory = () => VoiceManager.Get();
+                __instance.InputFactory = () => Voices.Get();
             }
             return true;
         }

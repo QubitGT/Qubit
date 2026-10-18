@@ -21,7 +21,7 @@
 
 using GorillaLocomotion;
 using HarmonyLib;
-using Qubit.Mods;
+using Qubit.Modules.Categories;
 
 namespace Qubit.Patches.Menu
 {

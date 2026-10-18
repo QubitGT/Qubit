@@ -20,7 +20,7 @@
  */
 
 using HarmonyLib;
-using Qubit.Classes.Mods;
+using Qubit.Modules.Classes;
 using TMPro;
 
 namespace Qubit.Patches.Menu

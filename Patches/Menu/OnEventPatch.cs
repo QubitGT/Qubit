@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Patches/Menu/AntiKick.cs
+ * Qubit Menu  Patches/Menu/OnEventPatch.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -35,7 +35,7 @@ namespace Qubit.Patches.Menu
         {
             if (enabled)
             {
-                if (VRRigExtensions.ActiveRigs.All(rig => rig != null && rig.GetPing() > 500))
+                if (Players.ActiveRigs.All(rig => rig != null && rig.GetPing() > 500))
                     return false;
             }
             return true;

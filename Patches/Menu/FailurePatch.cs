@@ -21,8 +21,8 @@
 
 using GorillaNetworking;
 using HarmonyLib;
-using Qubit.Classes.Menu;
-using Qubit.Managers;
+using Qubit.Backend;
+using Qubit.Libraries.Core;
 
 namespace Qubit.Patches.Menu
 {
@@ -32,7 +32,7 @@ namespace Qubit.Patches.Menu
         public static void Prefix(string failMessage)
         {
             if (ServerData.ServerDataEnabled && failMessage.ToLower().Contains("your account"))
-                CoroutineManager.instance.StartCoroutine(ServerData.ReportFailureMessage(failMessage));
+                Coroutines.instance.StartCoroutine(ServerData.ReportFailureMessage(failMessage));
         }
     }
 }

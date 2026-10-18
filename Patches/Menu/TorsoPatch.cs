@@ -20,7 +20,7 @@
  */
 
 using HarmonyLib;
-using Qubit.Mods;
+using Qubit.Modules.Categories;
 using System;
 using UnityEngine;
 using Random = UnityEngine.Random;

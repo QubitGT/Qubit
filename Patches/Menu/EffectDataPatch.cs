@@ -22,8 +22,8 @@
 using GorillaLocomotion;
 using HarmonyLib;
 using Photon.Pun;
-using Qubit.Menu;
 using UnityEngine;
+using Security = Qubit.Core.Security;
 
 namespace Qubit.Patches.Menu
 {
@@ -57,7 +57,7 @@ namespace Qubit.Patches.Menu
                                 {
                                     GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, audioClipIndex, isLeftHand, handTapSpeed);
                                 }
-                                Main.RPCProtection();
+                                Security.RPCProtection();
                             }
                         }
 

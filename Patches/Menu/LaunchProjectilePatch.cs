@@ -21,8 +21,8 @@
 
 using HarmonyLib;
 using Qubit.Extensions;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
+using static Qubit.Frontend.Settings;
+using static Qubit.Utilities.Assets;
 
 namespace Qubit.Patches.Menu
 {

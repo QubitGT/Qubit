@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Patches/Menu/LightningPatch.cs
+ * Qubit Menu  Patches/Menu/SetupVoicePatch.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,7 +20,7 @@
  */
 
 using HarmonyLib;
-using Qubit.Menu;
+using Qubit.Modules;
 
 namespace Qubit.Patches.Menu
 {
@@ -29,8 +29,8 @@ namespace Qubit.Patches.Menu
     {
         public static void Postfix()
         {
-            if (Buttons.GetIndex("High Quality Microphone").enabled)
-                Buttons.GetIndex("High Quality Microphone").enableMethod.Invoke();
+            if (Manager.GetIndex("High Quality Microphone").enabled)
+                Manager.GetIndex("High Quality Microphone").enableMethod.Invoke();
         }
     }
 }

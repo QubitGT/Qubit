@@ -20,7 +20,8 @@
  */
 
 using HarmonyLib;
-using Qubit.Managers;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Networking;
 using System;
 
 namespace Qubit.Patches.Menu
@@ -39,8 +40,8 @@ namespace Qubit.Patches.Menu
 
             if (delay != null)
             {
-                CoroutineManager.instance.StartCoroutine(
-                    Qubit.Menu.Main.SerializationDelay(() =>
+                Coroutines.instance.StartCoroutine(
+                    Serialization.SerializationDelay(() =>
                     {
                         float oldDelay = delay.Value;
                         delay = null;

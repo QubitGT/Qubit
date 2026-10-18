@@ -20,8 +20,8 @@
  */
 
 using HarmonyLib;
-using Qubit.Menu;
-using Qubit.Utilities;
+using Qubit.Backend;
+using Qubit.Extensions;
 using UnityEngine;
 
 namespace Qubit.Patches.Menu
@@ -33,8 +33,8 @@ namespace Qubit.Patches.Menu
 
         public static void Postfix(VRRig __instance, ref bool __result, Vector3 position, float range)
         {
-            NetPlayer player = RigUtilities.GetPlayerFromVRRig(__instance) ?? null;
-            if ((enabled && __instance.isLocal) || (player != null && Main.ShouldBypassChecks(player)))
+            NetPlayer player = Players.GetPlayerFromVRRig(__instance) ?? null;
+            if ((enabled && __instance.isLocal) || (player != null && Console.ShouldBypassChecks(player)))
                 __result = true;
         }
     }

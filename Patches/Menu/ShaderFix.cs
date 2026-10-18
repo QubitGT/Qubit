@@ -22,7 +22,7 @@
 using HarmonyLib;
 using UnityEngine;
 using UnityEngine.Rendering;
-using static Qubit.Menu.Main;
+using static Qubit.Frontend.Settings;
 
 namespace Qubit.Patches.Menu
 {

@@ -22,12 +22,11 @@
 using GorillaGameModes;
 using HarmonyLib;
 using Qubit.Extensions;
-using Qubit.Menu;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Qubit.Utilities.AssetUtilities;
-using static Qubit.Utilities.GameModeUtilities;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameModes;
 
 namespace Qubit.Patches.Menu
 {
@@ -41,7 +40,7 @@ namespace Qubit.Patches.Menu
         public static int tagCount;
 
         private static void PlaySound(string name) =>
-            LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/TagSounds/{name}.wav", $"{name}.wav", clip => clip.Play(Main.buttonClickVolume / 10f));
+            LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/TagSounds/{name}.wav", $"{name}.wav", clip => clip.Play(Frontend.Settings.buttonClickVolume / 10f));
 
         public static void Postfix(NetPlayer player)
         {

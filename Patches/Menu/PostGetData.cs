@@ -22,7 +22,7 @@
 using GorillaNetworking;
 using GorillaNetworking.Store;
 using HarmonyLib;
-using static Qubit.Menu.Main;
+using static Qubit.Frontend.Settings;
 
 namespace Qubit.Patches.Menu
 {

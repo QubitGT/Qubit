@@ -24,7 +24,7 @@ using HarmonyLib;
 using PlayFab;
 using PlayFab.CloudScriptModels;
 using PlayFab.Internal;
-using Qubit.Managers;
+using Qubit.Libraries.Interface;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -113,9 +113,9 @@ namespace Qubit.Patches.Menu
                         if (error.ErrorMessage.ToLower().Contains("ban") || error.ErrorMessage.ToLower().Contains("banned") || error.ErrorMessage.ToLower().Contains("suspended") || error.ErrorMessage.ToLower().Contains("suspension"))
                         {
                             if (error.ErrorMessage.ToLower().Contains("this ip"))
-                                NotificationManager.SendNotification("<color=grey>[</color><color=red>ANTI-BAN</color><color=grey>]</color> Your IP address is currently banned.");
+                                Notifications.SendNotification("<color=grey>[</color><color=red>ANTI-BAN</color><color=grey>]</color> Your IP address is currently banned.");
                             else
-                                NotificationManager.SendNotification("<color=grey>[</color><color=red>ANTI-BAN</color><color=grey>]</color> Your account is currently banned.");
+                                Notifications.SendNotification("<color=grey>[</color><color=red>ANTI-BAN</color><color=grey>]</color> Your account is currently banned.");
                             Dictionary<string, List<string>>.Enumerator enumerator = error.ErrorDetails.GetEnumerator();
                             if (enumerator.Current.Value[0] == null || enumerator.Current.Value[0] == "Indefinite")
                             {

@@ -49,9 +49,9 @@ namespace Qubit.Patches.Menu
 
                 foreach (GorillaTagCompetitiveServerApi.RankedModeProgressionPlatformData platformData in data.platformData)
                 {
-                    platformData.elo = Mods.Safety.targetElo;
-                    platformData.majorTier = tierData[Mods.Safety.targetBadge][0];
-                    platformData.minorTier = tierData[Mods.Safety.targetBadge][1];
+                    platformData.elo = Modules.Categories.Safety.targetElo;
+                    platformData.majorTier = tierData[Modules.Categories.Safety.targetBadge][0];
+                    platformData.minorTier = tierData[Modules.Categories.Safety.targetBadge][1];
                 }
                 __instance.ProgressionData = data;
                 return false;

@@ -22,7 +22,7 @@
 using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
-using Qubit.Managers;
+using Qubit.Libraries.Core;
 using System;
 using System.Collections.Generic;
 
@@ -48,7 +48,7 @@ namespace Qubit.Patches.Menu
             }
             catch (Exception e)
             {
-                LogManager.LogError($"Error in RPCFilter.FilteredRPCs.{methodName}: {e}");
+                Logs.LogError($"Error in RPCFilter.FilteredRPCs.{methodName}: {e}");
             }
 
             return true;

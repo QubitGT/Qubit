@@ -25,8 +25,8 @@ using PlayFab.ClientModels;
 using PlayFab.Internal;
 using System;
 using System.Collections.Generic;
+using static Qubit.Extensions.Random;
 using static Qubit.Patches.PatchHandler;
-using static Qubit.Utilities.RandomUtilities;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Patches.Safety

@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Patches/Menu/AntiCrashPatches.cs
+ * Qubit Menu  Patches/Menu/NetworkSystemPatch.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,7 +20,7 @@
  */
 
 using HarmonyLib;
-using Qubit.Menu;
+using Qubit.Modules;
 
 namespace Qubit.Patches.Menu
 {
@@ -31,7 +31,7 @@ namespace Qubit.Patches.Menu
         {
             public static bool Prefix(string roomName, RoomConfig opts, int regionIndex = -1)
             {
-                if (Buttons.GetIndex("Unlock Fan Club Subscription").enabled)
+                if (Manager.GetIndex("Unlock Fan Club Subscription").enabled)
                 {
                     if (opts.MaxPlayers == 20)
                         opts.MaxPlayers = 10;

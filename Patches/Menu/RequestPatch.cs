@@ -22,9 +22,9 @@
 using GorillaNetworking;
 using HarmonyLib;
 using Photon.Pun;
-using Qubit.Managers;
-using Qubit.Menu;
-using Qubit.Mods;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Networking;
+using Qubit.Modules.Categories;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
@@ -52,7 +52,7 @@ namespace Qubit.Patches.Menu
 
                     if (enabled)
                     {
-                        currentCoroutine ??= CoroutineManager.instance.StartCoroutine(LoadCosmetics());
+                        currentCoroutine ??= Coroutines.instance.StartCoroutine(LoadCosmetics());
                         return false;
                     }
 
@@ -61,7 +61,7 @@ namespace Qubit.Patches.Menu
                         CosmeticsController.CosmeticSet items = new CosmeticsController.CosmeticSet
                         (
                             CosmeticsController.instance.currentWornSet.ToDisplayNameArray().Select(
-                                cosmetic => Main.CosmeticsOwned.Contains(cosmetic)
+                                cosmetic => Frontend.Settings.CosmeticsOwned.Contains(cosmetic)
                                     ? cosmetic
                                     : "null"
                                 )
@@ -82,7 +82,7 @@ namespace Qubit.Patches.Menu
         {
             if (NetworkSystem.Instance.InRoom)
             {
-                Vector3 target = Main.TryOnRoom.transform.position;
+                Vector3 target = Frontend.Settings.TryOnRoom.transform.position;
 
                 VRRig.LocalRig.enabled = false;
                 VRRig.LocalRig.transform.position = target;
@@ -92,7 +92,7 @@ namespace Qubit.Patches.Menu
                 archiveCosmetics = CosmeticsController.instance.currentWornSet.ToDisplayNameArray();
                 CosmeticsController.instance.currentWornSet = new CosmeticsController.CosmeticSet(cosmeticArray, CosmeticsController.instance);
 
-                while (Vector3.Distance(Main.ServerPos, target) > 0.2f)
+                while (Vector3.Distance(Serialization.ServerPos, target) > 0.2f)
                     yield return null;
 
                 yield return new WaitForSeconds(0.1f);

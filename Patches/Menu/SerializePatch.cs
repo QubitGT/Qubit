@@ -21,7 +21,7 @@
 
 using HarmonyLib;
 using Photon.Pun;
-using Qubit.Managers;
+using Qubit.Libraries.Core;
 using System;
 
 namespace Qubit.Patches.Menu
@@ -50,7 +50,7 @@ namespace Qubit.Patches.Menu
             }
             catch (Exception e)
             {
-                LogManager.LogError($"Error in SerializePatch.OnSerialize: {e}");
+                Logs.LogError($"Error in SerializePatch.OnSerialize: {e}");
             }
 
             if (OverrideSerialization == null)
@@ -62,7 +62,7 @@ namespace Qubit.Patches.Menu
             }
             catch (Exception e)
             {
-                LogManager.LogError($"Error in SerializePatch.OverrideSerialization: {e}");
+                Logs.LogError($"Error in SerializePatch.OverrideSerialization: {e}");
                 return false;
             }
         }

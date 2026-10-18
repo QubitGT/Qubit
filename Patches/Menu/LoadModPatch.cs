@@ -22,7 +22,7 @@
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using HarmonyLib;
 using Modio.Mods;
-using Qubit.Mods.CustomMaps;
+using Qubit.Modules.Categories.CustomMaps;
 
 namespace Qubit.Patches.Menu
 {

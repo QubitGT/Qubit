@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Managers/URLBlocker.cs
+ * Qubit Menu  Patches/Safety/URLBlocker.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -21,7 +21,7 @@
 
 // The purpose of this class is to block known malicious URLs from being accessed by the game or mods
 using HarmonyLib;
-using Qubit.Managers;
+using Qubit.Libraries.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -120,7 +120,7 @@ namespace Qubit.Patches.Safety
                 shouldLog = notifiedAssemblies.Add(assemblyName);
 
             if (shouldLog)
-                LogManager.Log($"HEY!! Qubit Menu blocked a potentionally DANGEROUS REQUEST to: {url} | Reason: {reason} | Assumed Assembly: {assemblyName} | Assumed File: {fileName}");
+                Logs.Log($"HEY!! Qubit Menu blocked a potentionally DANGEROUS REQUEST to: {url} | Reason: {reason} | Assumed Assembly: {assemblyName} | Assumed File: {fileName}");
         }
 
         private static string NormalizeHost(string host)
@@ -361,11 +361,7 @@ namespace Qubit.Patches.Safety
         {
             static bool Prefix(string fileName, string arguments)
             {
-                if (IsBlockedProcess(arguments))
-                {
-                    return false;
-                }
-                return true;
+                return !IsBlockedProcess(arguments);
             }
         }
 
@@ -375,11 +371,7 @@ namespace Qubit.Patches.Safety
         {
             static bool Prefix(ProcessStartInfo startInfo)
             {
-                if (startInfo != null && IsBlockedProcess(startInfo.Arguments, startInfo.ArgumentList))
-                {
-                    return false;
-                }
-                return true;
+                return startInfo == null || !IsBlockedProcess(startInfo.Arguments, startInfo.ArgumentList);
             }
         }
 

@@ -19,8 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using GorillaNetworking;
 using HarmonyLib;
-using Qubit.Managers;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -94,11 +96,11 @@ namespace Qubit.Patches
                     if (type.GetCustomAttribute<SecurityPatch>() != null)
                         CriticalPatchFailed = true;
 
-                    LogManager.LogError($"Failed to patch {type.FullName}: {ex}");
+                    Logs.LogError($"Failed to patch {type.FullName}: {ex}");
                 }
             }
 
-            LogManager.Log($"Patched with {PatchErrors} errors");
+            Logs.Log($"Patched with {PatchErrors} errors");
 
             if (!awake)
                 IsPatched = true;
@@ -126,7 +128,7 @@ namespace Qubit.Patches
                     }
                     catch (Exception ex)
                     {
-                        LogManager.LogError($"Failed to restore security patch {type.FullName} after UnpatchAll: {ex}");
+                        Logs.LogError($"Failed to restore security patch {type.FullName} after UnpatchAll: {ex}");
                         CriticalPatchFailed = true;
                     }
                 }
@@ -179,7 +181,7 @@ namespace Qubit.Patches
             {
                 if (ProtectedMethods.Contains(original))
                 {
-                    LogManager.LogError($"Refused to remove protected patch: {targetClass.FullName}.{methodName}");
+                    Logs.LogError($"Refused to remove protected patch: {targetClass.FullName}.{methodName}");
                     return;
                 }
             }
@@ -283,7 +285,7 @@ namespace Qubit.Patches
             }
             catch (Exception ex)
             {
-                LogManager.LogError($"Failed to reapply security patch on {type.FullName}: {ex}");
+                Logs.LogError($"Failed to reapply security patch on {type.FullName}: {ex}");
             }
         }
 
@@ -305,7 +307,7 @@ namespace Qubit.Patches
             foreach (var owner in foreignOwners)
             {
                 try { instance.Unpatch(method, HarmonyPatchType.All, owner); }
-                catch (Exception ex) { LogManager.LogError($"Failed to remove patch from {method.Name}: {ex}"); }
+                catch (Exception ex) { Logs.LogError($"Failed to remove patch from {method.Name}: {ex}"); }
             }
         }
 
@@ -326,5 +328,22 @@ namespace Qubit.Patches
 
         internal static HarmonyLib.Harmony instance;
         public const string InstanceId = PluginInfo.GUID;
+
+        public static void ReportErrors()
+        {
+            if (PatchErrors > 0)
+            {
+                if (CriticalPatchFailed)
+                {
+                    string message = "A critical patch has failed, and you have been blocked from joining rooms for safety reasons. Please report this as an issue to the GitHub repository.";
+                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> {message}", 10000);
+                    GorillaComputer.instance.GeneralFailureMessage(message);
+                    if (NetworkSystem.Instance.InRoom)
+                        NetworkSystem.Instance.ReturnToSinglePlayer();
+                }
+                else
+                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> {PatchErrors} patch{(PatchErrors > 1 ? "es" : "")} failed to initialize. Please report this as an issue to the GitHub repository.", 10000);
+            }
+        }
     }
 }
