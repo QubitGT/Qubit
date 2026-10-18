@@ -53,8 +53,8 @@ namespace Qubit.Extensions
             if (next == float.MinValue)
                 return 0f;
 
-            float currentTime = usesNetworkTime && References.Network.IsOnline
-                ? References.Network.ServerTimestamp / 1000.0f
+            float currentTime = usesNetworkTime && ManagerRegistry.NetworkSystem.IsOnline
+                ? ManagerRegistry.NetworkSystem.ServerTimestamp / 1000.0f
                 : Time.time;
 
             return Mathf.Max(0f, next - currentTime);
@@ -70,7 +70,7 @@ namespace Qubit.Extensions
 
             CallLimiter shadow = shadows.GetValue(limiter, rl => rl.Clone());
 
-            return usesNetworkTime && References.Network.IsOnline
+            return usesNetworkTime && ManagerRegistry.NetworkSystem.IsOnline
                 ? shadow.CheckCallServerTime(time ?? (PhotonNetwork.CurrentTime))
                 : shadow.CheckCallTime((float)(time ?? Time.time));
         }

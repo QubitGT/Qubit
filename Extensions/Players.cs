@@ -50,7 +50,7 @@ namespace Qubit.Extensions
             Players.GetVRRigFromPlayer(self);
 
         public static bool InRoom(this NetPlayer self) =>
-            References.Network.AllNetPlayers.Contains(self);
+            ManagerRegistry.NetworkSystem.AllNetPlayers.Contains(self);
 
         public static Hashtable GetCustomProperties(this NetPlayer self) =>
             self.GetPlayer().CustomProperties;
@@ -74,7 +74,7 @@ namespace Qubit.Extensions
             GorillaGameManager.StaticFindRigForPlayer(p);
 
         public static NetPlayer GetPlayerFromVRRig(VRRig p) =>
-            p.Creator ?? References.Network.GetPlayer(References.Network.GetOwningPlayerID(p.rigSerializer.gameObject));
+            p.Creator ?? ManagerRegistry.NetworkSystem.GetPlayer(ManagerRegistry.NetworkSystem.GetOwningPlayerID(p.rigSerializer.gameObject));
 
         public static NetPlayer GetPlayerFromID(string id) =>
             PhotonNetwork.PlayerList.FirstOrDefault(player => player.UserId == id);
@@ -228,7 +228,7 @@ namespace Qubit.Extensions
         public static PlatformType GetPlatform(this VRRig rig)
         {
             if (rig == null) return PlatformType.Unknown;
-            string platform = References.Network.GetPlayerPlatform(rig.GetPlayer().ActorNumber);
+            string platform = ManagerRegistry.NetworkSystem.GetPlayerPlatform(rig.GetPlayer().ActorNumber);
 
             int suspiciouslySteam = 0;
             int suspiciouslyPC = 0;
@@ -339,7 +339,7 @@ namespace Qubit.Extensions
         public static float[] GetSpeed(this VRRig rig)
         {
             NetPlayer player = rig.GetPlayer();
-            switch (GorillaGameManager.instance.GameType())
+            switch (ManagerRegistry.GorillaGameManager.GameType())
             {
                 case GameModeType.Infection:
                 case GameModeType.InfectionCompetitive:
@@ -384,7 +384,7 @@ namespace Qubit.Extensions
             rig._playerOwnedCosmetics.Concat();
 
         public static bool IsVIMSubscriber(this VRRig rig) =>
-            SubscriptionManager.Instance.subData[rig.GetPlayer()].active;
+            ManagerRegistry.SubscriptionManager.subData[rig.GetPlayer()].active;
 
 
         private static readonly List<VRRig> _rigs = new List<VRRig>();

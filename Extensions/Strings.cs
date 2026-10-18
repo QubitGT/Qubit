@@ -164,5 +164,21 @@ namespace Qubit.Extensions
 
             return stringBuilder.ToString();
         }
+
+        /// <summary>
+        /// Wraps the text in the standard grey brackets with a colored tag, for example "[SUCCESS]".
+        /// </summary>
+        /// <param name="tag">The tag text.</param>
+        /// <param name="color">The color of the tag text.</param>
+        public static string FormatTag(this string tag, string color) =>
+            Bracket(color, tag);
+
+        /// <summary>
+        /// Builds the grey-bracketed colored text used in button labels and notifications, for example "[G]" with a green G.
+        /// </summary>
+        /// <param name="color">The color of the text between the brackets.</param>
+        /// <param name="text">The text between the brackets.</param>
+        public static string Bracket(string color, string text) =>
+            $"<color=grey>[</color><color={color}>{text}</color><color=grey>]</color>";
     }
 }

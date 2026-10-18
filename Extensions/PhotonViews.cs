@@ -19,6 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using System;
+using System.Collections.Generic;
+using System.Reflection;
+using UnityEngine;
+using static Qubit.Extensions.Colors;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Networking.Serialization;
 using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
@@ -82,5 +89,19 @@ namespace Qubit.Extensions
             }
             return false;
         }
+        public static bool CanCallNow(this FXSystemSettings settings, int index, float? time = null) =>
+            settings.GetCallLimiter(index).CanCallNow(time, settings.GetCallLimitType(index).UseNetWorkTime);
+
+        public static float GetDelay(this FXSystemSettings settings, int index) =>
+            settings.GetCallLimiter(index).GetDelay(settings.GetCallLimitType(index).UseNetWorkTime);
+
+        public static CallLimiter GetCallLimiter(this FXSystemSettings settings, int index) =>
+            settings.callSettings[index].CallLimitSettings;
+
+        public static CallLimitType<CallLimiter> GetCallLimitType(this FXSystemSettings settings, int index) =>
+            settings.callSettings[index];
+
+        public static void Serialize(this PhotonView view, Photon.Realtime.RaiseEventOptions options = null, int timeOffset = 0) =>
+            SendSerialize(view, options, timeOffset);
     }
 }

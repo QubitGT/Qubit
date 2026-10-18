@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using UnityEngine;
 
 namespace Qubit.Extensions
@@ -28,7 +29,7 @@ namespace Qubit.Extensions
         public static Vector3 GetTrueLaunchPosition(this Slingshot slingshot) =>
             slingshot.drawingHand.transform.position +
             (slingshot.centerOrigin.position - slingshot.drawingHand.transform.position).normalized *
-            (EquipmentInteractor.instance.grabRadius - slingshot.dummyProjectileColliderRadius) *
+            (ManagerRegistry.EquipmentInteractor.grabRadius - slingshot.dummyProjectileColliderRadius) *
             (slingshot.dummyProjectileInitialScale * Mathf.Abs(slingshot.transform.lossyScale.x));
 
         public static Vector3 GetNetworkedLaunchVelocity(this Slingshot slingshot)

@@ -19,6 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Photon.Pun;
+using Qubit.Core;
+using System;
+using System.Linq;
+using System.Reflection;
+using static Qubit.Extensions.Colors;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Networking.Serialization;
 using System.Collections.Generic;
 using UnityEngine;
 using static Qubit.Frontend.Settings;
@@ -115,5 +123,14 @@ namespace Qubit.Extensions
 
         public static Color DarkenColor(Color color, float intensity = 0.5f) =>
             new Color(color.r * intensity, color.g * intensity, color.b * intensity, color.a);
+
+        public static string ToHex(this Color input) =>
+            ColorToHex(input);
+
+        public static string ToRichRGBString(this Color input, int roundAmount = 255) =>
+            $"<color=red>{Math.Round(input.r * roundAmount)}</color> <color=green>{Math.Round(input.g * roundAmount)}</color> <color=blue>{Math.Round(input.b * roundAmount)}</color>";
+
+        public static string ToRGBString(this Color input, int roundAmount = 255) =>
+            $"{Math.Round(input.r * roundAmount)} {Math.Round(input.g * roundAmount)} {Math.Round(input.b * roundAmount)}";
     }
 }

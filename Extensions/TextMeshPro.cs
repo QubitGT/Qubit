@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Extensions/TextMeshPros.cs
+ * Qubit Menu  Extensions/TextMeshPro.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -25,7 +25,7 @@ using UnityEngine;
 
 namespace Qubit.Extensions
 {
-    public static class TextMeshPros
+    public static class TextMeshPro
     {
         public static void SafeSetText(this TMP_Text tmp, string text)
         {
