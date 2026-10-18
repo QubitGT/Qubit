@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/Presets.cs
+ * Qubit Menu  Modules/Categories/Presets.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,12 +19,15 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Managers;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
 using System;
 using System.IO;
-using static Qubit.Menu.Main;
+using static Qubit.Frontend.Resources.Fonts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Modules.Manager;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Presets
     {
@@ -50,16 +53,16 @@ namespace Qubit.Mods
             pageButtonType = 1;
             fontCycle = -1;
 
-            Qubit.Menu.Buttons.GetIndex("Change Menu Theme").cycleValue(true);
-            Qubit.Menu.Buttons.GetIndex("Change Page Type").cycleValue(true);
-            Qubit.Menu.Buttons.GetIndex("Change Font Type").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Menu Theme").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Page Type").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Font Type").cycleValue(true);
 
             Settings.Panic();
 
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            NotificationManager.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Legitimate preset enabled successfully.");
+            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Legitimate preset enabled successfully.");
         }
 
         public static void GhostPreset()
@@ -82,7 +85,7 @@ namespace Qubit.Mods
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            NotificationManager.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Ghost preset enabled successfully.");
+            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Ghost preset enabled successfully.");
         }
 
         public static void SaveCustomPreset(int id)
@@ -95,12 +98,12 @@ namespace Qubit.Mods
                 string file = Path.Combine(directory, $"Preset_{id}.txt");
                 File.WriteAllText(file, Settings.SavePreferencesToText());
 
-                NotificationManager.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Custom preset saved successfully.");
+                Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Custom preset saved successfully.");
             }
             catch (Exception ex)
             {
-                LogManager.LogError($"Failed to save custom preset {id}: {ex}");
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to save custom preset.");
+                Logs.LogError($"Failed to save custom preset {id}: {ex}");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to save custom preset.");
             }
         }
 
@@ -113,20 +116,20 @@ namespace Qubit.Mods
 
                 if (!File.Exists(file))
                 {
-                    NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Custom preset not found.");
+                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Custom preset not found.");
                     return;
                 }
 
                 string text = File.ReadAllText(file);
-                LogManager.Log(text);
+                Logs.Log(text);
                 Settings.LoadPreferencesFromText(text);
 
-                NotificationManager.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Custom preset loaded successfully.");
+                Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Custom preset loaded successfully.");
             }
             catch (Exception ex)
             {
-                LogManager.LogError($"Failed to load custom preset {id}: {ex}");
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to load custom preset.");
+                Logs.LogError($"Failed to load custom preset {id}: {ex}");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to load custom preset.");
             }
         }
 
@@ -144,16 +147,16 @@ namespace Qubit.Mods
             pageButtonType = 1;
             fontCycle = 0;
 
-            Qubit.Menu.Buttons.GetIndex("Change Menu Theme").cycleValue(true);
-            Qubit.Menu.Buttons.GetIndex("Change Page Type").cycleValue(true);
-            Qubit.Menu.Buttons.GetIndex("Change Font Type").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Menu Theme").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Page Type").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Font Type").cycleValue(true);
 
             Settings.Panic();
 
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            NotificationManager.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Performance preset enabled successfully.");
+            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Performance preset enabled successfully.");
         }
 
         public static void SafetyPreset()
@@ -172,16 +175,16 @@ namespace Qubit.Mods
             pageButtonType = 1;
             fontCycle = 0;
 
-            Qubit.Menu.Buttons.GetIndex("Change Menu Theme").cycleValue(true);
-            Qubit.Menu.Buttons.GetIndex("Change Page Type").cycleValue(true);
-            Qubit.Menu.Buttons.GetIndex("Change Font Type").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Menu Theme").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Page Type").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Font Type").cycleValue(true);
 
             Settings.Panic();
 
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            NotificationManager.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Safety preset enabled successfully.");
+            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Safety preset enabled successfully.");
         }
 
         public static void SimplePreset()
@@ -194,12 +197,12 @@ namespace Qubit.Mods
             };
 
             pageButtonType = 2;
-            Qubit.Menu.Buttons.GetIndex("Change Page Type").cycleValue(true);
+            Qubit.Modules.Manager.GetIndex("Change Page Type").cycleValue(true);
 
             foreach (string mod in presetMods)
                 Toggle(mod);
 
-            NotificationManager.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Simple preset enabled successfully.");
+            Notifications.SendNotification("<color=grey>[</color><color=purple>PRESET</color><color=grey>]</color> Simple preset enabled successfully.");
         }
     }
 }

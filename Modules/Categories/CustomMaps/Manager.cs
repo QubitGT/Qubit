@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/Manager.cs
+ * Qubit Menu  Modules/Categories/CustomMaps/Manager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,9 +20,7 @@
  */
 
 using GorillaTagScripts.VirtualStumpCustomMaps;
-using Qubit.Classes.Menu;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Libraries.Core;
 using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
@@ -31,7 +29,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 
-namespace Qubit.Mods.CustomMaps
+namespace Qubit.Modules.Categories.CustomMaps
 {
     public static class Manager
     {
@@ -44,8 +42,8 @@ namespace Qubit.Mods.CustomMaps
         {
             currentMapId = overwriteId;
 
-            int category = Buttons.GetCategory("Custom Map Mods");
-            List<ButtonInfo> buttons = new List<ButtonInfo> { new ButtonInfo { buttonText = "Exit Custom Map Mods", method = () => Buttons.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
+            string category = "Custom Map Mods";
+            List<Module> buttons = new List<Module> { new Module { buttonText = "Exit Custom Map Mods", method = () => Qubit.Modules.Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
 
             if (overwriteId != null)
             {
@@ -55,22 +53,22 @@ namespace Qubit.Mods.CustomMaps
 
                 CustomMap map = GetMapByID(mapID);
                 if (map == null)
-                    buttons.Add(new ButtonInfo { buttonText = "This map is not supported yet.", label = true });
+                    buttons.Add(new Module { buttonText = "This map is not supported yet.", label = true });
                 else
                     buttons.AddRange(map.Buttons);
 
                 buttons.AddRange(new[]
                 {
-                    new ButtonInfo { buttonText = " ", label = true },
-                    new ButtonInfo { buttonText = "Edit Custom Script", method = EditUserScript, isTogglable = false, toolTip = "Opens your custom script for this map." },
-                    new ButtonInfo { buttonText = "Delete Custom Script", method = DeleteUserScript, isTogglable = false, toolTip = "Deletes your custom script for this map." },
-                    new ButtonInfo { buttonText = "Run Custom Script", enableMethod = StartUserScript, disableMethod = StopUserScript, toolTip = "Runs your custom script for this map." }
+                    new Module { buttonText = " ", label = true },
+                    new Module { buttonText = "Edit Custom Script", method = EditUserScript, isTogglable = false, toolTip = "Opens your custom script for this map." },
+                    new Module { buttonText = "Delete Custom Script", method = DeleteUserScript, isTogglable = false, toolTip = "Deletes your custom script for this map." },
+                    new Module { buttonText = "Run Custom Script", enableMethod = StartUserScript, disableMethod = StopUserScript, toolTip = "Runs your custom script for this map." }
                 });
             }
             else
-                buttons.Add(new ButtonInfo { buttonText = "You have not loaded a map.", label = true });
+                buttons.Add(new Module { buttonText = "You have not loaded a map.", label = true });
 
-            Buttons.buttons[category] = buttons.ToArray();
+            Qubit.Modules.Manager.modules[category] = buttons.ToArray();
         }
 
         public static void ModifyCustomScript(Dictionary<int, string> replacements)
@@ -81,7 +79,7 @@ namespace Qubit.Mods.CustomMaps
             foreach (var (lineIndex, value) in replacements)
             {
                 if (lineIndex < 0 || lineIndex >= lines.Length) continue;
-                LogManager.Log("Replacing " + lines[lineIndex] + " with " + value);
+                Logs.Log("Replacing " + lines[lineIndex] + " with " + value);
                 lines[lineIndex] = value;
             }
 
@@ -95,7 +93,7 @@ namespace Qubit.Mods.CustomMaps
 
         public static void EditUserScript()
         {
-            string DirectoryTarget = FileUtilities.GetGamePath() + $"/{PluginInfo.BaseDirectory}/CustomScripts/{CustomMapLoader.LoadedMapModId}.luau";
+            string DirectoryTarget = Files.GetGamePath() + $"/{PluginInfo.BaseDirectory}/CustomScripts/{CustomMapLoader.LoadedMapModId}.luau";
             if (!File.Exists(DirectoryTarget))
             {
                 string script = CustomGameMode.LuaScript;
@@ -112,14 +110,14 @@ namespace Qubit.Mods.CustomMaps
 
         public static void DeleteUserScript()
         {
-            string DirectoryTarget = FileUtilities.GetGamePath() + $"/{PluginInfo.BaseDirectory}/CustomScripts/{CustomMapLoader.LoadedMapModId}.luau";
+            string DirectoryTarget = Files.GetGamePath() + $"/{PluginInfo.BaseDirectory}/CustomScripts/{CustomMapLoader.LoadedMapModId}.luau";
             if (File.Exists(DirectoryTarget))
                 File.Delete(DirectoryTarget);
         }
 
         public static void StartUserScript()
         {
-            string DirectoryTarget = FileUtilities.GetGamePath() + $"/{PluginInfo.BaseDirectory}/CustomScripts/{CustomMapLoader.LoadedMapModId}.luau";
+            string DirectoryTarget = Files.GetGamePath() + $"/{PluginInfo.BaseDirectory}/CustomScripts/{CustomMapLoader.LoadedMapModId}.luau";
             if (File.Exists(DirectoryTarget))
                 CustomGameMode.LuaScript = File.ReadAllText(DirectoryTarget);
 

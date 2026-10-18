@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/Advantages.cs
+ * Qubit Menu  Modules/Categories/Advantages.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,24 +19,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using ExitGames.Client.Photon;
 using GorillaGameModes;
 using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
+using Qubit.Core;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Libraries.Interface;
+using Qubit.Modules.Classes;
 using Qubit.Patches.Menu;
+using Qubit.Utilities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.GameModeUtilities;
-using static Qubit.Utilities.RandomUtilities;
-using static Qubit.Utilities.RigUtilities;
+using static Qubit.Core.Security;
+using static Qubit.Extensions.Players;
+using static Qubit.Extensions.Random;
+using static Qubit.Frontend.Core;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Utilities.GameModes;
+using static Qubit.Utilities.GameObj;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Object = UnityEngine.Object;
+using Random = UnityEngine.Random;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Advantages
     {
@@ -46,20 +57,20 @@ namespace Qubit.Mods
         {
             static void TurnOff()
             {
-                Buttons.GetIndex("Tag Self").SetEnabled(false);
+                Manager.GetIndex("Tag Self").SetEnabled(false);
                 ReloadMenu();
             }
             if (PhotonNetwork.IsMasterClient)
             {
                 AddInfected(PhotonNetwork.LocalPlayer);
-                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> You have been tagged.");
+                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> You have been tagged.");
                 TurnOff();
             }
             else
             {
                 if (InfectedList().Contains(PhotonNetwork.LocalPlayer))
                 {
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> You have been tagged.");
+                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> You have been tagged.");
                     VRRig.LocalRig.enabled = true;
                     TurnOff();
 
@@ -68,7 +79,7 @@ namespace Qubit.Mods
                 }
                 else
                 {
-                    VRRig rig = VRRigExtensions.ActiveRigs
+                    VRRig rig = Players.ActiveRigs
                         .Where(r => !r.IsLocal() && r.IsTagged())
                         .OrderBy(r => r.Distance(VRRig.LocalRig)
                                     + r.LatestVelocity().magnitude)
@@ -99,7 +110,7 @@ namespace Qubit.Mods
                         VRRig.LocalRig.enabled = false;
                         if (rig != null) VRRig.LocalRig.transform.position = rig.rightHandTransform.position;
 
-                        if (!Buttons.GetIndex("Obnoxious Tag").enabled) return;
+                        if (!Manager.GetIndex("Obnoxious Tag").enabled) return;
                         Quaternion rotation = Quaternion.Euler(new Vector3(0, Random.Range(0, 360), 0));
                         VRRig.LocalRig.transform.rotation = rotation;
 
@@ -120,7 +131,7 @@ namespace Qubit.Mods
                 RemoveInfected(PhotonNetwork.LocalPlayer);
             else if (!NetworkSystem.Instance.IsMasterClient)
             {
-                Important.Reconnect();
+                Room.Reconnect();
                 NoTagOnJoin();
             }
 
@@ -162,179 +173,33 @@ namespace Qubit.Mods
             }
         }
 
-        public static void UntagAll()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                foreach (Player v in PhotonNetwork.PlayerList)
-                    RemoveInfected(v);
-            }
-        }
-
         public static float spamTagDelay;
-        public static void SpamTagSelf()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                if (!(Time.time > spamTagDelay)) return;
-                spamTagDelay = Time.time + 0.1f;
-                if (InfectedList().Contains(PhotonNetwork.LocalPlayer))
-                    RemoveInfected(PhotonNetwork.LocalPlayer);
-                else
-                    AddInfected(PhotonNetwork.LocalPlayer);
-            }
-        }
-
-        public static void SpamTagGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!NetworkSystem.Instance.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                    {
-                        if (Time.time > spamTagDelay)
-                        {
-                            spamTagDelay = Time.time + 0.1f;
-                            if (InfectedList().Contains(lockTarget.GetPlayer()))
-                                RemoveInfected(lockTarget.GetPlayer());
-                            else
-                                AddInfected(lockTarget.GetPlayer());
-                        }
-                    }
-                }
-
-                if (!GetGunInput(true)) return;
-                VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                if (!gunTarget || gunTarget.IsLocal()) return;
-                if (!PhotonNetwork.IsMasterClient) return;
-                gunLocked = true;
-                lockTarget = gunTarget;
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
-
-        public static void SpamTagAll()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                if (!(Time.time > spamTagDelay)) return;
-                spamTagDelay = Time.time + 0.1f;
-                foreach (Player v in PhotonNetwork.PlayerList)
-                {
-                    if (InfectedList().Contains(v))
-                        AddInfected(v);
-                    else
-                        RemoveInfected(v);
-                }
-            }
-        }
-
-        public static void TagLagGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        if (PhotonNetwork.IsMasterClient)
-                        {
-                            if (lockTarget != null)
-                                ReportTagPatch.blacklistedPlayers.Remove(lockTarget.GetPlayer());
-
-                            gunLocked = true;
-                            lockTarget = gunTarget;
-
-                            ReportTagPatch.blacklistedPlayers.Add(GetPlayerFromVRRig(gunTarget));
-
-                        }
-                        else
-                            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    ReportTagPatch.blacklistedPlayers.Remove(lockTarget.GetPlayer());
-                }
-            }
-        }
 
         public static void GiveTagLagGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
+                if (PhotonNetwork.IsMasterClient)
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
+                    if (lockTarget != null)
+                        ReportTagPatch.invinciblePlayers.Remove(lockTarget.GetPlayer());
+
+                    gunLocked = true;
+                    lockTarget = gunTarget;
+
+                    ReportTagPatch.invinciblePlayers.Add(GetPlayerFromVRRig(gunTarget));
+
+                }
+                else
+                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
                     {
-                        if (PhotonNetwork.IsMasterClient)
-                        {
-                            if (lockTarget != null)
-                                ReportTagPatch.invinciblePlayers.Remove(lockTarget.GetPlayer());
-
-                            gunLocked = true;
-                            lockTarget = gunTarget;
-
-                            ReportTagPatch.invinciblePlayers.Add(GetPlayerFromVRRig(gunTarget));
-
-                        }
-                        else
-                            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                        gunLocked = false;
+                        ReportTagPatch.invinciblePlayers.Remove(lockTarget.GetPlayer());
                     }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    ReportTagPatch.invinciblePlayers.Remove(lockTarget.GetPlayer());
-                }
-            }
-        }
-
-        public static void SetTagCooldown(float value)
-        {
-            if (!NetworkSystem.Instance.InRoom)
-            {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in a room.");
-                return;
-            }
-            if (!NetworkSystem.Instance.IsMasterClient)
-            {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                return;
-            }
-            GorillaTagManager tagman = (GorillaTagManager)GorillaGameManager.instance;
-            tagman.tagCoolDown = value;
+                } });
         }
 
         public static float tagAuraDistance = 1.666f;
@@ -352,13 +217,13 @@ namespace Qubit.Mods
         public static void TagAura()
         {
             Color color = Color.red;
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => VRRig.LocalRig.IsTagged() && !vrrig.IsTagged() && !GTPlayer.Instance.disableMovement && vrrig.Distance(VRRig.LocalRig) < tagAuraDistance))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => VRRig.LocalRig.IsTagged() && !vrrig.IsTagged() && !GTPlayer.Instance.disableMovement && vrrig.Distance(VRRig.LocalRig) < tagAuraDistance))
             {
                 color = Color.green;
                 ReportTag(vrrig);
             }
-            if (Buttons.GetIndex("Visualize Tag Aura").enabled)
-                Visuals.Visualize(PrimitiveType.Cylinder, VRRig.LocalRig.bodyTransform.position, Quaternion.identity, new Vector3(tagAuraDistance, 0.01f, tagAuraDistance), Buttons.GetIndex("Prettier Visualize").enabled ? color : backgroundColor.GetCurrentColor(), -20170121181, 0.1f);
+            if (Manager.GetIndex("Visualize Tag Aura").enabled)
+                Visuals.Visualize(PrimitiveType.Cylinder, VRRig.LocalRig.bodyTransform.position, Quaternion.identity, new Vector3(tagAuraDistance, 0.01f, tagAuraDistance), Manager.GetIndex("Prettier Visualize").enabled ? color : backgroundColor.GetCurrentColor(), -20170121181, 0.1f);
         }
 
         public static void GripTagAura()
@@ -369,40 +234,21 @@ namespace Qubit.Mods
 
         public static void TagAuraPlayer(VRRig giving)
         {
-            foreach (var vrrig in from vrrig in VRRigExtensions.ActiveRigs let distance = Vector3.Distance(vrrig.headMesh.transform.position, giving.transform.position) where giving.IsTagged() && !vrrig.IsTagged() && !GTPlayer.Instance.disableMovement && distance < tagAuraDistance && !VRRig.LocalRig.IsLocal() && VRRig.LocalRig.IsTagged() select vrrig)
+            foreach (var vrrig in from vrrig in Players.ActiveRigs let distance = Vector3.Distance(vrrig.headMesh.transform.position, giving.transform.position) where giving.IsTagged() && !vrrig.IsTagged() && !GTPlayer.Instance.disableMovement && distance < tagAuraDistance && !VRRig.LocalRig.IsLocal() && VRRig.LocalRig.IsTagged() select vrrig)
                 TagPlayer(GetPlayerFromVRRig(vrrig));
         }
 
         public static void TagAuraGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    TagAuraPlayer(lockTarget);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                TagAuraPlayer(lockTarget);
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void TagAuraAll()
         {
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
                 TagAuraPlayer(vrrig);
         }
 
@@ -414,7 +260,7 @@ namespace Qubit.Mods
             GorillaTagger.Instance.tagRadiusOverride = tagReachDistance;
             GorillaTagger.Instance.tagRadiusOverrideFrame = Time.frameCount + 16;
 
-            if (Buttons.GetIndex("Visualize Tag Reach").enabled)
+            if (Manager.GetIndex("Visualize Tag Reach").enabled)
             {
                 Visuals.Visualize(PrimitiveType.Sphere, GorillaTagger.Instance.leftHandTransform.position, Quaternion.identity, new Vector3(tagReachDistance, 1, tagReachDistance), backgroundColor.GetCurrentColor(), -149286, 0.1f);
                 Visuals.Visualize(PrimitiveType.Sphere, GorillaTagger.Instance.rightHandTransform.position, Quaternion.identity, new Vector3(tagReachDistance, 1, tagReachDistance), backgroundColor.GetCurrentColor(), -149285, 0.1f);
@@ -433,9 +279,8 @@ namespace Qubit.Mods
                 return;
             }
 
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -444,7 +289,7 @@ namespace Qubit.Mods
                     {
                         VRRig.LocalRig.enabled = false;
 
-                        if (!Buttons.GetIndex("Obnoxious Tag").enabled)
+                        if (!Manager.GetIndex("Obnoxious Tag").enabled)
                             VRRig.LocalRig.transform.position = lockTarget.transform.position - new Vector3(0f, 3f, 0f);
                         else
                         {
@@ -500,15 +345,14 @@ namespace Qubit.Mods
                         }
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         private static float reportTagDelay;
@@ -526,7 +370,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             static void TurnOff()
             {
-                Buttons.GetIndex("Tag Player").SetEnabled(false);
+                Manager.GetIndex("Tag Player").SetEnabled(false);
                 ReloadMenu();
             }
             if (PhotonNetwork.IsMasterClient)
@@ -537,7 +381,7 @@ namespace Qubit.Mods
 
             if (!VRRig.LocalRig.IsTagged())
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
                 TurnOff();
                 return;
             }
@@ -554,7 +398,7 @@ namespace Qubit.Mods
             {
                 VRRig.LocalRig.enabled = false;
 
-                if (!Buttons.GetIndex("Obnoxious Tag").enabled)
+                if (!Manager.GetIndex("Obnoxious Tag").enabled)
                     VRRig.LocalRig.transform.position = targetRig.transform.position - new Vector3(0f, 3f, 0f);
                 else
                 {
@@ -593,43 +437,15 @@ namespace Qubit.Mods
                 TurnOff();
         }
 
-        public static void UntagGun()
-        {
-
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && gunTarget.IsTagged())
-                    {
-                        if (PhotonNetwork.IsMasterClient)
-                            RemoveInfected(GetPlayerFromVRRig(gunTarget));
-                        else
-                            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    }
-                }
-            }
-        }
-
         public static void FlickTagGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
+                GTPlayer.Instance.GetControllerTransform(false).position = NewPointer.transform.position;
 
-                if (GetGunInput(true))
-                {
-                    GTPlayer.Instance.GetControllerTransform(false).position = NewPointer.transform.position;
-
-                    if (Vector3.Distance(GTPlayer.Instance.GetControllerTransform(false).position, GorillaTagger.Instance.bodyCollider.transform.position) > 4f)
-                        GTPlayer.Instance.GetControllerTransform(false).position = GorillaTagger.Instance.bodyCollider.transform.position + (GTPlayer.Instance.GetControllerTransform(false).position - GorillaTagger.Instance.bodyCollider.transform.position) * 4f;
-                }
-            }
+                if (Vector3.Distance(GTPlayer.Instance.GetControllerTransform(false).position, GorillaTagger.Instance.bodyCollider.transform.position) > 4f)
+                    GTPlayer.Instance.GetControllerTransform(false).position = GorillaTagger.Instance.bodyCollider.transform.position + (GTPlayer.Instance.GetControllerTransform(false).position - GorillaTagger.Instance.bodyCollider.transform.position) * 4f;
+            });
         }
 
         public static void TagAll()
@@ -638,7 +454,7 @@ namespace Qubit.Mods
 
             static void TurnOff()
             {
-                Buttons.GetIndex("Tag All").SetEnabled(false);
+                Manager.GetIndex("Tag All").SetEnabled(false);
                 ReloadMenu();
             }
 
@@ -654,33 +470,33 @@ namespace Qubit.Mods
                     AddInfected(v);
 
                 TurnOff();
-                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
+                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
             }
             else
             {
                 if (instantTag)
                 {
                     InstantTagAll();
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
+                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
                     TurnOff();
                     return;
                 }
 
                 if (!VRRig.LocalRig.IsTagged())
                 {
-                    NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
+                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
                     TurnOff();
                 }
                 else
                 {
-                    bool isInfectedPlayers = VRRigExtensions.ActiveRigs.Any(vrrig => !vrrig.IsTagged());
+                    bool isInfectedPlayers = Players.ActiveRigs.Any(vrrig => !vrrig.IsTagged());
                     if (isInfectedPlayers)
                     {
-                        foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.IsTagged()))
+                        foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.IsTagged()))
                         {
                             VRRig.LocalRig.enabled = false;
 
-                            if (!Buttons.GetIndex("Obnoxious Tag").enabled)
+                            if (!Manager.GetIndex("Obnoxious Tag").enabled)
                                 VRRig.LocalRig.transform.position = vrrig.transform.position - new Vector3(0f, 3f, 0f);
                             else
                             {
@@ -719,7 +535,7 @@ namespace Qubit.Mods
                     }
                     else
                     {
-                        NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
+                        Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
                         VRRig.LocalRig.enabled = true;
                         TurnOff();
                     }
@@ -746,9 +562,8 @@ namespace Qubit.Mods
         private static float tagGunDelay;
         public static void InstantTagGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (GetGunInput(true) && Time.time > tagGunDelay)
@@ -764,20 +579,20 @@ namespace Qubit.Mods
                     }
                     catch { }
                 }
-            }
+            });
         }
 
         public static void InstantTagAll()
         {
             if (!VRRig.LocalRig.IsTagged())
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must be tagged.");
                 return;
             }
 
             Vector3 archiveRigPosition = VRRig.LocalRig.transform.position;
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.IsTagged()))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.IsTagged()))
             {
                 VRRig.LocalRig.transform.position = vrrig.transform.position;
                 SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { PhotonNetwork.MasterClient.ActorNumber } });
@@ -792,14 +607,14 @@ namespace Qubit.Mods
 
         public static void HuntTagAll()
         {
-            GorillaHuntManager huntComputer = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager huntComputer = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = huntComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
             if (!GTPlayer.Instance.disableMovement)
             {
                 VRRig vrrig = GetVRRigFromPlayer(target);
                 VRRig.LocalRig.enabled = false;
 
-                if (!Buttons.GetIndex("Obnoxious Tag").enabled)
+                if (!Manager.GetIndex("Obnoxious Tag").enabled)
                     VRRig.LocalRig.transform.position = vrrig.transform.position - new Vector3(0f, 3f, 0f);
                 else
                 {
@@ -836,9 +651,9 @@ namespace Qubit.Mods
             }
             else
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
+                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Everyone is tagged!");
                 VRRig.LocalRig.enabled = true;
-                Buttons.GetIndex("Tag All").enabled = false;
+                Manager.GetIndex("Tag All").enabled = false;
                 ReloadMenu();
             }
         }
@@ -899,276 +714,202 @@ namespace Qubit.Mods
             };
         }
 
-        public static void PaintbrawlStartGame()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.StartBattle();
-            }
-        }
-
-        public static void PaintbrawlEndGame()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.BattleEnd();
-            }
-        }
-
-        public static void PaintbrawlRestartGame()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.BattleEnd();
-                brawlManager.StartBattle();
-            }
-        }
-
         public static float paintbrawlSpamDelay;
-        public static void PaintbrawlBalloonSpamSelf()
-        {
-            if (Time.time < paintbrawlSpamDelay)
-                return;
-
-            paintbrawlSpamDelay = Time.time + 0.1f;
-
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.playerLives[PhotonNetwork.LocalPlayer.ActorNumber] = Random.Range(0, 4);
-            }
-        }
-
-        public static void PaintbrawlBalloonSpamGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!NetworkSystem.Instance.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                    {
-                        if (Time.time > paintbrawlSpamDelay)
-                        {
-                            paintbrawlSpamDelay = Time.time + 0.1f;
-
-                            if (!NetworkSystem.Instance.IsMasterClient)
-                                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                            else
-                            {
-                                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                                brawlManager.playerLives[PhotonNetwork.LocalPlayer.ActorNumber] = Random.Range(0, 4);
-                            }
-                        }
-                    }
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        if (PhotonNetwork.IsMasterClient)
-                        {
-                            gunLocked = true;
-                            lockTarget = gunTarget;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
-
-        public static void PaintbrawlBalloonSpam()
-        {
-            if (Time.time < paintbrawlSpamDelay)
-                return;
-
-            paintbrawlSpamDelay = Time.time + 0.1f;
-
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                foreach (Player player in PhotonNetwork.PlayerList)
-                    brawlManager.playerLives[player.ActorNumber] = Random.Range(0, 4);
-            }
-        }
 
         public static void PaintbrawlKillGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        NetPlayer owner = GetPlayerFromVRRig(gunTarget);
-                        if (!NetworkSystem.Instance.IsMasterClient)
-                            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                        else
-                        {
-                            GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                            brawlManager.playerLives[owner.ActorNumber] = 0;
-                        }
-                    }
-                }
-            }
-        }
-
-        public static int paintbrawlKillIndex;
-        public static readonly Dictionary<int, float> paintbrawlKillDelays = new Dictionary<int, float>();
-        public static void PaintbrawlKillPlayer(NetPlayer Target)
-        {
-            if (!NetworkSystem.Instance.IsMasterClient)
-            {
-                if (paintbrawlKillDelays.TryGetValue(Target.ActorNumber, out float lastTime))
-                {
-                    if (Time.time > lastTime)
-                        return;
-                }
-
-                paintbrawlKillDelays[Target.ActorNumber] = Time.time + 3.1f;
-
-                VRRig rig = GetVRRigFromPlayer(Target);
-                GameMode.ActiveNetworkHandler.SendRPC("RPC_ReportSlingshotHit", false, NetPlayerToPlayer(Target), rig.transform.position, paintbrawlKillIndex);
-                RPCProtection();
-
-                paintbrawlKillIndex++;
-            }
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.playerLives[Target.ActorNumber] = 0;
-            }
+                NetPlayer owner = GetPlayerFromVRRig(gunTarget);
+                if (!NetworkSystem.Instance.IsMasterClient)
+                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                else
+                    GameModes.SetPaintbrawlHealth(owner, 0);
+            });
         }
 
         public static void PaintbrawlKillSelf()
         {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                PaintbrawlKillPlayer(NetworkSystem.Instance.LocalPlayer);
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.playerLives[PhotonNetwork.LocalPlayer.ActorNumber] = 0;
-            }
+            GameModes.KillPaintbrawlPlayer(NetworkSystem.Instance.LocalPlayer);
         }
 
         public static void PaintbrawlKillAll()
         {
             if (!NetworkSystem.Instance.IsMasterClient)
-                PaintbrawlKillPlayer(GetRandomPlayer(false));
+                GameModes.KillPaintbrawlPlayer(GetRandomPlayer(false));
             else
             {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
                 foreach (Player player in PhotonNetwork.PlayerList)
-                    brawlManager.playerLives[player.ActorNumber] = 0;
+                    GameModes.SetPaintbrawlHealth(player.ActorNumber, 0);
             }
         }
 
-        public static void PaintbrawlReviveGun()
+        public static void DebugSlingshotAimbot()
         {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+            if (VRRig.LocalRig.GetSlingshot() == null)
+                return;
 
-                if (GetGunInput(true))
+            if (VRRig.LocalRig.GetSlingshot().InLeftHand() ? leftTrigger > 0.5f : rightTrigger > 0.5f)
+                return;
+
+            List<NetPlayer> infected = InfectedList();
+            List<VRRig> rigs = Players.ActiveRigs
+                .Where(rig => !rig.isLocal)
+                .Where(rig => !infected.Contains(rig.GetPlayer()))
+                .ToList();
+
+            Transform head = GorillaTagger.Instance.headCollider.transform;
+            VRRig targetRig = rigs
+                .Where(rig => rig != null)
+                .Select(rig => new
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        NetPlayer owner = GetPlayerFromVRRig(gunTarget);
-                        if (!NetworkSystem.Instance.IsMasterClient)
-                            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                        else
-                        {
-                            GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                            brawlManager.playerLives[owner.ActorNumber] = 4;
-                        }
-                    }
+                    Rig = rig,
+                    ToRig = (rig.transform.position - head.position).normalized,
+                    Distance = Vector3.Distance(head.position, rig.transform.position)
+                })
+                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig)) // only angle matters
+                .ThenBy(x => x.Distance) // tiebreaker if multiple at same angle
+                .Select(x => x.Rig)
+                .FirstOrDefault();
+
+            if (targetRig == null)
+                return;
+
+            Visuals.Visualize(PrimitiveType.Sphere, targetRig.headMesh.transform.position, Quaternion.identity, new Vector3(0.1f, 0.1f, 0.1f), Color.green, -91752, 0.1f);
+        }
+        public static void SlingshotHelper()
+        {
+            Slingshot slingshot = VRRig.LocalRig.GetSlingshot() as Slingshot;
+            if (slingshot == null)
+                return;
+
+            if (slingshot.ForLeftHandSlingshot() ? rightGrab : leftGrab)
+                slingshot.itemState = slingshot.ForLeftHandSlingshot() ? TransferrableObject.ItemStates.State2 : TransferrableObject.ItemStates.State3;
+        }
+        public static void SlingshotTriggerBot()
+        {
+            if (Fun.paintbrawlTriggerLine != null)
+            {
+                if (!Fun.paintbrawlTriggerLine.gameObject.activeSelf)
+                {
+                    Fun.paintbrawlTriggerLine = null;
+                    Object.Destroy(Fun.paintbrawlTriggerLine.gameObject);
+                }
+                else
+                    Fun.paintbrawlTriggerLine.gameObject.SetActive(false);
+            }
+
+            Slingshot localSlingshot = VRRig.LocalRig.GetSlingshot() as Slingshot;
+            if (localSlingshot == null || !localSlingshot.InDrawingState())
+                return;
+
+            if (Fun.paintbrawlTriggerLine == null)
+            {
+                GameObject lineObject = new GameObject("LineObject");
+                Fun.paintbrawlTriggerLine = lineObject.AddComponent<LineRenderer>();
+                Fun.paintbrawlTriggerLine.positionCount = 25;
+            }
+
+            Fun.paintbrawlTriggerLine.gameObject.SetActive(true);
+
+            Fun.paintbrawlTriggerLine.startColor = Color.black;
+            Fun.paintbrawlTriggerLine.endColor = Color.black;
+
+            Vector3 localPosition = localSlingshot.drawingHand.transform.position + (localSlingshot.centerOrigin.position - localSlingshot.drawingHand.transform.position).normalized * ((EquipmentInteractor.instance.grabRadius - localSlingshot.dummyProjectileColliderRadius) * (localSlingshot.dummyProjectileInitialScale * Mathf.Abs(localSlingshot.transform.lossyScale.x)));
+            Vector3 localVelocity = localSlingshot.GetLaunchVelocity();
+
+            Visuals.DrawTrajectory(localPosition, localVelocity, Fun.paintbrawlTriggerLine, NoInvisLayerMask(), Vector3.down * 10.79f);
+
+            Fun.paintbrawlTriggerLine.enabled = false;
+
+            if (Fun.paintbrawlTriggerLine.startColor == Color.green && Time.time > Fun.triggerBotDelay)
+                Fun.triggerBotDelay = Time.time + 0.5f;
+
+            if (Time.time < Fun.triggerBotDelay)
+            {
+                if (localSlingshot.ForLeftHandSlingshot())
+                {
+                    ControllerInputPoller.instance.rightControllerGripFloat = 0f;
+                    ControllerInputPoller.instance.rightGrab = false;
+                }
+                else
+                {
+                    ControllerInputPoller.instance.leftControllerGripFloat = 0f;
+                    ControllerInputPoller.instance.leftGrab = false;
                 }
             }
         }
-
-        public static void PaintbrawlReviveSelf()
+        public static void TagLagDetector()
         {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            if (NetworkSystem.Instance.InRoom && !NetworkSystem.Instance.IsMasterClient)
+            {
+                VRRig masterRig = PhotonNetwork.MasterClient.VRRig();
+                bool thereIsTagLag = masterRig.GetTruePing() > 1000;
+
+                switch (thereIsTagLag)
+                {
+                    case true when !Important.lastTagLag:
+                        Notifications.SendNotification("<color=grey>[</color><color=red>TAG LAG</color><color=grey>]</color> There is currently tag lag.");
+                        break;
+                    case false when Important.lastTagLag:
+                        Notifications.SendNotification("<color=grey>[</color><color=green>TAG LAG</color><color=grey>]</color> There is no longer tag lag.");
+                        break;
+                }
+
+                Important.lastTagLag = thereIsTagLag;
+            }
             else
             {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.playerLives[PhotonNetwork.LocalPlayer.ActorNumber] = 4;
+                if (Important.lastTagLag)
+                    Notifications.SendNotification("<color=grey>[</color><color=green>TAG LAG</color><color=grey>]</color> There is no longer tag lag.");
+                Important.lastTagLag = false;
             }
         }
 
-        public static void PaintbrawlReviveAll()
+        public static void FakeLag()
         {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                foreach (Player player in PhotonNetwork.PlayerList)
-                    brawlManager.playerLives[player.ActorNumber] = 4;
-            }
+            PlayerSerializePatch.delay = Manager.GetIndex("Fake Lag Others").enabled ? Movement.fakeLagDelay : (float?)null;
+
+            SerializePatch.OverrideSerialization = !Manager.GetIndex("Disable Fake Lag Self").enabled
+                ? (() =>
+                {
+                    MassSerialize(true, delay: Movement.fakeLagDelay);
+                    return false;
+                })
+                : (Func<bool>)null;
         }
 
-        // Credits to Malachi for the idea
-        public static void PaintbrawlNoDelay()
+        public static void LagRange()
         {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
+            bool isTagged = VRRig.LocalRig.IsTagged();
+
+            VRRig closestRig = Players.ActiveRigs
+                .Where(rig => rig != null && !rig.isLocal &&
+                                  (isTagged ? !rig.IsTagged() : rig.IsTagged()))
+                .OrderBy(rig => Vector3.Distance(rig.transform.position, GorillaTagger.Instance.bodyCollider.transform.position))
+                .FirstOrDefault();
+
+            float rigDistance = closestRig == null ? float.MaxValue :
+                          Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, closestRig.transform.position);
+
+            if (rigDistance < 15f)
             {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.hitCooldown = 0f;
-                brawlManager.tagCoolDown = 0f;
-                brawlManager.stunGracePeriod = 0f;
+                float lagPower = Mathf.Clamp(rigDistance, 1f, 15f) / 15f;
+                PhotonNetwork.SerializationRate = 4 + (int)Math.Ceiling(lagPower * 6f);
             }
         }
-
-        public static void DisablePaintbrawlNoDelay()
+        public static void Blink()
         {
-            GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-            brawlManager.hitCooldown = 3f;
-            brawlManager.tagCoolDown = 5f;
-            brawlManager.stunGracePeriod = 2f;
+            SerializePatch.OverrideSerialization = () => false;
+            PlayerSerializePatch.stopSerialization = true;
+            Movement.isBlinking = true;
         }
 
-        public static void PaintbrawlGodMode()
+        public static void DisableBlink()
         {
-            if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-            else
-            {
-                GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
-                brawlManager.playerLives[PhotonNetwork.LocalPlayer.ActorNumber] = 4;
-                GTPlayer.Instance.disableMovement = false;
-            }
+            SerializePatch.OverrideSerialization = null;
+            PlayerSerializePatch.stopSerialization = false;
+            Movement.isBlinking = false;
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/Fun.cs
+ * Qubit Menu  Modules/Categories/Fun.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -26,7 +26,6 @@ using GorillaLocomotion;
 using GorillaLocomotion.Climbing;
 using GorillaLocomotion.Swimming;
 using GorillaNetworking;
-using GorillaTag;
 using GorillaTag.Cosmetics;
 using GorillaTag.Rendering;
 using GorillaTagScripts;
@@ -40,11 +39,13 @@ using Photon.Voice.Unity.UtilityScripts;
 using PlayFab;
 using PlayFab.ClientModels;
 using POpusCodec.Enums;
-using Qubit.Classes.Menu;
-using Qubit.Classes.Mods;
+using Qubit.Core;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Libraries.Audio;
+using Qubit.Libraries.Controls;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
+using Qubit.Modules.Classes;
 using Qubit.Patches.Menu;
 using Qubit.Utilities;
 using System;
@@ -54,19 +55,30 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Unity.XR.CoreUtils;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Windows.Speech;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
-using static Qubit.Utilities.GameModeUtilities;
-using static Qubit.Utilities.RandomUtilities;
-using static Qubit.Utilities.RigUtilities;
+using static Qubit.Extensions.Players;
+using static Qubit.Extensions.Random;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Audio.Transcription;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.LocalPlayer;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Modules.Categories.Projectiles;
+using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameModes;
+using static Qubit.Utilities.GameObj;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
+using Security = Qubit.Core.Security;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Fun
     {
@@ -107,14 +119,14 @@ namespace Qubit.Mods
         public static void ApplySoundboardVolume(int index)
         {
             soundboardVolumeIndex = index * 0.05f;
-            VoiceManager.Get().ClipVolume = soundboardVolumeIndex;
+            Voices.Get().ClipVolume = soundboardVolumeIndex;
         }
 
         public static float soundboardSpeedIndex = 1;
         public static void ApplySoundboardSpeed(int index)
         {
             soundboardSpeedIndex = index * 0.05f;
-            VoiceManager.Get().ClipSpeed = soundboardSpeedIndex;
+            Voices.Get().ClipSpeed = soundboardSpeedIndex;
         }
 
         public static int headSpinIndex;
@@ -126,44 +138,7 @@ namespace Qubit.Mods
             headSpinSpeed = HeadSpinSpeedAmounts[index];
         }
 
-        private static float headSpinSpeed = 10f;
-        public static void SpinHead(string axis)
-        {
-            if (VRRig.LocalRig.enabled)
-            {
-                switch (axis.ToLower())
-                {
-                    case "x":
-                        VRRig.LocalRig.head.trackingRotationOffset.x += headSpinSpeed;
-                        break;
-                    case "y":
-                        VRRig.LocalRig.head.trackingRotationOffset.y += headSpinSpeed;
-                        break;
-                    case "z":
-                        VRRig.LocalRig.head.trackingRotationOffset.z += headSpinSpeed;
-                        break;
-                    default:
-                        return;
-                }
-            }
-            else
-            {
-                switch (axis.ToLower())
-                {
-                    case "x":
-                        VRRig.LocalRig.head.rigTarget.transform.rotation = Quaternion.Euler(VRRig.LocalRig.head.rigTarget.transform.rotation.eulerAngles + new Vector3(headSpinSpeed, 0f, 0f));
-                        break;
-                    case "y":
-                        VRRig.LocalRig.head.rigTarget.transform.rotation = Quaternion.Euler(VRRig.LocalRig.head.rigTarget.transform.rotation.eulerAngles + new Vector3(0f, headSpinSpeed, 0f));
-                        break;
-                    case "z":
-                        VRRig.LocalRig.head.rigTarget.transform.rotation = Quaternion.Euler(VRRig.LocalRig.head.rigTarget.transform.rotation.eulerAngles + new Vector3(0f, 0f, headSpinSpeed));
-                        break;
-                    default:
-                        return;
-                }
-            }
-        }
+        public static float headSpinSpeed = 10f;
 
         public static void SpazHead(string axis)
         {
@@ -236,30 +211,7 @@ namespace Qubit.Mods
                 FixHandTaps();
         }
 
-        private static float instantPartyDelay;
-        public static void InstantParty()
-        {
-            if (Time.time > instantPartyDelay)
-            {
-                instantPartyDelay = Time.time + 0.1f;
-
-                FriendshipGroupDetection.Instance.suppressPartyCreationUntilTimestamp = 0f;
-                FriendshipGroupDetection.Instance.groupCreateAfterTimestamp = 0f;
-
-                List<int> provisionalMembers = FriendshipGroupDetection.Instance.playersInProvisionalGroup;
-
-                if (provisionalMembers.Count > 0)
-                {
-                    Color targetColor = GTColor.RandomHSV(FriendshipGroupDetection.Instance.braceletRandomColorHSVRanges);
-                    FriendshipGroupDetection.Instance.myBraceletColor = targetColor;
-
-                    List<int> members = new List<int> { PhotonNetwork.LocalPlayer.ActorNumber };
-                    members.AddRange(from player in PhotonNetwork.PlayerListOthers where FriendshipGroupDetection.Instance.IsInMyGroup(player.UserId) || provisionalMembers.Contains(player.ActorNumber) select player.ActorNumber);
-                    FriendshipGroupDetection.Instance.SendPartyFormedRPC(FriendshipGroupDetection.PackColor(targetColor), members.ToArray(), false);
-                    RPCProtection();
-                }
-            }
-        }
+        public static float instantPartyDelay;
 
         public static Coroutine waterSplashCoroutine;
         public static IEnumerator EnableRig()
@@ -322,7 +274,7 @@ namespace Qubit.Mods
                             }
                     }
 
-                    RPCProtection();
+                    Security.RPCProtection();
                 }
                 catch { }
             }
@@ -341,40 +293,20 @@ namespace Qubit.Mods
 
         public static void GiveWaterSplashHandsGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
+                if (lockTarget.rightMiddle.calcT > 0.5f || lockTarget.leftMiddle.calcT > 0.5f)
                 {
-                    if (lockTarget.rightMiddle.calcT > 0.5f || lockTarget.leftMiddle.calcT > 0.5f)
+                    if (Time.time > splashDel)
                     {
-                        if (Time.time > splashDel)
-                        {
-                            Vector3 splashPosition = lockTarget.rightMiddle.calcT > 0.5f ? lockTarget.rightHandTransform.position : lockTarget.leftHandTransform.position;
-                            Quaternion splashRotation = lockTarget.rightMiddle.calcT > 0.5f ? lockTarget.rightHandTransform.rotation : lockTarget.leftHandTransform.rotation;
+                        Vector3 splashPosition = lockTarget.rightMiddle.calcT > 0.5f ? lockTarget.rightHandTransform.position : lockTarget.leftHandTransform.position;
+                        Quaternion splashRotation = lockTarget.rightMiddle.calcT > 0.5f ? lockTarget.rightHandTransform.rotation : lockTarget.leftHandTransform.rotation;
 
-                            BetaWaterSplash(splashPosition, splashRotation);
-                            splashDel = Time.time + 0.1f;
-                        }
+                        BetaWaterSplash(splashPosition, splashRotation);
+                        splashDel = Time.time + 0.1f;
                     }
                 }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static bool CanCallWaterSplashNow()
@@ -408,19 +340,15 @@ namespace Qubit.Mods
 
         public static void WaterSplashGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                    BetaWaterSplash(NewPointer.transform.position, RandomQuaternion());
-            }
+                BetaWaterSplash(NewPointer.transform.position, RandomQuaternion());
+            });
         }
 
         public static void WaterSplashAll()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (CanCallWaterSplashNow())
                 {
@@ -433,7 +361,7 @@ namespace Qubit.Mods
 
         public static void WaterSplashOnTouch()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                     BetaWaterSplash(rig.head.rigTarget.position, RandomQuaternion());
         }
@@ -458,7 +386,7 @@ namespace Qubit.Mods
         {
             bool isBoopLeft = false;
             bool isBoopRight = false;
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (!vrrig.isLocal)
                 {
@@ -479,7 +407,7 @@ namespace Qubit.Mods
                 if (NetworkSystem.Instance.InRoom)
                 {
                     GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, sound, true, 999999f);
-                    RPCProtection();
+                    Security.RPCProtection();
                 }
                 else
                     VRRig.LocalRig.PlayHandTapLocal(sound, true, 999999f);
@@ -489,7 +417,7 @@ namespace Qubit.Mods
                 if (NetworkSystem.Instance.InRoom)
                 {
                     GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, sound, false, 999999f);
-                    RPCProtection();
+                    Security.RPCProtection();
                 }
                 else
                     VRRig.LocalRig.PlayHandTapLocal(sound, false, 999999f);
@@ -551,7 +479,7 @@ namespace Qubit.Mods
                                 if (dist < minimalDist)
                                 {
                                     minimalDist = dist;
-                                    closestKey = ToTitleCase(child.name);
+                                    closestKey = Strings.ToTitleCase(child.name);
                                 }
                             }
 
@@ -596,7 +524,7 @@ namespace Qubit.Mods
             {
                 foreach (var keylog in keyLogs.Where(keylog => Time.time > (float)keylog[2]).ToList())
                 {
-                    NotificationManager.SendNotification("<color=grey>[</color><color=purple>KEYLOGS</color><color=grey>]</color> " + (string)keylog[1], 5000);
+                    Notifications.SendNotification("<color=grey>[</color><color=purple>KEYLOGS</color><color=grey>]</color> " + (string)keylog[1], 5000);
                     keyLogs.Remove(keylog);
                 }
             }
@@ -721,7 +649,7 @@ namespace Qubit.Mods
         }
 
         public static void Jumpscare() =>
-            CoroutineManager.instance.StartCoroutine(JumpscareCoroutine());
+            Coroutines.instance.StartCoroutine(JumpscareCoroutine());
 
         public static IEnumerator JumpscareCoroutine()
         {
@@ -779,20 +707,7 @@ namespace Qubit.Mods
                     FreeCamObject.transform.rotation = lockTarget.headMesh.transform.rotation;
                 }
                 else
-                {
-                    var GunData = RenderGun();
-                    RaycastHit Ray = GunData.Ray;
-
-                    if (GetGunInput(true))
-                    {
-                        VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                        if (gunTarget && !gunTarget.IsLocal())
-                        {
-                            gunLocked = true;
-                            lockTarget = gunTarget;
-                        }
-                    }
-                }
+                    GunLibrary.Target(lockTarget => { }, new GunLibrary.GunSettings { locks = true });
             }
             else
             {
@@ -834,12 +749,11 @@ namespace Qubit.Mods
 
         public static void PrioritizeVoiceGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
-                foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+                foreach (VRRig rig in Players.ActiveRigs)
                     rig.voiceAudio.volume = rig != lockTarget ? 0.1f : 2f;
 
                 if (GetGunInput(true))
@@ -851,19 +765,16 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-                gunLocked = false;
+            }, new GunLibrary.GunSettings { onIdle = () => { gunLocked = false; } });
         }
 
         public static void DeprioritizeVoiceGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
-                foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+                foreach (VRRig rig in Players.ActiveRigs)
                     rig.voiceAudio.volume = rig != lockTarget ? 1f : 0.1f;
 
                 if (GetGunInput(true))
@@ -875,40 +786,28 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-                gunLocked = false;
+            }, new GunLibrary.GunSettings { onIdle = () => { gunLocked = false; } });
         }
 
         public static void ResetVoiceAll()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
                 rig.voiceAudio.volume = 1f;
         }
 
         private static float muteDelay;
         public static void MuteGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > muteDelay)
+                foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer == GetPlayerFromVRRig(gunTarget)))
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer == GetPlayerFromVRRig(gunTarget)))
-                        {
-                            muteDelay = Time.time + 0.5f;
+                    muteDelay = Time.time + 0.5f;
 
-                            line.muteButton.isOn = !line.muteButton.isOn;
-                            line.PressButton(line.muteButton.isOn, GorillaPlayerLineButton.ButtonType.Mute);
-                        }
-                    }
+                    line.muteButton.isOn = !line.muteButton.isOn;
+                    line.PressButton(line.muteButton.isOn, GorillaPlayerLineButton.ButtonType.Mute);
                 }
-            }
+            }, new GunLibrary.GunSettings { when = () => Time.time > muteDelay });
         }
 
         public static void MuteAll()
@@ -931,23 +830,13 @@ namespace Qubit.Mods
 
         public static void ReportGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                NetPlayer player = GetPlayerFromVRRig(gunTarget);
 
-                if (GetGunInput(true) && Time.time > muteDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        NetPlayer player = GetPlayerFromVRRig(gunTarget);
-
-                        GorillaPlayerScoreboardLine.ReportPlayer(player.UserId, GorillaPlayerLineButton.ButtonType.Cheating, player.NickName);
-                        muteDelay = Time.time + 0.2f;
-                    }
-                }
-            }
+                GorillaPlayerScoreboardLine.ReportPlayer(player.UserId, GorillaPlayerLineButton.ButtonType.Cheating, player.NickName);
+                muteDelay = Time.time + 0.2f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > muteDelay });
         }
 
         public static void ReportAll()
@@ -959,9 +848,8 @@ namespace Qubit.Mods
         private static float pressButtonDelay;
         public static void TriggerAntiReportGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -983,7 +871,7 @@ namespace Qubit.Mods
                     {
                         pressButtonDelay = Time.time + 0.1f;
                         GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, 67, false, 999999f);
-                        RPCProtection();
+                        Security.RPCProtection();
                     }
                 }
 
@@ -996,15 +884,14 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    VRRig.LocalRig.enabled = true;
-                    gunLocked = false;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        VRRig.LocalRig.enabled = true;
+                        gunLocked = false;
+                    }
+                } });
         }
 
         public static void TriggerAntiReportAll()
@@ -1027,7 +914,7 @@ namespace Qubit.Mods
             {
                 pressButtonDelay = Time.time + 0.1f;
                 GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, 67, false, 999999f);
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -1070,7 +957,7 @@ namespace Qubit.Mods
                     VRRig.LocalRig.leftHand.rigTarget.transform.position = positionArchiveLeft;
                     VRRig.LocalRig.rightHand.rigTarget.transform.position = positionArchiveRight;
 
-                    RPCProtection();
+                    Security.RPCProtection();
 
                     return false;
                 }
@@ -1112,9 +999,9 @@ namespace Qubit.Mods
         {
             Prompt("Would you like to choose from a mod list or type the mod property?", () =>
             {
-                List<ButtonInfo> modList = new List<ButtonInfo> { new ButtonInfo { buttonText = "Exit Mod List", method = () => Buttons.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
+                List<Module> modList = new List<Module> { new Module { buttonText = "Exit Mod List", method = () => Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
                 modList.AddRange(Visuals.modDictionary.Select((t, i) => Visuals.modDictionary.ElementAt(i))
-                .Select((mod, i) => new ButtonInfo
+                .Select((mod, i) => new Module
                 {
                     buttonText = $"Mod{i}",
                     overlapText = mod.Value,
@@ -1124,8 +1011,8 @@ namespace Qubit.Mods
                 }));
 
 
-                Buttons.buttons[Buttons.GetCategory("Mod List")] = modList.ToArray();
-                Buttons.CurrentCategoryName = "Mod List";
+                Manager.modules["Mod List"] = modList.ToArray();
+                Manager.CurrentCategoryName = "Mod List";
             }, () =>
             {
                 PromptSingleText("Please enter what you would like to spoof your mods to (seperated by commas).", () =>
@@ -1182,7 +1069,7 @@ namespace Qubit.Mods
                     foreach (Tappable TappableObject in GetAllType<T>())
                         TappableObject.OnTap(1f);
 
-                    RPCProtection();
+                    Security.RPCProtection();
                     tapDelay = Time.time + 0.1f;
                 }
             }
@@ -1190,9 +1077,8 @@ namespace Qubit.Mods
 
         public static void TriggerLeafPileGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 GameObject NewPointer = GunData.NewPointer;
 
                 if (GetGunInput(true))
@@ -1206,7 +1092,7 @@ namespace Qubit.Mods
                 }
                 else
                     VRRig.LocalRig.enabled = true;
-            }
+            });
         }
 
         private static float buttonDelay;
@@ -1219,7 +1105,7 @@ namespace Qubit.Mods
                     foreach (GhostLabButton button in GetAllType<GhostLabButton>())
                     {
                         button.ButtonActivation();
-                        RPCProtection();
+                        Security.RPCProtection();
                     }
                     buttonDelay = Time.time + 0.1f;
                 }
@@ -1237,7 +1123,7 @@ namespace Qubit.Mods
                     hitDelay = Time.time + 0.1f;
 
                     mole.OnTap(1f);
-                    RPCProtection();
+                    Security.RPCProtection();
                 }
             }
         }
@@ -1251,7 +1137,7 @@ namespace Qubit.Mods
                 foreach (WhackAMole moleMachine in GetAllType<WhackAMole>())
                 {
                     moleMachine.GetView.RPC("WhackAMoleButtonPressed", RpcTarget.All);
-                    RPCProtection();
+                    Security.RPCProtection();
                 }
             }
         }
@@ -1266,7 +1152,7 @@ namespace Qubit.Mods
                     if (moleMachine.currentState == WhackAMole.GameState.Off || moleMachine.currentState == WhackAMole.GameState.TimesUp)
                     {
                         moleMachine.GetView.RPC("WhackAMoleButtonPressed", RpcTarget.All);
-                        RPCProtection();
+                        Security.RPCProtection();
                     }
                 }
             }
@@ -1290,7 +1176,7 @@ namespace Qubit.Mods
             }
 
             if (leftGrab || rightGrab)
-                RPCProtection();
+                Security.RPCProtection();
         }
 
         private static bool previousBraceletSpamState;
@@ -1310,7 +1196,7 @@ namespace Qubit.Mods
         {
             SetBraceletState(false, true);
             SetBraceletState(false, false);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static float isDirtyDelay;
@@ -1320,7 +1206,7 @@ namespace Qubit.Mods
             if (!VRRig.LocalRig.nonCosmeticRightHandItem.IsEnabled)
             {
                 SetBraceletState(true, false);
-                RPCProtection();
+                Security.RPCProtection();
 
                 VRRig.LocalRig.nonCosmeticRightHandItem.EnableItem(true);
             }
@@ -1346,7 +1232,7 @@ namespace Qubit.Mods
             if (!VRRig.LocalRig.nonCosmeticRightHandItem.IsEnabled)
             {
                 SetBraceletState(false, false);
-                RPCProtection();
+                Security.RPCProtection();
 
                 VRRig.LocalRig.nonCosmeticRightHandItem.EnableItem(false);
             }
@@ -1362,13 +1248,13 @@ namespace Qubit.Mods
         public static void GiveBuilderWatch()
         {
             VRRig.LocalRig.EnableBuilderResizeWatch(true);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static void RemoveBuilderWatch()
         {
             VRRig.LocalRig.EnableBuilderResizeWatch(false);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         private static float lastTimeDingied;
@@ -1413,7 +1299,7 @@ namespace Qubit.Mods
                 returnOrTeleport = !returnOrTeleport;
 
                 GetObject("City_Pretty/CosmeticsScoreboardAnchor/Arcade_prefab/MainRoom/VRArea/ModIOArcadeTeleporter/NetObject_VRTeleporter").GetComponent<PhotonView>().RPC("ActivateTeleportVFX", RpcTarget.All, returnOrTeleport, (short)Random.Range(0, 7));
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -1426,7 +1312,7 @@ namespace Qubit.Mods
                 returnOrTeleport = !returnOrTeleport;
 
                 GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/StumpVRHeadset/VirtualStump_StumpTeleporter/NetObject_VRTeleporter").GetComponent<PhotonView>().RPC("ActivateTeleportVFX", RpcTarget.All, returnOrTeleport, (short)0);
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -1438,7 +1324,7 @@ namespace Qubit.Mods
                 spamDelay = Time.time + 0.1f;
 
                 GetObject("Environment Objects/LocalObjects_Prefab/CityToBasement/DungeonEntrance/DungeonDoor_Prefab").GetComponent<PhotonView>().RPC("ChangeDoorState", RpcTarget.AllViaServer, open ? GTDoor.DoorState.Opening : GTDoor.DoorState.Closing);
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -1450,7 +1336,7 @@ namespace Qubit.Mods
                 spamDelay = Time.time + 0.1f;
 
                 GRElevatorManager.ElevatorButtonPressed(open ? GRElevator.ButtonType.Open : GRElevator.ButtonType.Close, GRElevatorManager._instance.currentLocation);
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -1466,7 +1352,7 @@ namespace Qubit.Mods
 
                 view.RPC("ChangeDoorState", RpcTarget.AllViaServer, openOrClose ? GTDoor.DoorState.Opening : GTDoor.DoorState.Closing);
                 view.RPC("ChangeDoorState", RpcTarget.AllViaServer, GTDoor.DoorState.HeldOpen);
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -1478,7 +1364,7 @@ namespace Qubit.Mods
                 openOrClose = !openOrClose;
 
                 GRElevatorManager.ElevatorButtonPressed(openOrClose ? GRElevator.ButtonType.Open : GRElevator.ButtonType.Close, GRElevatorManager._instance.currentLocation);
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -1515,8 +1401,7 @@ namespace Qubit.Mods
         {
             if (NetworkSystem.Instance.InRoom && GorillaGameManager.instance.GameType() == GameModeType.PropHunt)
             {
-                GorillaPropHuntGameManager hauntManager = (GorillaPropHuntGameManager)GorillaGameManager.instance;
-                hauntManager.m_ph_hand_follow_distance = distance;
+                GameModes.SetPropHuntHandDistance(distance);
             }
         }
 
@@ -1530,82 +1415,6 @@ namespace Qubit.Mods
             }
         }
 
-        public static void SetCurrencySelf(int currency = 0)
-        {
-            if (!NetworkSystem.Instance.IsMasterClient) { return; }
-            GRPlayer.Get(PhotonNetwork.LocalPlayer.ActorNumber).shiftCreditCache = currency;
-        }
-
-        public static void SetCurrencyGun(int currency = 0)
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        if (PhotonNetwork.IsMasterClient)
-                            GRPlayer.Get(GetPlayerFromVRRig(gunTarget).ActorNumber).shiftCreditCache = currency;
-                        else
-                            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    }
-                }
-            }
-        }
-
-        public static void SetCurrencyAll(int currency = 0)
-        {
-            if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-
-            foreach (Player target in PhotonNetwork.PlayerList)
-            {
-                GRPlayer plr = GRPlayer.Get(target.ActorNumber);
-                plr.shiftCreditCache = currency;
-            }
-        }
-
-        public static void AddCurrencySelf(int currency = 0)
-        {
-            if (!NetworkSystem.Instance.IsMasterClient) { return; }
-            GRPlayer.Get(PhotonNetwork.LocalPlayer.ActorNumber).shiftCreditCache += currency;
-        }
-
-        public static void AddCurrencyGun(int currency = 0)
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        if (PhotonNetwork.IsMasterClient)
-                            GRPlayer.Get(GetPlayerFromVRRig(gunTarget).ActorNumber).shiftCreditCache += currency;
-                        else
-                            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    }
-                }
-            }
-        }
-
-        public static void AddCurrencyAll(int currency = 0)
-        {
-            if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-
-            foreach (Player target in PhotonNetwork.PlayerList)
-            {
-                GRPlayer plr = GRPlayer.Get(target.ActorNumber);
-                plr.shiftCreditCache += currency;
-            }
-        }
-
         public static void RemoveCurrencySelf()
         {
             if (!NetworkSystem.Instance.IsMasterClient) { return; }
@@ -1614,100 +1423,24 @@ namespace Qubit.Mods
 
         public static void RemoveCurrencyGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        if (PhotonNetwork.IsMasterClient)
-                            GRPlayer.Get(GetPlayerFromVRRig(gunTarget).ActorNumber).shiftCreditCache = 0;
-                        else
-                            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    }
-                }
-            }
+                if (PhotonNetwork.IsMasterClient)
+                    GRPlayer.Get(GetPlayerFromVRRig(gunTarget).ActorNumber).shiftCreditCache = 0;
+                else
+                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            });
         }
 
         public static void RemoveCurrencyAll()
         {
-            if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!NetworkSystem.Instance.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
 
             foreach (Player target in PhotonNetwork.PlayerList)
             {
                 GRPlayer plr = GRPlayer.Get(target.ActorNumber);
                 plr.shiftCreditCache = 0;
             }
-        }
-
-        public static void Invincibility()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-
-            GRPlayer plr = GRPlayer.Get(PhotonNetwork.LocalPlayer.ActorNumber);
-
-            if (plr.State == GRPlayer.GRPlayerState.Ghost)
-                ManagerRegistry.GhostReactor.GhostReactorManager.RequestPlayerStateChange(plr, GRPlayer.GRPlayerState.Alive);
-
-            plr.hp = plr.maxHp;
-        }
-
-        public static void StartShift()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-            ManagerRegistry.GhostReactor.GhostReactorManager.RequestShiftStartAuthority(GhostReactor.instance.shiftManager.ShiftState == GhostReactorShiftManager.State.WaitingForFirstShiftStart);
-            RPCProtection();
-        }
-
-        public static void EndShift()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-            ManagerRegistry.GhostReactor.GhostReactorManager.RequestShiftEnd();
-            RPCProtection();
-        }
-
-        public static void SetQuota()
-        {
-            if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-            GhostReactor.instance.shiftManager.shiftStats.SetShiftStat(GRShiftStatType.CoresCollected, GhostReactor.instance.shiftManager.coresRequiredToDelveDeeper);
-            RPCProtection();
-        }
-
-        public static void GhostReactorFreezeGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    Overpowered.CreateItem(lockTarget.GetPlayer(), Overpowered.ObjectByName["GhostReactorEnergyCostGate"], lockTarget.headMesh.transform.position + RandomVector3(), RandomQuaternion(), Vector3.zero, Vector3.zero);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
-
-        public static void GhostReactorFreezeAll()
-        {
-            VRRig randomPlayer = GetRandomVRRig();
-            Overpowered.CreateItem(randomPlayer.GetPlayer(), Overpowered.ObjectByName["GhostReactorEnergyCostGate"], randomPlayer.headMesh.transform.position + RandomVector3(), RandomQuaternion(), Vector3.zero, Vector3.zero);
         }
 
         public static void SetPlayerState(Player Target, GRPlayer.GRPlayerState State)
@@ -1722,14 +1455,14 @@ namespace Qubit.Mods
                     )
             {
                 ManagerRegistry.GhostReactor.GhostReactorManager.RequestPlayerStateChange(GRPlayer, State);
-                RPCProtection();
+                Security.RPCProtection();
                 return;
             }
 
-            if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
+            if (!NetworkSystem.Instance.IsMasterClient) { Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
 
             if (State == GRPlayer.GRPlayerState.Ghost)
-                CoroutineManager.instance.StartCoroutine(KillTarget(Target));
+                Coroutines.instance.StartCoroutine(KillTarget(Target));
         }
 
         public static void SetPlayerState(NetPlayer Target, GRPlayer.GRPlayerState State) =>
@@ -1743,15 +1476,15 @@ namespace Qubit.Mods
             GRPlayer GRPlayer = GRPlayer.Get(Target.ActorNumber);
             VRRig Rig = GetVRRigFromPlayer(Target);
 
-            int netId = ManagerRegistry.GhostReactor.GameEntityManager.CreateTypeNetId(Overpowered.ObjectByName["GhostReactorEnemyChaserArmored"]);
+            int netId = ManagerRegistry.GhostReactor.GameEntityManager.CreateTypeNetId(Fun.ObjectByName["GhostReactorEnemyChaserArmored"]);
 
-            ManagerRegistry.GhostReactor.GameEntityManager.photonView.RPC("CreateItemRPC", Target, new[] { netId }, new[] { (int)ManagerRegistry.GhostReactor.GameEntityManager.zone }, new[] { Overpowered.ObjectByName["GhostReactorEnemyChaserArmored"] }, new[] { BitPackUtils.PackWorldPosForNetwork(Rig.transform.position) }, new[] { BitPackUtils.PackQuaternionForNetwork(Rig.transform.rotation) }, new[] { 0L }, new[] { 0 });
+            ManagerRegistry.GhostReactor.GameEntityManager.photonView.RPC("CreateItemRPC", Target, new[] { netId }, new[] { (int)ManagerRegistry.GhostReactor.GameEntityManager.zone }, new[] { Fun.ObjectByName["GhostReactorEnemyChaserArmored"] }, new[] { BitPackUtils.PackWorldPosForNetwork(Rig.transform.position) }, new[] { BitPackUtils.PackQuaternionForNetwork(Rig.transform.rotation) }, new[] { 0L }, new[] { 0 });
 
             ManagerRegistry.GhostReactor.GhostReactorManager.gameAgentManager.photonView.RPC("ApplyBehaviorRPC", Target, new[] { netId }, new byte[] { 6 });
 
             GRPlayer.ChangePlayerState(GRPlayer.GRPlayerState.Ghost, ManagerRegistry.GhostReactor.GhostReactorManager);
 
-            RPCProtection();
+            Security.RPCProtection();
 
             yield return null;
             yield return null;
@@ -1759,79 +1492,10 @@ namespace Qubit.Mods
 
             ManagerRegistry.GhostReactor.GameEntityManager.photonView.RPC("DestroyItemRPC", Target, new[] { netId });
 
-            RPCProtection();
+            Security.RPCProtection();
         }
 
-        private static float killDelay;
-        public static void SetStateSelf(int state) =>
-            SetPlayerState(PhotonNetwork.LocalPlayer, (GRPlayer.GRPlayerState)state);
-
-        public static void SetStateAll(int state)
-        {
-            foreach (Player target in PhotonNetwork.PlayerList)
-                SetPlayerState(target, (GRPlayer.GRPlayerState)state);
-        }
-
-        public static void SetStateGun(int state)
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                        SetPlayerState(gunTarget, (GRPlayer.GRPlayerState)state);
-                }
-            }
-        }
-
-        public static void SpazKillSelf()
-        {
-            if (Time.time > killDelay)
-            {
-                killDelay = Time.time + 0.1f;
-
-                GRPlayer plr = GRPlayer.Get(PhotonNetwork.LocalPlayer.ActorNumber);
-                SetPlayerState(PhotonNetwork.LocalPlayer, plr.State == GRPlayer.GRPlayerState.Alive ? GRPlayer.GRPlayerState.Ghost : GRPlayer.GRPlayerState.Alive);
-            }
-        }
-
-        public static void SpazKillGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && Time.time > killDelay)
-                    {
-                        killDelay = Time.time + 0.1f;
-                        GRPlayer plr = GRPlayer.Get(GetPlayerFromVRRig(gunTarget).ActorNumber);
-                        SetPlayerState(gunTarget, plr.State == GRPlayer.GRPlayerState.Alive ? GRPlayer.GRPlayerState.Ghost : GRPlayer.GRPlayerState.Alive);
-                    }
-                }
-            }
-        }
-
-        public static void SpazKillAll()
-        {
-            if (Time.time > killDelay)
-            {
-                foreach (Player target in PhotonNetwork.PlayerList)
-                {
-                    killDelay = Time.time + 0.1f;
-
-                    GRPlayer plr = GRPlayer.Get(target.ActorNumber);
-                    SetPlayerState(target, plr.State == GRPlayer.GRPlayerState.Alive ? GRPlayer.GRPlayerState.Ghost : GRPlayer.GRPlayerState.Alive);
-                }
-            }
-        }
+        public static float killDelay;
 
         public static void SpazToolStations()
         {
@@ -1937,10 +1601,10 @@ namespace Qubit.Mods
             mic.Bitrate = bitrate;
 
             if (RecorderPatch.enabled)
-                VoiceManager.Get().SamplingRate = samplingRate;
+                Voices.Get().SamplingRate = samplingRate;
 
 
-            CoroutineManager.instance.StartCoroutine(DelayReloadMicrophone());
+            Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
         }
 
         public static void SetMicrophoneAmplification(float gain)
@@ -1949,7 +1613,7 @@ namespace Qubit.Mods
                 return;
 
             if (RecorderPatch.enabled)
-                VoiceManager.Get().Gain = gain;
+                Voices.Get().Gain = gain;
             else
             {
                 Recorder mic = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
@@ -1976,31 +1640,31 @@ namespace Qubit.Mods
                     }
                 }
 
-                CoroutineManager.instance.StartCoroutine(DelayReloadMicrophone());
+                Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
             }
 
         }
 
         public static void EchoMicrophone(bool status)
         {
-            ButtonInfo button = Buttons.GetIndex("Legacy Microphone");
+            Module button = Manager.GetIndex("Legacy Microphone");
             if (button.enabled)
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are using Legacy Microphone. This mod does not support using the old microphone system.");
-                Buttons.GetIndex("Echo Microphone").SetEnabled(false);
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are using Legacy Microphone. This mod does not support using the old microphone system.");
+                Manager.GetIndex("Echo Microphone").SetEnabled(false);
                 return;
             }
 
             if (status)
             {
-                int sampleRate = VoiceManager.Get().SamplingRate;
+                int sampleRate = Voices.Get().SamplingRate;
                 int samples = Mathf.Max(1, sampleRate / 4);
                 float[] delayedBuffer = new float[samples];
                 int index = 0;
 
-                if (!VoiceManager.Get().PostProcessors.ContainsKey("Echo"))
+                if (!Voices.Get().PostProcessors.ContainsKey("Echo"))
                 {
-                    VoiceManager.Get().PostProcessors["Echo"] = buffer =>
+                    Voices.Get().PostProcessors["Echo"] = buffer =>
                     {
                         for (int i = 0; i < buffer.Length; i++)
                         {
@@ -2018,23 +1682,23 @@ namespace Qubit.Mods
             }
             else
             {
-                VoiceManager.Get().PostProcessors.Remove("Echo");
+                Voices.Get().PostProcessors.Remove("Echo");
             }
         }
 
         public static void GlitchyMicrophone(bool status)
         {
-            ButtonInfo button = Buttons.GetIndex("Legacy Microphone");
+            Module button = Manager.GetIndex("Legacy Microphone");
             if (button.enabled)
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are using Legacy Microphone. This mod does not support using the old microphone system.");
-                Buttons.GetIndex("Glitchy Microphone").SetEnabled(false);
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are using Legacy Microphone. This mod does not support using the old microphone system.");
+                Manager.GetIndex("Glitchy Microphone").SetEnabled(false);
                 return;
             }
 
             if (status)
             {
-                int rate = VoiceManager.Get().SamplingRate;
+                int rate = Voices.Get().SamplingRate;
                 int repeatLength = Mathf.Max(1, rate / 2);
                 float[] history = new float[repeatLength];
                 int historyIndex = 0;
@@ -2045,10 +1709,10 @@ namespace Qubit.Mods
 
                 int samplesUntilNext = Random.Range(rate * 1, rate * 4);
 
-                VoiceManager.Get().PostProcessClip = true;
-                if (!VoiceManager.Get().PostProcessors.ContainsKey("Glitch"))
+                Voices.Get().PostProcessClip = true;
+                if (!Voices.Get().PostProcessors.ContainsKey("Glitch"))
                 {
-                    VoiceManager.Get().PostProcessors["Glitch"] = buffer =>
+                    Voices.Get().PostProcessors["Glitch"] = buffer =>
                     {
                         for (int i = 0; i < buffer.Length; i++)
                         {
@@ -2085,25 +1749,25 @@ namespace Qubit.Mods
             }
             else
             {
-                VoiceManager.Get().PostProcessors.Remove("Glitch");
+                Voices.Get().PostProcessors.Remove("Glitch");
             }
         }
 
         public static void LaggyMicrophone(bool status)
         {
-            ButtonInfo button = Buttons.GetIndex("Legacy Microphone");
+            Module button = Manager.GetIndex("Legacy Microphone");
             if (button.enabled)
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are using Legacy Microphone. This mod does not support using the old microphone system.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are using Legacy Microphone. This mod does not support using the old microphone system.");
                 button.enabled = false;
                 return;
             }
 
             if (status)
             {
-                if (!VoiceManager.Get().PostProcessors.ContainsKey("Lag"))
+                if (!Voices.Get().PostProcessors.ContainsKey("Lag"))
                 {
-                    VoiceManager.Get().PostProcessors["Lag"] = buffer =>
+                    Voices.Get().PostProcessors["Lag"] = buffer =>
                     {
                         if (Random.value < 0.25f)
                             Array.Clear(buffer, 0, buffer.Length);
@@ -2111,13 +1775,13 @@ namespace Qubit.Mods
                 }
             }
             else
-                VoiceManager.Get().PostProcessors.Remove("Lag");
+                Voices.Get().PostProcessors.Remove("Lag");
         }
 
         public static void MuteMicrophone(bool mute)
         {
             if (RecorderPatch.enabled)
-                VoiceManager.Get().MuteMicrophone = mute;
+                Voices.Get().MuteMicrophone = mute;
             else
             {
                 if (!NetworkSystem.Instance.InRoom)
@@ -2135,7 +1799,7 @@ namespace Qubit.Mods
                 return;
 
             if (RecorderPatch.enabled)
-                VoiceManager.Get().Pitch = pitch;
+                Voices.Get().Pitch = pitch;
             else
             {
                 Recorder mic = NetworkSystem.Instance.VoiceConnection.PrimaryRecorder;
@@ -2161,7 +1825,7 @@ namespace Qubit.Mods
                         return;
                 }
 
-                CoroutineManager.instance.StartCoroutine(DelayReloadMicrophone());
+                Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
             }
 
         }
@@ -2179,9 +1843,8 @@ namespace Qubit.Mods
 
         public static void CopyVoiceGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -2193,13 +1856,13 @@ namespace Qubit.Mods
                         {
                             SpeakerPatch.enabled = true;
                             SpeakerPatch.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
-                            if (!VoiceManager.Get().PostProcessors.ContainsKey("CopyVoice"))  // this is so shit but i need to account for channels > 1
+                            if (!Voices.Get().PostProcessors.ContainsKey("CopyVoice"))  // this is so shit but i need to account for channels > 1
                             {
                                 float readPos = 0f;
 
-                                VoiceManager.Get().PostProcessors["CopyVoice"] = buffer =>
+                                Voices.Get().PostProcessors["CopyVoice"] = buffer =>
                                 {
-                                    var vm = VoiceManager.Get();
+                                    var vm = Voices.Get();
                                     int channels = vm.Channels;
 
                                     float sourceRate = (SpeakerPatch.targetSpeaker != null && SpeakerPatch.targetSpeaker.RemoteVoiceLink.Info.SamplingRate > 0)
@@ -2269,9 +1932,9 @@ namespace Qubit.Mods
 
                                 SpeakerPatch.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
 
-                                RecorderPatch.enabled = !Buttons.GetIndex("Legacy Microphone").enabled;
+                                RecorderPatch.enabled = !Manager.GetIndex("Legacy Microphone").enabled;
 
-                                VoiceManager.Get().PostProcessors["CopyVoice"] = null;
+                                Voices.Get().PostProcessors["CopyVoice"] = null;
 
                                 factory?.Dispose();
 
@@ -2282,7 +1945,7 @@ namespace Qubit.Mods
                                 {
                                     return factory;
                                 };
-                                CoroutineManager.instance.StartCoroutine(DelayReloadMicrophone());
+                                Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
                             }
                         }
 
@@ -2298,27 +1961,26 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-                if (factory != null || VoiceManager.Get().PostProcessors.ContainsKey("CopyVoice"))
-                    DisableCopyVoice();
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                    if (factory != null || Voices.Get().PostProcessors.ContainsKey("CopyVoice"))
+                        DisableCopyVoice();
+                } });
         }
 
         public static void DisableCopyVoice()
         {
             factory?.Dispose();
 
-            VoiceManager.Get().PostProcessors.Remove("CopyVoice");
+            Voices.Get().PostProcessors.Remove("CopyVoice");
 
             SpeakerPatch.enabled = false;
 
             Sound.FixMicrophone();
 
-            RecorderPatch.enabled = !Buttons.GetIndex("Legacy Microphone").enabled;
+            RecorderPatch.enabled = !Manager.GetIndex("Legacy Microphone").enabled;
 
             NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
         }
@@ -2328,7 +1990,7 @@ namespace Qubit.Mods
             string path = $"{PluginInfo.BaseDirectory}/Sounds/Narrations";
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
-            CoroutineManager.instance.StartCoroutine(TranscribeText(text, (audio) =>
+            Coroutines.instance.StartCoroutine(TranscribeText(text, (audio) =>
             {
                 PromptSingleText("The narration has been saved in your Soundboard!");
             }, text, path));
@@ -2337,7 +1999,7 @@ namespace Qubit.Mods
         public static DictationRecognizer drec;
         public static void MaskVoice()
         {
-            ButtonInfo mod = Buttons.GetIndex("Mask Voice");
+            Module mod = Manager.GetIndex("Mask Voice");
 
             if (Application.platform == RuntimePlatform.WindowsPlayer && Environment.OSVersion.Version.Major < 10)
                 PromptSingle("Your version of Windows is too old for this mod to run.", () => mod.SetEnabled(false));
@@ -2348,8 +2010,8 @@ namespace Qubit.Mods
             drec.DictationResult += (text, confidence) =>
             {
                 if (Settings.debugDictation)
-                    LogManager.Log($"Dictation result: {text}");
-                NotificationManager.SendNotification($"<color=grey>[</color><color=green>VOICE</color><color=grey>]</color> {text}");
+                    Logs.Log($"Dictation result: {text}");
+                Notifications.SendNotification($"<color=grey>[</color><color=green>VOICE</color><color=grey>]</color> {text}");
 
                 if (NetworkSystem.Instance.VoiceConnection.PrimaryRecorder != null)
                 {
@@ -2368,20 +2030,20 @@ namespace Qubit.Mods
             drec.DictationError += (error, hresult) =>
             {
                 if (Settings.debugDictation)
-                    LogManager.LogError($"Dictation error: {error}; HResult = {hresult}.");
+                    Logs.LogError($"Dictation error: {error}; HResult = {hresult}.");
                 if (error.Contains("Dictation support is not enabled on this device"))
                 {
                     DisableMaskVoice();
-                    NotificationManager.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Online Speech Recognition is not enabled on this device. Either open the menu to enable it, or check your internet connection.", 3000);
+                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Online Speech Recognition is not enabled on this device. Either open the menu to enable it, or check your internet connection.", 3000);
                     Prompt("Online Speech Recognition is not enabled on your device. Would you like to open the Settings page to enable it?", () => { Process.Start("ms-settings:privacy-speech"); PromptSingle("Once you enable Online Speech Recognition, turn this mod back on!", () => mod.SetEnabled(false)); }, () => PromptSingle("You will not be able to use this mod until you enable Online Speech Recognition.", () => mod.SetEnabled(false)));
                 }
             };
             drec.DictationHypothesis += (text) =>
             {
                 if (Settings.debugDictation)
-                    LogManager.Log($"Hypothesis: {text}");
-                NotificationManager.ClearAllNotifications();
-                NotificationManager.SendNotification($"<color=grey>[</color><color=green>VOICE</color><color=grey>]</color> {text}");
+                    Logs.Log($"Hypothesis: {text}");
+                Notifications.ClearAllNotifications();
+                Notifications.SendNotification($"<color=grey>[</color><color=green>VOICE</color><color=grey>]</color> {text}");
             };
             drec.Start();
         }
@@ -2402,7 +2064,7 @@ namespace Qubit.Mods
                 recorder.SourceType = Recorder.InputSourceType.Microphone;
             recorder.RestartRecording(true);
             if (RecorderPatch.enabled)
-                VoiceManager.Get().RestartMicrophone();
+                Voices.Get().RestartMicrophone();
         }
 
         public static IEnumerator DelayReloadMicrophone()
@@ -2413,80 +2075,56 @@ namespace Qubit.Mods
 
         public static void ObjectToPointGun(string objectName)
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                {
-                    ThrowableBug bug = GetBug(objectName);
-                    if (bug != null)
-                        bug.transform.position = NewPointer.transform.position + Vector3.up;
-                }
-            }
+                ThrowableBug bug = GetBug(objectName);
+                if (bug != null)
+                    bug.transform.position = NewPointer.transform.position + Vector3.up;
+            });
         }
 
         public static void CameraGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
+                LckSocialCamera camera = LckSocialCameraManager.Instance._networkedCococam;
+                camera.visible = true;
+                camera.recording = true;
 
-                if (GetGunInput(true))
-                {
-                    LckSocialCamera camera = LckSocialCameraManager.Instance._networkedCococam;
-                    camera.visible = true;
-                    camera.recording = true;
+                camera.m_CameraVisuals.SetNetworkedVisualsActive(true);
+                camera.m_CameraVisuals.SetRecordingState(true);
 
-                    camera.m_CameraVisuals.SetNetworkedVisualsActive(true);
-                    camera.m_CameraVisuals.SetRecordingState(true);
-
-                    camera.transform.position = NewPointer.transform.position + Vector3.up;
-                }
-            }
+                camera.transform.position = NewPointer.transform.position + Vector3.up;
+            });
         }
 
         public static void TabletGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
+                LckSocialCamera camera = LckSocialCameraManager.Instance._networkedTablet;
+                camera.visible = true;
+                camera.recording = true;
 
-                if (GetGunInput(true))
-                {
-                    LckSocialCamera camera = LckSocialCameraManager.Instance._networkedTablet;
-                    camera.visible = true;
-                    camera.recording = true;
+                camera.m_CameraVisuals.SetNetworkedVisualsActive(true);
+                camera.m_CameraVisuals.SetRecordingState(true);
 
-                    camera.m_CameraVisuals.SetNetworkedVisualsActive(true);
-                    camera.m_CameraVisuals.SetRecordingState(true);
-
-                    camera.transform.position = NewPointer.transform.position + Vector3.up;
-                }
-            }
+                camera.transform.position = NewPointer.transform.position + Vector3.up;
+            });
         }
 
         public static void GliderGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
+                foreach (GliderHoldable glider in GetAllType<GliderHoldable>())
                 {
-                    foreach (GliderHoldable glider in GetAllType<GliderHoldable>())
-                    {
-                        if (glider.GetView.Owner == PhotonNetwork.LocalPlayer)
-                            glider.gameObject.transform.position = NewPointer.transform.position + Vector3.up;
-                        else
-                            glider.OnHover(null, null);
-                    }
+                    if (glider.GetView.Owner == PhotonNetwork.LocalPlayer)
+                        glider.gameObject.transform.position = NewPointer.transform.position + Vector3.up;
+                    else
+                        glider.OnHover(null, null);
                 }
-            }
+            });
         }
 
         public static Coroutine dropBoard;
@@ -2499,54 +2137,41 @@ namespace Qubit.Mods
                 VRRig.LocalRig.transform.position = position + Vector3.down * 4f;
 
                 if (dropBoard != null)
-                    CoroutineManager.instance.StopCoroutine(dropBoard);
+                    Coroutines.instance.StopCoroutine(dropBoard);
 
-                dropBoard = CoroutineManager.instance.StartCoroutine(EnableRig());
+                dropBoard = Coroutines.instance.StartCoroutine(EnableRig());
             }
 
             FreeHoverboardManager.instance.SendDropBoardRPC(position, rotation, velocity, avelocity, boardColor);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         private static float hoverboardGunDelay;
         public static void HoverboardGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true) && Time.time > hoverboardGunDelay)
-                {
-                    hoverboardGunDelay = Time.time + 0.25f;
-                    BetaDropBoard(NewPointer.transform.position + Vector3.up, RandomQuaternion(), Vector3.zero, Vector3.zero, RandomColor());
-                }
-            }
+                hoverboardGunDelay = Time.time + 0.25f;
+                BetaDropBoard(NewPointer.transform.position + Vector3.up, RandomQuaternion(), Vector3.zero, Vector3.zero, RandomColor());
+            }, new GunLibrary.GunSettings { when = () => Time.time > hoverboardGunDelay });
         }
 
-        private static int pieceIdSet = -566818631;
+        public static int pieceIdSet = -566818631;
         private static float blockDelay;
         public static void BlocksGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                {
-                    RequestCreatePiece(pieceIdSet, NewPointer.transform.position + Vector3.up * 0.1f, Quaternion.identity, 0);
-                    RPCProtection();
-                }
-            }
+                RequestCreatePiece(pieceIdSet, NewPointer.transform.position + Vector3.up * 0.1f, Quaternion.identity, 0);
+                Security.RPCProtection();
+            });
         }
 
         private static float gbgd;
         public static void SelectBlockGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (GetGunInput(true))
@@ -2556,38 +2181,37 @@ namespace Qubit.Mods
                     {
                         gbgd = Time.time + 0.1f;
                         pieceIdSet = gunTarget.pieceType;
-                        NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully selected piece " + gunTarget.displayName + ".");
+                        Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully selected piece " + gunTarget.displayName + ".");
                     }
                 }
-            }
+            });
         }
 
         public static void CopyBlockInfoGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
-                if (GetGunInput(true))
-                {
-                    BuilderPiece gunTarget = Ray.collider.GetComponentInParent<BuilderPiece>();
-                    if (gunTarget && Time.time > gbgd)
-                    {
-                        gbgd = Time.time + 0.1f;
-                        GUIUtility.systemCopyBuffer = @$"{gunTarget.displayName}
-Piece Type: {gunTarget.pieceType}
-Piece Name: {gunTarget.name}";
-                        NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully copied piece data of " + gunTarget.displayName + ".");
-                    }
-                }
-            }
+                                if (GetGunInput(true))
+                                {
+                                    BuilderPiece gunTarget = Ray.collider.GetComponentInParent<BuilderPiece>();
+                                    if (gunTarget && Time.time > gbgd)
+                                    {
+                                        gbgd = Time.time + 0.1f;
+                                        GUIUtility.systemCopyBuffer = @$"{gunTarget.displayName}
+                Piece Type: {gunTarget.pieceType}
+                Piece Name: {gunTarget.name}";
+                                        Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully copied piece data of " + gunTarget.displayName + ".");
+                                    }
+                                }
+            });
         }
 
         public static void SelectBlock(int type, string name)
         {
             pieceIdSet = type;
-            NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully selected piece " + name.Replace("(Clone)", "") + ".");
+            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully selected piece " + name.Replace("(Clone)", "") + ".");
         }
 
         private static Dictionary<int, string> blocks;
@@ -2626,14 +2250,14 @@ Piece Name: {gunTarget.name}";
             rememberdirectory = pageNumber;
 
             Dictionary<int, string> allBlockData = GetAllBlockData();
-            List<ButtonInfo> blockButtons = new List<ButtonInfo> { new ButtonInfo { buttonText = "Exit Building Block Browser", method = RemoveCosmeticBrowser, isTogglable = false, toolTip = "Returns you back to the fun mods." } };
+            List<Module> blockButtons = new List<Module> { new Module { buttonText = "Exit Building Block Browser", method = RemoveCosmeticBrowser, isTogglable = false, toolTip = "Returns you back to the fun mods." } };
 
             int i = 0;
             foreach (KeyValuePair<int, string> block in allBlockData)
             {
                 blockButtons.Add
                 (
-                    new ButtonInfo
+                    new Module
                     {
                         buttonText = $"SelectBlock{i}",
                         overlapText = block.Value,
@@ -2645,8 +2269,8 @@ Piece Name: {gunTarget.name}";
                 i++;
             }
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = blockButtons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = blockButtons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void SetRespawnDistance(string objectName, float respawnDistance = float.MaxValue)
@@ -2724,7 +2348,7 @@ Piece Name: {gunTarget.name}";
                 SlingshotProjectile projectileInstance = projectileArray[index].projectileInstance;
                 if (projectileInstance == null || !projectileInstance.gameObject.activeSelf) continue;
 
-                foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.IsLocal()).Where(rig => rig.Distance(projectileInstance.transform.position) < 0.5f))
+                foreach (var rig in Players.ActiveRigs.Where(rig => !rig.IsLocal()).Where(rig => rig.Distance(projectileInstance.transform.position) < 0.5f))
                     projectileInstance.transform.position = rig.headMesh.transform.position;
             }
         }
@@ -2813,9 +2437,9 @@ Piece Name: {gunTarget.name}";
         public static void HoverboardScreenTarget(VRRig rig, Color color)
         {
             if (DisableHoverboardCoroutine != null)
-                CoroutineManager.instance.StopCoroutine(DisableHoverboardCoroutine);
+                Coroutines.instance.StopCoroutine(DisableHoverboardCoroutine);
 
-            DisableHoverboardCoroutine = CoroutineManager.instance.StartCoroutine(DisableHoverboard());
+            DisableHoverboardCoroutine = Coroutines.instance.StartCoroutine(DisableHoverboard());
 
             Vector3 angVel = rig.headMesh.GetOrAddComponent<GorillaVelocityEstimator>().angularVelocity;
 
@@ -2840,9 +2464,8 @@ Piece Name: {gunTarget.name}";
 
         public static void HoverboardScreenGun(Color color)
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -2857,15 +2480,14 @@ Piece Name: {gunTarget.name}";
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void HoverboardScreenAll(Color color)
@@ -2884,7 +2506,7 @@ Piece Name: {gunTarget.name}";
                         SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
                     }
 
-                    RPCProtection();
+                    Security.RPCProtection();
 
                     VRRig.LocalRig.enabled = true;
 
@@ -3004,40 +2626,6 @@ Piece Name: {gunTarget.name}";
                 (climber.col as SphereCollider).radius = 0.5f;
         }
 
-        public static void DebugSlingshotAimbot()
-        {
-            if (VRRig.LocalRig.GetSlingshot() == null)
-                return;
-
-            if (VRRig.LocalRig.GetSlingshot().InLeftHand() ? leftTrigger > 0.5f : rightTrigger > 0.5f)
-                return;
-
-            List<NetPlayer> infected = InfectedList();
-            List<VRRig> rigs = VRRigExtensions.ActiveRigs
-                .Where(rig => !rig.isLocal)
-                .Where(rig => !infected.Contains(rig.GetPlayer()))
-                .ToList();
-
-            Transform head = GorillaTagger.Instance.headCollider.transform;
-            VRRig targetRig = rigs
-                .Where(rig => rig != null)
-                .Select(rig => new
-                {
-                    Rig = rig,
-                    ToRig = (rig.transform.position - head.position).normalized,
-                    Distance = Vector3.Distance(head.position, rig.transform.position)
-                })
-                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig)) // only angle matters
-                .ThenBy(x => x.Distance) // tiebreaker if multiple at same angle
-                .Select(x => x.Rig)
-                .FirstOrDefault();
-
-            if (targetRig == null)
-                return;
-
-            Visuals.Visualize(PrimitiveType.Sphere, targetRig.headMesh.transform.position, Quaternion.identity, new Vector3(0.1f, 0.1f, 0.1f), Color.green, -91752, 0.1f);
-        }
-
         private static bool lastDrawing;
         public static void AngryBirdsSounds()
         {
@@ -3061,71 +2649,9 @@ Piece Name: {gunTarget.name}";
             }
             catch { }
         }
-        public static void SlingshotHelper()
-        {
-            Slingshot slingshot = VRRig.LocalRig.GetSlingshot() as Slingshot;
-            if (slingshot == null)
-                return;
-
-            if (slingshot.ForLeftHandSlingshot() ? rightGrab : leftGrab)
-                slingshot.itemState = slingshot.ForLeftHandSlingshot() ? TransferrableObject.ItemStates.State2 : TransferrableObject.ItemStates.State3;
-        }
 
         public static LineRenderer paintbrawlTriggerLine;
         public static float triggerBotDelay;
-        public static void SlingshotTriggerBot()
-        {
-            if (paintbrawlTriggerLine != null)
-            {
-                if (!paintbrawlTriggerLine.gameObject.activeSelf)
-                {
-                    paintbrawlTriggerLine = null;
-                    Object.Destroy(paintbrawlTriggerLine.gameObject);
-                }
-                else
-                    paintbrawlTriggerLine.gameObject.SetActive(false);
-            }
-
-            Slingshot localSlingshot = VRRig.LocalRig.GetSlingshot() as Slingshot;
-            if (localSlingshot == null || !localSlingshot.InDrawingState())
-                return;
-
-            if (paintbrawlTriggerLine == null)
-            {
-                GameObject lineObject = new GameObject("LineObject");
-                paintbrawlTriggerLine = lineObject.AddComponent<LineRenderer>();
-                paintbrawlTriggerLine.positionCount = 25;
-            }
-
-            paintbrawlTriggerLine.gameObject.SetActive(true);
-
-            paintbrawlTriggerLine.startColor = Color.black;
-            paintbrawlTriggerLine.endColor = Color.black;
-
-            Vector3 localPosition = localSlingshot.drawingHand.transform.position + (localSlingshot.centerOrigin.position - localSlingshot.drawingHand.transform.position).normalized * ((EquipmentInteractor.instance.grabRadius - localSlingshot.dummyProjectileColliderRadius) * (localSlingshot.dummyProjectileInitialScale * Mathf.Abs(localSlingshot.transform.lossyScale.x)));
-            Vector3 localVelocity = localSlingshot.GetLaunchVelocity();
-
-            Visuals.DrawTrajectory(localPosition, localVelocity, paintbrawlTriggerLine, NoInvisLayerMask(), Vector3.down * 10.79f);
-
-            paintbrawlTriggerLine.enabled = false;
-
-            if (paintbrawlTriggerLine.startColor == Color.green && Time.time > triggerBotDelay)
-                triggerBotDelay = Time.time + 0.5f;
-
-            if (Time.time < triggerBotDelay)
-            {
-                if (localSlingshot.ForLeftHandSlingshot())
-                {
-                    ControllerInputPoller.instance.rightControllerGripFloat = 0f;
-                    ControllerInputPoller.instance.rightGrab = false;
-                }
-                else
-                {
-                    ControllerInputPoller.instance.leftControllerGripFloat = 0f;
-                    ControllerInputPoller.instance.leftGrab = false;
-                }
-            }
-        }
 
         public static Coroutine BugCoroutine;
         public static IEnumerator ReturnRig()
@@ -3187,9 +2713,9 @@ Piece Name: {gunTarget.name}";
                     VRRig.LocalRig.transform.position = bugObject.transform.position;
 
                     if (BugCoroutine != null)
-                        CoroutineManager.instance.StopCoroutine(BugCoroutine);
+                        Coroutines.instance.StopCoroutine(BugCoroutine);
 
-                    BugCoroutine = CoroutineManager.instance.StartCoroutine(ReturnRig());
+                    BugCoroutine = Coroutines.instance.StartCoroutine(ReturnRig());
                 }
 
                 if (Vector3.SqrMagnitude(bugObject.transform.position - ServerPos) > 15f)
@@ -3232,7 +2758,7 @@ Piece Name: {gunTarget.name}";
 
             if (BugCoroutine != null)
             {
-                CoroutineManager.instance.StopCoroutine(BugCoroutine);
+                Coroutines.instance.StopCoroutine(BugCoroutine);
                 VRRig.LocalRig.enabled = true;
             }
 
@@ -3270,11 +2796,11 @@ Piece Name: {gunTarget.name}";
                     bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                     bugSpamObject.layer = 3;
 
-                    if (Buttons.GetIndex("Bug Colliders").enabled)
+                    if (Manager.GetIndex("Bug Colliders").enabled)
                     {
                         SphereCollider collider = bugSpamObject.AddComponent<SphereCollider>();
 
-                        if (Buttons.GetIndex("Bouncy Bug").enabled)
+                        if (Manager.GetIndex("Bouncy Bug").enabled)
                         {
                             collider.material.bounciness = 1f;
                             collider.material.bounceCombine = PhysicsMaterialCombine.Maximum;
@@ -3289,7 +2815,7 @@ Piece Name: {gunTarget.name}";
                     rigidbody.linearVelocity = GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
                     rigidbody.angularVelocity = RandomVector3(100f);
 
-                    rigidbody.useGravity = !Buttons.GetIndex("Zero Gravity Bugs").enabled;
+                    rigidbody.useGravity = !Manager.GetIndex("Zero Gravity Bugs").enabled;
 
                     targetBug.gameObject.GetOrAddComponent<ClampPosition>().targetTransform = bugSpamObject.transform;
 
@@ -3314,11 +2840,11 @@ Piece Name: {gunTarget.name}";
                 cameraSpamObject.transform.localScale = Vector3.one * 0.2f;
                 cameraSpamObject.layer = 3;
 
-                if (Buttons.GetIndex("Bug Colliders").enabled)
+                if (Manager.GetIndex("Bug Colliders").enabled)
                 {
                     SphereCollider collider = cameraSpamObject.AddComponent<SphereCollider>();
 
-                    if (Buttons.GetIndex("Bouncy Bug").enabled)
+                    if (Manager.GetIndex("Bouncy Bug").enabled)
                     {
                         collider.material.bounciness = 1f;
                         collider.material.bounceCombine = PhysicsMaterialCombine.Maximum;
@@ -3333,7 +2859,7 @@ Piece Name: {gunTarget.name}";
                 rigidbody.linearVelocity = GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
                 rigidbody.angularVelocity = RandomVector3(100f);
 
-                rigidbody.useGravity = !Buttons.GetIndex("Zero Gravity Bugs").enabled;
+                rigidbody.useGravity = !Manager.GetIndex("Zero Gravity Bugs").enabled;
 
                 camera.visible = true;
                 camera.recording = true;
@@ -3382,11 +2908,11 @@ Piece Name: {gunTarget.name}";
                             bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                             bugSpamObject.layer = 3;
 
-                            if (Buttons.GetIndex("Bug Colliders").enabled)
+                            if (Manager.GetIndex("Bug Colliders").enabled)
                             {
                                 SphereCollider collider = bugSpamObject.AddComponent<SphereCollider>();
 
-                                if (Buttons.GetIndex("Bouncy Bug").enabled)
+                                if (Manager.GetIndex("Bouncy Bug").enabled)
                                 {
                                     collider.material.bounciness = 1f;
                                     collider.material.bounceCombine = PhysicsMaterialCombine.Maximum;
@@ -3401,7 +2927,7 @@ Piece Name: {gunTarget.name}";
                             rigidbody.linearVelocity = GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
                             rigidbody.angularVelocity = RandomVector3(100f);
 
-                            rigidbody.useGravity = !Buttons.GetIndex("Zero Gravity Bugs").enabled;
+                            rigidbody.useGravity = !Manager.GetIndex("Zero Gravity Bugs").enabled;
 
                             targetBug.gameObject.GetOrAddComponent<ClampPosition>().targetTransform = bugSpamObject.transform;
 
@@ -3416,11 +2942,11 @@ Piece Name: {gunTarget.name}";
                             bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                             bugSpamObject.layer = 3;
 
-                            if (Buttons.GetIndex("Bug Colliders").enabled)
+                            if (Manager.GetIndex("Bug Colliders").enabled)
                             {
                                 SphereCollider collider = bugSpamObject.AddComponent<SphereCollider>();
 
-                                if (Buttons.GetIndex("Bouncy Bug").enabled)
+                                if (Manager.GetIndex("Bouncy Bug").enabled)
                                 {
                                     collider.material.bounciness = 1f;
                                     collider.material.bounceCombine = PhysicsMaterialCombine.Maximum;
@@ -3435,7 +2961,7 @@ Piece Name: {gunTarget.name}";
                             rigidbody.linearVelocity = GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
                             rigidbody.angularVelocity = RandomVector3(100f);
 
-                            rigidbody.useGravity = !Buttons.GetIndex("Zero Gravity Bugs").enabled;
+                            rigidbody.useGravity = !Manager.GetIndex("Zero Gravity Bugs").enabled;
 
                             targetBug.gameObject.GetOrAddComponent<ClampPosition>().targetTransform = bugSpamObject.transform;
 
@@ -3454,11 +2980,11 @@ Piece Name: {gunTarget.name}";
                             cameraSpamObject.transform.localScale = Vector3.one * 0.2f;
                             cameraSpamObject.layer = 3;
 
-                            if (Buttons.GetIndex("Bug Colliders").enabled)
+                            if (Manager.GetIndex("Bug Colliders").enabled)
                             {
                                 SphereCollider collider = cameraSpamObject.AddComponent<SphereCollider>();
 
-                                if (Buttons.GetIndex("Bouncy Bug").enabled)
+                                if (Manager.GetIndex("Bouncy Bug").enabled)
                                 {
                                     collider.material.bounciness = 1f;
                                     collider.material.bounceCombine = PhysicsMaterialCombine.Maximum;
@@ -3473,7 +2999,7 @@ Piece Name: {gunTarget.name}";
                             rigidbody.linearVelocity = GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
                             rigidbody.angularVelocity = RandomVector3(100f);
 
-                            rigidbody.useGravity = !Buttons.GetIndex("Zero Gravity Bugs").enabled;
+                            rigidbody.useGravity = !Manager.GetIndex("Zero Gravity Bugs").enabled;
 
                             camera.visible = true;
                             camera.recording = true;
@@ -3498,11 +3024,11 @@ Piece Name: {gunTarget.name}";
                             cameraSpamObject.transform.localScale = Vector3.one * 0.2f;
                             cameraSpamObject.layer = 3;
 
-                            if (Buttons.GetIndex("Bug Colliders").enabled)
+                            if (Manager.GetIndex("Bug Colliders").enabled)
                             {
                                 SphereCollider collider = cameraSpamObject.AddComponent<SphereCollider>();
 
-                                if (Buttons.GetIndex("Bouncy Bug").enabled)
+                                if (Manager.GetIndex("Bouncy Bug").enabled)
                                 {
                                     collider.material.bounciness = 1f;
                                     collider.material.bounceCombine = PhysicsMaterialCombine.Maximum;
@@ -3517,7 +3043,7 @@ Piece Name: {gunTarget.name}";
                             rigidbody.linearVelocity = GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
                             rigidbody.angularVelocity = RandomVector3(100f);
 
-                            rigidbody.useGravity = !Buttons.GetIndex("Zero Gravity Bugs").enabled;
+                            rigidbody.useGravity = !Manager.GetIndex("Zero Gravity Bugs").enabled;
 
                             camera.visible = true;
                             camera.recording = true;
@@ -3589,9 +3115,8 @@ Piece Name: {gunTarget.name}";
 
         public static void BugPhallusGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -3617,56 +3142,35 @@ Piece Name: {gunTarget.name}";
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void BugVibrateGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                ThrowableBug Bug = GetBug("Floating Bug Holdable");
+                ThrowableBug Firefly = Bug != null ? GetBug("Firefly") : null;
 
-                if (gunLocked && lockTarget != null)
+                if (Bug != null)
                 {
-                    ThrowableBug Bug = GetBug("Floating Bug Holdable");
-                    ThrowableBug Firefly = Bug != null ? GetBug("Firefly") : null;
-
-                    if (Bug != null)
-                    {
-                        Bug.transform.position = lockTarget.leftHandTransform.position;
-                        Bug.transform.rotation = RandomQuaternion();
-                    }
-
-                    if (Firefly != null)
-                    {
-                        Firefly.transform.position = lockTarget.rightHandTransform.position;
-                        Firefly.transform.rotation = RandomQuaternion();
-                    }
+                    Bug.transform.position = lockTarget.leftHandTransform.position;
+                    Bug.transform.rotation = RandomQuaternion();
                 }
-                if (GetGunInput(true))
+
+                if (Firefly != null)
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
+                    Firefly.transform.position = lockTarget.rightHandTransform.position;
+                    Firefly.transform.rotation = RandomQuaternion();
                 }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void BugVibrateAll()
@@ -3735,7 +3239,7 @@ Piece Name: {gunTarget.name}";
                     Firefly.reliableState.gameObject.transform.rotation = fireflyArchiveRotation;
                 }
 
-                RPCProtection();
+                Security.RPCProtection();
                 return false;
             };
         }
@@ -3787,11 +3291,11 @@ Piece Name: {gunTarget.name}";
                     bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                     bugSpamObject.layer = 3;
 
-                    if (Buttons.GetIndex("Bug Colliders").enabled)
+                    if (Manager.GetIndex("Bug Colliders").enabled)
                     {
                         SphereCollider collider = bugSpamObject.AddComponent<SphereCollider>();
 
-                        if (Buttons.GetIndex("Bouncy Bug").enabled)
+                        if (Manager.GetIndex("Bouncy Bug").enabled)
                         {
                             collider.material.bounciness = 1f;
                             collider.material.bounceCombine = PhysicsMaterialCombine.Maximum;
@@ -3806,7 +3310,7 @@ Piece Name: {gunTarget.name}";
                     rigidbody.linearVelocity = tracker.GetAverageVelocity(true, 0);
                     rigidbody.angularVelocity = bug.velocityEstimator.angularVelocity;
 
-                    rigidbody.useGravity = !Buttons.GetIndex("Zero Gravity Bugs").enabled;
+                    rigidbody.useGravity = !Manager.GetIndex("Zero Gravity Bugs").enabled;
 
                     bug.gameObject.GetOrAddComponent<ClampPosition>().targetTransform = bugSpamObject.transform;
 
@@ -3868,11 +3372,11 @@ Piece Name: {gunTarget.name}";
                     bugSpamObject.transform.localScale = Vector3.one * 0.2f;
                     bugSpamObject.layer = 3;
 
-                    if (Buttons.GetIndex("Bug Colliders").enabled)
+                    if (Manager.GetIndex("Bug Colliders").enabled)
                     {
                         SphereCollider collider = bugSpamObject.AddComponent<SphereCollider>();
 
-                        if (Buttons.GetIndex("Bouncy Bug").enabled)
+                        if (Manager.GetIndex("Bouncy Bug").enabled)
                         {
                             collider.material.bounciness = 1f;
                             collider.material.bounceCombine = PhysicsMaterialCombine.Maximum;
@@ -3887,7 +3391,7 @@ Piece Name: {gunTarget.name}";
                     rigidbody.linearVelocity = tracker.GetAverageVelocity(true, 0);
                     rigidbody.angularVelocity = estimator.angularVelocity;
 
-                    rigidbody.useGravity = !Buttons.GetIndex("Zero Gravity Bugs").enabled;
+                    rigidbody.useGravity = !Manager.GetIndex("Zero Gravity Bugs").enabled;
 
                     camera.gameObject.GetOrAddComponent<ClampPosition>().targetTransform = bugSpamObject.transform;
 
@@ -3961,7 +3465,7 @@ Piece Name: {gunTarget.name}";
             if (rightGrab)
             {
                 RequestCreatePiece(pieceIdSet, GorillaTagger.Instance.rightHandTransform.position, GorillaTagger.Instance.rightHandTransform.rotation, 0);
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -3970,7 +3474,7 @@ Piece Name: {gunTarget.name}";
             if (rightGrab)
             {
                 RequestCreatePiece(pieceIdSet, GorillaTagger.Instance.rightHandTransform.position, GorillaTagger.Instance.rightHandTransform.rotation, 0, null, false, false, GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength);
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -4039,7 +3543,7 @@ Piece Name: {gunTarget.name}";
 
             File.WriteAllText(fileName, ManagerRegistry.BuilderTable.WriteTableToJson());
 
-            string filePath = FileUtilities.GetGamePath() + "/" + fileName;
+            string filePath = Files.GetGamePath() + "/" + fileName;
             Process.Start(filePath);
         }
 
@@ -4084,7 +3588,7 @@ Piece Name: {gunTarget.name}";
             CosmeticsController.instance.ApplyCosmeticItemToSet(CosmeticsController.instance.currentWornSet, CosmeticsController.instance.GetItemFromDict(cosmeticName), true, false);
             CosmeticsController.instance.ApplyCosmeticItemToSet(VRRig.LocalRig.tryOnSet, CosmeticsController.instance.GetItemFromDict(cosmeticName), true, false);
             CosmeticsController.instance.UpdateWornCosmetics(NetworkSystem.Instance.InRoom);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static void CheckOwnedCosmetic(string cosmeticName)
@@ -4097,12 +3601,12 @@ Piece Name: {gunTarget.name}";
             {
                 if (!cosmetic.canTryOn)
                 {
-                    PromptSingle($"Looks like you don't own the cosmetic required for this mod ({ToTitleCase(cosmetic.overrideDisplayName)}), but this cosmetic is currently offsale. This mod will only work for people with cosmetic giving mods.");
+                    PromptSingle($"Looks like you don't own the cosmetic required for this mod ({Strings.ToTitleCase(cosmetic.overrideDisplayName)}), but this cosmetic is currently offsale. This mod will only work for people with cosmetic giving mods.");
                 }
                 else if (CosmeticsController.instance.CurrencyBalance >= cosmetic.cost)
-                    Prompt($"Looks like you don't own the cosmetic required for this mod ({ToTitleCase(cosmetic.overrideDisplayName)}), meaning it will only work in city. Would you like to purchase the cosmetic? ({cosmetic.cost}SR)", () => PurchaseCosmetic(cosmetic.itemName));
+                    Prompt($"Looks like you don't own the cosmetic required for this mod ({Strings.ToTitleCase(cosmetic.overrideDisplayName)}), meaning it will only work in city. Would you like to purchase the cosmetic? ({cosmetic.cost}SR)", () => PurchaseCosmetic(cosmetic.itemName));
                 else
-                    PromptSingle($"Looks like you don't own the cosmetic required for this mod ({ToTitleCase(cosmetic.overrideDisplayName)}), meaning it will only work in city.");
+                    PromptSingle($"Looks like you don't own the cosmetic required for this mod ({Strings.ToTitleCase(cosmetic.overrideDisplayName)}), meaning it will only work in city.");
             }
         }
 
@@ -4123,52 +3627,44 @@ Piece Name: {gunTarget.name}";
 
         public static void BubblerGun(int index, Quaternion handRotation, float handOffset = 0.5f)
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun(GTPlayer.Instance.locomotionEnabledLayers);
-                GameObject NewPointer = GunData.NewPointer;
+                DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(DisableThrowable(index));
+                TransferrableObject transferrableObject = VRRig.LocalRig.myBodyDockPositions.allObjects[index];
 
-                if (GetGunInput(true))
+                if (!CosmeticsOwned.Contains(transferrableObject.gameObject.name))
                 {
-                    DisableThrowableCoroutine = CoroutineManager.instance.StartCoroutine(DisableThrowable(index));
-                    TransferrableObject transferrableObject = VRRig.LocalRig.myBodyDockPositions.allObjects[index];
-
-                    if (!CosmeticsOwned.Contains(transferrableObject.gameObject.name))
-                    {
-                        VRRig.LocalRig.enabled = false;
-                        VRRig.LocalRig.transform.position = TryOnRoom.transform.position;
-                    }
-
-                    if (!transferrableObject.gameObject.activeSelf)
-                    {
-                        VRRig.LocalRig.SetActiveTransferrableObjectIndex(1, index);
-                        transferrableObject.gameObject.SetActive(true);
-                    }
-
-                    transferrableObject.storedZone = BodyDockPositions.DropPositions.RightArm;
-                    transferrableObject.currentState = TransferrableObject.PositionState.InRightHand;
-
                     VRRig.LocalRig.enabled = false;
-                    VRRig.LocalRig.transform.position = NewPointer.transform.position - Vector3.up * 0.5f;
-
-                    VRRig.LocalRig.rightHand.rigTarget.transform.position = NewPointer.transform.position + Vector3.up * handOffset;
-                    VRRig.LocalRig.rightHand.rigTarget.transform.rotation = handRotation;
-
-                    VRRig.LocalRig.rightIndex.calcT = 1f;
-                    VRRig.LocalRig.rightMiddle.calcT = 1f;
-
-                    VRRig.LocalRig.rightIndex.LerpFinger(1f, false);
-                    VRRig.LocalRig.rightMiddle.LerpFinger(1f, false);
+                    VRRig.LocalRig.transform.position = TryOnRoom.transform.position;
                 }
-            }
-            else
-                VRRig.LocalRig.enabled = true;
+
+                if (!transferrableObject.gameObject.activeSelf)
+                {
+                    VRRig.LocalRig.SetActiveTransferrableObjectIndex(1, index);
+                    transferrableObject.gameObject.SetActive(true);
+                }
+
+                transferrableObject.storedZone = BodyDockPositions.DropPositions.RightArm;
+                transferrableObject.currentState = TransferrableObject.PositionState.InRightHand;
+
+                VRRig.LocalRig.enabled = false;
+                VRRig.LocalRig.transform.position = NewPointer.transform.position - Vector3.up * 0.5f;
+
+                VRRig.LocalRig.rightHand.rigTarget.transform.position = NewPointer.transform.position + Vector3.up * handOffset;
+                VRRig.LocalRig.rightHand.rigTarget.transform.rotation = handRotation;
+
+                VRRig.LocalRig.rightIndex.calcT = 1f;
+                VRRig.LocalRig.rightMiddle.calcT = 1f;
+
+                VRRig.LocalRig.rightIndex.LerpFinger(1f, false);
+                VRRig.LocalRig.rightMiddle.LerpFinger(1f, false);
+            }, new GunLibrary.GunSettings { onIdle = () => { VRRig.LocalRig.enabled = true; }, layerMask = GTPlayer.Instance.locomotionEnabledLayers });
         }
 
         public static void WhiteColorTarget(VRRig rig)
         {
             int index = 629;
-            DisableThrowableCoroutine = CoroutineManager.instance.StartCoroutine(DisableThrowable(index));
+            DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(DisableThrowable(index));
             TransferrableObject transferrableObject = VRRig.LocalRig.myBodyDockPositions.allObjects[index];
 
             if (!CosmeticsOwned.Contains(transferrableObject.gameObject.name))
@@ -4201,9 +3697,8 @@ Piece Name: {gunTarget.name}";
 
         public static void WhiteColorGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -4218,15 +3713,14 @@ Piece Name: {gunTarget.name}";
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void BlackColorTarget(VRRig rig) =>
@@ -4234,9 +3728,8 @@ Piece Name: {gunTarget.name}";
 
         public static void BlackColorGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -4251,21 +3744,20 @@ Piece Name: {gunTarget.name}";
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void ChickenTarget(VRRig rig)
         {
             int index = 651;
-            DisableThrowableCoroutine = CoroutineManager.instance.StartCoroutine(DisableThrowable(index));
+            DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(DisableThrowable(index));
             TransferrableObject transferrableObject = VRRig.LocalRig.myBodyDockPositions.allObjects[index];
 
             if (!CosmeticsOwned.Contains(transferrableObject.gameObject.name))
@@ -4295,9 +3787,8 @@ Piece Name: {gunTarget.name}";
 
         public static void ChickenGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -4312,15 +3803,14 @@ Piece Name: {gunTarget.name}";
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         private static float throwableProjectileTimeout;
@@ -4329,9 +3819,9 @@ Piece Name: {gunTarget.name}";
             DistancePatch.enabled = true;
 
             if (DisableThrowableCoroutine != null)
-                CoroutineManager.instance.StopCoroutine(DisableThrowableCoroutine);
+                Coroutines.instance.StopCoroutine(DisableThrowableCoroutine);
 
-            DisableThrowableCoroutine = CoroutineManager.instance.StartCoroutine(DisableThrowable(index));
+            DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(DisableThrowable(index));
             TransferrableObject transferrableObject = VRRig.LocalRig.myBodyDockPositions.allObjects[index];
 
             if (!CosmeticsOwned.Contains(transferrableObject.gameObject.name))
@@ -4365,7 +3855,7 @@ Piece Name: {gunTarget.name}";
                 VRRig.LocalRig.transform.position = archivePosition;
                 SendSerialize(VRRig.LocalRig.GetPhotonView());
 
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -4383,68 +3873,13 @@ Piece Name: {gunTarget.name}";
 
         public static void ThrowableProjectileGun(int projectileIndex)
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                    SendThrowableProjectile(projectileIndex, NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, 0f, 0f), RandomQuaternion());
-            }
+                SendThrowableProjectile(projectileIndex, NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, 0f, 0f), RandomQuaternion());
+            });
         }
 
-        private static float startTimeBuilding;
-        public static void EnableAtticAntiReport() =>
-            startTimeBuilding = Time.time + 5f;
-
-        public static void AtticAntiReport()
-        {
-            if (Time.time > startTimeBuilding)
-                return;
-
-            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer == NetworkSystem.Instance.LocalPlayer))
-            {
-                RequestCreatePiece(-566818631, line.reportButton.transform.position + RandomVector3(0.3f), RandomQuaternion(), 0, null, true);
-                RPCProtection();
-            }
-        }
-
-        public static void AtticDrawGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                {
-                    if (!PhotonNetwork.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                        CoroutineManager.instance.StartCoroutine(DrawSmallDelay(NewPointer.transform.position));
-                }
-            }
-        }
-
-        public static void AtticBuildGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                {
-                    if (!PhotonNetwork.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                    {
-                        RequestCreatePiece(pieceIdSet, NewPointer.transform.position, RandomQuaternion(), 0, null, true);
-                        RPCProtection();
-                    }
-                }
-            }
-        }
+        public static float startTimeBuilding;
 
         public static IEnumerator DrawSmallDelay(Vector3 position)
         {
@@ -4455,236 +3890,19 @@ Piece Name: {gunTarget.name}";
             yield return new WaitForSeconds(0.5f);
             RequestCreatePiece(pieceIdSet, Temporary.transform.position, RandomQuaternion(), 0, null, true);
             Object.Destroy(Temporary);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
-        public static void AtticFreezeGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!PhotonNetwork.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                    {
-                        Player target = NetPlayerToPlayer(lockTarget.GetPlayer());
-                        RequestCreatePiece(-566818631, lockTarget.headMesh.transform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                        RequestCreatePiece(-566818631, lockTarget.leftHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                        RequestCreatePiece(-566818631, lockTarget.rightHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                        RPCProtection();
-                    }
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
-
-        public static void AtticFreezeAll()
-        {
-            if (rightTrigger > 0.5f)
-            {
-                Player target = GetRandomPlayer(false);
-
-                if (!PhotonNetwork.IsMasterClient)
-                    NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                else
-                {
-                    GetVRRigFromPlayer(target);
-                    RequestCreatePiece(-566818631, lockTarget.headMesh.transform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                    RequestCreatePiece(-566818631, lockTarget.leftHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                    RequestCreatePiece(-566818631, lockTarget.rightHandTransform.position + RandomVector3(0.4f), RandomQuaternion(), 0, target, true);
-                    RPCProtection();
-                }
-            }
-        }
-
-        private static float floatPower = 0.35f;
-        public static void AtticFloatGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!PhotonNetwork.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                    {
-                        floatPower += (0.3f - floatPower) * 0.05f;
-                        RequestCreatePiece(-566818631, lockTarget.transform.position + Vector3.down * floatPower, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), true);
-                        RPCProtection();
-                    }
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                floatPower = 0.35f;
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
-
-        public static void AtticFlingGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!PhotonNetwork.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                    {
-                        RequestCreatePiece(-566818631, lockTarget.transform.position + Vector3.down * 0.35f, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, Vector3.up * 50f);
-                        RPCProtection();
-                    }
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                floatPower = 0.35f;
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
-
-        public static void AtticBringGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!PhotonNetwork.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                    {
-                        RequestCreatePiece(-566818631, lockTarget.transform.position, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, (GorillaTagger.Instance.headCollider.transform.position - lockTarget.transform.position).normalized * 50f);
-                        RPCProtection();
-                    }
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                floatPower = 0.35f;
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
-
-        public static void AtticPushGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!PhotonNetwork.IsMasterClient)
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
-                    else
-                    {
-                        RequestCreatePiece(-566818631, lockTarget.transform.position, Quaternion.Euler(0f, Random.Range(0f, 350f), 0f), 0, NetPlayerToPlayer(lockTarget.GetPlayer()), false, true, (lockTarget.transform.position - GorillaTagger.Instance.headCollider.transform.position).normalized * 50f);
-                        RPCProtection();
-                    }
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                floatPower = 0.35f;
-                if (gunLocked)
-                    gunLocked = false;
-            }
-        }
+        public static float floatPower = 0.35f;
 
         public static Vector3 position = Vector3.zero;
-        public static void AtticTowerGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
 
-                if (position != Vector3.zero)
-                {
-                    RequestCreatePiece(pieceIdSet, position, Quaternion.Euler(0f, Time.frameCount % 360, 0f), 0, null, true);
-                    RPCProtection();
-
-                    position += new Vector3(0f, 0.1f, 0f);
-                }
-
-                if (GetGunInput(true))
-                    position = NewPointer.transform.position;
-            }
-            else
-                position = Vector3.zero;
-        }
-
-        private static bool isFiring;
+        public static bool isFiring;
         public static IEnumerator FireShotgun()
         {
             if (!NetworkSystem.Instance.IsMasterClient)
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
                 yield break;
             }
 
@@ -4693,7 +3911,7 @@ Piece Name: {gunTarget.name}";
             if (!File.Exists($"{PluginInfo.BaseDirectory}/shotgun.wav"))
                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/shotgun.ogg", "Audio/Mods/Fun/shotgun.ogg");
 
-            Sound.PlayAudio("shotgun.wav");
+            Fun.PlayAudio("shotgun.wav");
 
             BuilderPiece bullet = null;
 
@@ -4703,27 +3921,14 @@ Piece Name: {gunTarget.name}";
 
             RequestGrabPiece(bullet, true, Vector3.zero, Quaternion.identity);
             yield return null;
-            RequestDropPiece(bullet, ControllerUtilities.GetTrueRightHand().position + ControllerUtilities.GetTrueRightHand().forward * 0.65f + ControllerUtilities.GetTrueRightHand().right * 0.03f + ControllerUtilities.GetTrueRightHand().up * 0.05f, ControllerUtilities.GetTrueRightHand().rotation, ControllerUtilities.GetTrueRightHand().forward * 19.9f, Vector3.zero);
+            RequestDropPiece(bullet, Controllers.GetTrueRightHand().position + Controllers.GetTrueRightHand().forward * 0.65f + Controllers.GetTrueRightHand().right * 0.03f + Controllers.GetTrueRightHand().up * 0.05f, Controllers.GetTrueRightHand().rotation, Controllers.GetTrueRightHand().forward * 19.9f, Vector3.zero);
             yield return null;
-        }
-
-        public static void UnlimitedBuilding()
-        {
-            BuilderPieceInteractor.instance.maxHoldablePieceStackCount = int.MaxValue;
-            UnlimitPatches.enabled = true;
-        }
-
-        public static void DisableUnlimitedBuilding()
-        {
-            BuilderPieceInteractor.instance.maxHoldablePieceStackCount = 50;
-            UnlimitPatches.enabled = false;
         }
 
         public static void PlaceBlockGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (GetGunInput(true))
@@ -4732,17 +3937,16 @@ Piece Name: {gunTarget.name}";
                     if (gunTarget)
                     {
                         RequestPlacePiece(PlacePatch._piece, gunTarget, PlacePatch._bumpOffsetX, PlacePatch._bumpOffsetZ, PlacePatch._twist, PlacePatch._parentPiece, PlacePatch._attachIndex, PlacePatch._parentAttachIndex);
-                        RPCProtection();
+                        Security.RPCProtection();
                     }
                 }
-            }
+            });
         }
 
         public static void DestroyBlockGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (GetGunInput(true))
@@ -4751,10 +3955,10 @@ Piece Name: {gunTarget.name}";
                     if (gunTarget)
                     {
                         RequestRecyclePiece(gunTarget, true, 2);
-                        RPCProtection();
+                        Security.RPCProtection();
                     }
                 }
-            }
+            });
         }
 
         public static int blockDebounceIndex = 2;
@@ -4767,7 +3971,7 @@ Piece Name: {gunTarget.name}";
 
         public static void RequestCreatePiece(int pieceType, Vector3 position, Quaternion rotation, int materialType, object target = null, bool overrideFreeze = false, bool forceGravity = false, Vector3? velocity = null, Vector3? angVelocity = null)
         {
-            if (Buttons.GetIndex("Random Block Type").enabled)
+            if (Manager.GetIndex("Random Block Type").enabled)
                 pieceType = GetRandomBlockType();
 
             BuilderTable table = ManagerRegistry.BuilderTable;
@@ -4802,7 +4006,7 @@ Piece Name: {gunTarget.name}";
                             break;
                     }
 
-                    if ((!overrideFreeze && !Buttons.GetIndex("Zero Gravity Blocks").enabled) || forceGravity)
+                    if ((!overrideFreeze && !Manager.GetIndex("Zero Gravity Blocks").enabled) || forceGravity)
                     {
                         blockDelay = Time.time + 0.02f;
 
@@ -4966,14 +4170,13 @@ Piece Name: {gunTarget.name}";
         public static void BuildingBlockAura()
         {
             RequestCreatePiece(pieceIdSet, VRRig.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, 0);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static void BuildingBlockTextGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 GameObject NewPointer = GunData.NewPointer;
 
                 if (GetGunInput(true))
@@ -4984,7 +4187,7 @@ Piece Name: {gunTarget.name}";
                     if (Time.time > Overpowered.textDelay)
                     {
                         Overpowered.textDelay = Time.time + 0.1f;
-                        bool[][] characterData = Overpowered.Letters[Overpowered.textToRender[Overpowered.characterIndex].ToString()];
+                        bool[][] characterData = Overpowered.Letters[Fun.textToRender[Overpowered.characterIndex].ToString()];
 
                         List<Vector3> positions = new List<Vector3>();
                         for (int i = 0; i < characterData.Length; i++)
@@ -5006,7 +4209,7 @@ Piece Name: {gunTarget.name}";
                         foreach (Vector3 position in positions)
                             RequestCreatePiece(pieceIdSet, position, Quaternion.identity, 0);
 
-                        RPCProtection();
+                        Security.RPCProtection();
                     }
                 }
                 else
@@ -5014,19 +4217,19 @@ Piece Name: {gunTarget.name}";
                     Overpowered.basePosition = null;
                     Overpowered.characterIndex = 0;
                 }
-            }
+            });
         }
 
         public static void RainBuildingBlocks()
         {
             RequestCreatePiece(pieceIdSet, VRRig.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, 0);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static void BuildingBlockFountain()
         {
             RequestCreatePiece(pieceIdSet, VRRig.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, 0, velocity: RandomVector3(15f));
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static void SpazObject(string objectName)
@@ -5205,7 +4408,7 @@ Piece Name: {gunTarget.name}";
         public static void OrbitBlocks()
         {
             RequestCreatePiece(pieceIdSet, GorillaTagger.Instance.headCollider.transform.position + new Vector3(MathF.Cos((float)Time.frameCount / 30), 0f, MathF.Sin((float)Time.frameCount / 30)), Quaternion.identity, 0);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static void RideObject(string objectName)
@@ -5303,7 +4506,7 @@ Piece Name: {gunTarget.name}";
             yield return null;
 
             RequestCreatePiece(pieceType, VRRig.LocalRig.transform.position + Vector3.up, Quaternion.identity, 0, null, true);
-            RPCProtection();
+            Security.RPCProtection();
 
             while (pieceId < 0)
                 yield return null;
@@ -5321,7 +4524,7 @@ Piece Name: {gunTarget.name}";
         {
             if (!NetworkSystem.Instance.IsMasterClient)
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
                 yield break;
             }
 
@@ -5541,22 +4744,8 @@ Piece Name: {gunTarget.name}";
             yield return null;
         }
 
-        private static bool previousGripDown;
-        private static bool previousTriggerDown;
-        public static void Shotgun()
-        {
-            if (isFiring)
-                ControllerInputPoller.instance.leftControllerGripFloat = 1f;
-
-            if (rightGrab && !previousGripDown)
-                CoroutineManager.instance.StartCoroutine(CreateShotgun());
-
-            if (rightGrab && rightTrigger > 0.5f && !previousTriggerDown)
-                CoroutineManager.instance.StartCoroutine(FireShotgun());
-
-            previousGripDown = rightGrab;
-            previousTriggerDown = rightTrigger > 0.5f;
-        }
+        public static bool previousGripDown;
+        public static bool previousTriggerDown;
 
         public static IEnumerator CreateMassiveBlock()
         {
@@ -5580,7 +4769,7 @@ Piece Name: {gunTarget.name}";
         public static void MassiveBlock()
         {
             if (rightGrab && !previousGripDown)
-                CoroutineManager.instance.StartCoroutine(CreateMassiveBlock());
+                Coroutines.instance.StartCoroutine(CreateMassiveBlock());
 
             previousGripDown = rightGrab;
         }
@@ -5592,94 +4781,6 @@ Piece Name: {gunTarget.name}";
 
             if (rightGrab)
                 VRRig.LocalRig.sizeManager.currentSizeLayerMaskValue = 2;
-        }
-
-        public static void SlowMonsters()
-        {
-            foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
-            {
-                if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                monkeyeAI.speed = 0.02f;
-            }
-        }
-
-        public static void FastMonsters()
-        {
-            foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
-            {
-                if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                monkeyeAI.speed = 0.5f;
-            }
-        }
-
-        public static void FixMonsters()
-        {
-            foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
-            {
-                if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                monkeyeAI.speed = 0.1f;
-            }
-        }
-
-        public static void GrabMonsters()
-        {
-            if (rightGrab)
-            {
-                foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
-                {
-                    if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                    monkeyeAI.gameObject.transform.position = GorillaTagger.Instance.rightHandTransform.position;
-                }
-            }
-        }
-
-        public static void MonsterGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                {
-                    foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
-                    {
-                        if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                        monkeyeAI.gameObject.transform.position = NewPointer.transform.position + Vector3.up;
-                    }
-                }
-            }
-        }
-
-        public static void SpazMonsters()
-        {
-            foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
-            {
-                if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                monkeyeAI.transform.rotation = Quaternion.Euler(new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
-            }
-        }
-
-        public static void OrbitMonsters()
-        {
-            MonkeyeAI[] them = GetAllType<MonkeyeAI>();
-            int index = 0;
-            foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
-            {
-                if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                float offset = 360f / them.Length * index;
-                monkeyeAI.transform.position = GorillaTagger.Instance.headCollider.transform.position + new Vector3(MathF.Cos(offset + (float)Time.frameCount / 30) * 2f, 1f, MathF.Sin(offset + (float)Time.frameCount / 30) * 2f);
-                index++;
-            }
-        }
-
-        public static void DestroyMonsters()
-        {
-            foreach (MonkeyeAI monkeyeAI in GetAllType<MonkeyeAI>())
-            {
-                if (!NetworkSystem.Instance.IsMasterClient) { NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client."); return; }
-                monkeyeAI.gameObject.transform.position = new Vector3(99999f, 99999f, 99999f);
-            }
         }
 
         private static readonly List<BuilderPiece> potentialgrabbedpieces = new List<BuilderPiece>();
@@ -5700,10 +4801,10 @@ Piece Name: {gunTarget.name}";
                 if (piece == null)
                     return;
 
-                RequestGrabPiece(piece, false, Buttons.GetIndex("No Random Position Grab").enabled ? Vector3.zero : RandomVector3(0.5f), Buttons.GetIndex("No Random Rotation Grab").enabled ? Quaternion.identity : RandomQuaternion());
+                RequestGrabPiece(piece, false, Manager.GetIndex("No Random Position Grab").enabled ? Vector3.zero : RandomVector3(0.5f), Manager.GetIndex("No Random Rotation Grab").enabled ? Quaternion.identity : RandomQuaternion());
                 potentialgrabbedpieces.Add(piece);
 
-                RPCProtection();
+                Security.RPCProtection();
             }
 
             if (rightTrigger > 0.5f && Time.time > blockDelay)
@@ -5721,7 +4822,7 @@ Piece Name: {gunTarget.name}";
                 }
 
                 potentialgrabbedpieces.Clear();
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -5743,10 +4844,10 @@ Piece Name: {gunTarget.name}";
                 if (piece == null)
                     return;
 
-                RequestGrabPiece(piece, false, Buttons.GetIndex("No Random Position Grab").enabled ? Vector3.zero : RandomVector3(0.5f), Buttons.GetIndex("No Random Rotation Grab").enabled ? Quaternion.identity : RandomQuaternion());
+                RequestGrabPiece(piece, false, Manager.GetIndex("No Random Position Grab").enabled ? Vector3.zero : RandomVector3(0.5f), Manager.GetIndex("No Random Rotation Grab").enabled ? Quaternion.identity : RandomQuaternion());
                 potentialgrabbedpieces.Add(piece);
 
-                RPCProtection();
+                Security.RPCProtection();
             }
 
             if (rightTrigger > 0.5f && Time.time > blockDelay)
@@ -5764,7 +4865,7 @@ Piece Name: {gunTarget.name}";
                 }
 
                 potentialgrabbedpieces.Clear();
-                RPCProtection();
+                Security.RPCProtection();
             }
         }
 
@@ -5819,22 +4920,16 @@ Piece Name: {gunTarget.name}";
 
         public static void BalloonGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
+                foreach (BalloonHoldable balloon in GetAllType<BalloonHoldable>())
                 {
-                    foreach (BalloonHoldable balloon in GetAllType<BalloonHoldable>())
-                    {
-                        if (balloon.ownerRig.isLocal)
-                            balloon.gameObject.transform.position = NewPointer.transform.position + Vector3.up;
-                        else
-                            balloon.WorldShareableRequestOwnership();
-                    }
+                    if (balloon.ownerRig.isLocal)
+                        balloon.gameObject.transform.position = NewPointer.transform.position + Vector3.up;
+                    else
+                        balloon.WorldShareableRequestOwnership();
                 }
-            }
+            });
         }
 
         public static void DestroyBalloons()
@@ -6066,42 +5161,22 @@ Piece Name: {gunTarget.name}";
         public static float stealIdentityDelay;
         public static void CopyIdentityGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > stealIdentityDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        ChangeName(GetPlayerFromVRRig(gunTarget).NickName);
-                        ChangeColor(gunTarget.playerColor);
-                        stealIdentityDelay = Time.time + 0.5f;
-                    }
-                }
-            }
+                ChangeName(GetPlayerFromVRRig(gunTarget).NickName);
+                ChangeColor(gunTarget.playerColor);
+                stealIdentityDelay = Time.time + 0.5f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > stealIdentityDelay });
         }
 
         private static float stealCosmeticsDelay;
         public static void CopyCosmeticsGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > stealCosmeticsDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, gunTarget.cosmeticSet.ToPackedIDArray(), gunTarget.tryOnSet.ToPackedIDArray(), false);
-                        stealCosmeticsDelay = Time.time + 0.5f;
-                    }
-                }
-            }
+                GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, gunTarget.cosmeticSet.ToPackedIDArray(), gunTarget.tryOnSet.ToPackedIDArray(), false);
+                stealCosmeticsDelay = Time.time + 0.5f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > stealCosmeticsDelay });
         }
 
         public static int accessoryType;
@@ -6299,7 +5374,7 @@ Piece Name: {gunTarget.name}";
                         VRRig.LocalRig.cosmeticSet = new CosmeticsController.CosmeticSet(randomCosmetics.ToArray(), CosmeticsController.instance);
                     }
                     GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, PackCosmetics(randomCosmetics.ToArray()), PackCosmetics(randomCosmetics.ToArray()), false);
-                    RPCProtection();
+                    Security.RPCProtection();
                 }
             }
         }
@@ -6328,7 +5403,7 @@ Piece Name: {gunTarget.name}";
                         VRRig.LocalRig.cosmeticSet = new CosmeticsController.CosmeticSet(randomCosmetics.ToArray(), CosmeticsController.instance);
                     }
                     GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, PackCosmetics(randomCosmetics.ToArray()), PackCosmetics(randomCosmetics.ToArray()), false);
-                    RPCProtection();
+                    Security.RPCProtection();
                 }
             }
         }
@@ -6356,7 +5431,7 @@ Piece Name: {gunTarget.name}";
                         VRRig.LocalRig.cosmeticSet = new CosmeticsController.CosmeticSet(randomCosmetics.ToArray(), CosmeticsController.instance);
                     }
                     GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, PackCosmetics(randomCosmetics.ToArray()), PackCosmetics(randomCosmetics.ToArray()), false);
-                    RPCProtection();
+                    Security.RPCProtection();
                 }
             }
         }
@@ -6406,7 +5481,7 @@ Piece Name: {gunTarget.name}";
             CosmeticsController.instance.currentWornSet = new CosmeticsController.CosmeticSet(cosmeticArray, CosmeticsController.instance);
             VRRig.LocalRig.cosmeticSet = new CosmeticsController.CosmeticSet(cosmeticArray, CosmeticsController.instance);
             GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, PackCosmetics(cosmeticArray), CosmeticsController.instance.tryOnSet.ToPackedIDArray(), false);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static void TryOffAnywhere()
@@ -6414,7 +5489,7 @@ Piece Name: {gunTarget.name}";
             CosmeticsController.instance.currentWornSet = new CosmeticsController.CosmeticSet(archiveCosmetics, CosmeticsController.instance);
             VRRig.LocalRig.cosmeticSet = new CosmeticsController.CosmeticSet(archiveCosmetics, CosmeticsController.instance);
             GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, archiveCosmetics, CosmeticsController.instance.tryOnSet.ToPackedIDArray(), false);
-            RPCProtection();
+            Security.RPCProtection();
         }
 
         public static void AddCosmeticToCart(string cosmetic)
@@ -6434,7 +5509,7 @@ Piece Name: {gunTarget.name}";
                 CatalogVersion = CosmeticsController.instance.catalog
             }, delegate
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Item \"" + ToTitleCase(hat.overrideDisplayName) + "\" has been purchased.", 5000);
+                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Item \"" + Strings.ToTitleCase(hat.overrideDisplayName) + "\" has been purchased.", 5000);
                 CosmeticsController.instance.ProcessExternalUnlock(hat.itemName, false, false);
                 CosmeticsController.instance.currencyBalance -= hat.cost;
                 CosmeticsOwned += hat.itemName;
@@ -6446,27 +5521,27 @@ Piece Name: {gunTarget.name}";
         {
             rememberdirectory = pageNumber;
 
-            List<ButtonInfo> cosmeticbuttons = new List<ButtonInfo> { new ButtonInfo { buttonText = "Exit Cosmetic Browser", method = RemoveCosmeticBrowser, isTogglable = false, toolTip = "Returns you back to the fun mods." } };
+            List<Module> cosmeticbuttons = new List<Module> { new Module { buttonText = "Exit Cosmetic Browser", method = RemoveCosmeticBrowser, isTogglable = false, toolTip = "Returns you back to the fun mods." } };
             foreach (CosmeticsController.CosmeticItem hat in CosmeticsController.instance.allCosmetics)
             {
                 if (hat.canTryOn)
-                    cosmeticbuttons.Add(new ButtonInfo { buttonText = ToTitleCase(hat.overrideDisplayName), method = () => AddCosmeticToCart(hat.itemName), isTogglable = false, toolTip = "Adds the " + hat.overrideDisplayName.ToLower() + "to your cart." });
+                    cosmeticbuttons.Add(new Module { buttonText = Strings.ToTitleCase(hat.overrideDisplayName), method = () => AddCosmeticToCart(hat.itemName), isTogglable = false, toolTip = "Adds the " + hat.overrideDisplayName.ToLower() + "to your cart." });
             }
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = cosmeticbuttons.ToArray();
+            Manager.modules["Temporary Category"] = cosmeticbuttons.ToArray();
 
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void RemoveCosmeticBrowser()
         {
             pageNumber = rememberdirectory;
-            Buttons.CurrentCategoryName = "Fun Mods";
+            Manager.CurrentCategoryName = "Fun Mods";
         }
 
         public static void AutoLoadCosmetics()
         {
             RequestPatch.enabled = true;
-            RequestPatch.currentCoroutine ??= CoroutineManager.instance.StartCoroutine(RequestPatch.LoadCosmetics());
+            RequestPatch.currentCoroutine ??= Coroutines.instance.StartCoroutine(RequestPatch.LoadCosmetics());
             TryOnRoom.GetComponent<CosmeticBoundaryTrigger>().enabled = false;
         }
 
@@ -6523,12 +5598,12 @@ Piece Name: {gunTarget.name}";
                 string[] cosmetics = { "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null", "null" };
 
                 GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.Others, PackCosmetics(cosmetics), PackCosmetics(cosmetics), false);
-                RPCProtection();
+                Security.RPCProtection();
             }
             if (lasttagged && !VRRig.LocalRig.IsTagged())
             {
                 GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.Others, CosmeticsController.instance.currentWornSet.ToPackedIDArray(), CosmeticsController.instance.tryOnSet.ToPackedIDArray(), false);
-                RPCProtection();
+                Security.RPCProtection();
             }
             lasttagged = VRRig.LocalRig.IsTagged();
         }
@@ -6555,23 +5630,13 @@ Piece Name: {gunTarget.name}";
         private static float idgundelay;
         public static void CopyIDGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > idgundelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        idgundelay = Time.time + 0.5f;
-                        string id = GetPlayerFromVRRig(gunTarget).UserId;
-                        NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
-                        GUIUtility.systemCopyBuffer = id;
-                    }
-                }
-            }
+                idgundelay = Time.time + 0.5f;
+                string id = GetPlayerFromVRRig(gunTarget).UserId;
+                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
+                GUIUtility.systemCopyBuffer = id;
+            }, new GunLibrary.GunSettings { when = () => Time.time > idgundelay });
         }
 
         public static void CopyIDAura()
@@ -6579,7 +5644,7 @@ Piece Name: {gunTarget.name}";
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -6591,7 +5656,7 @@ Piece Name: {gunTarget.name}";
             {
                 foreach (var id in nearbyPlayers.Select(nearbyPlayer => GetPlayerFromVRRig(nearbyPlayer).UserId))
                 {
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
+                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
                     GUIUtility.systemCopyBuffer = id;
                 }
             }
@@ -6603,7 +5668,7 @@ Piece Name: {gunTarget.name}";
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal())
                 {
@@ -6618,7 +5683,7 @@ Piece Name: {gunTarget.name}";
             {
                 foreach (var id in touchedPlayers.Select(rig => rig.GetPlayer().UserId))
                 {
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
+                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
                     GUIUtility.systemCopyBuffer = id;
                 }
             }
@@ -6626,9 +5691,9 @@ Piece Name: {gunTarget.name}";
 
         public static void CopyIDAll()
         {
-            foreach (var id in VRRigExtensions.ActiveRigs.Select(vrrig => GetPlayerFromVRRig(vrrig).UserId))
+            foreach (var id in Players.ActiveRigs.Select(vrrig => GetPlayerFromVRRig(vrrig).UserId))
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
+                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
                 GUIUtility.systemCopyBuffer = id;
             }
         }
@@ -6636,33 +5701,23 @@ Piece Name: {gunTarget.name}";
         public static void CopySelfID()
         {
             string id = PhotonNetwork.LocalPlayer.UserId;
-            NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
+            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
             GUIUtility.systemCopyBuffer = id;
         }
 
         public static void NarrateIDGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > idgundelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        idgundelay = Time.time + 0.5f;
-                        SpeakText("Name: " + GetPlayerFromVRRig(gunTarget).NickName + ". I D: " + string.Join(" ", GetPlayerFromVRRig(gunTarget).UserId));
-                    }
-                }
-            }
+                idgundelay = Time.time + 0.5f;
+                SpeakText("Name: " + GetPlayerFromVRRig(gunTarget).NickName + ". I D: " + string.Join(" ", GetPlayerFromVRRig(gunTarget).UserId));
+            }, new GunLibrary.GunSettings { when = () => Time.time > idgundelay });
         }
 
         public static void NarrateIDAll()
         {
             string ids = "";
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (!vrrig.isLocal)
                     ids += "Name: " + GetPlayerFromVRRig(vrrig).NickName + ". I D: " + string.Join(" ", GetPlayerFromVRRig(vrrig).UserId) + ". ";
@@ -6676,7 +5731,7 @@ Piece Name: {gunTarget.name}";
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -6701,7 +5756,7 @@ Piece Name: {gunTarget.name}";
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal())
                 {
@@ -6728,27 +5783,17 @@ Piece Name: {gunTarget.name}";
 
         public static void NarrateFakeDoxxGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > idgundelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        idgundelay = Time.time + 0.5f;
-                        SpeakText("Name: " + GetPlayerFromVRRig(gunTarget).NickName + ". I P  ADD DRESS: " + string.Join(" ", $"{Random.Range(1, 255)}.{Random.Range(1, 255)}.{Random.Range(1, 255)}"));
-                    }
-                }
-            }
+                idgundelay = Time.time + 0.5f;
+                SpeakText("Name: " + GetPlayerFromVRRig(gunTarget).NickName + ". I P  ADD DRESS: " + string.Join(" ", $"{Random.Range(1, 255)}.{Random.Range(1, 255)}.{Random.Range(1, 255)}"));
+            }, new GunLibrary.GunSettings { when = () => Time.time > idgundelay });
         }
 
         public static void NarrateFakeDoxxAll()
         {
             string ids = "";
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (!vrrig.isLocal)
                     ids += "Name: " + GetPlayerFromVRRig(vrrig).NickName + ". I P  ADD DRESS: " + string.Join(" ", $"{Random.Range(1, 255)}.{Random.Range(1, 255)}.{Random.Range(1, 255)}") + ". ";
@@ -6761,7 +5806,7 @@ Piece Name: {gunTarget.name}";
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -6786,7 +5831,7 @@ Piece Name: {gunTarget.name}";
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal())
                 {
@@ -6821,24 +5866,14 @@ Piece Name: {gunTarget.name}";
 
         public static void CopyCreationDateGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                creationDateDelay = Time.time + 0.5f;
 
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && Time.time > creationDateDelay)
-                    {
-                        creationDateDelay = Time.time + 0.5f;
-
-                        string date = GetCreationDate(GetPlayerFromVRRig(gunTarget).UserId, CopyCreationDate);
-                        if (date != "Loading...")
-                            CopyCreationDate(date);
-                    }
-                }
-            }
+                string date = GetCreationDate(GetPlayerFromVRRig(gunTarget).UserId, CopyCreationDate);
+                if (date != "Loading...")
+                    CopyCreationDate(date);
+            }, new GunLibrary.GunSettings { when = () => Time.time > creationDateDelay });
         }
 
         public static void CopyCreationDateAura()
@@ -6846,7 +5881,7 @@ Piece Name: {gunTarget.name}";
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -6865,7 +5900,7 @@ Piece Name: {gunTarget.name}";
 
             List<VRRig> touchedPlayers = new List<VRRig>();
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal())
                 {
@@ -6885,7 +5920,7 @@ Piece Name: {gunTarget.name}";
 
         public static void CopyCreationDateAll()
         {
-            foreach (var date in VRRigExtensions.ActiveRigs.Select(vrrig => GetCreationDate(GetPlayerFromVRRig(vrrig).UserId, CopyCreationDate)).Where(date => date != "Loading..."))
+            foreach (var date in Players.ActiveRigs.Select(vrrig => GetCreationDate(GetPlayerFromVRRig(vrrig).UserId, CopyCreationDate)).Where(date => date != "Loading..."))
             {
                 CopyCreationDate(date);
             }
@@ -6893,7 +5928,7 @@ Piece Name: {gunTarget.name}";
 
         public static void CopyCreationDate(string date)
         {
-            NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + date, 5000);
+            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + date, 5000);
             GUIUtility.systemCopyBuffer = date;
         }
 
@@ -6906,7 +5941,7 @@ Piece Name: {gunTarget.name}";
 
         public static void NarrateCreationDateAll()
         {
-            foreach (var date in VRRigExtensions.ActiveRigs.Select(vrrig => GetCreationDate(GetPlayerFromVRRig(vrrig).UserId, SpeakText)).Where(date => date != "Loading..."))
+            foreach (var date in Players.ActiveRigs.Select(vrrig => GetCreationDate(GetPlayerFromVRRig(vrrig).UserId, SpeakText)).Where(date => date != "Loading..."))
                 SpeakText(date);
         }
 
@@ -6915,7 +5950,7 @@ Piece Name: {gunTarget.name}";
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -6934,7 +5969,7 @@ Piece Name: {gunTarget.name}";
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            List<VRRig> touchedPlayers = VRRigExtensions.ActiveRigs.Where(rig => !rig.IsLocal()).Where(rig => rig.IsBeingTouched()).ToList();
+            List<VRRig> touchedPlayers = Players.ActiveRigs.Where(rig => !rig.IsLocal()).Where(rig => rig.IsBeingTouched()).ToList();
 
             if (touchedPlayers.Count <= 0 || Time.time < allNarrationDelay) return;
             allNarrationDelay = Time.time + 10f;
@@ -6945,24 +5980,14 @@ Piece Name: {gunTarget.name}";
 
         public static void NarrateCreationDateGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                creationDateDelay = Time.time + 0.5f;
 
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && Time.time > creationDateDelay)
-                    {
-                        creationDateDelay = Time.time + 0.5f;
-
-                        string date = GetCreationDate(GetPlayerFromVRRig(gunTarget).UserId, date => SpeakText(date));
-                        if (date != "Loading...")
-                            SpeakText(date);
-                    }
-                }
-            }
+                string date = GetCreationDate(GetPlayerFromVRRig(gunTarget).UserId, date => SpeakText(date));
+                if (date != "Loading...")
+                    SpeakText(date);
+            }, new GunLibrary.GunSettings { when = () => Time.time > creationDateDelay });
         }
 
         public static void GrabPlayerInfo()
@@ -6982,13 +6007,13 @@ Piece Name: {gunTarget.name}";
                     b = plr.playerColor.b * 255;
                     cosmetics = plr.Cosmetics();
                 }
-                catch { LogManager.Log("Failed to log colors, rig most likely nonexistent"); }
+                catch { Logs.Log("Failed to log colors, rig most likely nonexistent"); }
                 try
                 {
                     text += "\n====================================\n";
                     text += string.Concat("Player Name: \"", player.NickName, "\", Player ID: \"", player.UserId, "\", Player Color: (R: ", r.ToString(), ", G: ", g.ToString(), ", B: ", b.ToString(), "), Cosmetics: ", cosmetics);
                 }
-                catch { LogManager.Log("Failed to log player"); }
+                catch { Logs.Log("Failed to log player"); }
             }
             text += "\n====================================\n";
             text += "Text file generated with Qubit Menu";
@@ -6996,8 +6021,1891 @@ Piece Name: {gunTarget.name}";
 
             File.WriteAllText(fileName, text);
 
-            string filePath = FileUtilities.GetGamePath() + "/" + fileName;
+            string filePath = Files.GetGamePath() + "/" + fileName;
             Process.Start(filePath);
+        }
+
+        public static void DisablePitchScaling()
+        {
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            {
+                vrrig.voicePitchForRelativeScale = new AnimationCurve(
+                    new Keyframe(0f, 1f, 0f, 0f),
+                    new Keyframe(1f, 1f, 0f, 0f)
+                );
+            }
+        }
+
+        public static void EnablePitchScaling()
+        {
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+                vrrig.voicePitchForRelativeScale = VRRig.LocalRig.voicePitchForRelativeScale;
+        }
+
+        public static void DisableMouthMovement()
+        {
+            VRRig.LocalRig.shouldSendSpeakingLoudness = false;
+            LoudnessPatch.enabled = true;
+        }
+
+        public static void EnableMouthMovement()
+        {
+            VRRig.LocalRig.shouldSendSpeakingLoudness = true;
+            LoudnessPatch.enabled = false;
+        }
+
+        public static void ConfusePlayerGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+
+                if (gunLocked && lockTarget != null)
+                {
+                    VRRig.LocalRig.enabled = false;
+                    VRRig.LocalRig.transform.position = lockTarget.transform.position - new Vector3(0f, 2f, 0f);
+
+                    if (Time.time > Fun.splashDel)
+                    {
+                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlaySplashEffect", lockTarget.GetPlayer(), lockTarget.transform.position + RandomVector3(0.5f), RandomQuaternion(), 4f, 100f, true, false);
+                        Security.RPCProtection();
+                        Fun.splashDel = Time.time + 0.1f;
+                    }
+                }
+                if (GetGunInput(true))
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        gunLocked = true;
+                        lockTarget = gunTarget;
+                    }
+                }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
+        }
+
+        public static void ConfuseAllPlayers()
+        {
+            SerializePatch.OverrideSerialization = () =>
+            {
+                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                Vector3 archivePos = VRRig.LocalRig.transform.position;
+
+                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                {
+                    VRRig targetRig = GetVRRigFromPlayer(Player);
+
+                    VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up * 2f;
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                }
+
+                Security.RPCProtection();
+
+                VRRig.LocalRig.transform.position = archivePos;
+
+                return false;
+            };
+        }
+
+        public static void ConfuseAllPlayersSplash()
+        {
+            if (Time.time > Fun.splashDel)
+            {
+                Fun.splashDel = Time.time + 0.05f;
+                VRRig rig = GetRandomVRRig();
+                GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlaySplashEffect", rig.GetPlayer(), rig.transform.position + RandomVector3(0.5f), RandomQuaternion(), 4f, 100f, true, false);
+            }
+        }
+
+        public static bool tinnitusSelf;
+        public static void TinnitusGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!NetworkSystem.Instance.InRoom) return;
+                gunLocked = true;
+                lockTarget = gunTarget;
+
+                if (Movement.tinnitus.Count == 0)
+                {
+                    AudioClip audioClip = Movement.CreateTinnitusSound(Movement.targetHz);
+                    Voices.Clip clip = Voices.Get().AudioClip(audioClip);
+                    clip.Looping = true;
+                    Movement.tinnitus[clip.Id] = clip;
+                }
+                NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = tinnitusSelf;
+
+                SerializePatch.OverrideSerialization = () =>
+                {
+                    NetPlayer target = lockTarget.GetPlayer();
+                    MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                    Vector3 positionArchive = VRRig.LocalRig.transform.position;
+                    VRRig.LocalRig.transform.position = lockTarget.transform.position - (lockTarget.headMesh.transform.forward * 0.2f);
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
+
+                    VRRig.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => plr.ActorNumber != target.ActorNumber).Select(plr => plr.ActorNumber).ToArray() });
+
+                    Security.RPCProtection();
+                    VRRig.LocalRig.transform.position = positionArchive;
+
+                    return false;
+                };
+            }, new GunLibrary.GunSettings { when = () => !gunLocked, onIdle = () =>
+                {
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        Sound.FixMicrophone();
+                        SerializePatch.OverrideSerialization = null;
+                    }
+                } });
+        }
+
+        public static void TinnitusAll()
+        {
+            if (!NetworkSystem.Instance.InRoom) return;
+            if (Movement.tinnitus.Count == 0)
+            {
+                AudioClip audioClip = Movement.CreateTinnitusSound(Movement.targetHz);
+                Voices.Clip clip = Voices.Get().AudioClip(audioClip);
+                clip.Looping = true;
+                Movement.tinnitus[clip.Id] = clip;
+            }
+            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = tinnitusSelf;
+
+            SerializePatch.OverrideSerialization = () =>
+            {
+                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                Vector3 archivePos = VRRig.LocalRig.transform.position;
+
+                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                {
+                    VRRig targetRig = GetVRRigFromPlayer(Player);
+
+                    VRRig.LocalRig.transform.position = targetRig.transform.position - (targetRig.headMesh.transform.forward * 0.2f);
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                }
+
+                Security.RPCProtection();
+
+                VRRig.LocalRig.transform.position = archivePos;
+
+                return false;
+            };
+        }
+
+        public static void DisableTinnitus()
+        {
+            SerializePatch.OverrideSerialization = null;
+            foreach (Voices.Clip clip in Movement.tinnitus.Values)
+                Voices.Get().StopAudioClip(clip);
+            Movement.tinnitus.Clear();
+        }
+        public static void OverstimulateGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+
+                if (gunLocked && lockTarget != null)
+                {
+                    if (Time.time > Fun.splashDel)
+                    {
+                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlaySplashEffect", lockTarget.GetPlayer(), lockTarget.headMesh.transform.TransformPoint(Vector3.forward * 0.2f), RandomQuaternion(), 4f, 100f, true, false);
+                        Fun.splashDel = Time.time + 0.1f;
+                    }
+
+                    if (Random.Range(0f, 1f) > 0.5f)
+                    {
+                        if (Time.time > Movement.soundSpamDelay)
+                        {
+                            Movement.soundSpamDelay = Time.time + 0.1f;
+                            GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", lockTarget.GetPhotonPlayer(), Random.Range(336, 338), false, 999999f);
+                        }
+                    }
+                    else
+                    {
+                        if (Time.time > Movement.soundSpamDelay)
+                        {
+                            int[] sounds = {
+                                Random.Range(40,54),
+                                Random.Range(214,221)
+                            };
+
+                            Movement.soundSpamDelay = Time.time + 0.1f;
+                            GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", lockTarget.GetPhotonPlayer(), sounds[Random.Range(0, 1)], false, 999999f);
+                        }
+                    }
+
+                    if (Time.time > Movement.hoverboardSpawnDelay)
+                    {
+                        Movement.hoverboardSpawnDelay = Time.time + 0.25f;
+
+                        FreeHoverboardManager.DataPerPlayer orCreatePlayerData = FreeHoverboardManager.instance.GetOrCreatePlayerData(NetworkSystem.Instance.LocalPlayer.ActorNumber);
+                        int boardIndex = orCreatePlayerData.board0.gameObject.activeSelf ? ((!orCreatePlayerData.board1.gameObject.activeSelf) ? 1 : (1 - FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex)) : 0;
+
+                        FreeHoverboardManager.instance.photonView.RPC("DropBoard_RPC", lockTarget.GetPhotonPlayer(), boardIndex == 1,
+                            BitPackUtils.PackWorldPosForNetwork(lockTarget.headMesh.transform.TransformPoint(Vector3.forward * 0.2f)),
+                            BitPackUtils.PackQuaternionForNetwork(RandomQuaternion()),
+                            BitPackUtils.PackWorldPosForNetwork(RandomVector3(3)), BitPackUtils.PackWorldPosForNetwork(RandomVector3(3)),
+                            BitPackUtils.PackColorForNetwork(RandomColor()));
+
+                        FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex = boardIndex;
+                    }
+
+                    Security.RPCProtection();
+                }
+
+                if (GetGunInput(true))
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal() && !gunLocked)
+                    {
+                        gunLocked = true;
+                        lockTarget = gunTarget;
+
+                        SerializePatch.OverrideSerialization = () =>
+                        {
+                            NetPlayer target = lockTarget.GetPlayer();
+                            MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                            Vector3 positionArchive = VRRig.LocalRig.transform.position;
+                            VRRig.LocalRig.transform.position = lockTarget.transform.position + RandomVector3();
+                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
+
+                            Security.RPCProtection();
+                            VRRig.LocalRig.transform.position = positionArchive;
+                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => plr.ActorNumber != target.ActorNumber).Select(plr => plr.ActorNumber).ToArray() });
+
+                            return false;
+                        };
+                    }
+                }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        SerializePatch.OverrideSerialization = null;
+                    }
+                } });
+        }
+
+        public static void OverstimulateAll()
+        {
+            SerializePatch.OverrideSerialization ??= () =>
+            {
+                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+                Vector3 archivePos = VRRig.LocalRig.transform.position;
+                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                {
+                    VRRig targetRig = GetVRRigFromPlayer(Player);
+                    VRRig.LocalRig.transform.position = targetRig.transform.position + RandomVector3();
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                }
+                Security.RPCProtection();
+                VRRig.LocalRig.transform.position = archivePos;
+                return false;
+            };
+
+            VRRig randomRig = GetRandomVRRig();
+
+            if (Time.time > Fun.splashDel)
+            {
+                GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlaySplashEffect", GetPlayerFromVRRig(randomRig), randomRig.headMesh.transform.TransformPoint(Vector3.forward * 0.2f), RandomQuaternion(), 4f, 100f, true, false);
+                Fun.splashDel = Time.time + 0.1f;
+            }
+
+            if (Random.Range(0f, 1f) > 0.5f)
+            {
+                if (Time.time > Movement.soundSpamDelay)
+                {
+                    Movement.soundSpamDelay = Time.time + 0.1f;
+                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", randomRig.GetPhotonPlayer(), Random.Range(336, 338), false, 999999f);
+                }
+            }
+            else
+            {
+                if (Time.time > Movement.soundSpamDelay)
+                {
+                    int[] sounds = {
+                        Random.Range(40,54),
+                        Random.Range(214,221)
+                    };
+
+                    Movement.soundSpamDelay = Time.time + 0.1f;
+                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", randomRig.GetPhotonPlayer(), sounds[Random.Range(0, 1)], false, 999999f);
+                }
+            }
+
+            if (Time.time > Movement.hoverboardSpawnDelay)
+            {
+                Movement.hoverboardSpawnDelay = Time.time + 0.25f;
+
+                FreeHoverboardManager.DataPerPlayer orCreatePlayerData = FreeHoverboardManager.instance.GetOrCreatePlayerData(NetworkSystem.Instance.LocalPlayer.ActorNumber);
+                int boardIndex = orCreatePlayerData.board0.gameObject.activeSelf ? ((!orCreatePlayerData.board1.gameObject.activeSelf) ? 1 : (1 - FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex)) : 0;
+
+                FreeHoverboardManager.instance.photonView.RPC("DropBoard_RPC", randomRig.GetPhotonPlayer(), boardIndex == 1,
+                    BitPackUtils.PackWorldPosForNetwork(randomRig.headMesh.transform.TransformPoint(Vector3.forward * 0.2f)),
+                    BitPackUtils.PackQuaternionForNetwork(RandomQuaternion()),
+                    BitPackUtils.PackWorldPosForNetwork(RandomVector3(3)), BitPackUtils.PackWorldPosForNetwork(RandomVector3(3)),
+                    BitPackUtils.PackColorForNetwork(RandomColor()));
+
+                FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex = boardIndex;
+            }
+        }
+
+        public static void ShutdownHeadsetGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+
+                if (gunLocked && lockTarget != null)
+                    Fun.HoverboardScreenTarget(lockTarget, Color.black);
+
+                if (GetGunInput(true))
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        gunLocked = true;
+                        lockTarget = gunTarget;
+
+                        LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/shutdown.ogg", "Audio/Mods/Fun/shutdown.ogg", clip => Fun.PlayAudio(clip));
+                    }
+                }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
+        }
+
+        public static void ShutdownHeadsetAll() =>
+            Fun.HoverboardScreenAll(Color.black);
+
+        public static void ReverseSchizophrenicGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                gunLocked = true;
+                lockTarget = gunTarget;
+
+                SerializePatch.OverrideSerialization = () =>
+                {
+                    NetPlayer target = lockTarget.GetPlayer();
+                    MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                    Vector3 positionArchive = VRRig.LocalRig.transform.position;
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => plr.ActorNumber != target.ActorNumber).Select(plr => plr.ActorNumber).ToArray() });
+
+                    VRRig.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
+
+                    Security.RPCProtection();
+                    VRRig.LocalRig.transform.position = positionArchive;
+
+                    return false;
+                };
+            }, new GunLibrary.GunSettings { when = () => !gunLocked, onIdle = () =>
+                {
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        SerializePatch.OverrideSerialization = null;
+                    }
+                } });
+        }
+
+        public static void SchizophrenicGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                gunLocked = true;
+                lockTarget = gunTarget;
+
+                SerializePatch.OverrideSerialization = () =>
+                {
+                    NetPlayer target = lockTarget.GetPlayer();
+                    MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                    Vector3 positionArchive = VRRig.LocalRig.transform.position;
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
+
+                    VRRig.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => plr.ActorNumber != target.ActorNumber).Select(plr => plr.ActorNumber).ToArray() });
+
+                    Security.RPCProtection();
+                    VRRig.LocalRig.transform.position = positionArchive;
+
+                    return false;
+                };
+            }, new GunLibrary.GunSettings { when = () => !gunLocked, onIdle = () =>
+                {
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        SerializePatch.OverrideSerialization = null;
+                    }
+                } });
+        }
+
+        public static Dictionary<string, int> ObjectByName { get => ManagerRegistry.GhostReactor.GameEntityManager.itemPrefabFactory.ToDictionary(prefab => prefab.Value.name, prefab => prefab.Key); }
+
+        public static void SpamObjectGrip(int objectId)
+        {
+            if (rightGrab)
+                Overpowered.CreateItem(RpcTarget.All, objectId, GorillaTagger.Instance.rightHandTransform.position, RandomQuaternion(), GorillaTagger.Instance.rightHandTransform.forward * ShootStrength, Vector3.zero);
+        }
+
+        public static void SpamEntityGrip()
+        {
+            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
+            SpamObjectGrip(objectIds[Random.Range(0, objectIds.Length)]);
+        }
+
+        public static void ToolSpamGrip()
+        {
+            int[] objectIds = ObjectByName.Where(x => x.Key.Contains("Tool")).Select(x => x.Value).ToArray();
+            SpamObjectGrip(objectIds[Random.Range(0, objectIds.Length)]);
+        }
+
+        public static void ToolSpamGun()
+        {
+            int[] objectIds = ObjectByName.Where(x => x.Key.Contains("Tool")).Select(x => x.Value).ToArray();
+            SpamObjectGun(objectIds[Random.Range(0, objectIds.Length)]);
+        }
+
+        public static void SpamObjectGun(int objectId)
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                Overpowered.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero);
+            });
+        }
+
+        public static void SpamEntityGun()
+        {
+            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
+            SpamObjectGun(objectIds[Random.Range(0, objectIds.Length)]);
+        }
+
+        public static void RainEntities()
+        {
+            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
+            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], VRRig.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, Vector3.down, Vector3.zero);
+        }
+
+        public static void EntityAura()
+        {
+            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
+            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], VRRig.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, Vector3.down, Vector3.zero);
+        }
+
+        public static void EntityFountain()
+        {
+            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
+            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], VRRig.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, RandomVector3(15f), Vector3.zero);
+        }
+
+        public static string textToRender;
+
+        public static void GhostReactorTextGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                GameObject NewPointer = GunData.NewPointer;
+
+                if (GetGunInput(true))
+                {
+                    if (Overpowered.basePosition == null)
+                        Overpowered.basePosition = NewPointer.transform.position + Vector3.up;
+
+                    if (Time.time > Overpowered.textDelay)
+                    {
+                        Overpowered.textDelay = Time.time + 0.1f;
+                        bool[][] characterData = Overpowered.Letters[textToRender[Overpowered.characterIndex].ToString()];
+
+                        List<Vector3> position = new List<Vector3>();
+                        for (int i = 0; i < characterData.Length; i++)
+                        {
+                            bool[] column = characterData[i];
+
+                            for (int j = 0; j < column.Length; j++)
+                            {
+                                bool currentIndex = column[j];
+                                Vector3 offset = new Vector3((j * 0.2f) + (Overpowered.characterIndex * 1.2f), i * -0.2f, 0f);
+
+                                if (currentIndex)
+                                    position.Add(Overpowered.basePosition.Value + offset);
+                            }
+                        }
+
+                        Overpowered.CreateItems(RpcTarget.All, Enumerable.Repeat(ObjectByName["GhostReactorCollectibleFlower"], position.Count).ToArray(), position.ToArray(), Enumerable.Repeat(Quaternion.identity, position.Count).ToArray());
+                        Overpowered.characterIndex++;
+                    }
+                }
+                else
+                {
+                    Overpowered.characterIndex = 0;
+                    Overpowered.basePosition = null;
+                }
+            });
+        }
+
+        public static void SuperInfectionTextGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                GameObject NewPointer = GunData.NewPointer;
+
+                if (GetGunInput(true))
+                {
+                    if (Overpowered.basePosition == null)
+                        Overpowered.basePosition = NewPointer.transform.position + Vector3.up;
+
+                    if (Time.time > Overpowered.textDelay)
+                    {
+                        Overpowered.textDelay = Time.time + 0.1f;
+                        bool[][] characterData = Overpowered.Letters[textToRender[Overpowered.characterIndex].ToString()];
+
+                        List<Vector3> position = new List<Vector3>();
+                        for (int i = 0; i < characterData.Length; i++)
+                        {
+                            bool[] column = characterData[i];
+
+                            for (int j = 0; j < column.Length; j++)
+                            {
+                                bool currentIndex = column[j];
+                                Vector3 offset = new Vector3((j * 0.2f) + (Overpowered.characterIndex * 1.2f), i * -0.2f, 0f);
+
+                                if (currentIndex)
+                                    position.Add(Overpowered.basePosition.Value + offset);
+                            }
+                        }
+
+                        Overpowered.CreateItems(RpcTarget.All, Enumerable.Repeat(GadgetByName["SIGadgetDashYoyo"], position.Count).ToArray(), position.ToArray(), Enumerable.Repeat(Quaternion.identity, position.Count).ToArray(), null, ManagerRegistry.SuperInfection.GameEntityManager);
+                        Overpowered.characterIndex++;
+                    }
+                }
+                else
+                {
+                    Overpowered.characterIndex = 0;
+                    Overpowered.basePosition = null;
+                }
+            });
+        }
+
+        public static void GhostReactorDrawGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                Coroutines.instance.StartCoroutine(Overpowered.DrawSmallDelay(NewPointer.transform.position, ObjectByName["GhostReactorCollectibleCore"], ManagerRegistry.GhostReactor.GameEntityManager));
+            });
+        }
+
+        public static void SuperInfectionDrawGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
+                Coroutines.instance.StartCoroutine(Overpowered.DrawSmallDelay(NewPointer.transform.position, objectIds[Random.Range(0, objectIds.Length)], ManagerRegistry.SuperInfection.GameEntityManager));
+            });
+        }
+        public static void DestroyEntityGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                if (Time.time > Overpowered.destroyDelay)
+                {
+                    GameEntity gameEntity = null;
+                    float closestDist = float.MaxValue;
+
+                    foreach (GameEntity entity in ManagerRegistry.GhostReactor.GameEntityManager.entities)
+                    {
+                        if (entity != null)
+                        {
+                            float distance = Vector3.Distance(NewPointer.transform.position, entity.transform.position);
+                            if (distance < 0.75f && distance < closestDist)
+                            {
+                                gameEntity = entity;
+                                closestDist = distance;
+                            }
+                        }
+                    }
+
+                    if (gameEntity != null)
+                    {
+                        Overpowered.destroyDelay = Time.time + 0.02f;
+                        if (NetworkSystem.Instance.IsMasterClient)
+                        {
+                            ManagerRegistry.GhostReactor.GameEntityManager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new[] { gameEntity.GetNetId() });
+                            Security.RPCProtection();
+                        }
+                        else
+                        {
+                            gameEntity.RequestGrab(true, Vector3.zero, Quaternion.identity);
+                            gameEntity.RequestThrow(true, GorillaTagger.Instance.bodyCollider.transform.position - (Vector3.up * 14f), Quaternion.identity, Vector3.zero, Vector3.zero);
+                        }
+                    }
+                }
+            });
+        }
+        public static void InfiniteResources()
+        {
+            var player = SIPlayer.Get(NetworkSystem.Instance.LocalPlayer.ActorNumber);
+            for (int i = 0; i < player.CurrentProgression.resourceArray.Length; i++)
+                player.CurrentProgression.resourceArray[i] = int.MaxValue;
+
+            if (Time.time > Overpowered.resourceIncrementDelay)
+            {
+                Overpowered.resourceIncrementDelay = Time.time + 1f;
+                for (int i = 0; i < (int)SIResource.ResourceType.Count; i++)
+                {
+                    var resourceType = (SIResource.ResourceType)i;
+                    ProgressionManager.Instance.IncrementSIResource(resourceType.ToString(), OnFailure: (error) => Overpowered.resourceIncrementDelay = Time.time + 10f);
+                }
+            }
+        }
+
+        public static void CompleteAllQuests()
+        {
+            for (int i = 0; i < SIProgression.Instance.activeQuestIds.Length; i++)
+            {
+                RotatingQuest quest = SIProgression.Instance.questSourceList.GetQuestById(SIProgression.Instance.activeQuestIds[i]);
+                quest.SetProgress(quest.requiredOccurenceCount);
+            }
+        }
+
+        public static void ClaimAllTerminals()
+        {
+            foreach (var terminal in ManagerRegistry.SuperInfection.ZoneSuperInfection.siTerminals)
+                terminal?.PlayerHandScanned(NetworkSystem.Instance.LocalPlayer.ActorNumber);
+        }
+
+        public static void UnlockAllGadgets()
+        {
+            foreach (var page in SIProgression.Instance.unlockedTechTreeData)
+            {
+                for (int i = 0; i < page.Length; i++)
+                    page[i] = true;
+            }
+        }
+
+        public static void DebugBlasterAimbot()
+        {
+            List<NetPlayer> infected = InfectedList();
+            List<VRRig> rigs = Players.ActiveRigs
+                .Where(rig => !rig.isLocal)
+                .Where(rig => !infected.Contains(rig.GetPlayer()))
+                .ToList();
+
+            Transform head = GorillaTagger.Instance.headCollider.transform;
+            VRRig targetRig = rigs
+                .Where(rig => rig != null)
+                .Select(rig => new
+                {
+                    Rig = rig,
+                    ToRig = (rig.transform.position - head.position).normalized,
+                    Distance = Vector3.Distance(head.position, rig.transform.position)
+                })
+                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig)) // only angle matters
+                .ThenBy(x => x.Distance) // tiebreaker if multiple at same angle
+                .Select(x => x.Rig)
+                .FirstOrDefault();
+
+            if (targetRig == null)
+                return;
+
+            Visuals.Visualize(PrimitiveType.Sphere, targetRig.headMesh.transform.position, Quaternion.identity, new Vector3(0.1f, 0.1f, 0.1f), Color.green, -91752, 0.1f);
+        }
+
+        public static void BlasterLaserSpam()
+        {
+            if (rightGrab)
+                Overpowered.BetaFireBlaster(GorillaTagger.Instance.rightHandTransform.position, GorillaTagger.Instance.rightHandTransform.forward);
+        }
+
+        public static void BlasterFlingGun(Vector3 direction)
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                Overpowered.BetaFireBlaster(lockTarget.transform.position, direction.normalized);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void BlasterFlingAll(Vector3 direction)
+        {
+            if (Overpowered.GetBlaster() == null)
+                SerializePatch.OverrideSerialization = null;
+            else SerializePatch.OverrideSerialization ??= () =>
+            {
+                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                Vector3 archivePos = VRRig.LocalRig.transform.position;
+
+                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                {
+                    VRRig targetRig = GetVRRigFromPlayer(Player);
+
+                    VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                }
+
+                Security.RPCProtection();
+
+                VRRig.LocalRig.transform.position = archivePos;
+
+                return false;
+            };
+
+            foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+            {
+                VRRig targetRig = GetVRRigFromPlayer(Player);
+                Overpowered.BetaFireBlaster(targetRig.transform.position, direction, Player, true);
+            }
+        }
+
+        public static void BlasterFlingTowardsGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                Overpowered.BetaFireBlaster(lockTarget.transform.position, GorillaTagger.Instance.bodyCollider.transform.position - lockTarget.transform.position);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void BlasterFlingTowardsAll()
+        {
+            if (Overpowered.GetBlaster() == null)
+                SerializePatch.OverrideSerialization = null;
+            else SerializePatch.OverrideSerialization ??= () =>
+            {
+                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                Vector3 archivePos = VRRig.LocalRig.transform.position;
+
+                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                {
+                    VRRig targetRig = GetVRRigFromPlayer(Player);
+
+                    VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                }
+
+                Security.RPCProtection();
+
+                VRRig.LocalRig.transform.position = archivePos;
+
+                return false;
+            };
+
+            foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+            {
+                VRRig targetRig = GetVRRigFromPlayer(Player);
+                Overpowered.BetaFireBlaster(targetRig.transform.position, GorillaTagger.Instance.bodyCollider.transform.position - targetRig.transform.position, Player, true);
+            }
+        }
+
+        public static void BlasterFlingAwayGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                Overpowered.BetaFireBlaster(lockTarget.transform.position, lockTarget.transform.position - GorillaTagger.Instance.bodyCollider.transform.position);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void BlasterFlingAwayAll()
+        {
+            if (Overpowered.GetBlaster() == null)
+                SerializePatch.OverrideSerialization = null;
+            else SerializePatch.OverrideSerialization ??= () =>
+            {
+                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                Vector3 archivePos = VRRig.LocalRig.transform.position;
+
+                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                {
+                    VRRig targetRig = GetVRRigFromPlayer(Player);
+
+                    VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                }
+
+                Security.RPCProtection();
+
+                VRRig.LocalRig.transform.position = archivePos;
+
+                return false;
+            };
+
+            foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+            {
+                VRRig targetRig = GetVRRigFromPlayer(Player);
+                Overpowered.BetaFireBlaster(targetRig.transform.position, targetRig.transform.position - GorillaTagger.Instance.bodyCollider.transform.position, Player, true);
+            }
+        }
+
+        public static void BlasterKickGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                Overpowered.BetaFireBlaster(lockTarget.transform.position, lockTarget.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - lockTarget.transform.position).normalized : lockTarget.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void BlasterKickAll()
+        {
+            if (Overpowered.GetBlaster() == null)
+                SerializePatch.OverrideSerialization = null;
+            else SerializePatch.OverrideSerialization ??= () =>
+            {
+                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                Vector3 archivePos = VRRig.LocalRig.transform.position;
+
+                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                {
+                    VRRig targetRig = GetVRRigFromPlayer(Player);
+
+                    VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                }
+
+                Security.RPCProtection();
+
+                VRRig.LocalRig.transform.position = archivePos;
+
+                return false;
+            };
+
+            foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+            {
+                VRRig targetRig = GetVRRigFromPlayer(Player);
+                Overpowered.BetaFireBlaster(targetRig.transform.position, targetRig.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - targetRig.transform.position).normalized : targetRig.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left, Player, true);
+            }
+        }
+
+        public static void BlasterCrashGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                Overpowered.BetaFireBlaster(lockTarget.transform.position, lockTarget.transform.position.y > 55f ? Vector3.right : Vector3.up);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void BlasterCrashAll()
+        {
+            if (Overpowered.GetBlaster() == null)
+                SerializePatch.OverrideSerialization = null;
+            else SerializePatch.OverrideSerialization ??= () =>
+            {
+                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
+
+                Vector3 archivePos = VRRig.LocalRig.transform.position;
+
+                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+                {
+                    VRRig targetRig = GetVRRigFromPlayer(Player);
+
+                    VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
+                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
+                }
+
+                Security.RPCProtection();
+
+                VRRig.LocalRig.transform.position = archivePos;
+
+                return false;
+            };
+
+            foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
+            {
+                VRRig targetRig = GetVRRigFromPlayer(Player);
+                Overpowered.BetaFireBlaster(targetRig.transform.position, targetRig.transform.position.y > 55f ? Vector3.right : Vector3.up, Player, true);
+            }
+        }
+
+        public static void BlasterControlGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+
+                if (gunLocked && lockTarget != null && lockTarget.Distance(GorillaTagger.Instance.bodyCollider.transform.position) > 0.5f)
+                    Overpowered.BetaFireBlaster(lockTarget.transform.position, GorillaTagger.Instance.bodyCollider.transform.position - lockTarget.transform.position);
+
+                if (GetGunInput(true))
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        gunLocked = true;
+                        lockTarget = gunTarget;
+                    }
+                }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                } });
+        }
+
+        public static Dictionary<string, int> GadgetByName
+        {
+            get =>
+                ManagerRegistry.SuperInfection.GameEntityManager.itemPrefabFactory
+                .ToDictionary(prefab => prefab.Value.name, prefab => prefab.Key);
+        }
+
+        public static void SpamGadgetGrip(int objectId)
+        {
+            if (rightGrab)
+                Overpowered.CreateItem(RpcTarget.All, objectId, GorillaTagger.Instance.rightHandTransform.position, RandomQuaternion(), GorillaTagger.Instance.rightHandTransform.forward * ShootStrength, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+        }
+
+        public static void SpamGadgetGun(int objectId)
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                Overpowered.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            });
+        }
+
+        public static void GadgetSpamGrip()
+        {
+            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
+            SpamGadgetGrip(objectIds[Random.Range(0, objectIds.Length)]);
+        }
+
+        public static void GadgetSpamGun()
+        {
+            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
+            SpamGadgetGun(objectIds[Random.Range(0, objectIds.Length)]);
+        }
+
+        public static void RainGadgets()
+        {
+            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
+            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], VRRig.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, Vector3.down, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+        }
+
+        public static void GadgetAura()
+        {
+            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
+            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], VRRig.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, Vector3.down, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+        }
+
+        public static void GadgetFountain()
+        {
+            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
+            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], VRRig.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, RandomVector3(15f), Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+        }
+
+        public static void ResourceSpamGrip()
+        {
+            int[] objectIds = GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
+            SpamGadgetGrip(objectIds[Random.Range(0, objectIds.Length)]);
+        }
+
+        public static void ResourceSpamGun()
+        {
+            int[] objectIds = GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
+            SpamGadgetGun(objectIds[Random.Range(0, objectIds.Length)]);
+        }
+
+        public static void DestroyGadgetGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                if (Time.time > Overpowered.destroyDelay)
+                {
+                    GameEntity gameEntity = null;
+                    float closestDist = float.MaxValue;
+
+                    foreach (GameEntity entity in ManagerRegistry.SuperInfection.GameEntityManager.entities)
+                    {
+                        if (entity != null)
+                        {
+                            float distance = Vector3.Distance(NewPointer.transform.position, entity.transform.position);
+                            if (distance < 0.75f && distance < closestDist)
+                            {
+                                gameEntity = entity;
+                                closestDist = distance;
+                            }
+                        }
+                    }
+
+                    if (gameEntity != null)
+                    {
+                        Overpowered.destroyDelay = Time.time + 0.02f;
+                        if (NetworkSystem.Instance.IsMasterClient)
+                        {
+                            ManagerRegistry.SuperInfection.GameEntityManager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new[] { gameEntity.GetNetId() });
+                            Security.RPCProtection();
+                        }
+                        else
+                        {
+                            gameEntity.RequestGrab(true, Vector3.zero, Quaternion.identity, ManagerRegistry.SuperInfection.GameEntityManager);
+                            gameEntity.RequestThrow(true, GorillaTagger.Instance.bodyCollider.transform.position - (Vector3.up * 14f), Quaternion.identity, Vector3.zero, Vector3.zero, ManagerRegistry.SuperInfection.GameEntityManager);
+                        }
+                    }
+                }
+            });
+        }
+
+        
+
+        public static void SpawnBlueLucy()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+            {
+                hgc.timeGongStarted = Time.time;
+                hgc.currentState = HalloweenGhostChaser.ChaseState.Gong;
+                hgc.isSummoned = false;
+            }
+            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void SpawnRedLucy()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+            {
+                hgc.timeGongStarted = Time.time;
+                hgc.currentState = HalloweenGhostChaser.ChaseState.Gong;
+                hgc.isSummoned = true;
+            }
+            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void DespawnLucy()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+            {
+                hgc.currentState = HalloweenGhostChaser.ChaseState.Dormant;
+                hgc.isSummoned = false;
+            }
+            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void LucyChase(NetPlayer player)
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+            {
+                hgc.currentState = HalloweenGhostChaser.ChaseState.Chasing;
+                hgc.targetPlayer = player;
+                hgc.followTarget = GorillaTagger.Instance.offlineVRRig.transform;
+            }
+            else
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void LucyChaseGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                LucyChase(gunTarget.GetPlayer());
+            });
+        }
+
+        public static void LucyAttack(NetPlayer player)
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+            {
+                if (Time.time > hgc.grabTime + hgc.grabDuration + 0.1f)
+                {
+                    if (hgc.targetPlayer != player)
+                    {
+                        hgc.currentState = HalloweenGhostChaser.ChaseState.Dormant;
+                        SendSerialize(hgc.GetView);
+                    }
+                    hgc.currentState = HalloweenGhostChaser.ChaseState.Grabbing;
+                    hgc.grabTime = Time.time;
+                    hgc.targetPlayer = player;
+                }
+            }
+            else
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void LucyAttackGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                LucyAttack(lockTarget.GetPlayer());
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void LucyHarassGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                HalloweenGhostChaser hgc = Overpowered.Lucy;
+                if (hgc.IsMine)
+                {
+                    if (Time.time > lucyDelay)
+                    {
+                        hgc.currentState = hgc.currentState == HalloweenGhostChaser.ChaseState.Grabbing ? HalloweenGhostChaser.ChaseState.Chasing : HalloweenGhostChaser.ChaseState.Grabbing;
+                        hgc.transform.position = lockTarget.transform.position + Vector3.up;
+                        hgc.currentSpeed = 0f;
+                        hgc.targetPlayer = lockTarget.GetPlayer();
+                        hgc.followTarget = lockTarget.transform;
+                        lucyDelay = Time.time + 0.1f;
+                    }
+                }
+                else
+                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void LucyAttackAll()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (SerializePatch.OverrideSerialization != null)
+            {
+                SerializePatch.OverrideSerialization = () =>
+                {
+                    MassSerialize(true, new[] { hgc.GetView });
+                    return false;
+                };
+            }
+
+            if (hgc.IsMine)
+            {
+                if (Time.time > hgc.grabTime + hgc.grabDuration + 0.1f)
+                {
+                    foreach (NetPlayer player in NetworkSystem.Instance.PlayerListOthers)
+                    {
+                        hgc.currentState = HalloweenGhostChaser.ChaseState.Grabbing;
+                        hgc.grabTime = Time.time;
+                        hgc.targetPlayer = player;
+                        SendSerialize(Overpowered.Lucy.GetView, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
+                    }
+                }
+            }
+            else
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static float lucyDelay;
+        public static void SpazLucy()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+            {
+                if (Time.time > lucyDelay)
+                {
+                    hgc.timeGongStarted = hgc.timeGongStarted == 0f ? Time.time : 0f;
+                    hgc.currentState = HalloweenGhostChaser.ChaseState.Gong;
+                    hgc.isSummoned = true;
+                    lucyDelay = Time.time + 0.1f;
+                }
+            }
+            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void AnnoyingLucy()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+            {
+                if (Time.time > lucyDelay)
+                {
+                    hgc.timeGongStarted = Time.time;
+                    hgc.grabTime = Time.time;
+                    hgc.currentState = hgc.currentState == HalloweenGhostChaser.ChaseState.Gong ? HalloweenGhostChaser.ChaseState.Grabbing : HalloweenGhostChaser.ChaseState.Gong;
+                    hgc.targetPlayer = GetRandomPlayer(true);
+                    lucyDelay = Time.time + 0.1f;
+                }
+            }
+            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void BecomeLucy()
+        {
+            if (!NetworkSystem.Instance.IsMasterClient)
+            {
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                return;
+            }
+
+            if (Overpowered.Lucy != null)
+            {
+                VRRig.LocalRig.enabled = false;
+                VRRig.LocalRig.transform.position = GorillaTagger.Instance.bodyCollider.transform.position - Vector3.up * 99999f;
+
+                Overpowered.Lucy.transform.position = GorillaTagger.Instance.bodyCollider.transform.position;
+                Overpowered.Lucy.transform.rotation = GorillaTagger.Instance.headCollider.transform.rotation;
+
+                Overpowered.Lucy.currentState = HalloweenGhostChaser.ChaseState.Chasing;
+                Overpowered.Lucy.targetPlayer = null;
+            }
+        }
+
+        public static void MoveLucyGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                if (Overpowered.Lucy.IsMine)
+                    Overpowered.Lucy.transform.position = NewPointer.transform.position + Vector3.up;
+                else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+            });
+        }
+
+        public static void FastLucy()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+                hgc.currentSpeed = 10f;
+            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void SlowLucy()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+                hgc.currentSpeed = 1f;
+            else Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+        }
+
+        public static void BarrelGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                if (GetGunInput(true))
+                Overpowered.SendBarrelProjectile(GunData.NewPointer.transform.position + Vector3.up, Vector3.zero, Quaternion.identity);
+            });
+        }
+
+        public static void GliderBlindGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+
+                if (GetGunInput(true))
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        gunLocked = true;
+                        lockTarget = gunTarget;
+                    }
+                }
+
+                if (gunLocked)
+                {
+                    foreach (GliderHoldable glider in GetAllType<GliderHoldable>())
+                    {
+                        if (glider.GetView.Owner == PhotonNetwork.LocalPlayer)
+                        {
+                            glider.gameObject.transform.position = lockTarget.headMesh.transform.position;
+                            glider.gameObject.transform.rotation = Quaternion.Euler(new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
+                        }
+                        else
+                            glider.OnHover(null, null);
+                    }
+                }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                } });
+        }
+
+        public static void GliderBlindAll()
+        {
+            GliderHoldable[] those = GetAllType<GliderHoldable>();
+            int index = 0;
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            {
+                try
+                {
+                    GliderHoldable glider = those[index];
+                    if (glider.GetView.Owner == PhotonNetwork.LocalPlayer)
+                    {
+                        glider.gameObject.transform.position = vrrig.headMesh.transform.position;
+                        glider.gameObject.transform.rotation = Quaternion.Euler(new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
+                    }
+                    else
+                        glider.OnHover(null, null);
+                }
+                catch { }
+                index++;
+            }
+        }
+
+        public static void EffectSpam(CrittersManager.CritterEvent critterEvent)
+        {
+            if (rightGrab)
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    CrittersPawn[] critters = CrittersManager.instance.crittersPawns.ToArray();
+                    if (critters.Length > 0)
+                    {
+                        CrittersPawn critter = critters[0];
+                        critter.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                        int actorId = critter.actorId;
+                        CrittersManager.instance.TriggerEvent(critterEvent, actorId, critter.transform.position, Quaternion.LookRotation(critter.transform.up));
+                    }
+                }
+                else
+                {
+                    CrittersActor.CrittersActorType type = CrittersActor.CrittersActorType.StickyTrap;
+                    Vector3 velocity = Vector3.down * 20f;
+                    switch (critterEvent)
+                    {
+                        case CrittersManager.CritterEvent.StunExplosion:
+                            type = CrittersActor.CrittersActorType.StunBomb;
+                            break;
+                        case CrittersManager.CritterEvent.StickyDeployed:
+                        case CrittersManager.CritterEvent.StickyTriggered:
+                            type = CrittersActor.CrittersActorType.StickyTrap;
+                            break;
+                        case CrittersManager.CritterEvent.NoiseMakerTriggered:
+                            type = CrittersActor.CrittersActorType.NoiseMaker;
+                            break;
+                    }
+
+                    CrittersGrabber localGrabber = GetAllType<CrittersGrabber>().Where(grabber => grabber.rigPlayerId == PhotonNetwork.LocalPlayer.ActorNumber && grabber.isLeft).FirstOrDefault();
+                    List<CrittersActor> critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 3f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    CrittersActor critter = critters[Random.Range(0, critters.Count)];
+
+                    if (Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 25f)
+                    {
+                        VRRig.LocalRig.enabled = false;
+                        VRRig.LocalRig.transform.position = critter.transform.position - Vector3.one * 5f;
+
+                        if (Overpowered.CritterCoroutine != null)
+                            Coroutines.instance.StopCoroutine(Overpowered.CritterCoroutine);
+
+                        Overpowered.CritterCoroutine = Coroutines.instance.StartCoroutine(Overpowered.RopeEnableRig());
+                    }
+
+                    if (Vector3.Distance(critter.transform.position, ServerPos) < 25f && Time.time > Overpowered.critterGrabDelay)
+                    {
+                        Overpowered.critterGrabDelay = Time.time + 0.1f;
+
+                        critter.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                        critter.transform.rotation = GorillaTagger.Instance.rightHandTransform.rotation;
+
+                        if (critter)
+                            critter.SetImpulseVelocity(velocity, Vector3.zero);
+
+                        if (localGrabber != null)
+                            CrittersManager.instance.SendRPC("RemoteCrittersActorGrabbedby",
+                                CrittersManager.instance.guard.currentOwner, critter.actorId, localGrabber.actorId,
+                                Quaternion.identity, Vector3.zero, false);
+                        CrittersManager.instance.SendRPC("RemoteCritterActorReleased", CrittersManager.instance.guard.currentOwner, critter.actorId, false, critter.transform.rotation, critter.transform.position, velocity, Vector3.zero);
+                    }
+                }
+            }
+        }
+
+        public static void EffectGun(CrittersManager.CritterEvent critterEvent)
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+                GameObject NewPointer = GunData.NewPointer;
+
+                if (GetGunInput(true))
+                {
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        CrittersPawn[] critters = CrittersManager.instance.crittersPawns.ToArray();
+                        if (critters.Length > 0)
+                        {
+                            CrittersPawn critter = critters[0];
+                            critter.transform.position = NewPointer.transform.position;
+                            int actorId = critter.actorId;
+                            CrittersManager.instance.TriggerEvent(critterEvent, actorId, critter.transform.position, Quaternion.LookRotation(critter.transform.up));
+                        }
+                    }
+                    else
+                    {
+                        CrittersActor.CrittersActorType type = CrittersActor.CrittersActorType.StickyTrap;
+                        Vector3 velocity = -Ray.normal * 50f;
+                        switch (critterEvent)
+                        {
+                            case CrittersManager.CritterEvent.StunExplosion:
+                                type = CrittersActor.CrittersActorType.StunBomb;
+                                break;
+                            case CrittersManager.CritterEvent.StickyDeployed:
+                            case CrittersManager.CritterEvent.StickyTriggered:
+                                type = CrittersActor.CrittersActorType.StickyTrap;
+                                break;
+                            case CrittersManager.CritterEvent.NoiseMakerTriggered:
+                                type = CrittersActor.CrittersActorType.NoiseMaker;
+                                break;
+                        }
+
+                        CrittersGrabber localGrabber = GetAllType<CrittersGrabber>().Where(grabber => grabber.rigPlayerId == PhotonNetwork.LocalPlayer.ActorNumber && grabber.isLeft).FirstOrDefault();
+                        List<CrittersActor> critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 3f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                        if (critters.Count <= 0)
+                            critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                        if (critters.Count <= 0)
+                            critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                        CrittersActor critter = critters[Random.Range(0, critters.Count)];
+
+                        if (Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 25f)
+                        {
+                            VRRig.LocalRig.enabled = false;
+                            VRRig.LocalRig.transform.position = critter.transform.position - Vector3.one * 5f;
+
+                            if (Overpowered.CritterCoroutine != null)
+                                Coroutines.instance.StopCoroutine(Overpowered.CritterCoroutine);
+
+                            Overpowered.CritterCoroutine = Coroutines.instance.StartCoroutine(Overpowered.RopeEnableRig());
+                        }
+
+                        if (Vector3.Distance(critter.transform.position, ServerPos) < 25f && Time.time > Overpowered.critterGrabDelay)
+                        {
+                            Overpowered.critterGrabDelay = Time.time + 0.05f;
+
+                            critter.transform.position = NewPointer.transform.position + Ray.normal;
+                            critter.transform.rotation = RandomQuaternion();
+
+                            if (critter)
+                                critter.SetImpulseVelocity(velocity, Vector3.zero);
+
+                            if (localGrabber != null)
+                                CrittersManager.instance.SendRPC("RemoteCrittersActorGrabbedby",
+                                    CrittersManager.instance.guard.currentOwner, critter.actorId, localGrabber.actorId,
+                                    Quaternion.identity, Vector3.zero, false);
+                            CrittersManager.instance.SendRPC("RemoteCritterActorReleased", CrittersManager.instance.guard.currentOwner, critter.actorId, false, critter.transform.rotation, critter.transform.position, velocity, Vector3.zero);
+                        }
+                    }
+                }
+            });
+        }
+
+        public static void CritterSpam()
+        {
+            if (rightGrab)
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    List<CrittersPawn> critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null).ToList();
+
+                    CrittersPawn targetCritter = critters[Random.Range(0, critters.Count)];
+                    targetCritter.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                    targetCritter.transform.rotation = RandomQuaternion();
+                }
+                else
+                {
+                    CrittersGrabber localGrabber = GetAllType<CrittersGrabber>().Where(grabber => grabber.rigPlayerId == PhotonNetwork.LocalPlayer.ActorNumber && grabber.isLeft).FirstOrDefault();
+                    List<CrittersPawn> critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 3f).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null).ToList();
+
+                    if (critters.Count <= 0)
+                        return;
+
+                    CrittersPawn critter = critters[Random.Range(0, critters.Count)];
+
+                    if (Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 25f)
+                    {
+                        VRRig.LocalRig.enabled = false;
+                        VRRig.LocalRig.transform.position = critter.transform.position - Vector3.one * 5f;
+
+                        if (Overpowered.CritterCoroutine != null)
+                            Coroutines.instance.StopCoroutine(Overpowered.CritterCoroutine);
+
+                        Overpowered.CritterCoroutine = Coroutines.instance.StartCoroutine(Overpowered.RopeEnableRig());
+                    }
+
+                    if (Vector3.Distance(critter.transform.position, ServerPos) < 25f && critter.currentState != CrittersPawn.CreatureState.Grabbed && Time.time > Overpowered.critterGrabDelay)
+                    {
+                        Overpowered.critterGrabDelay = Time.time + 0.05f;
+
+                        critter.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                        critter.transform.rotation = RandomQuaternion();
+
+                        if (localGrabber != null)
+                            CrittersManager.instance.SendRPC("RemoteCrittersActorGrabbedby",
+                                CrittersManager.instance.guard.currentOwner, critter.actorId, localGrabber.actorId,
+                                Quaternion.identity, Vector3.zero, false);
+                        CrittersManager.instance.SendRPC("RemoteCritterActorReleased", CrittersManager.instance.guard.currentOwner, critter.actorId, false, critter.transform.rotation, critter.transform.position, Vector3.zero, Vector3.zero);
+                    }
+                }
+            }
+        }
+
+        public static void CritterMinigun()
+        {
+            if (rightGrab)
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    List<CrittersPawn> critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null).ToList();
+
+                    CrittersPawn targetCritter = critters[Random.Range(0, critters.Count)];
+                    targetCritter.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                    targetCritter.transform.rotation = RandomQuaternion();
+
+                    if (targetCritter.usesRB)
+                        targetCritter.SetImpulseVelocity(GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength, RandomVector3(100f));
+                }
+                else
+                {
+                    CrittersGrabber localGrabber = GetAllType<CrittersGrabber>().Where(grabber => grabber.rigPlayerId == PhotonNetwork.LocalPlayer.ActorNumber && grabber.isLeft).FirstOrDefault();
+                    List<CrittersPawn> critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 3f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    CrittersPawn critter = critters[Random.Range(0, critters.Count)];
+
+                    if (Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 25f)
+                    {
+                        VRRig.LocalRig.enabled = false;
+                        VRRig.LocalRig.transform.position = critter.transform.position - Vector3.one * 5f;
+
+                        if (Overpowered.CritterCoroutine != null)
+                            Coroutines.instance.StopCoroutine(Overpowered.CritterCoroutine);
+
+                        Overpowered.CritterCoroutine = Coroutines.instance.StartCoroutine(Overpowered.RopeEnableRig());
+                    }
+
+                    if (Vector3.Distance(critter.transform.position, ServerPos) < 25f && Time.time > Overpowered.critterGrabDelay)
+                    {
+                        Overpowered.critterGrabDelay = Time.time + 0.05f;
+
+                        critter.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                        critter.transform.rotation = RandomQuaternion();
+
+                        if (localGrabber != null)
+                            CrittersManager.instance.SendRPC("RemoteCrittersActorGrabbedby",
+                                CrittersManager.instance.guard.currentOwner, critter.actorId, localGrabber.actorId,
+                                Quaternion.identity, Vector3.zero, false);
+                        CrittersManager.instance.SendRPC("RemoteCritterActorReleased", CrittersManager.instance.guard.currentOwner, critter.actorId, false, critter.transform.rotation, critter.transform.position, GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength, Vector3.zero);
+                    }
+                }
+            }
+        }
+        public static void CritterGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    List<CrittersPawn> critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null).ToList();
+
+                    CrittersPawn targetCritter = critters[Random.Range(0, critters.Count)];
+                    targetCritter.transform.position = NewPointer.transform.position;
+                    targetCritter.transform.rotation = RandomQuaternion();
+                }
+                else
+                {
+                    CrittersGrabber localGrabber = GetAllType<CrittersGrabber>().Where(grabber => grabber.rigPlayerId == PhotonNetwork.LocalPlayer.ActorNumber && grabber.isLeft).FirstOrDefault();
+                    List<CrittersPawn> critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 3f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = CrittersManager.instance.crittersPawns.Where(critter => critter != null).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    CrittersPawn critter = critters[Random.Range(0, critters.Count)];
+
+                    if (Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 25f)
+                    {
+                        VRRig.LocalRig.enabled = false;
+                        VRRig.LocalRig.transform.position = critter.transform.position - Vector3.one * 5f;
+
+                        if (Overpowered.CritterCoroutine != null)
+                            Coroutines.instance.StopCoroutine(Overpowered.CritterCoroutine);
+
+                        Overpowered.CritterCoroutine = Coroutines.instance.StartCoroutine(Overpowered.RopeEnableRig());
+                    }
+
+                    if (Vector3.Distance(critter.transform.position, ServerPos) < 25f && Time.time > Overpowered.critterGrabDelay)
+                    {
+                        Overpowered.critterGrabDelay = Time.time + 0.05f;
+
+                        critter.transform.position = NewPointer.transform.position + Vector3.up;
+                        critter.transform.rotation = RandomQuaternion();
+
+                        if (localGrabber != null)
+                            CrittersManager.instance.SendRPC("RemoteCrittersActorGrabbedby",
+                                CrittersManager.instance.guard.currentOwner, critter.actorId, localGrabber.actorId,
+                                Quaternion.identity, Vector3.zero, false);
+                        CrittersManager.instance.SendRPC("RemoteCritterActorReleased", CrittersManager.instance.guard.currentOwner, critter.actorId, false, critter.transform.rotation, critter.transform.position, Vector3.zero, Vector3.zero);
+                    }
+                }
+            });
+        }
+
+        public static void ObjectSpam(CrittersActor.CrittersActorType type)
+        {
+            if (rightGrab)
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    CrittersActor Object = CrittersManager.instance.SpawnActor(type);
+                    Object.MoveActor(GorillaTagger.Instance.rightHandTransform.position, GorillaTagger.Instance.rightHandTransform.rotation);
+
+                    if (Object.usesRB)
+                        Object.SetImpulseVelocity(GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength, RandomVector3(100f));
+                }
+                else
+                {
+                    Vector3 velocity = GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
+                    switch (type)
+                    {
+                        case CrittersActor.CrittersActorType.LoudNoise:
+                            type = CrittersActor.CrittersActorType.NoiseMaker;
+                            velocity = Vector3.down * 50f;
+                            break;
+                        case CrittersActor.CrittersActorType.StickyGoo:
+                            type = CrittersActor.CrittersActorType.StickyTrap;
+                            velocity = Vector3.down * 50f;
+                            break;
+                    }
+
+                    CrittersGrabber localGrabber = GetAllType<CrittersGrabber>().Where(grabber => grabber.rigPlayerId == PhotonNetwork.LocalPlayer.ActorNumber && grabber.isLeft).FirstOrDefault();
+                    List<CrittersActor> critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 3f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    if (critters.Count <= 0)
+                        critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                    CrittersActor critter = critters[Random.Range(0, critters.Count)];
+
+                    if (Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 25f)
+                    {
+                        VRRig.LocalRig.enabled = false;
+                        VRRig.LocalRig.transform.position = critter.transform.position - Vector3.one * 5f;
+
+                        if (Overpowered.CritterCoroutine != null)
+                            Coroutines.instance.StopCoroutine(Overpowered.CritterCoroutine);
+
+                        Overpowered.CritterCoroutine = Coroutines.instance.StartCoroutine(Overpowered.RopeEnableRig());
+                    }
+
+                    if (Vector3.Distance(critter.transform.position, ServerPos) < 25f && Time.time > Overpowered.critterGrabDelay)
+                    {
+                        Overpowered.critterGrabDelay = Time.time + 0.05f;
+
+                        critter.transform.position = GorillaTagger.Instance.rightHandTransform.position;
+                        critter.transform.rotation = GorillaTagger.Instance.rightHandTransform.rotation;
+
+                        if (critter)
+                            critter.SetImpulseVelocity(velocity, Vector3.zero);
+
+                        if (localGrabber != null)
+                            CrittersManager.instance.SendRPC("RemoteCrittersActorGrabbedby",
+                                CrittersManager.instance.guard.currentOwner, critter.actorId, localGrabber.actorId,
+                                Quaternion.identity, Vector3.zero, false);
+                        CrittersManager.instance.SendRPC("RemoteCritterActorReleased", CrittersManager.instance.guard.currentOwner, critter.actorId, false, critter.transform.rotation, critter.transform.position, velocity, Vector3.zero);
+                    }
+                }
+            }
+        }
+
+        public static void ObjectGun(CrittersActor.CrittersActorType type)
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+                GameObject NewPointer = GunData.NewPointer;
+
+                if (GetGunInput(true))
+                {
+                    if (PhotonNetwork.IsMasterClient)
+                    {
+                        CrittersActor Object = CrittersManager.instance.SpawnActor(type);
+                        Object.MoveActor(NewPointer.transform.position + Vector3.up, RandomQuaternion());
+                    }
+                    else
+                    {
+                        Vector3 velocity = Vector3.zero;
+                        Vector3 position = NewPointer.transform.position + Vector3.up;
+
+                        switch (type)
+                        {
+                            case CrittersActor.CrittersActorType.LoudNoise:
+                                type = CrittersActor.CrittersActorType.NoiseMaker;
+                                velocity = Ray.normal * -20f;
+                                position = NewPointer.transform.position + Ray.normal;
+                                break;
+                            case CrittersActor.CrittersActorType.StickyGoo:
+                                type = CrittersActor.CrittersActorType.StickyTrap;
+                                velocity = Ray.normal * -20f;
+                                position = NewPointer.transform.position + Ray.normal;
+                                break;
+                        }
+
+                        CrittersGrabber localGrabber = GetAllType<CrittersGrabber>().Where(grabber => grabber.rigPlayerId == PhotonNetwork.LocalPlayer.ActorNumber && grabber.isLeft).FirstOrDefault();
+                        List<CrittersActor> critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 3f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                        if (critters.Count <= 0)
+                            critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type && Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) < 25f).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                        if (critters.Count <= 0)
+                            critters = GetAllType<CrittersActor>().Where(critter => critter != null && critter.crittersActorType == type).OrderByDescending(critter => Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)).ToList();
+
+                        CrittersActor critter = critters[Random.Range(0, critters.Count)];
+
+                        if (Vector3.Distance(critter.transform.position, GorillaTagger.Instance.bodyCollider.transform.position) > 25f)
+                        {
+                            VRRig.LocalRig.enabled = false;
+                            VRRig.LocalRig.transform.position = critter.transform.position - Vector3.one * 5f;
+
+                            if (Overpowered.CritterCoroutine != null)
+                                Coroutines.instance.StopCoroutine(Overpowered.CritterCoroutine);
+
+                            Overpowered.CritterCoroutine = Coroutines.instance.StartCoroutine(Overpowered.RopeEnableRig());
+                        }
+
+                        if (Vector3.Distance(critter.transform.position, ServerPos) < 25f && Time.time > Overpowered.critterGrabDelay)
+                        {
+                            Overpowered.critterGrabDelay = Time.time + 0.1f;
+
+                            critter.transform.position = position;
+                            critter.transform.rotation = RandomQuaternion();
+
+                            if (critter)
+                                critter.SetImpulseVelocity(velocity, Vector3.zero);
+
+                            if (localGrabber != null)
+                                CrittersManager.instance.SendRPC("RemoteCrittersActorGrabbedby",
+                                    CrittersManager.instance.guard.currentOwner, critter.actorId, localGrabber.actorId,
+                                    Quaternion.identity, Vector3.zero, false);
+                            CrittersManager.instance.SendRPC("RemoteCritterActorReleased", CrittersManager.instance.guard.currentOwner, critter.actorId, false, critter.transform.rotation, critter.transform.position, velocity, Vector3.zero);
+                        }
+                    }
+                }
+            });
+        }
+
+        public static int red = 10;
+        public static int green = 5;
+        public static int blue;
+
+        public static string targetRank = "High";
+
+        public static void SpoofRank(bool enabled, string tier = null)
+        {
+            RankedPatch.enabled = enabled;
+            RankedPatch.targetTier = tier;
+        }
+
+        /// <summary>
+        /// Spoofs your platform for the Ranked gamemode.
+        /// </summary>
+        /// <param name="enabled">Spoof Enabled</param>
+        /// <param name="target">Target Platform</param>
+        public static void SpoofPlatform(bool enabled, string target = null)
+        {
+            RankedPatch.enabled = enabled;
+            RankedPatch.targetPlatform = target;
+        }
+        public static void SpoofBadge()
+        {
+            SetRankedPatch.enabled = true;
+            if (!Mathf.Approximately(VRRig.LocalRig.currentRankedELO, Safety.targetElo) || VRRig.LocalRig.currentRankedSubTierQuest != Safety.targetBadge || VRRig.LocalRig.currentRankedSubTierPC != Safety.targetBadge)
+                VRRig.LocalRig.SetRankedInfo(Safety.targetElo, Safety.targetBadge, Safety.targetBadge);
+        }
+        public static void PlayAudio(AudioClip sound, bool disableMicrophone = false)
+        {
+            if (sound == null)
+            {
+                Logs.LogError("AudioClip is null");
+                return;
+            }
+            if (!NetworkSystem.Instance.InRoom)
+            {
+                if (Sound.soundboardAudioManager == null)
+                {
+                    Sound.soundboardAudioManager = new GameObject("2DAudioMgr");
+                    AudioSource temp = Sound.soundboardAudioManager.AddComponent<AudioSource>();
+                    temp.spatialBlend = 0f;
+                }
+
+                AudioSource ausrc = Sound.soundboardAudioManager.GetComponent<AudioSource>();
+                ausrc.volume = 1f;
+                ausrc.clip = sound;
+                ausrc.loop = false;
+                ausrc.Play();
+
+                Sound.AudioIsPlaying = true;
+                Sound.RecoverTime = Time.time + sound.length;
+
+                return;
+            }
+
+            if (!RecorderPatch.enabled)
+            {
+                NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.AudioClip;
+                NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip = sound;
+                NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            }
+            else if (RecorderPatch.enabled)
+            {
+                if (Soundboard.LegacySoundboard && Voices.Get().AudioClips.Count == 1)
+                    Voices.Get().StopAudioClips();
+                Voices.Get().AudioClip(sound, disableMicrophone);
+            }
+
+            if (!Soundboard.LoopAudio)
+            {
+                Sound.AudioIsPlaying = true;
+                Sound.RecoverTime = Time.time + sound.length + 0.4f;
+            }
+        }
+
+
+        public static void PlayAudio(string file)
+        {
+            if (NetworkSystem.Instance.InRoom)
+            {
+                LoadSoundFromFile(file, clip =>
+                {
+                    PlayAudio(clip);
+                });
+            }
         }
 
         /*
@@ -7082,7 +7990,7 @@ Piece Name: {gunTarget.name}";
                             if (selButton != null)
                                 Toggle(selButton.buttonText, true);
                             else
-                                NotificationManager.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Mod \"{consoleTyped}\" does not exist.");
+                                Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Mod \"{consoleTyped}\" does not exist.");
                             consoleTyped = "";
                             break;
                         }

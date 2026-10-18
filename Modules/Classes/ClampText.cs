@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/SceneMapLoader.cs
+ * Qubit Menu  Modules/Classes/ClampText.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,32 +19,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using UnityEngine;
+using UnityEngine.UI;
 
-using UnityEngine.SceneManagement;
-
-namespace Qubit.Mods.CustomMaps
+namespace Qubit.Modules.Classes
 {
-    public static class SceneMapLoader
+    public class ClampText : MonoBehaviour
     {
-        public static void Init()
+        public void Start()
         {
-            SceneMapRegistry.FillRegistry();
-            SceneManager.activeSceneChanged += OnSceneChanged;
-            CheckSceneForMap(SceneManager.GetActiveScene().name);
+            currentText = GetComponent<Text>();
+            LateUpdate();
         }
 
-        public static void OnSceneChanged(Scene oldScene, Scene newScene)
-        {
-            CheckSceneForMap(newScene.name);
-        }
+        public void LateUpdate() =>
+            currentText.text = targetText.text;
 
-        public static void CheckSceneForMap(string sceneName)
-        {
-            var map = SceneMapRegistry.GetMapForScene(sceneName);
-            if (map != null)
-                Manager.UpdateCustomMapsTab(map.MapID);
-            else
-                Manager.UpdateCustomMapsTab();
-        }
+        public Text currentText;
+        public Text targetText;
     }
 }

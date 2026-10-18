@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/Maps/ChimpCombat.cs
+ * Qubit Menu  Modules/Categories/CustomMaps/Maps/ChimpCombat.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -22,40 +22,40 @@
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
-using Qubit.Classes.Menu;
 using Qubit.Extensions;
-using Qubit.Managers;
+using Qubit.Libraries.Interface;
+using Qubit.Modules.Classes;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Extensions.VRRigExtensions;
-using static Qubit.Menu.Main;
-using static Qubit.Mods.CustomMaps.Manager;
-using static Qubit.Utilities.RigUtilities;
+using static Qubit.Core.Security;
+using static Qubit.Extensions.Players;
+using static Qubit.Modules.Categories.CustomMaps.Manager;
+using static Qubit.Modules.Classes.GunLibrary;
 
-namespace Qubit.Mods.CustomMaps.Maps
+namespace Qubit.Modules.Categories.CustomMaps.Maps
 {
     public class ChimpCombat : CustomMap
     {
         public override long MapID => 5135423;
-        public override ButtonInfo[] Buttons => new[]
+        public override Module[] Buttons => new[]
         {
-            new ButtonInfo { buttonText = "Kill Self Player", overlapText = "Kill Self", method = KillSelf, isTogglable = false, toolTip = "Kills yourself."},
-            new ButtonInfo { buttonText = "Kill Player Gun", overlapText = "Kill Gun", method = KillGun, toolTip = "Kills whoever your hand desires."},
-            new ButtonInfo { buttonText = "Kill All Players", overlapText = "Kill All", method = KillAll, isTogglable = false, toolTip = "Kills everyone in the room."},
-            new ButtonInfo { buttonText = "God Mode_", overlapText = "God Mode", enableMethod = GodMode, disableMethod = DisableGodMode, toolTip = "Prevents you from getting killed."},
-            new ButtonInfo { buttonText = "No Grenade Cooldown", enableMethod = NoGrenadeCooldown, disableMethod = DisableNoGrenadeCooldown, toolTip = "Disables the cooldown on spawning grenades."},
-            new ButtonInfo { buttonText = "No Shoot Cooldown", enableMethod = NoShootCooldown, disableMethod = DisableNoShootCooldown, toolTip = "Disables the cooldown on shooting."},
-            new ButtonInfo { buttonText = "Rapid Fire", enableMethod = RapidFire, disableMethod = DisableRapidFire, toolTip = "Automatically shoots when holding down right trigger."},
-            new ButtonInfo { buttonText = "Instant Kill", enableMethod = InstantKill, disableMethod = DisableInstantKill, toolTip = "Makes your gun instant kill players."},
-            new ButtonInfo { buttonText = "Infinite Points", enableMethod = InfinitePoints, disableMethod = DisableInfinitePoints, toolTip = "Gives you an infinite amount of points."},
-            new ButtonInfo { buttonText = "Infinite Ammo", enableMethod = InfiniteAmmo, disableMethod = DisableInfiniteAmmo, toolTip = "Gives you an infinite amount of ammo."},
-            new ButtonInfo { buttonText = "Chimp Combat Crash Gun", overlapText = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
-            new ButtonInfo { buttonText = "Chimp Combat Crash All", overlapText = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
-            new ButtonInfo { buttonText = "Chimp Combat Anti Report", overlapText = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
-            new ButtonInfo { buttonText = "Chimp Combat Crash Aura", overlapText = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
-            new ButtonInfo { buttonText = "Chimp Combat Crash On Touch", overlapText = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
-            new ButtonInfo { buttonText = "Chimp Combat Crash When Touched", overlapText = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }
+            new Module { buttonText = "Kill Self Player", overlapText = "Kill Self", method = KillSelf, isTogglable = false, toolTip = "Kills yourself."},
+            new Module { buttonText = "Kill Player Gun", overlapText = "Kill Gun", method = KillGun, toolTip = "Kills whoever your hand desires."},
+            new Module { buttonText = "Kill All Players", overlapText = "Kill All", method = KillAll, isTogglable = false, toolTip = "Kills everyone in the room."},
+            new Module { buttonText = "God Mode_", overlapText = "God Mode", enableMethod = GodMode, disableMethod = DisableGodMode, toolTip = "Prevents you from getting killed."},
+            new Module { buttonText = "No Grenade Cooldown", enableMethod = NoGrenadeCooldown, disableMethod = DisableNoGrenadeCooldown, toolTip = "Disables the cooldown on spawning grenades."},
+            new Module { buttonText = "No Shoot Cooldown", enableMethod = NoShootCooldown, disableMethod = DisableNoShootCooldown, toolTip = "Disables the cooldown on shooting."},
+            new Module { buttonText = "Rapid Fire", enableMethod = RapidFire, disableMethod = DisableRapidFire, toolTip = "Automatically shoots when holding down right trigger."},
+            new Module { buttonText = "Instant Kill", enableMethod = InstantKill, disableMethod = DisableInstantKill, toolTip = "Makes your gun instant kill players."},
+            new Module { buttonText = "Infinite Points", enableMethod = InfinitePoints, disableMethod = DisableInfinitePoints, toolTip = "Gives you an infinite amount of points."},
+            new Module { buttonText = "Infinite Ammo", enableMethod = InfiniteAmmo, disableMethod = DisableInfiniteAmmo, toolTip = "Gives you an infinite amount of ammo."},
+            new Module { buttonText = "Chimp Combat Crash Gun", overlapText = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
+            new Module { buttonText = "Chimp Combat Crash All", overlapText = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
+            new Module { buttonText = "Chimp Combat Anti Report", overlapText = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
+            new Module { buttonText = "Chimp Combat Crash Aura", overlapText = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
+            new Module { buttonText = "Chimp Combat Crash On Touch", overlapText = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
+            new Module { buttonText = "Chimp Combat Crash When Touched", overlapText = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }
         };
 
         public static float killDelay;
@@ -79,9 +79,8 @@ namespace Qubit.Mods.CustomMaps.Maps
 
         public static void KillGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null && Time.time > killDelay)
@@ -100,12 +99,11 @@ namespace Qubit.Mods.CustomMaps.Maps
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                } });
         }
 
         public static void KillAll()
@@ -209,9 +207,8 @@ namespace Qubit.Mods.CustomMaps.Maps
         }
         public static void CrashGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null && Time.time > crashDelay)
@@ -230,12 +227,11 @@ namespace Qubit.Mods.CustomMaps.Maps
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                } });
         }
         public static void CrashAura()
         {
@@ -245,7 +241,7 @@ namespace Qubit.Mods.CustomMaps.Maps
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -264,7 +260,7 @@ namespace Qubit.Mods.CustomMaps.Maps
         {
             if (Time.time < crashDelay)
                 return;
-            foreach (var netPlayer in from rig in VRRigExtensions.ActiveRigs where !rig.isLocal && (Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f) select rig.GetPlayer())
+            foreach (var netPlayer in from rig in Players.ActiveRigs where !rig.isLocal && (Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f) select rig.GetPlayer())
             {
                 CrashPlayer(netPlayer.ActorNumber);
                 crashDelay = Time.time + 0.2f;
@@ -274,7 +270,7 @@ namespace Qubit.Mods.CustomMaps.Maps
         {
             if (Time.time < crashDelay)
                 return;
-            foreach (var player in from vrrig in VRRigExtensions.ActiveRigs where !vrrig.isMyPlayer && !vrrig.isOfflineVRRig && (Vector3.Distance(vrrig.rightHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.leftHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.transform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5) select GetPlayerFromVRRig(vrrig))
+            foreach (var player in from vrrig in Players.ActiveRigs where !vrrig.isMyPlayer && !vrrig.isOfflineVRRig && (Vector3.Distance(vrrig.rightHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.leftHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.transform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5) select GetPlayerFromVRRig(vrrig))
             {
                 CrashPlayer(player.ActorNumber);
                 crashDelay = Time.time + 0.2f;
@@ -296,7 +292,7 @@ namespace Qubit.Mods.CustomMaps.Maps
                 NetPlayer netPlayer = GetPlayerFromVRRig(vrrig);
                 CrashPlayer(netPlayer.ActorNumber);
                 crashDelay = Time.time + 0.5f;
-                NotificationManager.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been crashed.");
+                Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been crashed.");
             });
         }
     }

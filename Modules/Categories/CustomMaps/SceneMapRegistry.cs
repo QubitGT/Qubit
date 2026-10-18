@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/Maps/FlightSimulator.cs
+ * Qubit Menu  Modules/Categories/CustomMaps/SceneMapRegistry.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,28 +19,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Classes.Menu;
+
 using System.Collections.Generic;
-using static Qubit.Mods.CustomMaps.Manager;
 
-namespace Qubit.Mods.CustomMaps.Maps
+namespace Qubit.Modules.Categories.CustomMaps
 {
-    public class FlightSimulator : CustomMap
+    public static class SceneMapRegistry
     {
-        public override long MapID => 5024157;
-        public override ButtonInfo[] Buttons => new[]
-        {
-            new ButtonInfo { buttonText = "Steal Pilot", enableMethod = StealPilot, disableMethod = DisableStealPilot, toolTip = "Allows you to steal the pilot position from other people's planes."},
-        };
+        public static readonly Dictionary<string, SceneMap> sceneMapLookup = new Dictionary<string, SceneMap>();
 
-        public static void StealPilot()
+        public static void RegisterMap(long mapID, string sceneName)
         {
-            ModifyCustomScript(new Dictionary<int, string>
-                    {
-                        { 373, "if isButtonPressed(pilotClaimButtonJet) then" }
-                    });
+            if (!sceneMapLookup.ContainsKey(sceneName))
+                sceneMapLookup.Add(sceneName, new SceneMap(mapID, sceneName));
         }
-        public static void DisableStealPilot() =>
-            RevertCustomScript(373);
+
+        public static SceneMap GetMapForScene(string sceneName)
+        {
+            sceneMapLookup.TryGetValue(sceneName, out var map);
+            return map;
+        }
+
+        public static void FillRegistry()
+        {
+            RegisterMap(5107228, "monke-magic-halloween-alt");
+            RegisterMap(5135423, "Guns");
+            RegisterMap(5024157, "Flight-Simulator");
+            RegisterMap(4977315, "MiningSimulator");
+        }
     }
 }

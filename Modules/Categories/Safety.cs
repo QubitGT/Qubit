@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/Safety.cs
+ * Qubit Menu  Modules/Categories/Safety.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -22,42 +22,49 @@
 using ExitGames.Client.Photon;
 using GorillaLocomotion;
 using GorillaNetworking;
-using GorillaTagScripts;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
 using Qubit.Patches.Menu;
 using Qubit.Patches.Safety;
-using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.RigUtilities;
+using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.Players;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.LocalPlayer;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameObj;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
+using Security = Qubit.Core.Security;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Safety
     {
         private static bool antiOculusReportHooked;
         public static void GeneralSafety()
         {
-            if (!Buttons.GetIndex("Anti Report <color=grey>[</color><color=green>Disconnect</color><color=grey>]</color>").enabled) AntiReportDisconnect();
-            if (!Buttons.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) AntiCheatPatches.SendReportPatch.AntiACReport = true;
-            if (!Buttons.GetIndex("Anti Moderator").enabled) AntiModerator();
-            if (!Buttons.GetIndex("Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>").enabled && !antiOculusReportHooked) { antiOculusReportHooked = true; EnableAntiOculusReport(); }
+            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Disconnect</color><color=grey>]</color>").enabled) AntiReportDisconnect();
+            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) AntiCheatPatches.SendReportPatch.AntiACReport = true;
+            if (!Manager.GetIndex("Anti Moderator").enabled) AntiModerator();
+            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>").enabled && !antiOculusReportHooked) { antiOculusReportHooked = true; EnableAntiOculusReport(); }
         }
 
         public static void DisableGeneral()
         {
-            if (!Buttons.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) AntiCheatPatches.SendReportPatch.AntiACReport = false;
-            if (!Buttons.GetIndex("Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>").enabled) DisableAntiOculusReport();
+            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) AntiCheatPatches.SendReportPatch.AntiACReport = false;
+            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>").enabled) DisableAntiOculusReport();
         }
 
         public static void NoFinger()
@@ -161,8 +168,8 @@ namespace Qubit.Mods
             {
                 if (!BanPatches.CheckAutoBanListForName.CheckBanList(PhotonNetwork.LocalPlayer.NickName))
                 {
-                    NotificationManager.SendNotification($"<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> Your name, {PhotonNetwork.LocalPlayer.NickName}, is not allowed. It has been reset for your safety.");
-                    ChangeName(RandomUtilities.RandomString(8));
+                    Notifications.SendNotification($"<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> Your name, {PhotonNetwork.LocalPlayer.NickName}, is not allowed. It has been reset for your safety.");
+                    ChangeName(Qubit.Extensions.Random.RandomString(8));
                 }
             }
 
@@ -174,11 +181,11 @@ namespace Qubit.Mods
         {
             if (Time.time > flushCooldown)
             {
-                RPCProtection();
+                Security.RPCProtection();
                 flushCooldown = Time.time + 5f;
                 return;
             }
-            NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not meant to spam Flush RPCs. Only call it once after you are done spamming RPCs.");
+            Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not meant to spam Flush RPCs. Only call it once after you are done spamming RPCs.");
         }
         
 
@@ -271,7 +278,7 @@ namespace Qubit.Mods
 
                 onReport?.Invoke(reportRig, reportRig.transform.position);
                 reportRig = null;
-                AchievementManager.UnlockAchievement(new AchievementManager.Achievement
+                Achievements.Unlock(new Achievements.Achievement
                 {
                     name = "Troublemaker",
                     description = "Evade a player report.",
@@ -285,7 +292,7 @@ namespace Qubit.Mods
                 if (line.linePlayer != NetworkSystem.Instance.LocalPlayer) continue;
                 Transform report = line.reportButton.gameObject.transform;
 
-                foreach (var vrrig in from vrrig in VRRigExtensions.ActiveRigs where !vrrig.isLocal where OverlappingButton(vrrig, report.position) || (antiMute && OverlappingButton(vrrig, line.muteButton.gameObject.transform.position)) where !smartAntiReport || SmartAntiReport(line.linePlayer) select vrrig)
+                foreach (var vrrig in from vrrig in Players.ActiveRigs where !vrrig.isLocal where OverlappingButton(vrrig, report.position) || (antiMute && OverlappingButton(vrrig, line.muteButton.gameObject.transform.position)) where !smartAntiReport || SmartAntiReport(line.linePlayer) select vrrig)
                     onReport?.Invoke(vrrig, report.transform.position);
             }
         }
@@ -296,11 +303,11 @@ namespace Qubit.Mods
             AntiReport((vrrig, position) =>
             {
                 NetworkSystem.Instance.ReturnToSinglePlayer();
-                RPCProtection();
+                Security.RPCProtection();
 
                 if (!(Time.time > antiReportDelay)) return;
                 antiReportDelay = Time.time + 1f;
-                NotificationManager.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, you have been disconnected.");
+                Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, you have been disconnected.");
             });
         }
 
@@ -309,11 +316,11 @@ namespace Qubit.Mods
             AntiReport((vrrig, position) =>
             {
                 if (!(Time.time > antiReportDelay)) return;
-                Important.Reconnect();
-                RPCProtection();
+                Room.Reconnect();
+                Security.RPCProtection();
 
                 antiReportDelay = Time.time + 1f;
-                NotificationManager.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, you have been disconnected and will be reconnected shortly.");
+                Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, you have been disconnected and will be reconnected shortly.");
             });
         }
 
@@ -323,11 +330,11 @@ namespace Qubit.Mods
             {
                 if (!(Time.time > antiReportDelay)) return;
 
-                Important.JoinRandom();
-                RPCProtection();
+                Room.JoinRandom();
+                Security.RPCProtection();
 
                 antiReportDelay = Time.time + 1f;
-                NotificationManager.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, you have been disconnected and will be reconnected shortly.");
+                Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, you have been disconnected and will be reconnected shortly.");
             });
         }
 
@@ -382,7 +389,7 @@ namespace Qubit.Mods
             });
 
             if (notifyText != "")
-                NotificationManager.SendNotification($"<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> {notifyText} {(notifyText.Contains("&") || notifyText.Contains(",") ? "are" : "is")} reporting you.");
+                Notifications.SendNotification($"<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> {notifyText} {(notifyText.Contains("&") || notifyText.Contains(",") ? "are" : "is")} reporting you.");
         }
 
         public static void AntiReportOverlay()
@@ -403,9 +410,9 @@ namespace Qubit.Mods
             });
 
             if (notifyText.IsNullOrEmpty())
-                NotificationManager.information.Remove("Anti-Report");
+                Notifications.information.Remove("Anti-Report");
             else
-                NotificationManager.information["Anti-Report"] = notifyText;
+                Notifications.information["Anti-Report"] = notifyText;
         }
 
         public static void AntiReportFRT(Player subject)
@@ -418,7 +425,7 @@ namespace Qubit.Mods
 
         public static void AntiModerator()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isOfflineVRRig && vrrig.Cosmetics().Contains("LBAAK") || vrrig.Cosmetics().Contains("LBAAD") || vrrig.Cosmetics().Contains("LMAPY")))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isOfflineVRRig && vrrig.Cosmetics().Contains("LBAAK") || vrrig.Cosmetics().Contains("LBAAD") || vrrig.Cosmetics().Contains("LMAPY")))
             {
                 try
                 {
@@ -438,14 +445,14 @@ namespace Qubit.Mods
                             g = plr.playerColor.r * 255;
                             b = plr.playerColor.r * 255;
                         }
-                        catch { LogManager.Log("Failed to log colors, rig most likely nonexistent"); }
+                        catch { Logs.Log("Failed to log colors, rig most likely nonexistent"); }
 
                         try
                         {
                             text += "\n====================================\n";
                             text += string.Concat("Player Name: \"", player.NickName, "\", Player ID: \"", player.UserId, "\", Player Color: (R: ", r.ToString(), ", G: ", g.ToString(), ", B: ", b.ToString(), ")");
                         }
-                        catch { LogManager.Log("Failed to log player"); }
+                        catch { Logs.Log("Failed to log player"); }
 
                         text += "\n====================================\n";
                         text += "Text file generated with Qubit Menu";
@@ -456,13 +463,13 @@ namespace Qubit.Mods
                 }
                 catch { }
                 NetworkSystem.Instance.ReturnToSinglePlayer();
-                NotificationManager.SendNotification($"<color=grey>[</color><color=purple>ANTI-MODERATOR</color><color=grey>]</color> {vrrig.GetName()} is a moderator, you have been disconnected. Their player ID and room code have been saved to a file.");
+                Notifications.SendNotification($"<color=grey>[</color><color=purple>ANTI-MODERATOR</color><color=grey>]</color> {vrrig.GetName()} is a moderator, you have been disconnected. Their player ID and room code have been saved to a file.");
             }
         }
 
         public static void AntiContentCreator()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isOfflineVRRig && Visuals.specialCosmetics.Keys.Any(x => vrrig.Cosmetics().Contains(x))))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isOfflineVRRig && Visuals.specialCosmetics.Keys.Any(x => vrrig.Cosmetics().Contains(x))))
             {
                 try
                 {
@@ -482,14 +489,14 @@ namespace Qubit.Mods
                             g = plr.playerColor.r * 255;
                             b = plr.playerColor.r * 255;
                         }
-                        catch { LogManager.Log("Failed to log colors, rig most likely nonexistent"); }
+                        catch { Logs.Log("Failed to log colors, rig most likely nonexistent"); }
 
                         try
                         {
                             text += "\n====================================\n";
                             text += string.Concat("Player Name: \"", player.NickName, "\", Player ID: \"", player.UserId, "\", Player Color: (R: ", r.ToString(), ", G: ", g.ToString(), ", B: ", b.ToString(), ")");
                         }
-                        catch { LogManager.Log("Failed to log player"); }
+                        catch { Logs.Log("Failed to log player"); }
 
                         text += "\n====================================\n";
                         text += "Text file generated with Qubit Menu";
@@ -500,7 +507,7 @@ namespace Qubit.Mods
                 }
                 catch { }
                 NetworkSystem.Instance.ReturnToSinglePlayer();
-                NotificationManager.SendNotification($"<color=grey>[</color><color=purple>ANTI-CONTENT CREATOR</color><color=grey>]</color> {vrrig.GetName()} is a content creator, you have been disconnected. Their player ID and room code have been saved to a file.");
+                Notifications.SendNotification($"<color=grey>[</color><color=purple>ANTI-CONTENT CREATOR</color><color=grey>]</color> {vrrig.GetName()} is a content creator, you have been disconnected. Their player ID and room code have been saved to a file.");
             }
         }
 
@@ -510,7 +517,7 @@ namespace Qubit.Mods
             VRRig specialRig = null;
             string specialCosmetic = null;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.IsLocal()))
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal()))
             {
                 foreach (var cosmetic in Visuals.specialCosmetics.Where(cosmetic => rig.Cosmetics().Contains(cosmetic.Key)))
                 {
@@ -524,7 +531,7 @@ namespace Qubit.Mods
             }
 
             if (specialRig != null && !previousSpecial)
-                NotificationManager.SendNotification($"<color=grey>[</color><color=#{specialRig.GetColor().ToHex()}>COSMETIC</color><color=grey>]</color> {specialRig.GetName()} has {specialCosmetic}.");
+                Notifications.SendNotification($"<color=grey>[</color><color=#{specialRig.GetColor().ToHex()}>COSMETIC</color><color=grey>]</color> {specialRig.GetName()} has {specialCosmetic}.");
 
             previousSpecial = specialRig != null;
         }
@@ -700,7 +707,7 @@ namespace Qubit.Mods
             List<VRRig> toRemove = new List<VRRig>();
             foreach (VRRig rig in nameSpoofRigs)
             {
-                if (!VRRigExtensions.ActiveRigs.Contains(rig))
+                if (!Players.ActiveRigs.Contains(rig))
                     toRemove.Add(rig);
             }
 
@@ -710,7 +717,7 @@ namespace Qubit.Mods
             toRemove.Clear();
 
             string archiveNickname = PhotonNetwork.NickName;
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (rig.isLocal) continue;
                 if (!nameSpoofRigs.Contains(rig))
@@ -735,7 +742,7 @@ namespace Qubit.Mods
             List<VRRig> toRemove = new List<VRRig>();
             foreach (VRRig rig in colorSpoofRigs)
             {
-                if (!VRRigExtensions.ActiveRigs.Contains(rig))
+                if (!Players.ActiveRigs.Contains(rig))
                     toRemove.Add(rig);
             }
 
@@ -744,7 +751,7 @@ namespace Qubit.Mods
 
             toRemove.Clear();
 
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => !colorSpoofRigs.Contains(rig)))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => !colorSpoofRigs.Contains(rig)))
             {
                 GorillaTagger.Instance.myVRRig.SendRPC("RPC_InitializeNoobMaterial", rig.GetPlayer(), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f));
                 colorSpoofRigs.Add(rig);
@@ -768,43 +775,41 @@ namespace Qubit.Mods
             "BLUE", "RED", "GREEN", "PURPLE", "YELLOW", "BLACK", "WHITE", "BROWN", "CYAN", "GRAY",
             "GREY", "BANNED", "LEMON", "PLUSHIE", "CHEETO", "TIKTOK", "YOUTUBE", "TWITCH", "DISCORD", "MODDER", "HACKER"
         };
-
-        public static string targetRank = "High";
         public static int rankIndex = 2;
         public static void ApplyRankedTier(int index)
         {
             rankIndex = index;
-            targetRank = ((RankedProgressionManager.ERankedMatchmakingTier)index).ToString();
+            Fun.targetRank = ((RankedProgressionManager.ERankedMatchmakingTier)index).ToString();
         }
 
         public static readonly string[] BadgeNames = { "Wood", "Rock", "Bronze", "Silver", "Gold", "Platinum", "Crystal", "Banana" };
         public static void ApplyBadgeTier(int index) => targetBadge = index;
 
-        public static void SpoofRank(bool enabled, string tier = null)
-        {
-            RankedPatch.enabled = enabled;
-            RankedPatch.targetTier = tier;
-        }
-
-        /// <summary>
-        /// Spoofs your platform for the Ranked gamemode.
-        /// </summary>
-        /// <param name="enabled">Spoof Enabled</param>
-        /// <param name="target">Target Platform</param>
-        public static void SpoofPlatform(bool enabled, string target = null)
-        {
-            RankedPatch.enabled = enabled;
-            RankedPatch.targetPlatform = target;
-        }
-
 
         public static int targetElo = 4000;
         public static int targetBadge = 7;
-        public static void SpoofBadge()
+
+        public static void OnlySerializeNecessary()
         {
-            SetRankedPatch.enabled = true;
-            if (!Mathf.Approximately(VRRig.LocalRig.currentRankedELO, targetElo) || VRRig.LocalRig.currentRankedSubTierQuest != targetBadge || VRRig.LocalRig.currentRankedSubTierPC != targetBadge)
-                VRRig.LocalRig.SetRankedInfo(targetElo, targetBadge, targetBadge);
+            SerializePatch.OverrideSerialization = () =>
+            {
+                SendSerialize(VRRig.LocalRig.GetPhotonView());
+                //SendSerialize(GorillaTagger.Instance.myVRRig.reliableView);
+                return false;
+            };
+        }
+        public static void SteamDetector()
+        {
+            bool playerOnSteam = Players.ActiveRigs.Any(vrrig => !vrrig.IsLocal() && vrrig.IsSteam());
+            if (playerOnSteam && !Important.lastSteam)
+            {
+                VRRig vrrig = Players.ActiveRigs.First(vrrig => !vrrig.IsLocal() && vrrig.IsSteam());
+                Notifications.SendNotification($"<color=grey>[</color><color=red>STEAM</color><color=grey>]</color> {vrrig.GetName()} is on Steam.");
+
+                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Safety/steam.ogg", "Audio/Mods/Safety/steam.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+            }
+
+            Important.lastSteam = playerOnSteam;
         }
     }
 }

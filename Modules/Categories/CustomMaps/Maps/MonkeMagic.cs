@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/Maps/MonkeMagic.cs
+ * Qubit Menu  Modules/Categories/CustomMaps/Maps/MonkeMagic.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -22,41 +22,42 @@
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
-using Qubit.Classes.Menu;
 using Qubit.Extensions;
-using Qubit.Managers;
+using Qubit.Libraries.Interface;
+using Qubit.Modules.Classes;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Extensions.VRRigExtensions;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.RigUtilities;
+using static Qubit.Core.Security;
+using static Qubit.Extensions.Players;
+using static Qubit.Modules.Classes.GunLibrary;
+using Random = UnityEngine.Random;
 
-namespace Qubit.Mods.CustomMaps.Maps
+namespace Qubit.Modules.Categories.CustomMaps.Maps
 {
     public class MonkeMagic : CustomMap
     {
         public override long MapID => 5107228;
-        public override ButtonInfo[] Buttons => new[]
+        public override Module[] Buttons => new[]
         {
-            new ButtonInfo { buttonText = "Lightning Strike Self", method = LightningStrikeSelf, toolTip = "Strikes yourself with lightning."},
-            new ButtonInfo { buttonText = "Lightning Strike Gun", method = LightningStrikeGun, toolTip = "Strikes whoever your hand desires with lightning."},
-            new ButtonInfo { buttonText = "Lightning Strike All", method = LightningStrikeAll, toolTip = "Strikes everyone in the room with lightning."},
+            new Module { buttonText = "Lightning Strike Self", method = LightningStrikeSelf, toolTip = "Strikes yourself with lightning."},
+            new Module { buttonText = "Lightning Strike Gun", method = LightningStrikeGun, toolTip = "Strikes whoever your hand desires with lightning."},
+            new Module { buttonText = "Lightning Strike All", method = LightningStrikeAll, toolTip = "Strikes everyone in the room with lightning."},
 
-            new ButtonInfo { buttonText = "Change Material Self", method = ChangeMaterialSelf, toolTip = "Changes your material."},
-            new ButtonInfo { buttonText = "Change Material Gun", method = ChangeMaterialGun, toolTip = "Changes the material of whoever your hand desires."},
-            new ButtonInfo { buttonText = "Change Material All", method = ChangeMaterialAll, toolTip = "Changes the material of everyone in the room."},
+            new Module { buttonText = "Change Material Self", method = ChangeMaterialSelf, toolTip = "Changes your material."},
+            new Module { buttonText = "Change Material Gun", method = ChangeMaterialGun, toolTip = "Changes the material of whoever your hand desires."},
+            new Module { buttonText = "Change Material All", method = ChangeMaterialAll, toolTip = "Changes the material of everyone in the room."},
 
-            new ButtonInfo { buttonText = "Spawn Lucy Self", isTogglable = false, method = SpawnLucySelf, toolTip = "Spawns lucy on yourself."},
-            new ButtonInfo { buttonText = "Spawn Lucy Gun", method = SpawnLucyGun, toolTip = "Spawns lucy on whoever your hand desires."},
-            new ButtonInfo { buttonText = "Spawn Lucy All", isTogglable = false, method = SpawnLucyAll, toolTip = "Spawns lucy on everyone in the room."},
+            new Module { buttonText = "Spawn Lucy Self", isTogglable = false, method = SpawnLucySelf, toolTip = "Spawns lucy on yourself."},
+            new Module { buttonText = "Spawn Lucy Gun", method = SpawnLucyGun, toolTip = "Spawns lucy on whoever your hand desires."},
+            new Module { buttonText = "Spawn Lucy All", isTogglable = false, method = SpawnLucyAll, toolTip = "Spawns lucy on everyone in the room."},
 
-            new ButtonInfo { buttonText = "Monke Magic Crash Gun", overlapText = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
-            new ButtonInfo { buttonText = "Monke Magic Crash All", overlapText = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
-            new ButtonInfo { buttonText = "Monke Magic Anti Report", overlapText = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
-            new ButtonInfo { buttonText = "Monke Magic Crash Aura", overlapText = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
-            new ButtonInfo { buttonText = "Monke Magic Crash On Touch", overlapText = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
-            new ButtonInfo { buttonText = "Monke Magic Crash When Touched", overlapText = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }
+            new Module { buttonText = "Monke Magic Crash Gun", overlapText = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
+            new Module { buttonText = "Monke Magic Crash All", overlapText = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
+            new Module { buttonText = "Monke Magic Anti Report", overlapText = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
+            new Module { buttonText = "Monke Magic Crash Aura", overlapText = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
+            new Module { buttonText = "Monke Magic Crash On Touch", overlapText = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
+            new Module { buttonText = "Monke Magic Crash When Touched", overlapText = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }
         };
 
         private static float lightningDelay;
@@ -70,9 +71,8 @@ namespace Qubit.Mods.CustomMaps.Maps
 
         public static void LightningStrikeGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null && Time.time > lightningDelay)
@@ -91,12 +91,11 @@ namespace Qubit.Mods.CustomMaps.Maps
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                } });
         }
 
         public static void LightningStrikeAll()
@@ -122,9 +121,8 @@ namespace Qubit.Mods.CustomMaps.Maps
 
         public static void ChangeMaterialGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null && Time.time > materialDelay)
@@ -143,12 +141,11 @@ namespace Qubit.Mods.CustomMaps.Maps
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                } });
         }
 
         public static void ChangeMaterialAll()
@@ -170,22 +167,12 @@ namespace Qubit.Mods.CustomMaps.Maps
 
         public static void SpawnLucyGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && Time.time > lucyDelay)
-                    {
-                        lucyDelay = Time.time + 0.2f;
-                        PhotonNetwork.RaiseEvent(180, new object[] { "SummonLucy", (double)lockTarget.GetPlayer().ActorNumber }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
-                        RPCProtection();
-                    }
-                }
-            }
+                lucyDelay = Time.time + 0.2f;
+                PhotonNetwork.RaiseEvent(180, new object[] { "SummonLucy", (double)lockTarget.GetPlayer().ActorNumber }, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendReliable);
+                RPCProtection();
+            }, new GunLibrary.GunSettings { when = () => Time.time > lucyDelay });
         }
 
         public static void SpawnLucyAll()
@@ -212,9 +199,8 @@ namespace Qubit.Mods.CustomMaps.Maps
         }
         public static void CrashGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null && Time.time > crashDelay)
@@ -233,12 +219,11 @@ namespace Qubit.Mods.CustomMaps.Maps
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                } });
         }
         public static void CrashAura()
         {
@@ -248,7 +233,7 @@ namespace Qubit.Mods.CustomMaps.Maps
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (Vector3.Distance(vrrig.transform.position, VRRig.LocalRig.transform.position) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -269,7 +254,7 @@ namespace Qubit.Mods.CustomMaps.Maps
         {
             if (Time.time < crashDelay)
                 return;
-            foreach (var Player in from rig in VRRigExtensions.ActiveRigs where !rig.isLocal && (Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f) select rig.GetPlayer())
+            foreach (var Player in from rig in Players.ActiveRigs where !rig.isLocal && (Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f) select rig.GetPlayer())
             {
                 CrashPlayer(Player.ActorNumber);
                 crashDelay = Time.time + 0.2f;
@@ -279,7 +264,7 @@ namespace Qubit.Mods.CustomMaps.Maps
         {
             if (Time.time < crashDelay)
                 return;
-            foreach (var Player in from vrrig in VRRigExtensions.ActiveRigs where !vrrig.isMyPlayer && !vrrig.isOfflineVRRig && (Vector3.Distance(vrrig.rightHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.leftHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.transform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5) select GetPlayerFromVRRig(vrrig))
+            foreach (var Player in from vrrig in Players.ActiveRigs where !vrrig.isMyPlayer && !vrrig.isOfflineVRRig && (Vector3.Distance(vrrig.rightHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.leftHandTransform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5 || Vector3.Distance(vrrig.transform.position, GorillaTagger.Instance.offlineVRRig.transform.position) <= 0.5) select GetPlayerFromVRRig(vrrig))
             {
                 CrashPlayer(Player.ActorNumber);
                 crashDelay = Time.time + 0.2f;
@@ -306,7 +291,7 @@ namespace Qubit.Mods.CustomMaps.Maps
                     NetPlayer Player = GetPlayerFromVRRig(vrrig);
                     CrashPlayer(Player.ActorNumber);
                     crashDelay = Time.time + 0.5f;
-                    NotificationManager.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been crashed.");
+                    Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been crashed.");
                 }
             });
         }

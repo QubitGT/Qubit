@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Mods/Important.cs
+ * Qubit Menu  Modules/Categories/Important.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -20,16 +20,17 @@
  */
 
 using GorillaExtensions;
-using GorillaGameModes;
 using GorillaNetworking;
-using GorillaTagScripts;
 using HarmonyLib;
 using Photon.Pun;
-using Qubit.Classes.Menu;
+using Qubit.Backend;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Managers.DiscordRPC;
-using Qubit.Menu;
+using Qubit.Libraries.Audio;
+using Qubit.Libraries.Controls;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.DiscordRPC;
+using Qubit.Libraries.DiscordRPC.Entities;
+using Qubit.Libraries.Interface;
 using Qubit.Patches.Menu;
 using Qubit.Utilities;
 using System;
@@ -51,13 +52,18 @@ using UnityEngine.TextCore;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using Valve.Newtonsoft.Json;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
-using static Qubit.Utilities.RandomUtilities;
-using Hashtable = ExitGames.Client.Photon.Hashtable;
+using static Qubit.Frontend.Core;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Resources.Fonts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Modules.Manager;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Important
     {
@@ -66,115 +72,6 @@ namespace Qubit.Mods
             public string name;
             public bool isPublic;
             public byte size;
-        }
-        public static void RoomCreator()
-        {
-            CustomRoomConfig room = new CustomRoomConfig();
-            prompts.Clear();
-
-            void AskConfirm()
-            {
-                string displayName = room.name.StartsWith("@") ? room.name.Substring(1) : room.name;
-                displayName = displayName.Replace("<size=1000%>", "").Replace("</size>", "");
-                string finalName = room.size > 10 && !room.name.StartsWith("@") ? $"@{room.name}" : room.name;
-                Prompt($"Are you ok with your custom room?:\n" +
-                       $"Room Name: {displayName}\n" +
-                       $"Public: {room.isPublic}\n" +
-                       $"Size: {room.size}",
-                () =>
-                {
-                    CreateRoom(finalName, room.isPublic, room.size, JoinType.Solo);
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Creating room, please be patient.");
-                    PromptSingle("Success! Please be patient while the room is being created.");
-                }, () =>
-                {
-                    RoomCreator();
-                });
-            }
-
-            void AskRoomSize()
-            {
-                PromptSingleText("What do you want your room size to be? (minimum 1, maximum 20)", () =>
-                {
-                    int value = byte.TryParse(keyboardInput, out byte result) ? result : 10;
-                    room.size = (byte)Math.Clamp(value, 1, 20);
-                    AskConfirm();
-                }, "Done");
-            }
-
-            void AskSize()
-            {
-                Prompt("Would you like to enlarge the room name in-game?", () =>
-                {
-                    string baseName = room.name.StartsWith("@") ? room.name.Substring(1) : room.name;
-                    string prefix = room.name.StartsWith("@") ? "@" : "";
-                    room.name = $"{prefix}<size=1000%>{baseName}</size>";
-                    AskPublic();
-                }, () =>
-                {
-                    AskPublic();
-                });
-            }
-
-            void AskPublic()
-            {
-                Prompt("Do you want your room to be public?", () =>
-                {
-                    room.isPublic = true;
-                    AskRoomSize();
-                }, () =>
-                {
-                    room.isPublic = false;
-                    AskRoomSize();
-                });
-            }
-
-            Prompt("Would you like to pick your own room name or have a random one?", () =>
-            {
-                Prompt("Do you want to make your room name an emoji?", () =>
-                {
-                    int category = Buttons.CurrentCategoryIndex;
-                    string[] emojis = { "😀", "😂", "😍", "😎" };
-                    List<ButtonInfo> modList = new List<ButtonInfo> {
-                        new ButtonInfo { label = true, buttonText = "Click on an emoji you'd like to use!" }
-                    };
-                    foreach (string emoji in emojis)
-                    {
-                        modList.Add(new ButtonInfo
-                        {
-                            buttonText = emoji,
-                            method = () =>
-                            {
-                                room.name = emoji;
-                                Buttons.CurrentCategoryIndex = category;
-                                Buttons.buttons[Buttons.GetCategory("Temporary Category")] = Array.Empty<ButtonInfo>();
-                                AskSize();
-                            },
-                            isTogglable = false
-                        });
-                    }
-                    Buttons.buttons[Buttons.GetCategory("Temporary Category")] = modList.ToArray();
-                    Buttons.CurrentCategoryName = "Temporary Category";
-                }, () =>
-                {
-                    PromptSingleText("What would you like your room name to be?", () =>
-                    {
-                        if (keyboardInput.IsNullOrEmpty())
-                        {
-                            PromptSingle("Room name cannot be empty.");
-                            RoomCreator();
-                            return;
-                        }
-                        room.name = keyboardInput;
-                        AskPublic();
-                    }, "Ok");
-                });
-            }, () =>
-            {
-                room.name = RandomString();
-                AskPublic();
-            }, "My own", "Random");
-
         }
         public static string oldId = "";
         public async static void CheckNewAcc()
@@ -205,50 +102,10 @@ namespace Qubit.Mods
             }
         }
 
-        public static void QueueRoom(string roomName)
-        {
-            if (queueCoroutine != null)
-                CoroutineManager.instance.StopCoroutine(queueCoroutine);
-
-            queueCoroutine = CoroutineManager.instance.StartCoroutine(QueueRoomCoroutine(roomName));
-        }
-
-        public static void Reconnect()
-        {
-            string roomName = NetworkSystem.Instance.RoomName;
-
-            NetworkSystem.Instance.ReturnToSinglePlayer();
-            QueueRoom(roomName);
-        }
-
-        public static void CancelReconnect()
-        {
-            if (queueCoroutine != null)
-                CoroutineManager.instance.StopCoroutine(queueCoroutine);
-
-            NetworkSystem.Instance.netState = NetworkSystem.Instance.InRoom ? NetSystemState.InGame : NetSystemState.Idle;
-
-            partyLastCode = null;
-            partyKickReconnecting = false;
-        }
-
-        public static void JoinRandom()
-        {
-            if (NetworkSystem.Instance.InRoom)
-            {
-                NetworkSystem.Instance.ReturnToSinglePlayer();
-                CoroutineManager.instance.StartCoroutine(JoinRandomDelay());
-                return;
-            }
-
-            GorillaNetworkJoinTrigger trigger = PhotonNetworkController.Instance.currentJoinTrigger ?? GorillaComputer.instance.GetJoinTriggerForZone("forest");
-            PhotonNetworkController.Instance.AttemptToJoinPublicRoom(trigger);
-        }
-
         public static IEnumerator JoinRandomDelay()
         {
             yield return new WaitForSeconds(1.5f);
-            JoinRandom();
+            Room.JoinRandom();
         }
 
         public static async Task ForceCreateRoom(string name, RoomConfig options)
@@ -257,54 +114,6 @@ namespace Qubit.Mods
                 await NetworkSystem.Instance.ReturnToSinglePlayer();
 
             await (NetworkSystem.Instance as NetworkSystemPUN).TryCreateRoom(name, options);
-        }
-
-        public static bool instantCreate;
-        public static void CreateRoom(string roomName, bool isPublic, byte roomSize = 0, JoinType roomJoinType = JoinType.Solo)
-        {
-            if (roomSize > 10 && !roomName.StartsWith("@"))
-                roomName = $"@{roomName}";
-            var netTrigger = PhotonNetworkController.Instance.currentJoinTrigger ?? GorillaComputer.instance.GetJoinTriggerForZone("forest");
-            RoomConfig roomConfig = new RoomConfig
-            {
-                createIfMissing = true,
-                isJoinable = true,
-                isPublic = isPublic,
-                MaxPlayers = roomSize == 0 ? RoomSystem.GetRoomSizeForCreate(netTrigger.zone, Enum.Parse<GameModeType>(GorillaComputer.instance.currentGameMode.Value, true), !isPublic, SubscriptionManager.IsLocalSubscribed()) : roomSize,
-                CustomProps = new Hashtable
-                {
-                    { "platform", PhotonNetworkController.Instance.platformTag },
-                    { "gameMode", netTrigger.GetFullDesiredGameModeString() },
-                    { "language", LocalisationManager.CurrentLanguage.ToString() },
-                    { "fan_club", SubscriptionManager.IsLocalSubscribed() ? "true" : "false" },
-                    { "queueName", GorillaComputer.instance.currentQueue },
-                }
-            };
-
-            PhotonNetworkController.Instance.currentJoinType = roomJoinType;
-
-            if (roomJoinType == JoinType.JoinWithParty || roomJoinType == JoinType.ForceJoinWithParty)
-                Task.Run(PhotonNetworkController.Instance.SendPartyFollowCommands);
-
-            switch (roomJoinType)
-            {
-                case JoinType.JoinWithNearby:
-                case JoinType.JoinWithElevator:
-                    roomConfig.SetFriendIDs(PhotonNetworkController.Instance.FriendIDList);
-                    break;
-                case JoinType.JoinWithParty:
-                case JoinType.ForceJoinWithParty:
-                    roomConfig.SetFriendIDs(FriendshipGroupDetection.Instance.PartyMemberIDs.ToList());
-                    break;
-            }
-
-            if (instantCreate)
-            {
-                (NetworkSystem.Instance as NetworkSystemPUN).internalState = NetworkSystemPUN.InternalState.Searching_Creating;
-                _ = ForceCreateRoom(roomName, roomConfig);
-            }
-            else
-                NetworkSystem.Instance.ConnectToRoom(roomName, roomConfig);
         }
 
         public static void BroadcastRoom(string roomName, bool create, string key, string shuffler)
@@ -354,7 +163,7 @@ exit";
 
             File.WriteAllText(fileName, restartScript);
 
-            string filePath = FileUtilities.GetGamePath() + "/" + fileName;
+            string filePath = Files.GetGamePath() + "/" + fileName;
             Process.Start(filePath);
             Application.Quit();
         }
@@ -375,7 +184,7 @@ exit";
             {
                 discord = new DiscordRpcClient("1396080212441042944")
                 {
-                    Logger = new Managers.DiscordRPC.Logging.DiscordLogManager()
+                    Logger = new Libraries.DiscordRPC.Logging.DiscordLogManager()
                 };
 
                 discord.Initialize();
@@ -406,7 +215,7 @@ exit";
                 {
                     Details = inRoom ? $"Playing {GorillaGameManager.instance.GameType().ToString().ToLower()}" : "Playing alone",
                     State = inRoom ? $"Room: {roomName} ({PhotonNetwork.PlayerList.Length}/{PhotonNetwork.CurrentRoom.MaxPlayers})" : "Not in a room",
-                    Assets = new Managers.DiscordRPC.Assets
+                    Assets = new Libraries.DiscordRPC.Entities.Assets
                     {
                         LargeImageKey = "cone",
                         LargeImageText = "Qubit Menu",
@@ -460,10 +269,10 @@ exit";
                     if (request.result == UnityWebRequest.Result.Success)
                     {
                         File.WriteAllBytes($"{PluginInfo.BaseDirectory}/QuickSong.exe", request.downloadHandler.data);
-                        NotificationManager.SendNotification($"<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully downloaded QuickSong to {PluginInfo.BaseDirectory}/QuickSong.exe.");
+                        Notifications.SendNotification($"<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully downloaded QuickSong to {PluginInfo.BaseDirectory}/QuickSong.exe.");
                     }
                     else
-                        NotificationManager.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not download QuickSong: {(request.error.IsNullOrEmpty() ? "Unknown error" : request.error)}");
+                        Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not download QuickSong: {(request.error.IsNullOrEmpty() ? "Unknown error" : request.error)}");
 
                     quickSongExists = File.Exists($"{PluginInfo.BaseDirectory}/QuickSong.exe");
                 }, () => Toggle("Media Integration"));
@@ -485,7 +294,7 @@ exit";
         {
             ProcessStartInfo psi = new ProcessStartInfo
             {
-                FileName = $"{FileUtilities.GetGamePath()}/{PluginInfo.BaseDirectory}/QuickSong.exe",
+                FileName = $"{Files.GetGamePath()}/{PluginInfo.BaseDirectory}/QuickSong.exe",
                 Arguments = "-all",
                 UseShellExecute = false,
                 RedirectStandardOutput = true,
@@ -546,7 +355,7 @@ exit";
 
         public static void PreviousTrack()
         {
-            CoroutineManager.instance.StartCoroutine(UpdateDataCoroutine(0.1f));
+            Coroutines.instance.StartCoroutine(UpdateDataCoroutine(0.1f));
             ElapsedTime = 0f;
             SendKey(VirtualKeyCodes.PREVIOUS_TRACK);
         }
@@ -559,7 +368,7 @@ exit";
 
         public static void SkipTrack()
         {
-            CoroutineManager.instance.StartCoroutine(UpdateDataCoroutine(0.1f));
+            Coroutines.instance.StartCoroutine(UpdateDataCoroutine(0.1f));
             ElapsedTime = 0f;
             SendKey(VirtualKeyCodes.NEXT_TRACK);
         }
@@ -686,7 +495,7 @@ exit";
                     text.margin = new Vector4(0.5f, 0, 0, 0);
 
                     if (text != null && text.fontMaterial != null)
-                        text.fontMaterial.shader = TextMeshProExtensions.TmpShader;
+                        text.fontMaterial.shader = TextMeshPros.TmpShader;
 
                     mediaText = text;
                 }
@@ -707,7 +516,7 @@ exit";
                 if (Time.time > updateDataDelay)
                 {
                     updateDataDelay = Time.time + 5f;
-                    CoroutineManager.instance.StartCoroutine(UpdateDataCoroutine());
+                    Coroutines.instance.StartCoroutine(UpdateDataCoroutine());
                 }
 
                 if (!Paused)
@@ -718,7 +527,7 @@ exit";
                     if (Mathf.Abs(leftJoystick.x) > 0.5f)
                     {
                         inputDelay = Time.time + 0.5f;
-                        SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                        Sounds.Play(Sounds.DefaultSounds["Button"]);
 
                         if (leftJoystick.x > 0f)
                             SkipTrack();
@@ -729,7 +538,7 @@ exit";
                     if (leftJoystickClick)
                     {
                         inputDelay = Time.time + 0.5f;
-                        SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                        Sounds.Play(Sounds.DefaultSounds["Button"]);
 
                         PauseTrack();
                     }
@@ -775,7 +584,7 @@ exit";
                     return;
 
                 float FOV = 90f;
-                if (Keyboard.current.cKey.isPressed)
+                if (UnityEngine.InputSystem.Keyboard.current.cKey.isPressed)
                 {
                     Vector2 scroll = Mouse.current.scroll.ReadValue();
                     zoomFOV += -scroll.y * 5f;
@@ -788,7 +597,7 @@ exit";
                     TPC.fieldOfView = Mathf.Lerp(TPC.fieldOfView, FOV, 0.1f);
                 }
                 TPC.gameObject.transform.Find("CM vcam1").GetComponent<CinemachineVirtualCamera>().enabled = false;
-                TPC.gameObject.transform.position = Keyboard.current.cKey.isPressed ? Vector3.Lerp(TPC.transform.position, GorillaTagger.Instance.headCollider.transform.position, 0.1f) : GorillaTagger.Instance.headCollider.transform.position;
+                TPC.gameObject.transform.position = UnityEngine.InputSystem.Keyboard.current.cKey.isPressed ? Vector3.Lerp(TPC.transform.position, GorillaTagger.Instance.headCollider.transform.position, 0.1f) : GorillaTagger.Instance.headCollider.transform.position;
                 TPC.gameObject.transform.rotation = Quaternion.Lerp(TPC.transform.rotation, GorillaTagger.Instance.headCollider.transform.rotation, 0.075f);
             }
         }
@@ -868,7 +677,7 @@ exit";
             while (!newSessionDataTask.IsCompleted)
                 yield return null;
             if (newSessionDataTask.IsFaulted)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to redeem shiny rocks.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to redeem shiny rocks.");
 
             GetPlayerData_Data newSessionData = newSessionDataTask.Result;
             if (newSessionData.responseType == GetSessionResponseType.NOT_FOUND)
@@ -878,13 +687,13 @@ exit";
                 while (!optInTask.IsCompleted)
                     yield return null;
                 if (optInTask.IsFaulted)
-                    NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to redeem shiny rocks.");
+                    Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Failed to redeem shiny rocks.");
 
-                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully redeemed shiny rocks!");
+                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully redeemed shiny rocks!");
                 CosmeticsController.instance.GetCurrencyBalance();
             }
             else
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You have already redeemed the shiny rocks.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You have already redeemed the shiny rocks.");
             yield break;
         }
 
@@ -924,7 +733,7 @@ exit";
             physicalQuitBox.transform.position = quitBox.transform.position;
             physicalQuitBox.transform.rotation = quitBox.transform.rotation;
             physicalQuitBox.transform.localScale = quitBox.transform.localScale;
-            physicalQuitBox.GetComponent<Renderer>().material = CustomBoardManager.BoardMaterial;
+            physicalQuitBox.GetComponent<Renderer>().material = CustomBoards.BoardMaterial;
 
             quitBox.SetActive(false);
         }
@@ -937,7 +746,7 @@ exit";
 
         public static void BlockOnMute()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.rigContainer.IsMuted)
                     Settings.BlockPlayer(rig);
@@ -945,35 +754,6 @@ exit";
                     if (Settings.Blocked.Contains(rig))
                     Settings.UnblockPlayer(rig);
             }
-        }
-
-        public static void DisablePitchScaling()
-        {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
-            {
-                vrrig.voicePitchForRelativeScale = new AnimationCurve(
-                    new Keyframe(0f, 1f, 0f, 0f),
-                    new Keyframe(1f, 1f, 0f, 0f)
-                );
-            }
-        }
-
-        public static void EnablePitchScaling()
-        {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
-                vrrig.voicePitchForRelativeScale = VRRig.LocalRig.voicePitchForRelativeScale;
-        }
-
-        public static void DisableMouthMovement()
-        {
-            VRRig.LocalRig.shouldSendSpeakingLoudness = false;
-            LoudnessPatch.enabled = true;
-        }
-
-        public static void EnableMouthMovement()
-        {
-            VRRig.LocalRig.shouldSendSpeakingLoudness = true;
-            LoudnessPatch.enabled = false;
         }
 
         private static float lastTime;
@@ -1101,57 +881,8 @@ exit";
             }
         }
 
-        private static bool lastTagLag;
-        public static void TagLagDetector()
-        {
-            if (NetworkSystem.Instance.InRoom && !NetworkSystem.Instance.IsMasterClient)
-            {
-                VRRig masterRig = PhotonNetwork.MasterClient.VRRig();
-                bool thereIsTagLag = masterRig.GetTruePing() > 1000;
+        public static bool lastTagLag;
 
-                switch (thereIsTagLag)
-                {
-                    case true when !lastTagLag:
-                        NotificationManager.SendNotification("<color=grey>[</color><color=red>TAG LAG</color><color=grey>]</color> There is currently tag lag.");
-                        break;
-                    case false when lastTagLag:
-                        NotificationManager.SendNotification("<color=grey>[</color><color=green>TAG LAG</color><color=grey>]</color> There is no longer tag lag.");
-                        break;
-                }
-
-                lastTagLag = thereIsTagLag;
-            }
-            else
-            {
-                if (lastTagLag)
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>TAG LAG</color><color=grey>]</color> There is no longer tag lag.");
-                lastTagLag = false;
-            }
-        }
-
-        private static bool lastSteam;
-        public static void SteamDetector()
-        {
-            bool playerOnSteam = VRRigExtensions.ActiveRigs.Any(vrrig => !vrrig.IsLocal() && vrrig.IsSteam());
-            if (playerOnSteam && !lastSteam)
-            {
-                VRRig vrrig = VRRigExtensions.ActiveRigs.First(vrrig => !vrrig.IsLocal() && vrrig.IsSteam());
-                NotificationManager.SendNotification($"<color=grey>[</color><color=red>STEAM</color><color=grey>]</color> {vrrig.GetName()} is on Steam.");
-
-                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Safety/steam.ogg", "Audio/Mods/Safety/steam.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
-            }
-
-            lastSteam = playerOnSteam;
-        }
-
-        public static string RandomRoomName()
-        {
-            while (true)
-            {
-                string text = RandomString();
-                if (GorillaComputer.instance.CheckAutoBanListForName(text))
-                    return text;
-            }
-        }
+        public static bool lastSteam;
     }
 }

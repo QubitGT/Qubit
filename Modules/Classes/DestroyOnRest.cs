@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/SceneMapRegistry.cs
+ * Qubit Menu  Modules/Classes/DestroyOnRest.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,33 +19,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using UnityEngine;
 
-using System.Collections.Generic;
-
-namespace Qubit.Mods.CustomMaps
+namespace Qubit.Modules.Classes
 {
-    public static class SceneMapRegistry
+    public class DestroyOnRest : MonoBehaviour
     {
-        public static readonly Dictionary<string, SceneMap> sceneMapLookup = new Dictionary<string, SceneMap>();
-
-        public static void RegisterMap(long mapID, string sceneName)
+        public void Start()
         {
-            if (!sceneMapLookup.ContainsKey(sceneName))
-                sceneMapLookup.Add(sceneName, new SceneMap(mapID, sceneName));
+            rigidbody = gameObject.GetComponent<Rigidbody>();
+            Update();
         }
 
-        public static SceneMap GetMapForScene(string sceneName)
+        public void Update()
         {
-            sceneMapLookup.TryGetValue(sceneName, out var map);
-            return map;
+            if (rigidbody.linearVelocity.magnitude < 0.01f)
+                Destroy(gameObject);
         }
 
-        public static void FillRegistry()
-        {
-            RegisterMap(5107228, "monke-magic-halloween-alt");
-            RegisterMap(5135423, "Guns");
-            RegisterMap(5024157, "Flight-Simulator");
-            RegisterMap(4977315, "MiningSimulator");
-        }
+        public Rigidbody rigidbody;
     }
 }

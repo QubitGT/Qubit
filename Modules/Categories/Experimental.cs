@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/Experimental.cs
+ * Qubit Menu  Modules/Categories/Experimental.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -25,11 +25,12 @@ using GorillaNetworking;
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using Photon.Pun;
 using Photon.Realtime;
-using Qubit.Classes.Menu;
+using Qubit.Backend;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
-using Qubit.Patches.Menu;
+using Qubit.Libraries.Controls;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
+using Qubit.Modules.Classes;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -39,14 +40,22 @@ using System.IO;
 using System.Linq;
 using TMPro;
 using UnityEngine;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.RandomUtilities;
-using static Qubit.Utilities.RigUtilities;
-using Console = Qubit.Classes.Menu.Console;
+using static Qubit.Core.Security;
+using static Qubit.Extensions.Players;
+using static Qubit.Extensions.Random;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Resources.Fonts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.LocalPlayer;
+using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Utilities.GameObj;
+using Console = Qubit.Backend.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Experimental
     {
@@ -54,9 +63,9 @@ namespace Qubit.Mods
         {
             int duplicateButtons = 0;
             List<string> previousNames = new List<string>();
-            foreach (ButtonInfo[] buttonn in Buttons.buttons)
+            foreach (Module[] buttonn in Manager.modules.Values)
             {
-                foreach (ButtonInfo button in buttonn)
+                foreach (Module button in buttonn)
                 {
                     if (previousNames.Contains(button.buttonText))
                     {
@@ -68,7 +77,7 @@ namespace Qubit.Mods
                     previousNames.Add(button.buttonText);
                 }
             }
-            NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully fixed " + duplicateButtons + " broken buttons.");
+            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully fixed " + duplicateButtons + " broken buttons.");
         }
 
         private static readonly Dictionary<Renderer, Material> oldMats = new Dictionary<Renderer, Material>();
@@ -88,7 +97,7 @@ namespace Qubit.Mods
                         v.material = replacement;
                     }
                 }
-                catch (Exception exception) { LogManager.LogError(string.Format("mat error {1} - {0}", exception.Message, exception.StackTrace)); }
+                catch (Exception exception) { Logs.LogError(string.Format("mat error {1} - {0}", exception.Message, exception.StackTrace)); }
             }
         }
 
@@ -96,16 +105,6 @@ namespace Qubit.Mods
         {
             foreach (KeyValuePair<Renderer, Material> v in oldMats)
                 v.Key.material = v.Value;
-        }
-
-        public static void OnlySerializeNecessary()
-        {
-            SerializePatch.OverrideSerialization = () =>
-            {
-                SendSerialize(VRRig.LocalRig.GetPhotonView());
-                //SendSerialize(GorillaTagger.Instance.myVRRig.reliableView);
-                return false;
-            };
         }
 
         public static void DumpSoundData()
@@ -119,7 +118,7 @@ namespace Qubit.Mods
                     text += "\n====================================\n";
                     text += i + " ; " + oneshot.matName + " ; " + oneshot.slidePercent + "% ; " + (oneshot.audio == null ? "none" : oneshot.audio.name);
                 }
-                catch { LogManager.Log("Failed to log sound"); }
+                catch { Logs.Log("Failed to log sound"); }
                 i++;
             }
             text += "\n====================================\n";
@@ -128,7 +127,7 @@ namespace Qubit.Mods
 
             File.WriteAllText(fileName, text);
 
-            string filePath = FileUtilities.GetGamePath() + "/" + fileName;
+            string filePath = Files.GetGamePath() + "/" + fileName;
             Process.Start(filePath);
         }
 
@@ -142,7 +141,7 @@ namespace Qubit.Mods
                     text += "\n====================================\n";
                     text += hat.itemName + " ; " + hat.displayName + " (override " + hat.overrideDisplayName + ") ; " + hat.cost + "SR ; canTryOn = " + hat.canTryOn;
                 }
-                catch { LogManager.Log("Failed to log hat"); }
+                catch { Logs.Log("Failed to log hat"); }
             }
             text += "\n====================================\n";
             text += "Text file generated with Qubit Menu";
@@ -150,7 +149,7 @@ namespace Qubit.Mods
 
             File.WriteAllText(fileName, text);
 
-            string filePath = FileUtilities.GetGamePath() + "/" + fileName;
+            string filePath = Files.GetGamePath() + "/" + fileName;
             Process.Start(filePath);
         }
 
@@ -163,13 +162,13 @@ namespace Qubit.Mods
                 {
                     text += hat.itemName + ";;" + hat.overrideDisplayName + ";;" + hat.cost + "\n";
                 }
-                catch { LogManager.Log("Failed to log hat"); }
+                catch { Logs.Log("Failed to log hat"); }
             }
             string fileName = $"{PluginInfo.BaseDirectory}/DecryptableCosmeticData.txt";
 
             File.WriteAllText(fileName, text);
 
-            string filePath = FileUtilities.GetGamePath() + "/" + fileName;
+            string filePath = Files.GetGamePath() + "/" + fileName;
             Process.Start(filePath);
         }
 
@@ -184,7 +183,7 @@ namespace Qubit.Mods
                     text += "\n====================================\n";
                     text += i + " ; " + name;
                 }
-                catch { LogManager.Log("Failed to log RPC"); }
+                catch { Logs.Log("Failed to log RPC"); }
                 i++;
             }
             text += "\n====================================\n";
@@ -193,14 +192,14 @@ namespace Qubit.Mods
 
             File.WriteAllText(fileName, text);
 
-            string filePath = FileUtilities.GetGamePath() + "/" + fileName;
+            string filePath = Files.GetGamePath() + "/" + fileName;
             Process.Start(filePath);
         }
 
         public static void BlankPage()
         {
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = Array.Empty<ButtonInfo>();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = Array.Empty<Module>();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CopyCustomGamemodeScript()
@@ -208,10 +207,10 @@ namespace Qubit.Mods
             string script = CustomGameMode.LuaScript;
 
             if (string.IsNullOrEmpty(script))
-                NotificationManager.SendNotification("<color=grey>[</color><color=yellow>WARNING</color><color=grey>]</color> This map does not have a Lua script.", 5000);
+                Notifications.SendNotification("<color=grey>[</color><color=yellow>WARNING</color><color=grey>]</color> This map does not have a Lua script.", 5000);
             else
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Copied map script to your clipboard.", 5000);
+                Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Copied map script to your clipboard.", 5000);
                 GUIUtility.systemCopyBuffer = script;
             }
         }
@@ -219,7 +218,7 @@ namespace Qubit.Mods
         public static void CopyCustomMapID()
         {
             string id = CustomMapManager.currentRoomMapModId._id.ToString();
-            NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
+            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> " + id, 5000);
             GUIUtility.systemCopyBuffer = id;
         }
 
@@ -264,15 +263,15 @@ namespace Qubit.Mods
                     if (!NetworkSystem.Instance.InRoom && restartRoom != "")
                     {
                         if (Important.queueCoroutine == null && Time.time > restartDelay)
-                            Important.QueueRoom(restartRoom);
+                            Room.QueueRoom(restartRoom);
                     }
                     else
                     {
                         TeleportPlayer(restartPosition);
                         File.Delete(restartDataPath);
-                        NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Restarted game with information.");
+                        Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Restarted game with information.");
                         restartIndex = 4;
-                        Buttons.GetIndex("Safe Restart Game").SetEnabled(false);
+                        Manager.GetIndex("Safe Restart Game").SetEnabled(false);
                     }
                     break;
             }
@@ -281,61 +280,41 @@ namespace Qubit.Mods
         private static float adminEventDelay;
         public static void AdminKickGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("kick", ReceiverGroup.All, GetPlayerFromVRRig(gunTarget).UserId);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("kick", ReceiverGroup.All, GetPlayerFromVRRig(gunTarget).UserId);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static List<string> platExcluded = new List<string>();
         public static void AdminPlatToggleGun(bool exclude)
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
+                string id = GetPlayerFromVRRig(gunTarget).UserId;
+                adminEventDelay = Time.time + 0.1f;
+                if (exclude)
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
+                    if (!platExcluded.Contains(id))
                     {
-                        string id = GetPlayerFromVRRig(gunTarget).UserId;
-                        adminEventDelay = Time.time + 0.1f;
-                        if (exclude)
-                        {
-                            if (!platExcluded.Contains(id))
-                            {
-                                platExcluded.Add(id);
-                                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Player is now excluded.");
-                            }
-                            else
-                                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Player is already excluded!");
-                        }
-                        else
-                        {
-                            if (platExcluded.Contains(id))
-                            {
-                                platExcluded.Remove(id);
-                                NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Player is now included.");
-                            }
-                            else
-                                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Player is already included!");
-                        }
+                        platExcluded.Add(id);
+                        Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Player is now excluded.");
                     }
+                    else
+                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Player is already excluded!");
                 }
-            }
+                else
+                {
+                    if (platExcluded.Contains(id))
+                    {
+                        platExcluded.Remove(id);
+                        Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Player is now included.");
+                    }
+                    else
+                        Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Player is already included!");
+                }
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminKickAll() =>
@@ -343,21 +322,11 @@ namespace Qubit.Mods
 
         public static void AdminCrashGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("crash", GetPlayerFromVRRig(gunTarget).ActorNumber);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("crash", GetPlayerFromVRRig(gunTarget).ActorNumber);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminCrashAll() =>
@@ -365,28 +334,17 @@ namespace Qubit.Mods
 
         public static void AdminLagSpikeGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.5f;
-                        Console.ExecuteCommand("sleep", GetPlayerFromVRRig(gunTarget).ActorNumber, 1000);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.5f;
+                Console.ExecuteCommand("sleep", GetPlayerFromVRRig(gunTarget).ActorNumber, 1000);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminLagGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -407,11 +365,10 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    gunLocked = false;
+                } });
         }
 
         public static void AdminLagSpikeAll() =>
@@ -429,9 +386,8 @@ namespace Qubit.Mods
 
         public static void AdminGiveFlyGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -455,20 +411,18 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    gunLocked = false;
+                } });
         }
 
         public static bool AdminPlatformsLastLeft;
         public static bool AdminPlatformsLastRight;
         public static void AdminGivePlatforms()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -500,18 +454,16 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    gunLocked = false;
+                } });
         }
 
         public static void AdminGiveTriggerFlyGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -535,19 +487,17 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    gunLocked = false;
+                } });
         }
 
         public static Vector3 speedLastVel;
         public static void AdminGiveSpeedGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -570,18 +520,16 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    gunLocked = false;
+                } });
         }
 
         public static void AdminGiveLowGravity()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -604,30 +552,19 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    gunLocked = false;
+                } });
         }
 
         public static void AdminVibrateGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.2f;
-                        Console.ExecuteCommand("vibrate", GetPlayerFromVRRig(gunTarget).ActorNumber, 3, 1f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.2f;
+                Console.ExecuteCommand("vibrate", GetPlayerFromVRRig(gunTarget).ActorNumber, 3, 1f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminVibrateAll() =>
@@ -635,61 +572,31 @@ namespace Qubit.Mods
 
         public static void AdminBMuteGun(bool mute)
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.5f;
-                        Console.ExecuteCommand(mute ? "mute" : "unmute", ReceiverGroup.All, GetPlayerFromVRRig(gunTarget).UserId);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.5f;
+                Console.ExecuteCommand(mute ? "mute" : "unmute", ReceiverGroup.All, GetPlayerFromVRRig(gunTarget).UserId);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminBlockGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 5f;
-                        Console.ExecuteCommand("block", GetPlayerFromVRRig(gunTarget).ActorNumber, 300L);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 5f;
+                Console.ExecuteCommand("block", GetPlayerFromVRRig(gunTarget).ActorNumber, 300L);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminABlockGun(bool Silent)
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 5f;
-                        Console.ExecuteCommand("notify", ReceiverGroup.All, GetPlayerFromVRRig(gunTarget).NickName + " has been blocked" + (Silent ? "" : " by " + ServerData.Administrators[PhotonNetwork.LocalPlayer.UserId]) + ".");
-                        Console.ExecuteCommand("block", GetPlayerFromVRRig(gunTarget).ActorNumber, 300L);
-                        RPCProtection();
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 5f;
+                Console.ExecuteCommand("notify", ReceiverGroup.All, GetPlayerFromVRRig(gunTarget).NickName + " has been blocked" + (Silent ? "" : " by " + ServerData.Administrators[PhotonNetwork.LocalPlayer.UserId]) + ".");
+                Console.ExecuteCommand("block", GetPlayerFromVRRig(gunTarget).ActorNumber, 300L);
+                RPCProtection();
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminBMuteAll(bool mute) =>
@@ -697,80 +604,40 @@ namespace Qubit.Mods
 
         public static void AdminButtonPressGun(string key)
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.8f;
-                        Console.ExecuteCommand("controller", GetPlayerFromVRRig(gunTarget).ActorNumber, key, 1f, 1f);
-                        RPCProtection();
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.8f;
+                Console.ExecuteCommand("controller", GetPlayerFromVRRig(gunTarget).ActorNumber, key, 1f, 1f);
+                RPCProtection();
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void FlipMenuGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("toggle", GetPlayerFromVRRig(gunTarget).ActorNumber, "Right Hand");
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("toggle", GetPlayerFromVRRig(gunTarget).ActorNumber, "Right Hand");
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminEnableGun(bool enable, string mod)
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("forceenable", GetPlayerFromVRRig(gunTarget).ActorNumber, mod, enable);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("forceenable", GetPlayerFromVRRig(gunTarget).ActorNumber, mod, enable);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         private static float jumpscareDelay;
         public static void AdminJumpscareGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > jumpscareDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        jumpscareDelay = Time.time + 0.2f;
-                        Console.ExecuteCommand("toggle", GetPlayerFromVRRig(gunTarget).ActorNumber, "Jumpscare");
-                    }
-                }
-            }
+                jumpscareDelay = Time.time + 0.2f;
+                Console.ExecuteCommand("toggle", GetPlayerFromVRRig(gunTarget).ActorNumber, "Jumpscare");
+            }, new GunLibrary.GunSettings { when = () => Time.time > jumpscareDelay });
         }
 
         public static void AdminJumpscareAll() =>
@@ -797,7 +664,7 @@ namespace Qubit.Mods
         {
             Console.ExecuteCommand("forceenable", rig.GetPlayer().ActorNumber, "Zero Gravity", true);
             Vector3 pos = rig.transform.position;
-            while (VRRigExtensions.ActiveRigs.Contains(rig))
+            while (Players.ActiveRigs.Contains(rig))
             {
                 Console.ExecuteCommand("tp", rig.GetPlayer().ActorNumber, pos);
                 yield return new WaitForSeconds(0.1f);
@@ -806,105 +673,59 @@ namespace Qubit.Mods
 
         public static void AdminFreezeGun(bool freeze)
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
+                adminEventDelay = Time.time + 0.1f;
+                switch (freeze)
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        switch (freeze)
-                        {
-                            case true when !freezePool.ContainsKey(gunTarget):
-                                freezePool.Add(gunTarget, CoroutineManager.instance.StartCoroutine(FreezeCoroutine(gunTarget)));
-                                break;
-                            case false when freezePool.ContainsKey(gunTarget):
-                                CoroutineManager.instance.StopCoroutine(freezePool[gunTarget]);
-                                Console.ExecuteCommand("forceenable", GetPlayerFromVRRig(gunTarget).ActorNumber, "Zero Gravity", false);
-                                freezePool.Remove(gunTarget);
-                                break;
-                        }
-                    }
+                    case true when !freezePool.ContainsKey(gunTarget):
+                        freezePool.Add(gunTarget, Coroutines.instance.StartCoroutine(FreezeCoroutine(gunTarget)));
+                        break;
+                    case false when freezePool.ContainsKey(gunTarget):
+                        Coroutines.instance.StopCoroutine(freezePool[gunTarget]);
+                        Console.ExecuteCommand("forceenable", GetPlayerFromVRRig(gunTarget).ActorNumber, "Zero Gravity", false);
+                        freezePool.Remove(gunTarget);
+                        break;
                 }
-            }
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminTeleportGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    adminEventDelay = Time.time + 0.1f;
-                    Console.ExecuteCommand("tp", ReceiverGroup.Others, NewPointer.transform.position);
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("tp", ReceiverGroup.Others, NewPointer.transform.position);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminFlingGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("vel", GetPlayerFromVRRig(gunTarget).ActorNumber, new Vector3(0f, 50f, 0f));
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("vel", GetPlayerFromVRRig(gunTarget).ActorNumber, new Vector3(0f, 50f, 0f));
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminCrashBypassGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        if (ServerData.Administrators.ContainsKey(GetPlayerFromVRRig(gunTarget).UserId))
-                            return;
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("tp", GetPlayerFromVRRig(gunTarget).ActorNumber, new Vector3(0f, 1000000f, 0f));
-                    }
-                }
-            }
+                if (ServerData.Administrators.ContainsKey(GetPlayerFromVRRig(gunTarget).UserId))
+                    return;
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("tp", GetPlayerFromVRRig(gunTarget).ActorNumber, new Vector3(0f, 1000000f, 0f));
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminLockdownGun(bool enable)
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("togglemenu", GetPlayerFromVRRig(gunTarget).ActorNumber, enable);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("togglemenu", GetPlayerFromVRRig(gunTarget).ActorNumber, enable);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         private static readonly List<int> FullActorNumbers = new List<int>();
@@ -935,21 +756,11 @@ namespace Qubit.Mods
 
         public static void AdminFullLockdownGun(bool enable)
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        FullToggleMenu(GetPlayerFromVRRig(gunTarget).ActorNumber, enable);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                FullToggleMenu(GetPlayerFromVRRig(gunTarget).ActorNumber, enable);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         private static bool lastInRoom2;
@@ -980,7 +791,7 @@ namespace Qubit.Mods
             {
                 if (thestrangledleft == null)
                 {
-                    foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => Vector3.Distance(rig.headMesh.transform.position, GorillaTagger.Instance.leftHandTransform.position) < 0.2f))
+                    foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => Vector3.Distance(rig.headMesh.transform.position, GorillaTagger.Instance.leftHandTransform.position) < 0.2f))
                     {
                         thestrangledleft = rig;
                         if (NetworkSystem.Instance.InRoom)
@@ -1020,7 +831,7 @@ namespace Qubit.Mods
             {
                 if (thestrangled == null)
                 {
-                    foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => Vector3.Distance(rig.headMesh.transform.position, GorillaTagger.Instance.rightHandTransform.position) < 0.2f))
+                    foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal).Where(rig => Vector3.Distance(rig.headMesh.transform.position, GorillaTagger.Instance.rightHandTransform.position) < 0.2f))
                     {
                         thestrangled = rig;
                         if (NetworkSystem.Instance.InRoom)
@@ -1059,32 +870,20 @@ namespace Qubit.Mods
 
         public static void AdminObjectGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    adminEventDelay = Time.time + 0.1f;
-                    Console.ExecuteCommand("platf", ReceiverGroup.All, NewPointer.transform.position);
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("platf", ReceiverGroup.All, NewPointer.transform.position);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void AdminRandomObjectGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    adminEventDelay = Time.time + 0.1f;
-                    Console.ExecuteCommand("platf", ReceiverGroup.All, NewPointer.transform.position, RandomVector3(), RandomVector3(360f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), 1f);
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("platf", ReceiverGroup.All, NewPointer.transform.position, RandomVector3(), RandomVector3(360f), Random.Range(0f, 1f), Random.Range(0f, 1f), Random.Range(0f, 1f), 1f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         private static float lastnetscale = 1f;
@@ -1106,17 +905,11 @@ namespace Qubit.Mods
 
         public static void LightningGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    adminEventDelay = Time.time + 0.1f;
-                    Console.ExecuteCommand("strike", ReceiverGroup.All, NewPointer.transform.position);
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("strike", ReceiverGroup.All, NewPointer.transform.position);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void LightningAura()
@@ -1149,9 +942,8 @@ namespace Qubit.Mods
         private static Vector3 originalMePosition = Vector3.zero;
         public static void AdminFearGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -1188,18 +980,17 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
 
-                    TeleportPlayer(originalMePosition);
-                    Console.ExecuteCommand("tpnv", lockTarget.GetPlayer().ActorNumber, whereOriginalPlayerPos);
-                    Console.ExecuteCommand("unmuteall", lockTarget.GetPlayer().ActorNumber);
-                }
-            }
+                        TeleportPlayer(originalMePosition);
+                        Console.ExecuteCommand("tpnv", lockTarget.GetPlayer().ActorNumber, whereOriginalPlayerPos);
+                        Console.ExecuteCommand("unmuteall", lockTarget.GetPlayer().ActorNumber);
+                    }
+                } });
         }
 
         public static void EnableNoAdminIndicator()
@@ -1248,7 +1039,7 @@ namespace Qubit.Mods
                     switch (command)
                     {
                         case "confirmusing":
-                            if (Buttons.GetIndex("Menu User Name Tags").enabled && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
+                            if (Manager.GetIndex("Menu User Name Tags").enabled && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId))
                             {
                                 VRRig vrrig = GetVRRigFromPlayer(sender);
                                 if (!nametags.TryGetValue(vrrig, out var nametag))
@@ -1264,7 +1055,7 @@ namespace Qubit.Mods
                                         userColor = Console.GetMenuTypeName((string)args[2]);
 
                                     textMesh.color = userColor;
-                                    textMesh.text = ToTitleCase((string)args[2]);
+                                    textMesh.text = Strings.ToTitleCase((string)args[2]);
 
                                     nametags.Add(vrrig, go);
                                 }
@@ -1279,21 +1070,21 @@ namespace Qubit.Mods
                                     if (Visuals.nameTagChams)
                                         textMesh.Chams();
                                     textMesh.color = userColor;
-                                    textMesh.text = ToTitleCase((string)args[2]);
+                                    textMesh.text = Strings.ToTitleCase((string)args[2]);
                                 }
                             }
-                            if (Buttons.GetIndex("Conduct Menu Users").enabled)
+                            if (Manager.GetIndex("Conduct Menu Users").enabled)
                             {
                                 if (!onConduct.ContainsKey(sender.UserId))
                                 {
                                     bool add = ServerData.Administrators.ContainsKey(sender.UserId);
-                                    string txt = sender.NickName + " - " + ToTitleCase((string)args[2]);
+                                    string txt = sender.NickName + " - " + Strings.ToTitleCase((string)args[2]);
                                     if (add)
                                         txt = "<color=red>" + txt + "</color>";
                                     onConduct.Add(sender.UserId, txt);
                                 }
                             }
-                            if (Buttons.GetIndex("Admin Find User").enabled)
+                            if (Manager.GetIndex("Admin Find User").enabled)
                                 isUserFound = true;
                             break;
                     }
@@ -1315,7 +1106,7 @@ namespace Qubit.Mods
 
             foreach (KeyValuePair<VRRig, GameObject> nametag in nametags.ToList())
             {
-                if (!VRRigExtensions.ActiveRigs.Contains(nametag.Key))
+                if (!Players.ActiveRigs.Contains(nametag.Key))
                 {
                     Object.Destroy(nametag.Value);
                     nametags.Remove(nametag.Key);
@@ -1384,7 +1175,7 @@ namespace Qubit.Mods
                                         userColor = Console.GetMenuTypeName((string)args[2]);
 
                                     textMesh.color = userColor;
-                                    textMesh.text = ToTitleCase((string)args[2]);
+                                    textMesh.text = Strings.ToTitleCase((string)args[2]);
 
                                     nametags.Add(vrrig, go);
                                 }
@@ -1397,7 +1188,7 @@ namespace Qubit.Mods
                                         userColor = Console.GetMenuTypeName((string)args[2]);
 
                                     textMesh.color = userColor;
-                                    textMesh.text = ToTitleCase((string)args[2]);
+                                    textMesh.text = Strings.ToTitleCase((string)args[2]);
                                 }
                             }
                             break;
@@ -1420,10 +1211,10 @@ namespace Qubit.Mods
             if (Visuals.DoPerformanceCheck())
                 return;
 
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            _ = Buttons.GetIndex("Hidden on Camera").enabled;
-            float lineWidth = (Buttons.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            _ = Manager.GetIndex("Hidden on Camera").enabled;
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
@@ -1455,11 +1246,11 @@ namespace Qubit.Mods
         public static readonly Dictionary<string, string> onConduct = new Dictionary<string, string>();
         public static void ConsoleOnConduct()
         {
-            if (NetworkSystem.Instance.InRoom && (!lastInRoom || PhotonNetwork.PlayerList.Length != lastPlayerCount) && !Buttons.GetIndex("Menu User Name Tags").enabled)
+            if (NetworkSystem.Instance.InRoom && (!lastInRoom || PhotonNetwork.PlayerList.Length != lastPlayerCount) && !Manager.GetIndex("Menu User Name Tags").enabled)
                 Console.ExecuteCommand("isusing", ReceiverGroup.All);
 
             string conductText = "";
-            conductText += "<color=red>" + PhotonNetwork.LocalPlayer.NickName + " - " + ToTitleCase(Console.MenuName) + "</color>\\n";
+            conductText += "<color=red>" + PhotonNetwork.LocalPlayer.NickName + " - " + Strings.ToTitleCase(Console.MenuName) + "</color>\\n";
             foreach (KeyValuePair<string, string> item in onConduct)
             {
                 if (GetPlayerFromID(item.Key) == null)
@@ -1479,7 +1270,7 @@ namespace Qubit.Mods
 
             if (!NetworkSystem.Instance.InRoom)
             {
-                Important.JoinRandom();
+                Room.JoinRandom();
                 isUserFound = false;
                 FindUserTime = Time.time + 7f;
             }
@@ -1487,12 +1278,12 @@ namespace Qubit.Mods
             {
                 if (isUserFound)
                 {
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Found menu user!");
-                    Buttons.GetIndex("Admin Find User").SetEnabled(false);
+                    Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Found menu user!");
+                    Manager.GetIndex("Admin Find User").SetEnabled(false);
                     isUserFound = false;
                     return;
                 }
-                NotificationManager.SendNotification("Nobody found, searching for players.");
+                Notifications.SendNotification("Nobody found, searching for players.");
                 NetworkSystem.Instance.ReturnToSinglePlayer();
                 FindUserTime = Time.time + 2f;
             }
@@ -1503,7 +1294,7 @@ namespace Qubit.Mods
         {
             if (Time.time > thingdeb)
             {
-                foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+                foreach (VRRig rig in Players.ActiveRigs)
                 {
                     bool leftHand = Vector3.Distance(GorillaTagger.Instance.leftHandTransform.position, rig.headMesh.transform.position) < 0.25f;
                     bool rightHand = Vector3.Distance(GorillaTagger.Instance.rightHandTransform.position, rig.headMesh.transform.position) < 0.25f;
@@ -1525,21 +1316,11 @@ namespace Qubit.Mods
 
         public static void JoinGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("join", GetPlayerFromVRRig(gunTarget).ActorNumber, targetRoom.ToUpper());
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("join", GetPlayerFromVRRig(gunTarget).ActorNumber, targetRoom.ToUpper());
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void JoinAll() =>
@@ -1551,7 +1332,7 @@ namespace Qubit.Mods
             PromptText("What notification would you like to send?", () =>
             {
                 targetNotification = keyboardInput;
-                Buttons.GetIndex("NotifLabel").overlapText = "Notif: " + keyboardInput;
+                Manager.GetIndex("NotifLabel").overlapText = "Notif: " + keyboardInput;
             }, null, "Done", "Cancel");
         }
 
@@ -1560,21 +1341,11 @@ namespace Qubit.Mods
 
         public static void NotifyGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("notify", GetPlayerFromVRRig(gunTarget).ActorNumber, targetNotification);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("notify", GetPlayerFromVRRig(gunTarget).ActorNumber, targetNotification);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void NotifyAll() =>
@@ -1679,21 +1450,11 @@ namespace Qubit.Mods
 
         public static void AdminBringGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("tpnv", GetPlayerFromVRRig(gunTarget).ActorNumber, GorillaTagger.Instance.headCollider.transform.position + new Vector3(0f, 1.5f, 0f));
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("tpnv", GetPlayerFromVRRig(gunTarget).ActorNumber, GorillaTagger.Instance.headCollider.transform.position + new Vector3(0f, 1.5f, 0f));
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void BringAllUsing()
@@ -1707,28 +1468,22 @@ namespace Qubit.Mods
 
         public static void AdminOrganizeGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
+                var users = Console.userDictionary.Keys.Where(u => !u.IsLocal).ToList();
+                if (users.Count == 1)
                 {
-                    var users = Console.userDictionary.Keys.Where(u => !u.IsLocal).ToList();
-                    if (users.Count == 1)
-                    {
-                        Console.ExecuteCommand("tpnv", users.FirstOrDefault().ActorNumber, NewPointer.transform.position);
-                        return;
-                    }
-
-                    float spacing = 0.8f;
-                    for (int i = 0; i < users.Count; i++)
-                    {
-                        Console.ExecuteCommand("tpnv", users[i].ActorNumber, NewPointer.transform.position - Vector3.right * ((users.Count - 1) * spacing / 2f) + Vector3.right * (spacing * i));
-                    }
-                    adminEventDelay = Time.time + 0.05f;
+                    Console.ExecuteCommand("tpnv", users.FirstOrDefault().ActorNumber, NewPointer.transform.position);
+                    return;
                 }
-            }
+
+                float spacing = 0.8f;
+                for (int i = 0; i < users.Count; i++)
+                {
+                    Console.ExecuteCommand("tpnv", users[i].ActorNumber, NewPointer.transform.position - Vector3.right * ((users.Count - 1) * spacing / 2f) + Vector3.right * (spacing * i));
+                }
+                adminEventDelay = Time.time + 0.05f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void BringHandAllUsing()
@@ -1736,7 +1491,7 @@ namespace Qubit.Mods
             if (Time.time > adminEventDelay)
             {
                 adminEventDelay = Time.time + 0.05f;
-                Console.ExecuteCommand("tpnv", ReceiverGroup.Others, ControllerUtilities.GetTrueRightHand().position + ControllerUtilities.GetTrueRightHand().forward);
+                Console.ExecuteCommand("tpnv", ReceiverGroup.Others, Controllers.GetTrueRightHand().position + Controllers.GetTrueRightHand().forward);
             }
         }
 
@@ -1798,21 +1553,11 @@ namespace Qubit.Mods
 
         public static void LightGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("lighting", GetPlayerFromVRRig(gunTarget).ActorNumber, false);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("lighting", GetPlayerFromVRRig(gunTarget).ActorNumber, false);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
         public static void LightAllUsing()
         {
@@ -1824,21 +1569,11 @@ namespace Qubit.Mods
         }
         public static void DarkGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("lighting", GetPlayerFromVRRig(gunTarget).ActorNumber, true);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("lighting", GetPlayerFromVRRig(gunTarget).ActorNumber, true);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void DarkAllUsing()
@@ -1851,21 +1586,11 @@ namespace Qubit.Mods
         }
         public static void WorldOffGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("environmentobj", GetPlayerFromVRRig(gunTarget).ActorNumber, false);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("environmentobj", GetPlayerFromVRRig(gunTarget).ActorNumber, false);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void WorldOffAllUsing()
@@ -1878,21 +1603,11 @@ namespace Qubit.Mods
         }
         public static void WorldOnGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("environmentobj", GetPlayerFromVRRig(gunTarget).ActorNumber, true);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("environmentobj", GetPlayerFromVRRig(gunTarget).ActorNumber, true);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void WorldOnAllUsing()
@@ -1905,21 +1620,11 @@ namespace Qubit.Mods
         }
         public static void EarthquakeGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("earthquake", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("earthquake", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void EarthquakeAllUsing()
@@ -1933,21 +1638,11 @@ namespace Qubit.Mods
 
         public static void DrunkGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("drunk", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("drunk", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void DrunkAllUsing()
@@ -1961,21 +1656,11 @@ namespace Qubit.Mods
 
         public static void LowGravityGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 6.66f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 6.66f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void LowGravityAllUsing()
@@ -1988,21 +1673,11 @@ namespace Qubit.Mods
         }
         public static void HighGravityGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 7.77f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 7.77f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void HighGravityAllUsing()
@@ -2015,21 +1690,11 @@ namespace Qubit.Mods
         }
         public static void ZeroGravityGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 9.81f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 9.81f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void ZeroGravityAllUsing()
@@ -2042,21 +1707,11 @@ namespace Qubit.Mods
         }
         public static void ResetGravityGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 1f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("setgravity", GetPlayerFromVRRig(gunTarget).ActorNumber, 1f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void ResetGravityAllUsing()
@@ -2071,21 +1726,11 @@ namespace Qubit.Mods
 
         public static void CreeperGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("swaphands", GetPlayerFromVRRig(gunTarget).ActorNumber, 5f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("swaphands", GetPlayerFromVRRig(gunTarget).ActorNumber, 5f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void CreeperAllUsing()
@@ -2099,21 +1744,11 @@ namespace Qubit.Mods
 
         public static void WeirdGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("weirdrendering", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("weirdrendering", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void WeirdAllUsing()
@@ -2128,21 +1763,11 @@ namespace Qubit.Mods
 
         public static void SpinGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("spin", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("spin", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void SpinAllUsing()
@@ -2155,21 +1780,11 @@ namespace Qubit.Mods
         }
         public static void InvertGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("invert", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("invert", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void InvertAllUsing()
@@ -2182,21 +1797,11 @@ namespace Qubit.Mods
         }
         public static void BounceGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("bounce", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("bounce", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void BounceAllUsing()
@@ -2209,21 +1814,11 @@ namespace Qubit.Mods
         }
         public static void RainbowGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("rainbow", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("rainbow", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void RainbowAllUsing()
@@ -2236,21 +1831,11 @@ namespace Qubit.Mods
         }
         public static void FlipGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("flip", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("flip", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void FlipAllUsing()
@@ -2263,21 +1848,11 @@ namespace Qubit.Mods
         }
         public static void ZeroGGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("zeroG", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("zeroG", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void ZeroGAllUsing()
@@ -2290,21 +1865,11 @@ namespace Qubit.Mods
         }
         public static void SuperjumpGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("superjump", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("superjump", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void SuperjumpAllUsing()
@@ -2317,21 +1882,11 @@ namespace Qubit.Mods
         }
         public static void BlurGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("blur", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("blur", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void BlurAllUsing()
@@ -2344,21 +1899,11 @@ namespace Qubit.Mods
         }
         public static void TposeGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("tpose", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("tpose", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void TposeAllUsing()
@@ -2371,21 +1916,11 @@ namespace Qubit.Mods
         }
         public static void HeadspinGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("headspin", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("headspin", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void HeadspinAllUsing()
@@ -2398,21 +1933,11 @@ namespace Qubit.Mods
         }
         public static void FreezeandpullGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("freezeandpull", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("freezeandpull", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void FreezeandpullAllUsing()
@@ -2425,21 +1950,11 @@ namespace Qubit.Mods
         }
         public static void MagnetGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("magnet", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("magnet", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void MagnetAllUsing()
@@ -2452,21 +1967,11 @@ namespace Qubit.Mods
         }
         public static void RagdollGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("ragdoll", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("ragdoll", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void RagdollAllUsing()
@@ -2480,21 +1985,11 @@ namespace Qubit.Mods
 
         public static void BlackholeGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("blackhole", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("blackhole", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void BlackholeAllUsing()
@@ -2507,21 +2002,11 @@ namespace Qubit.Mods
         }
         public static void YeetGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("yeet", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("yeet", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void YeetAllUsing()
@@ -2534,21 +2019,11 @@ namespace Qubit.Mods
         }
         public static void LastmomentGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("lastmoment", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("lastmoment", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void LastmomentAllUsing()
@@ -2561,21 +2036,11 @@ namespace Qubit.Mods
         }
         public static void StunGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("stun", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("stun", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void StunAllUsing()
@@ -2589,21 +2054,11 @@ namespace Qubit.Mods
 
         public static void LSDGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true) && Time.time > adminEventDelay)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        adminEventDelay = Time.time + 0.1f;
-                        Console.ExecuteCommand("lsd", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
-                    }
-                }
-            }
+                adminEventDelay = Time.time + 0.1f;
+                Console.ExecuteCommand("lsd", GetPlayerFromVRRig(gunTarget).ActorNumber, 3f);
+            }, new GunLibrary.GunSettings { when = () => Time.time > adminEventDelay });
         }
 
         public static void LSDAllUsing()
@@ -2612,6 +2067,24 @@ namespace Qubit.Mods
             {
                 adminEventDelay = Time.time + 0.05f;
                 Console.ExecuteCommand("lsd", ReceiverGroup.Others, 3f);
+            }
+        }
+
+        public static void DisorganizeMenu()
+        {
+            if (!disorganized)
+            {
+                disorganized = true;
+                foreach (Module[] buttonArray in Manager.modules.Values)
+                {
+                    if (buttonArray.Length > 0)
+                    {
+                        for (int i = 0; i < buttonArray.Length; i++)
+                            Manager.modules["Main"] = Manager.modules["Main"].Concat(new[] { buttonArray[i] }).ToArray();
+
+                        Array.Clear(buttonArray, 0, buttonArray.Length);
+                    }
+                }
             }
         }
 

@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/CustomMap.cs
+ * Qubit Menu  Modules/Categories/CustomMaps/CustomMap.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,13 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Classes.Menu;
-
-namespace Qubit.Mods.CustomMaps
+namespace Qubit.Modules.Categories.CustomMaps
 {
     public abstract class CustomMap
     {
         public abstract long MapID { get; }
-        public abstract ButtonInfo[] Buttons { get; }
+        public abstract Module[] Buttons { get; }
     }
 }

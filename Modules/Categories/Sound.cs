@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/Sound.cs
+ * Qubit Menu  Modules/Categories/Sound.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -24,42 +24,44 @@ using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
-using Qubit.Classes.Menu;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Frontend.Classes;
+using Qubit.Libraries.Audio;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
 using Qubit.Patches.Menu;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
-using static Qubit.Utilities.FileUtilities;
+using static Qubit.Core.Security;
+using static Qubit.Frontend.Core;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Modules.Manager;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.Files;
 using Random = UnityEngine.Random;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Sound
     {
-        public static bool LegacySoundboard = false;
-        public static bool LoopAudio = false;
-        public static bool OverlapAudio = false;
         public static int BindMode;
         public static string Subdirectory = "";
-        public static readonly Dictionary<string, ButtonInfo[]> CachedButtons = new Dictionary<string, ButtonInfo[]>();
 
         public static void LoadSoundboard(bool openCategory = true)
         {
             string key = Subdirectory ?? "";
 
-            if (CachedButtons.TryGetValue(key, out ButtonInfo[] buttons))
+            if (Soundboard.CachedButtons.TryGetValue(key, out Module[] buttons))
             {
-                Buttons.buttons[Buttons.GetCategory("Soundboard")] = buttons;
+                Manager.modules["Soundboard"] = buttons;
 
                 if (openCategory)
-                    Buttons.CurrentCategoryName = "Soundboard";
+                    Manager.CurrentCategoryName = "Soundboard";
 
                 return;
             }
@@ -69,11 +71,11 @@ namespace Qubit.Mods
             if (!Directory.Exists(path))
                 Directory.CreateDirectory(path);
 
-            List<ButtonInfo> soundButtons = new List<ButtonInfo>();
+            List<Module> soundButtons = new List<Module>();
 
             if (Subdirectory != "")
             {
-                soundButtons.Add(new ButtonInfo
+                soundButtons.Add(new Module
                 {
                     buttonText = "Exit Subdirectory",
                     overlapText = "Exit " + Subdirectory.Split("/")[^1],
@@ -88,10 +90,10 @@ namespace Qubit.Mods
             }
             else
             {
-                soundButtons.Add(new ButtonInfo
+                soundButtons.Add(new Module
                 {
                     buttonText = "Exit Soundboard",
-                    method = () => Buttons.CurrentCategoryName = "Sound Mods",
+                    method = () => Manager.CurrentCategoryName = "Sound Mods",
                     isTogglable = false,
                     toolTip = "Returns you back to the sound mods."
                 });
@@ -103,7 +105,7 @@ namespace Qubit.Mods
             soundButtons.AddRange(
                 from folder in folders
                 let relativePath = Path.GetRelativePath(path, folder)
-                select new ButtonInfo
+                select new Module
                 {
                     buttonText = "SoundboardFolder" + relativePath.Hash(),
                     overlapText = $"<sprite name=\"Folder\">  {relativePath}  ",
@@ -113,7 +115,7 @@ namespace Qubit.Mods
                 });
 
             if (!RecorderPatch.enabled)
-                NotificationManager.SendNotification($"<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> You are using the legacy microphone system. Modern soundboard features will not be implemented.");
+                Notifications.SendNotification($"<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> You are using the legacy microphone system. Modern soundboard features will not be implemented.");
 
             foreach (string file in files)
             {
@@ -124,11 +126,11 @@ namespace Qubit.Mods
                 string soundKey = "SoundboardSound" + soundName.Hash();
 
 
-                if (!RecorderPatch.enabled || LegacySoundboard)
+                if (!RecorderPatch.enabled || Soundboard.LegacySoundboard)
                 {
                     if (BindMode > 0)
                     {
-                        soundButtons.Add(new ButtonInfo
+                        soundButtons.Add(new Module
                         {
                             buttonText = soundKey,
                             overlapText = soundName,
@@ -139,24 +141,24 @@ namespace Qubit.Mods
                     }
                     else
                     {
-                        if (LoopAudio)
+                        if (Soundboard.LoopAudio)
                         {
-                            soundButtons.Add(new ButtonInfo
+                            soundButtons.Add(new Module
                             {
                                 buttonText = soundKey,
                                 overlapText = soundName,
-                                enableMethod = () => PlayAudio(soundPath),
+                                enableMethod = () => Fun.PlayAudio(soundPath),
                                 disableMethod = StopAllSounds,
                                 toolTip = $"Plays {soundName} through your microphone."
                             });
                         }
                         else
                         {
-                            soundButtons.Add(new ButtonInfo
+                            soundButtons.Add(new Module
                             {
                                 buttonText = soundKey,
                                 overlapText = soundName,
-                                method = () => PlayAudio(soundPath),
+                                method = () => Fun.PlayAudio(soundPath),
                                 isTogglable = false,
                                 toolTip = $"Plays {soundName} through your microphone."
                             });
@@ -165,8 +167,8 @@ namespace Qubit.Mods
                 }
                 else if (RecorderPatch.enabled)
                 {
-                    ButtonInfo buttonInfo = null;
-                    buttonInfo = new ButtonInfo
+                    Module buttonInfo = null;
+                    buttonInfo = new Module
                     {
                         buttonText = soundKey,
                         overlapText = soundName,
@@ -179,7 +181,7 @@ namespace Qubit.Mods
                 }
             }
 
-            soundButtons.Add(new ButtonInfo
+            soundButtons.Add(new Module
             {
                 buttonText = "Stop All Sounds",
                 method = StopAllSounds,
@@ -187,7 +189,7 @@ namespace Qubit.Mods
                 toolTip = "Stops all currently playing sounds."
             });
 
-            soundButtons.Add(new ButtonInfo
+            soundButtons.Add(new Module
             {
                 buttonText = "Open Sound Folder",
                 aliases = new[] { "Open Soundboard Folder" },
@@ -196,19 +198,19 @@ namespace Qubit.Mods
                 toolTip = "Opens a folder containing all of your sounds."
             });
 
-            soundButtons.Add(new ButtonInfo
+            soundButtons.Add(new Module
             {
                 buttonText = "Reload Sounds",
                 method = () =>
                 {
-                    CachedButtons.Clear();
+                    Soundboard.CachedButtons.Clear();
                     LoadSoundboard();
                 },
                 isTogglable = false,
                 toolTip = "Reloads all of your sounds."
             });
 
-            soundButtons.Add(new ButtonInfo
+            soundButtons.Add(new Module
             {
                 buttonText = "Get More Sounds",
                 method = LoadSoundLibrary,
@@ -216,19 +218,16 @@ namespace Qubit.Mods
                 toolTip = "Opens a public audio library, where you can download your own sounds."
             });
 
-            CachedButtons[key] = soundButtons.ToArray();
-            Buttons.buttons[Buttons.GetCategory("Soundboard")] = CachedButtons[key];
+            Soundboard.CachedButtons[key] = soundButtons.ToArray();
+            Manager.modules["Soundboard"] = Soundboard.CachedButtons[key];
 
             if (openCategory)
-                Buttons.CurrentCategoryName = "Soundboard";
+                Manager.CurrentCategoryName = "Soundboard";
         }
 
         public static void OpenFolder(string folder)
         {
-            if (string.IsNullOrEmpty(Subdirectory))
-                Subdirectory = "/" + folder;
-            else
-                Subdirectory = Subdirectory.TrimEnd('/') + "/" + folder;
+            Subdirectory = string.IsNullOrEmpty(Subdirectory) ? "/" + folder : Subdirectory.TrimEnd('/') + "/" + folder;
 
             LoadSoundboard();
         }
@@ -237,7 +236,7 @@ namespace Qubit.Mods
         {
             string library = GetHttp($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/SoundLibrary.txt");
             string[] audios = AlphabetizeNoSkip(library.Split("\n"));
-            List<ButtonInfo> soundbuttons = new List<ButtonInfo> { new ButtonInfo { buttonText = "Exit Sound Library", method = () => LoadSoundboard(), isTogglable = false, toolTip = "Returns you back to the soundboard." } };
+            List<Module> soundbuttons = new List<Module> { new Module { buttonText = "Exit Sound Library", method = () => LoadSoundboard(), isTogglable = false, toolTip = "Returns you back to the soundboard." } };
             int index = 0;
             foreach (string audio in audios)
             {
@@ -245,33 +244,33 @@ namespace Qubit.Mods
                 {
                     index++;
                     string[] Data = audio.Split(";");
-                    soundbuttons.Add(new ButtonInfo { buttonText = "SoundboardDownload" + index, overlapText = Data[0], method = () => DownloadSound(Data[0], $"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/Sounds/{Data[1]}"), isTogglable = false, toolTip = "Downloads " + Data[0] + " to your sound library." });
+                    soundbuttons.Add(new Module { buttonText = "SoundboardDownload" + index, overlapText = Data[0], method = () => DownloadSound(Data[0], $"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/Sounds/{Data[1]}"), isTogglable = false, toolTip = "Downloads " + Data[0] + " to your sound library." });
                 }
             }
-            Buttons.buttons[Buttons.GetCategory("Sound Library")] = soundbuttons.ToArray();
-            Buttons.CurrentCategoryName = "Sound Library";
+            Manager.modules["Sound Library"] = soundbuttons.ToArray();
+            Manager.CurrentCategoryName = "Sound Library";
         }
 
         public static void LoadSoundProperties(string soundName, string soundPath, string hash)
         {
-            ButtonInfo playButton = null;
-            ButtonInfo pauseButton = null;
-            ButtonInfo durationButton = null;
-            ButtonInfo volumeButton = null;
-            ButtonInfo speedButton = null;
+            Module playButton = null;
+            Module pauseButton = null;
+            Module durationButton = null;
+            Module volumeButton = null;
+            Module speedButton = null;
 
             float skipAmount = 1f;
-            ButtonInfo skipAmountButton = null;
-            ButtonInfo skipButton = null;
+            Module skipAmountButton = null;
+            Module skipButton = null;
 
             bool isActive = activeSounds.ContainsKey(hash);
             string hashedName = soundName.Hash();
 
             void Play()
             {
-                if (OverlapAudio)
+                if (Soundboard.OverlapAudio)
                 {
-                    PlayAudio(soundPath);
+                    Fun.PlayAudio(soundPath);
                     playButton.SetEnabled(false);
                     return;
                 }
@@ -279,7 +278,7 @@ namespace Qubit.Mods
                 if (!activeSounds.ContainsKey(hash))
                 {
                     playButton.overlapText = "Stop";
-                    PlaySoundboardSound(soundPath, hash, LoopAudio, BindMode > 0);
+                    PlaySoundboardSound(soundPath, hash, Soundboard.LoopAudio, BindMode > 0);
 
                     System.Collections.IEnumerator Reload()
                     {
@@ -290,7 +289,7 @@ namespace Qubit.Mods
                         ReloadMenu();
                     }
 
-                    CoroutineManager.instance.StartCoroutine(Reload());
+                    Coroutines.instance.StartCoroutine(Reload());
                 }
             }
 
@@ -324,7 +323,7 @@ namespace Qubit.Mods
                 return string.Join(" ", parts);
             }
 
-            playButton = new ButtonInfo
+            playButton = new Module
             {
                 buttonText = $"Play or Pause SoundboardSound {hashedName}",
                 toolTip = $"Plays or pauses the sound {soundName}.",
@@ -334,7 +333,7 @@ namespace Qubit.Mods
                 enabled = isActive
             };
 
-            durationButton = new ButtonInfo
+            durationButton = new Module
             {
                 label = true,
                 buttonText = $"SoundboardSound {hashedName}'s Duration",
@@ -343,18 +342,17 @@ namespace Qubit.Mods
                 {
                     try
                     {
-                        if (activeSounds.TryGetValue(hash, out var s) && s.Clip != null)
-                            durationButton.overlapText = $"Duration: {FormatDuration(s.Clip.CurrentTime)}";
-                        else
-                            durationButton.overlapText = "Duration: N/A";
+                        durationButton.overlapText = activeSounds.TryGetValue(hash, out var s) && s.Clip != null
+                            ? $"Duration: {FormatDuration(s.Clip.CurrentTime)}"
+                            : "Duration: N/A";
                     }
                     catch { }
                 }
             };
 
-            var list = new List<ButtonInfo>
+            var list = new List<Module>
             {
-                new ButtonInfo
+                new Module
                 {
                     buttonText = $"Exit {soundName}'s Properties",
                     method = () => LoadSoundboard(),
@@ -366,7 +364,7 @@ namespace Qubit.Mods
 
             if (activeSounds.TryGetValue(hash, out var sound) && sound.Clip != null)
             {
-                pauseButton = new ButtonInfo
+                pauseButton = new Module
                 {
                     buttonText = $"Pause SoundboardSound {hashedName}",
                     overlapText = "Pause",
@@ -383,7 +381,7 @@ namespace Qubit.Mods
                     toolTip = $"Pauses or resumes the sound."
                 };
                 list.Add(pauseButton);
-                list.Add(new ButtonInfo
+                list.Add(new Module
                 {
                     buttonText = $"Loop SoundboardSound {hashedName}",
                     overlapText = "Loop",
@@ -392,7 +390,7 @@ namespace Qubit.Mods
                     toolTip = "Makes the song loop when it ends."
                 });
 
-                skipButton = new ButtonInfo
+                skipButton = new Module
                 {
                     buttonText = $"Skip SoundboardSound {hashedName}",
                     overlapText = $"Skip <color=grey>[</color><color=green>{skipAmount:0.0}s</color><color=grey>]</color>",
@@ -405,7 +403,7 @@ namespace Qubit.Mods
 
                 list.Add(skipButton);
                 list.Add(durationButton);
-                list.Add(new ButtonInfo
+                list.Add(new Module
                 {
                     label = true,
                     buttonText = $"SoundboardSound {hashedName}'s Length",
@@ -452,8 +450,8 @@ namespace Qubit.Mods
                 list.Add(speedButton);
             }
 
-            Buttons.buttons[Buttons.GetCategory("Sound Properties")] = list.ToArray();
-            Buttons.CurrentCategoryName = "Sound Properties";
+            Manager.modules["Sound Properties"] = list.ToArray();
+            Manager.CurrentCategoryName = "Sound Properties";
         }
 
         public static void DownloadSound(string name, string url)
@@ -476,68 +474,19 @@ namespace Qubit.Mods
                     Play2DAudio(clip);
             });
 
-            CachedButtons.Remove(Subdirectory ?? "");
+            Soundboard.CachedButtons.Remove(Subdirectory ?? "");
 
-            NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully downloaded " + name + " to the soundboard.");
+            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully downloaded " + name + " to the soundboard.");
         }
 
         public static bool AudioIsPlaying;
         public static float RecoverTime = -1f;
 
-        private static GameObject soundboardAudioManager;
-
-        public static bool disableLocalSoundboard;
-        public static void PlayAudio(AudioClip sound, bool disableMicrophone = false)
-        {
-            if (sound == null)
-            {
-                LogManager.LogError("AudioClip is null");
-                return;
-            }
-            if (!NetworkSystem.Instance.InRoom)
-            {
-                if (soundboardAudioManager == null)
-                {
-                    soundboardAudioManager = new GameObject("2DAudioMgr");
-                    AudioSource temp = soundboardAudioManager.AddComponent<AudioSource>();
-                    temp.spatialBlend = 0f;
-                }
-
-                AudioSource ausrc = soundboardAudioManager.GetComponent<AudioSource>();
-                ausrc.volume = 1f;
-                ausrc.clip = sound;
-                ausrc.loop = false;
-                ausrc.Play();
-
-                AudioIsPlaying = true;
-                RecoverTime = Time.time + sound.length;
-
-                return;
-            }
-
-            if (!RecorderPatch.enabled)
-            {
-                NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.AudioClip;
-                NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.AudioClip = sound;
-                NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.RestartRecording(true);
-            }
-            else if (RecorderPatch.enabled)
-            {
-                if (LegacySoundboard && VoiceManager.Get().AudioClips.Count == 1)
-                    VoiceManager.Get().StopAudioClips();
-                VoiceManager.Get().AudioClip(sound, disableMicrophone);
-            }
-
-            if (!LoopAudio)
-            {
-                AudioIsPlaying = true;
-                RecoverTime = Time.time + sound.length + 0.4f;
-            }
-        }
+        public static GameObject soundboardAudioManager;
 
         private class SoundData
         {
-            public VoiceManager.Clip Clip;
+            public Voices.Clip Clip;
             public AudioClip AudioClip;
         }
 
@@ -578,12 +527,12 @@ namespace Qubit.Mods
                 {
                     if (RecorderPatch.enabled && NetworkSystem.Instance.InRoom)
                     {
-                        var id = VoiceManager.Get().AudioClip(clip, false);
+                        var id = Voices.Get().AudioClip(clip, false);
                         activeSounds[hash] = new SoundData { Clip = id, AudioClip = clip };
                     }
                 }
 
-                var clips = VoiceManager.Get().AudioClips;
+                var clips = Voices.Get().AudioClips;
                 var keys = activeSounds.Keys.ToList();
             }
 
@@ -599,21 +548,9 @@ namespace Qubit.Mods
                 if (activeSounds.ContainsKey(hash))
                 {
                     if (RecorderPatch.enabled)
-                        VoiceManager.Get().StopAudioClip(activeSounds[hash].Clip);
+                        Voices.Get().StopAudioClip(activeSounds[hash].Clip);
                     activeSounds.Remove(hash);
                 }
-            }
-        }
-
-
-        public static void PlayAudio(string file)
-        {
-            if (NetworkSystem.Instance.InRoom)
-            {
-                LoadSoundFromFile(file, clip =>
-                {
-                    PlayAudio(clip);
-                });
             }
         }
 
@@ -626,9 +563,9 @@ namespace Qubit.Mods
                 RecoverTime = -1f;
             }
 
-            foreach (ButtonInfo[] buttonArray in CachedButtons.Values)
+            foreach (Module[] buttonArray in Soundboard.CachedButtons.Values)
             {
-                foreach (ButtonInfo button in buttonArray)
+                foreach (Module button in buttonArray)
                 {
                     if (button != null && button.enabled)
                         button.SetEnabled(false);
@@ -643,7 +580,7 @@ namespace Qubit.Mods
                     {
                         var keys = new HashSet<string>(activeSounds.Keys);
 
-                        foreach (var row in Buttons.buttons)
+                        foreach (var row in Manager.modules.Values)
                         {
                             foreach (var button in row)
                             {
@@ -654,7 +591,7 @@ namespace Qubit.Mods
 
                         activeSounds.Clear();
                     }
-                    VoiceManager.Get().StopAudioClips();
+                    Voices.Get().StopAudioClips();
 
                     NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
                 }
@@ -681,7 +618,7 @@ namespace Qubit.Mods
                 {
                     var keys = new HashSet<string>(activeSounds.Keys);
 
-                    foreach (var row in Buttons.buttons)
+                    foreach (var row in Manager.modules.Values)
                     {
                         foreach (var button in row)
                         {
@@ -692,7 +629,7 @@ namespace Qubit.Mods
 
                     activeSounds.Clear();
                 }
-                VoiceManager.Get().StopAudioClips();
+                Voices.Get().StopAudioClips();
             }
             else
             {
@@ -726,7 +663,7 @@ namespace Qubit.Mods
                 if (NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.SourceType == Recorder.InputSourceType.AudioClip)
                     FixMicrophone();
                 else
-                    PlayAudio(file);
+                    Fun.PlayAudio(file);
             }
             lastBindPressed = bindPressed;
         }
@@ -747,13 +684,13 @@ namespace Qubit.Mods
         public static void BetaPlayTag(int id, float volume)
         {
             if (!NetworkSystem.Instance.IsMasterClient)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not master client.");
             else
             {
                 if (Time.time > sendEffectDelay)
                 {
                     object[] soundSendData = { id, volume, false };
-                    object[] sendEventData = { PhotonNetwork.ServerTimestamp, (byte)Constants.Network.ROOM_SYSTEM, soundSendData };
+                    object[] sendEventData = { PhotonNetwork.ServerTimestamp, Constants.Network.ROOM_SYSTEM, soundSendData };
 
                     try
                     {
@@ -824,10 +761,17 @@ namespace Qubit.Mods
 
         public static void CustomSoundSpam() => SoundSpam(soundId);
 
-        public static void BetaSoundSpam(int id)
+        public static void Initialize()
         {
-            if (rightGrab)
-                BetaPlayTag(id, 999999f);
+            try
+            {
+                LoadSoundboard(false);
+            }
+            catch (Exception exc)
+            {
+                Logs.LogError(
+                $"Error with Sound.LoadSoundboard() at {exc.StackTrace}: {exc.Message}");
+            }
         }
     }
 }

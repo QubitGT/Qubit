@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Mods/Detected.cs
+ * Qubit Menu  Modules/Categories/Detected.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -25,17 +25,21 @@ using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Libraries.Core;
+using Qubit.Modules.Classes;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
-using static Qubit.Utilities.RigUtilities;
+using static Qubit.Extensions.Players;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Utilities.Assets;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Random = UnityEngine.Random;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Detected
     {
@@ -47,9 +51,9 @@ namespace Qubit.Mods
                 Prompt("The mods in this category are detected. <b>Unless you know what you're doing, you will get banned.</b> Are you sure you would like to continue?",
                     () =>
                     {
-                        allowDetected = true; Buttons.CurrentCategoryName = "Detected Mods";
+                        allowDetected = true; Manager.CurrentCategoryName = "Detected Mods";
 
-                        AchievementManager.UnlockAchievement(new AchievementManager.Achievement
+                        Achievements.Unlock(new Achievements.Achievement
                         {
                             name = "Sinister",
                             description = "Open the \"Detected Mods\" category.",
@@ -58,7 +62,7 @@ namespace Qubit.Mods
                         });
                     });
             }
-            else Buttons.CurrentCategoryName = "Detected Mods";
+            else Manager.CurrentCategoryName = "Detected Mods";
         }
 
         public static Dictionary<VRRig, int> viewIdArchive = new Dictionary<VRRig, int>();
@@ -88,47 +92,38 @@ namespace Qubit.Mods
 
         public static void QuarantineGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-                if (GetGunInput(true))
+                PhotonView view = gunTarget.GetPhotonView();
+                if (view != null)
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
+                    Destroy(gunTarget, new Hashtable
                     {
-                        PhotonView view = gunTarget.GetPhotonView();
-                        if (view != null)
+                        { 0, view.ViewID }
+                    }, new RaiseEventOptions
+                    {
+                        TargetActors = PhotonNetwork.PlayerList.Where(p => p != view.Owner).Select(p => p.ActorNumber).ToArray()
+                    });
+                    foreach (VRRig rig in Players.ActiveRigs)
+                    {
+                        if (rig != gunTarget)
                         {
-                            Destroy(gunTarget, new Hashtable
+                            Destroy(rig, new Hashtable
                             {
-                                { 0, view.ViewID }
+                                { 0, rig.GetPhotonView().ViewID }
                             }, new RaiseEventOptions
                             {
-                                TargetActors = PhotonNetwork.PlayerList.Where(p => p != view.Owner).Select(p => p.ActorNumber).ToArray()
+                                TargetActors = new[] { gunTarget.GetPlayer().ActorNumber }
                             });
-                            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
-                            {
-                                if (rig != gunTarget)
-                                {
-                                    Destroy(rig, new Hashtable
-                                    {
-                                        { 0, rig.GetPhotonView().ViewID }
-                                    }, new RaiseEventOptions
-                                    {
-                                        TargetActors = new[] { gunTarget.GetPlayer().ActorNumber }
-                                    });
-                                }
-                            }
                         }
                     }
                 }
-            }
+            });
         }
 
         public static void QuarantineAll()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal())
                 {
@@ -142,7 +137,7 @@ namespace Qubit.Mods
                         {
                             TargetActors = PhotonNetwork.PlayerList.Where(p => p != view.Owner).Select(p => p.ActorNumber).ToArray()
                         });
-                        foreach (VRRig otherRig in VRRigExtensions.ActiveRigs)
+                        foreach (VRRig otherRig in Players.ActiveRigs)
                         {
                             if (otherRig != rig)
                             {
@@ -164,7 +159,7 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -185,7 +180,7 @@ namespace Qubit.Mods
                         {
                             TargetActors = PhotonNetwork.PlayerList.Where(p => p != view.Owner).Select(p => p.ActorNumber).ToArray()
                         });
-                        foreach (VRRig otherRig in VRRigExtensions.ActiveRigs)
+                        foreach (VRRig otherRig in Players.ActiveRigs)
                         {
                             if (otherRig != rig)
                             {
@@ -206,7 +201,7 @@ namespace Qubit.Mods
         public static void QuarantineOnTouch()
         {
             if (!NetworkSystem.Instance.InRoom) return;
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                 {
@@ -221,7 +216,7 @@ namespace Qubit.Mods
                             TargetActors = PhotonNetwork.PlayerList.Where(p => p != view.Owner).Select(p => p.ActorNumber).ToArray()
                         });
                     }
-                    foreach (VRRig otherRig in VRRigExtensions.ActiveRigs)
+                    foreach (VRRig otherRig in Players.ActiveRigs)
                     {
                         if (otherRig != rig)
                         {
@@ -273,7 +268,7 @@ namespace Qubit.Mods
                 {
                     TargetActors = PhotonNetwork.PlayerList.Where(p => p != view.Owner).Select(p => p.ActorNumber).ToArray()
                 });
-                foreach (VRRig otherRig in VRRigExtensions.ActiveRigs)
+                foreach (VRRig otherRig in Players.ActiveRigs)
                 {
                     if (otherRig != line.linePlayer.VRRig())
                     {
@@ -291,36 +286,26 @@ namespace Qubit.Mods
 
         public static void GhostGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
+                PhotonView view = gunTarget.GetPhotonView();
+                if (view != null)
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
+                    viewIdArchive[gunTarget] = view.ViewID;
+                    Destroy(gunTarget, new Hashtable
                     {
-                        PhotonView view = gunTarget.GetPhotonView();
-                        if (view != null)
-                        {
-                            viewIdArchive[gunTarget] = view.ViewID;
-                            Destroy(gunTarget, new Hashtable
-                            {
-                                { 0, view.ViewID }
-                            }, new RaiseEventOptions
-                            {
-                                TargetActors = PhotonNetwork.PlayerList.Where(p => p != view.Owner).Select(p => p.ActorNumber).ToArray()
-                            });
-                        }
-                    }
+                        { 0, view.ViewID }
+                    }, new RaiseEventOptions
+                    {
+                        TargetActors = PhotonNetwork.PlayerList.Where(p => p != view.Owner).Select(p => p.ActorNumber).ToArray()
+                    });
                 }
-            }
+            });
         }
 
         public static void GhostAll()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 try
                 {
@@ -353,7 +338,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -391,7 +376,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
 
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && !viewIdArchive.ContainsKey(rig) && rig.IsBeingTouched())
                 {
@@ -464,7 +449,7 @@ namespace Qubit.Mods
             if (Time.time > muteDelay)
             {
                 muteDelay = Time.time + 0.15f;
-                foreach (VRRig rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.IsLocal() && rig.muted))
+                foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && rig.muted))
                 {
                     try
                     {
@@ -477,26 +462,16 @@ namespace Qubit.Mods
 
         public static void UnghostGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        int viewID = viewIdArchive[gunTarget];
-                        Destroy(gunTarget, null, null, viewID);
-                    }
-                }
-            }
+                int viewID = viewIdArchive[gunTarget];
+                Destroy(gunTarget, null, null, viewID);
+            });
         }
 
         public static void UnghostAll()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (viewIdArchive.TryGetValue(rig, out int viewID))
                     Destroy(rig, null, null, viewID);
@@ -508,7 +483,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -530,7 +505,7 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (rig.IsBeingTouched() && viewIdArchive.ContainsKey(rig))
                 {
@@ -542,41 +517,31 @@ namespace Qubit.Mods
 
         public static void IsolateGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
+                foreach (VRRig rig in Players.ActiveRigs)
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
+                    bool includeLocal = !Manager.GetIndex("Isolate Others").enabled || !rig.IsLocal();
+                    PhotonView view = GetPhotonViewFromVRRig(rig);
+                    if (includeLocal && rig != gunTarget)
                     {
-                        foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+                        Destroy(rig, new Hashtable
                         {
-                            bool includeLocal = !Buttons.GetIndex("Isolate Others").enabled || !rig.IsLocal();
-                            PhotonView view = GetPhotonViewFromVRRig(rig);
-                            if (includeLocal && rig != gunTarget)
-                            {
-                                Destroy(rig, new Hashtable
-                                {
-                                    { 0, view.ViewID }
-                                }, new RaiseEventOptions
-                                {
-                                    TargetActors = new[] { gunTarget.GetPlayer().ActorNumber }
-                                });
-                            }
-                        }
+                            { 0, view.ViewID }
+                        }, new RaiseEventOptions
+                        {
+                            TargetActors = new[] { gunTarget.GetPlayer().ActorNumber }
+                        });
                     }
                 }
-            }
+            });
         }
 
         public static void IsolateAll()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
-                bool includeLocal = !Buttons.GetIndex("Isolate Others").enabled || !rig.IsLocal();
+                bool includeLocal = !Manager.GetIndex("Isolate Others").enabled || !rig.IsLocal();
                 if (includeLocal)
                 {
                     PhotonView view = GetPhotonViewFromVRRig(rig);
@@ -598,7 +563,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -610,7 +575,7 @@ namespace Qubit.Mods
             {
                 foreach (VRRig rig in nearbyPlayers)
                 {
-                    bool includeLocal = !Buttons.GetIndex("Isolate Others").enabled || !rig.IsLocal();
+                    bool includeLocal = !Manager.GetIndex("Isolate Others").enabled || !rig.IsLocal();
                     if (includeLocal)
                     {
                         PhotonView view = GetPhotonViewFromVRRig(rig);
@@ -630,13 +595,13 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && !viewIdArchive.ContainsKey(rig) && rig.IsBeingTouched())
                 {
-                    foreach (VRRig otherRig in VRRigExtensions.ActiveRigs)
+                    foreach (VRRig otherRig in Players.ActiveRigs)
                     {
-                        bool includeLocal = !Buttons.GetIndex("Isolate Others").enabled || !otherRig.IsLocal();
+                        bool includeLocal = !Manager.GetIndex("Isolate Others").enabled || !otherRig.IsLocal();
                         PhotonView view = GetPhotonViewFromVRRig(otherRig);
                         if (includeLocal && otherRig != rig)
                         {
@@ -656,34 +621,15 @@ namespace Qubit.Mods
 
         public static void LagGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    Destroy(lockTarget.GetPhotonPlayer());
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                Destroy(lockTarget.GetPhotonPlayer());
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void LagAll()
         {
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.IsLocal()))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.IsLocal()))
                 Destroy(rig.GetPhotonPlayer());
         }
 
@@ -692,7 +638,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -711,7 +657,7 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                     Destroy(rig.GetPhotonPlayer());
@@ -721,41 +667,20 @@ namespace Qubit.Mods
         public static float muteDelay;
         public static void MuteGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
+                if (Time.time > muteDelay)
                 {
-                    if (Time.time > muteDelay)
-                    {
-                        Destroy(lockTarget.GetPhotonPlayer());
-                        muteDelay = Time.time + 0.15f;
-                    }
+                    Destroy(lockTarget.GetPhotonPlayer());
+                    muteDelay = Time.time + 0.15f;
                 }
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void MuteAll()
         {
             if (!(Time.time > muteDelay)) return;
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.IsLocal()))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.IsLocal()))
                 Destroy(rig.GetPhotonPlayer());
 
             muteDelay = Time.time + 0.15f;
@@ -766,7 +691,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -789,7 +714,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
 
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched() && Time.time > muteDelay)
                 {
@@ -808,35 +733,14 @@ namespace Qubit.Mods
 
         public static void ChangeNameGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
+                Hashtable hashtable = new Hashtable
                 {
-                    Hashtable hashtable = new Hashtable
-                    {
-                        [ActorProperties.PlayerName] = name
-                    };
-                    PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(lockTarget.GetPlayer().ActorNumber, hashtable);
-                }
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                    [ActorProperties.PlayerName] = name
+                };
+                PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(lockTarget.GetPlayer().ActorNumber, hashtable);
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void ChangeNameAll()
@@ -856,7 +760,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -881,7 +785,7 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                 {
@@ -897,36 +801,15 @@ namespace Qubit.Mods
 
         public static void BanGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
+                Hashtable hashtable = new Hashtable
                 {
-                    Hashtable hashtable = new Hashtable
-                    {
-                        [ActorProperties.PlayerName] = GorillaComputer.instance.anywhereTwoWeek[Random.Range(0, GorillaComputer.instance.anywhereTwoWeek.Length)]
-                    };
-                    PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(lockTarget.GetPlayer().ActorNumber, hashtable);
-                    MonkeAgent.instance.SendReport("evading the name ban", lockTarget.GetPlayer().UserId, lockTarget.GetPlayer().NickName);
-                }
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                    [ActorProperties.PlayerName] = GorillaComputer.instance.anywhereTwoWeek[Random.Range(0, GorillaComputer.instance.anywhereTwoWeek.Length)]
+                };
+                PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(lockTarget.GetPlayer().ActorNumber, hashtable);
+                MonkeAgent.instance.SendReport("evading the name ban", lockTarget.GetPlayer().UserId, lockTarget.GetPlayer().NickName);
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void BanAll()
@@ -945,33 +828,23 @@ namespace Qubit.Mods
         private static float customPropertyDelay;
         public static void BypassModCheckersGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                customPropertyDelay = Time.time + 0.25f;
 
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && Time.time > customPropertyDelay)
-                    {
-                        customPropertyDelay = Time.time + 0.25f;
+                var player = gunTarget.GetPhotonPlayer();
+                if (player == null) return;
 
-                        var player = gunTarget.GetPhotonPlayer();
-                        if (player == null) return;
+                if (player.CustomProperties == null || player.CustomProperties.Count == 0) return;
 
-                        if (player.CustomProperties == null || player.CustomProperties.Count == 0) return;
+                Hashtable toRemove = new Hashtable();
 
-                        Hashtable toRemove = new Hashtable();
+                foreach (var key in from keyObj in player.CustomProperties.Keys.ToList() select keyObj?.ToString() into key where key != null where !key.Equals(PlayerConfig.Player_HasDoneTutorial) select key)
+                    toRemove[key] = null;
 
-                        foreach (var key in from keyObj in player.CustomProperties.Keys.ToList() select keyObj?.ToString() into key where key != null where !key.Equals(PlayerConfig.Player_HasDoneTutorial) select key)
-                            toRemove[key] = null;
-
-                        if (toRemove.Count > 0)
-                            player.SetCustomProperties(toRemove);
-                    }
-                }
-            }
+                if (toRemove.Count > 0)
+                    player.SetCustomProperties(toRemove);
+            }, new GunLibrary.GunSettings { when = () => Time.time > customPropertyDelay });
 
         }
 
@@ -998,7 +871,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -1025,7 +898,7 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                 {
@@ -1049,26 +922,16 @@ namespace Qubit.Mods
 
         public static void BreakModCheckersGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                customPropertyDelay = Time.time + 0.25f;
 
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && Time.time > customPropertyDelay)
-                    {
-                        customPropertyDelay = Time.time + 0.25f;
+                Hashtable props = new Hashtable();
+                foreach (string mod in Visuals.modDictionary.Keys)
+                    props[mod] = true;
 
-                        Hashtable props = new Hashtable();
-                        foreach (string mod in Visuals.modDictionary.Keys)
-                            props[mod] = true;
-
-                        gunTarget.GetPhotonPlayer().SetCustomProperties(props);
-                    }
-                }
-            }
+                gunTarget.GetPhotonPlayer().SetCustomProperties(props);
+            }, new GunLibrary.GunSettings { when = () => Time.time > customPropertyDelay });
         }
 
         public static void BreakModCheckersAll()
@@ -1086,7 +949,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -1111,7 +974,7 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                 {
@@ -1126,23 +989,13 @@ namespace Qubit.Mods
 
         public static void GamemodeIncludeGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                customPropertyDelay = Time.time + 0.25f;
 
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && Time.time > customPropertyDelay)
-                    {
-                        customPropertyDelay = Time.time + 0.25f;
-
-                        Hashtable props = new Hashtable { { PlayerConfig.Player_HasDoneTutorial, true } };
-                        gunTarget.GetPhotonPlayer().SetCustomProperties(props);
-                    }
-                }
-            }
+                Hashtable props = new Hashtable { { PlayerConfig.Player_HasDoneTutorial, true } };
+                gunTarget.GetPhotonPlayer().SetCustomProperties(props);
+            }, new GunLibrary.GunSettings { when = () => Time.time > customPropertyDelay });
         }
 
         public static void GamemodeIncludeAll()
@@ -1159,7 +1012,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -1181,7 +1034,7 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                 {
@@ -1193,23 +1046,13 @@ namespace Qubit.Mods
 
         public static void GamemodeExcludeGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                customPropertyDelay = Time.time + 0.25f;
 
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && Time.time > customPropertyDelay)
-                    {
-                        customPropertyDelay = Time.time + 0.25f;
-
-                        Hashtable props = new Hashtable { { PlayerConfig.Player_HasDoneTutorial, false } };
-                        gunTarget.GetPhotonPlayer().SetCustomProperties(props);
-                    }
-                }
-            }
+                Hashtable props = new Hashtable { { PlayerConfig.Player_HasDoneTutorial, false } };
+                gunTarget.GetPhotonPlayer().SetCustomProperties(props);
+            }, new GunLibrary.GunSettings { when = () => Time.time > customPropertyDelay });
         }
 
         public static void GamemodeExcludeAll()
@@ -1226,7 +1069,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom) return;
             List<VRRig> nearbyPlayers = new List<VRRig>();
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.Distance(VRRig.LocalRig) < 4 && !vrrig.IsLocal())
                     nearbyPlayers.Add(vrrig);
@@ -1248,7 +1091,7 @@ namespace Qubit.Mods
         {
             if (!NetworkSystem.Instance.InRoom) return;
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                 {
@@ -1268,7 +1111,7 @@ namespace Qubit.Mods
 
         public static void BreakNetworkTriggers()
         {
-            string queue = Buttons.GetIndex("Switch to Modded Gamemode").enabled ? GorillaComputer.instance.currentQueue + "MODDED_" : GorillaComputer.instance.currentQueue;
+            string queue = Manager.GetIndex("Switch to Modded Gamemode").enabled ? GorillaComputer.instance.currentQueue + "MODDED_" : GorillaComputer.instance.currentQueue;
             Hashtable hash = new Hashtable
             {
                 {RoomConfig.Room_GameModePropKey, string.Join("", GorillaComputer.instance.allowedMapsToJoin) + queue + GorillaComputer.instance.currentGameMode.Value }

@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/Projectiles.cs
+ * Qubit Menu  Modules/Categories/Projectiles.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -26,10 +26,11 @@ using GorillaNetworking;
 using GorillaTag.CosmeticSystem;
 using Photon.Pun;
 using Photon.Realtime;
-using Qubit.Classes.Menu;
+using Qubit.Backend;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
+using Qubit.Modules.Classes;
 using Qubit.Patches.Menu;
 using System;
 using System.Collections;
@@ -38,14 +39,19 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using static Qubit.Extensions.VRRigExtensions;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.RandomUtilities;
-using static Qubit.Utilities.RigUtilities;
+using WebSocketSharp;
+using static Qubit.Core.Security;
+using static Qubit.Extensions.Players;
+using static Qubit.Extensions.Random;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Projectiles
     {
@@ -113,7 +119,7 @@ namespace Qubit.Mods
                     {
                         _cachedProjectileEntries = entries;
                         _isBuildingCache = false;
-                        ButtonInfo projectileButton = Buttons.GetIndex("Change Projectile");
+                        Module projectileButton = Manager.GetIndex("Change Projectile");
                         projectileButton?.onValueChanged?.Invoke();
                         onComplete?.Invoke();
                     }
@@ -133,7 +139,7 @@ namespace Qubit.Mods
                         var registry = VRRig.LocalRig?.cosmeticsObjectRegistry;
                         if (registry == null)
                         {
-                            LogManager.LogError("CosmeticsItemRegistry on our rig is null??");
+                            Logs.LogError("CosmeticsItemRegistry on our rig is null??");
                             Finish();
                             return;
                         }
@@ -156,7 +162,7 @@ namespace Qubit.Mods
 
                             if (Time.time > start + 5f)
                             {
-                                LogManager.LogError($"Throwable (index: {item.info.throwableIndex}, right id: {item.rightId}, left id: {item.leftId}) took too long to spawn, so I'm just gonna go");
+                                Logs.LogError($"Throwable (index: {item.info.throwableIndex}, right id: {item.rightId}, left id: {item.leftId}) took too long to spawn, so I'm just gonna go");
                                 break;
                             }
 
@@ -175,7 +181,7 @@ namespace Qubit.Mods
                     }
                     catch (Exception ex)
                     {
-                        LogManager.LogError($"Trying to resolve throwable failed (index: {item.info.throwableIndex}, right id: {item.rightId}, left id: {item.leftId}): {ex}");
+                        Logs.LogError($"Trying to resolve throwable failed (index: {item.info.throwableIndex}, right id: {item.rightId}, left id: {item.leftId}): {ex}");
                     }
                     finally
                     {
@@ -188,9 +194,15 @@ namespace Qubit.Mods
             }
             catch (Exception ex)
             {
-                LogManager.LogError($"BuildProjectileCache failed: {ex}");
+                Logs.LogError($"BuildProjectileCache failed: {ex}");
                 _isBuildingCache = false;
             }
+        }
+
+        public static void LoadProjectileCache()
+        {
+            if (CosmeticsV2Spawner_Dirty.isPrepared && _cachedProjectileEntries == null)
+                BuildProjectileCache();
         }
 
         private static SnowballThrowable FindByThrowableIndex(SnowballMaker maker, int throwableIndex)
@@ -217,9 +229,7 @@ namespace Qubit.Mods
         public static ProjectileEntry GetGrowingSnowballProjectileEntry()
         {
             ProjectileEntry entry = GetPreferredProjectileEntry();
-            if (entry.Throwable is GrowingSnowballThrowable)
-                return entry;
-            return FindProjectile("Growing Snowball");
+            return entry.Throwable is GrowingSnowballThrowable ? entry : FindProjectile("Growing Snowball");
         }
 
         public static ProjectileEntry FindProjectile(string name) =>
@@ -241,7 +251,7 @@ namespace Qubit.Mods
 
             name = name.Trim();
             name = Regex.Replace(name, @"\s+", " ");
-            name = ToTitleCase(name);
+            name = Strings.ToTitleCase(name);
 
             switch (name)
             {
@@ -352,7 +362,7 @@ namespace Qubit.Mods
             }
             catch (Exception e)
             {
-                LogManager.LogError($"Launching a Local Projectile errored: {e.Message}. Full exception:\n{e}");
+                Logs.LogError($"Launching a Local Projectile errored: {e.Message}. Full exception:\n{e}");
             }
         }
 
@@ -367,10 +377,7 @@ namespace Qubit.Mods
         {
             if (projDebounceType == -1)
             {
-                if (friendSided || clientSided)
-                    return true;
-                else
-                    return VRRig.LocalRig.fxSettings.CanCallNow((int)type);
+                return friendSided || clientSided ? true : VRRig.LocalRig.fxSettings.CanCallNow((int)type);
             }
             else
             {
@@ -389,24 +396,18 @@ namespace Qubit.Mods
             try
             {
                 projectileFrameSent = Time.frameCount;
-                ProjectileWatcherCoroutine ??= CoroutineManager.instance.StartCoroutine(ProjectileWatcher());
+                ProjectileWatcherCoroutine ??= Coroutines.instance.StartCoroutine(ProjectileWatcher());
 
-                if (options == null)
-                {
-                    if (friendSided && !ServerData.Administrators.ContainsKey(NetworkSystem.Instance.LocalPlayer.UserId))
-                    {
-                        options = new RaiseEventOptions
+                options ??= friendSided && !ServerData.Administrators.ContainsKey(NetworkSystem.Instance.LocalPlayer.UserId)
+                        ? new RaiseEventOptions
                         {
                             TargetActors = NetworkSystem.Instance.PlayerListOthers
                                 //.Where(p => FriendManager.IsPlayerFriend(p))
                                 .Select(p => p.ActorNumber)
                                 .Concat(new[] { NetworkSystem.Instance.LocalPlayer.ActorNumber })
                                 .ToArray()
-                        };
-                    }
-                    else
-                        options = new RaiseEventOptions { Receivers = ReceiverGroup.All };
-                }
+                        }
+                        : new RaiseEventOptions { Receivers = ReceiverGroup.All };
 
                 if (CanCallNow(FXType.Projectile) || !NetworkSystem.Instance.InRoom)
                 {
@@ -520,7 +521,7 @@ namespace Qubit.Mods
                     }
                 }
             }
-            catch (Exception e) { LogManager.LogError($"Projectile error: {e.Message}. Full exception:\n{e}"); }
+            catch (Exception e) { Logs.LogError($"Projectile error: {e.Message}. Full exception:\n{e}"); }
         }
 
         public static Coroutine ProjectileWatcherCoroutine;
@@ -581,11 +582,8 @@ namespace Qubit.Mods
         {
             get
             {
-                ButtonInfo random = Buttons.GetIndex("Random Projectile");
-                if (random != null && random.enabled)
-                    return Random.Range(0, GetAll()?.Count ?? 1);
-
-                return _projMode;
+                Module random = Manager.GetIndex("Random Projectile");
+                return random != null && random.enabled ? Random.Range(0, GetAll()?.Count ?? 1) : _projMode;
             }
             set => _projMode = value;
         }
@@ -603,7 +601,7 @@ namespace Qubit.Mods
             if (ProjectileMode < 0)
                 ProjectileMode = projectileNames.Length - 1;
 
-            Buttons.GetIndex("Change Projectile").overlapText = "Change Projectile <color=grey>[</color><color=green>" + projectileNames[ProjectileMode] + "</color><color=grey>]</color>";
+            Manager.GetIndex("Change Projectile").overlapText = "Change Projectile <color=grey>[</color><color=green>" + projectileNames[ProjectileMode] + "</color><color=grey>]</color>";
         }
 
         public static int targetProjectileIndex;
@@ -614,13 +612,9 @@ namespace Qubit.Mods
         public static readonly string[] ShootStrengthNames = { "Slow", "Medium", "Fast", "Ultra Fast", "Instant" };
         public static void ApplyShootSpeed(int index) => ShootStrength = ShootStrengthTypes[index];
 
-        public static int red = 10;
-        public static int green = 5;
-        public static int blue;
-
-        public static void ApplyRed(int index) => red = index;
-        public static void ApplyGreen(int index) => green = index;
-        public static void ApplyBlue(int index) => blue = index;
+        public static void ApplyRed(int index) => Fun.red = index;
+        public static void ApplyGreen(int index) => Fun.green = index;
+        public static void ApplyBlue(int index) => Fun.blue = index;
         public static float projDebounce;
         public static float projDebounceType = -1f;
 
@@ -633,8 +627,8 @@ namespace Qubit.Mods
         public static string DisplayProjectileDelay(int index) => index == -1 ? "Default" : (index / 20f).ToString();
         public static void ProjectileDelayWarning(bool positive)
         {
-            if (projDebounceType != -1f && (!Buttons.GetIndex("Friend Sided Projectiles").enabled || !Buttons.GetIndex("Client Sided Projectiles").enabled))
-                NotificationManager.SendNotification($"<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> Using a projectile delay thats not the default may not work and have the possibility of getting you banned. Use at your own caution.", 5000);
+            if (projDebounceType != -1f && (!Manager.GetIndex("Friend Sided Projectiles").enabled || !Manager.GetIndex("Client Sided Projectiles").enabled))
+                Notifications.SendNotification($"<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> Using a projectile delay thats not the default may not work and have the possibility of getting you banned. Use at your own caution.", 5000);
         }
 
         public static Color CalculateProjectileColor()
@@ -643,14 +637,14 @@ namespace Qubit.Mods
             byte g = 255;
             byte b = 255;
 
-            if (Buttons.GetIndex("Random Color").enabled)
+            if (Manager.GetIndex("Random Color").enabled)
             {
                 r = (byte)Random.Range(0, 255);
                 g = (byte)Random.Range(0, 255);
                 b = (byte)Random.Range(0, 255);
             }
 
-            else if (Buttons.GetIndex("Rainbow Projectiles").enabled)
+            else if (Manager.GetIndex("Rainbow Projectiles").enabled)
             {
                 float h = Time.frameCount / 180f % 1f;
                 Color rgbcolor = Color.HSVToRGB(h, 1f, 1f);
@@ -659,7 +653,7 @@ namespace Qubit.Mods
                 b = (byte)(rgbcolor.b * 255);
             }
 
-            else if (Buttons.GetIndex("Hard Rainbow Projectiles").enabled)
+            else if (Manager.GetIndex("Hard Rainbow Projectiles").enabled)
             {
                 float h = Time.frameCount / 180f % 1f;
                 Color rgbcolor = Color.HSVToRGB(h, 1f, 1f);
@@ -668,11 +662,11 @@ namespace Qubit.Mods
                 b = (byte)(Mathf.Floor(rgbcolor.b * 2f) / 2f * 255f);
             }
 
-            else if (Buttons.GetIndex("Custom Colored Projectiles").enabled)
+            else if (Manager.GetIndex("Custom Colored Projectiles").enabled)
             {
-                r = (byte)(red / 10f * 255);
-                g = (byte)(green / 10f * 255);
-                b = (byte)(blue / 10f * 255);
+                r = (byte)(Fun.red / 10f * 255);
+                g = (byte)(Fun.green / 10f * 255);
+                b = (byte)(Fun.blue / 10f * 255);
             }
 
             return new Color32(r, g, b, 255);
@@ -694,7 +688,7 @@ namespace Qubit.Mods
             }
             catch
             {
-                LogManager.Log("Falling back to archiveIncrement");
+                Logs.Log("Falling back to archiveIncrement");
 
                 archiveIncrement++;
                 return archiveIncrement;
@@ -726,11 +720,9 @@ namespace Qubit.Mods
         {
             get
             {
-                if (Buttons.GetIndex("Random Growing Snowball Size").enabled)
-                    return Random.Range(0, MaximumSnowballSize);
-                if (friendSided)
-                    return Math.Max(_snowballSize, friendProjectileScale);
-                return _snowballSize;
+                return Manager.GetIndex("Random Growing Snowball Size").enabled
+                    ? Random.Range(0, MaximumSnowballSize)
+                    : friendSided ? Math.Max(_snowballSize, friendProjectileScale) : _snowballSize;
             }
             set => _snowballSize = value;
         }
@@ -741,10 +733,10 @@ namespace Qubit.Mods
 
         public static void ProjectileSpam()
         {
-            bool fireLeft = (Buttons.GetIndex("Left Handed Projectiles").enabled || Buttons.GetIndex("Both Handed Projectiles").enabled) && leftGrab;
+            bool fireLeft = (Manager.GetIndex("Left Handed Projectiles").enabled || Manager.GetIndex("Both Handed Projectiles").enabled) && leftGrab;
             bool fireRight = rightGrab || Mouse.current.leftButton.isPressed;
 
-            if (Buttons.GetIndex("Both Handed Projectiles").enabled)
+            if (Manager.GetIndex("Both Handed Projectiles").enabled)
             {
                 fireLeft = leftGrab;
                 fireRight = rightGrab;
@@ -762,7 +754,7 @@ namespace Qubit.Mods
                     Vector3 startpos = hands[i].position;
                     Vector3 charvel = GTPlayer.Instance.RigidbodyVelocity;
 
-                    if (Buttons.GetIndex("Shoot Projectiles").enabled)
+                    if (Manager.GetIndex("Shoot Projectiles").enabled)
                     {
                         charvel += GetGunDirection(hands[i]) * ShootStrength;
 
@@ -776,24 +768,23 @@ namespace Qubit.Mods
                         }
                     }
 
-                    if (Buttons.GetIndex("Random Direction").enabled)
+                    if (Manager.GetIndex("Random Direction").enabled)
                         charvel = RandomVector3(100f);
 
-                    if (Buttons.GetIndex("Include Hand Velocity").enabled)
+                    if (Manager.GetIndex("Include Hand Velocity").enabled)
                         charvel = hands[i] == GorillaTagger.Instance.rightHandTransform
                             ? GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0)
                             : GTPlayer.Instance.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
 
-                    SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor(), SnowballSize, null, Buttons.GetIndex("Alternate Projectile Hand").enabled ? (Time.frameCount % 2 == 0) ? ThrowableHand.Left : ThrowableHand.Right : ThrowableHand.Dynamic);
+                    SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor(), SnowballSize, null, Manager.GetIndex("Alternate Projectile Hand").enabled ? (Time.frameCount % 2 == 0) ? ThrowableHand.Left : ThrowableHand.Right : ThrowableHand.Dynamic);
                 }
             }
         }
 
         public static void ProjectileGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 GameObject NewPointer = GunData.NewPointer;
 
                 if (GetGunInput(true))
@@ -801,7 +792,7 @@ namespace Qubit.Mods
                     Vector3 startpos = NewPointer.transform.position + Vector3.up;
                     Vector3 charvel = Vector3.zero;
 
-                    if (Buttons.GetIndex("Shoot Projectiles").enabled)
+                    if (Manager.GetIndex("Shoot Projectiles").enabled)
                     {
                         charvel = GTPlayer.Instance.RigidbodyVelocity + GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
                         if (Mouse.current.leftButton.isPressed)
@@ -814,12 +805,12 @@ namespace Qubit.Mods
                         }
                     }
 
-                    if (Buttons.GetIndex("Include Hand Velocity").enabled)
+                    if (Manager.GetIndex("Include Hand Velocity").enabled)
                         charvel = GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0);
 
                     SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor(), SnowballSize);
                 }
-            }
+            });
         }
 
         public static void LazerSpam()
@@ -829,7 +820,7 @@ namespace Qubit.Mods
                 Vector3 startpos = GorillaTagger.Instance.headCollider.transform.position;
                 Vector3 charvel = GorillaTagger.Instance.headCollider.transform.forward * 30f;
 
-                if (Buttons.GetIndex("Shoot Projectiles").enabled)
+                if (Manager.GetIndex("Shoot Projectiles").enabled)
                 {
                     charvel = GTPlayer.Instance.RigidbodyVelocity + GetGunDirection(GorillaTagger.Instance.rightHandTransform) * ShootStrength;
                     if (Mouse.current.leftButton.isPressed)
@@ -842,7 +833,7 @@ namespace Qubit.Mods
                     }
                 }
 
-                if (Buttons.GetIndex("Include Hand Velocity").enabled)
+                if (Manager.GetIndex("Include Hand Velocity").enabled)
                     charvel = GTPlayer.Instance.RightHand.velocityTracker.GetAverageVelocity(true, 0);
 
                 SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor());
@@ -851,36 +842,16 @@ namespace Qubit.Mods
 
         public static void GiveProjectileSpamGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+                Vector3 startpos = lockTarget.rightHandTransform.position;
+                Vector3 charvel = Vector3.zero;
 
-                if (gunLocked && lockTarget != null)
-                {
-                    Vector3 startpos = lockTarget.rightHandTransform.position;
-                    Vector3 charvel = Vector3.zero;
+                if (Manager.GetIndex("Shoot Projectiles").enabled)
+                    charvel = lockTarget.rightHandTransform.transform.forward * ShootStrength;
 
-                    if (Buttons.GetIndex("Shoot Projectiles").enabled)
-                        charvel = lockTarget.rightHandTransform.transform.forward * ShootStrength;
-
-                    SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor());
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor());
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void ImpactSpam()
@@ -915,7 +886,7 @@ namespace Qubit.Mods
                 SnowballThrowable throwable = leftHand ? entry?.ThrowableLeft : entry?.ThrowableRight;
                 if (throwable == null)
                 {
-                    LogManager.LogError("Throwable is null on " + (leftHand ? "left" : "right") + " hand for projectile: " + entry?.Name);
+                    Logs.LogError("Throwable is null on " + (leftHand ? "left" : "right") + " hand for projectile: " + entry?.Name);
                     continue;
                 }
                 if (!throwable.gameObject.activeSelf)
@@ -1007,9 +978,8 @@ namespace Qubit.Mods
 
         public static void UrineGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -1028,22 +998,20 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void FecesGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -1062,22 +1030,20 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void PeriodGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -1096,22 +1062,20 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void SemenGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -1130,22 +1094,20 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void VomitGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -1164,22 +1126,20 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void SpitGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -1198,22 +1158,20 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void LazerEyesGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -1232,42 +1190,22 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void ProjectileBlindGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    ProjectileBlindPlayer(lockTarget);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                ProjectileBlindPlayer(lockTarget);
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void ProjectileBlindAll()
@@ -1313,29 +1251,10 @@ namespace Qubit.Mods
 
         public static void ProjectileLagGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    ProjectileLagPlayer(lockTarget);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                ProjectileLagPlayer(lockTarget);
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void ProjectileLagAll()
@@ -1381,26 +1300,20 @@ namespace Qubit.Mods
 
         public static void ProjectileNukeGun()
         {
-            if (!GetGunInput(false))
-                return;
+            GunLibrary.Point(newPointer =>
+            {
+                float t = Time.timeSinceLevelLoad;
 
-            var gunData = RenderGun();
-            GameObject newPointer = gunData.NewPointer;
+                Vector3 startPos = newPointer.transform.position + Vector3.up * 50f;
+                Vector3 velocity = Physics.gravity * t;
+                Vector3 position = startPos + 0.5f * Physics.gravity * (t * t);
 
-            if (!GetGunInput(true))
-                return;
-
-            float t = Time.timeSinceLevelLoad;
-
-            Vector3 startPos = newPointer.transform.position + Vector3.up * 50f;
-            Vector3 velocity = Physics.gravity * t;
-            Vector3 position = startPos + 0.5f * Physics.gravity * (t * t);
-
-            SendProjectile(
-                GetPreferredProjectileEntry(),
-                position + RandomVector3(velocity.magnitude * 0.25f).X_Z(),
-                velocity
-            );
+                SendProjectile(
+                    GetPreferredProjectileEntry(),
+                    position + RandomVector3(velocity.magnitude * 0.25f).X_Z(),
+                    velocity
+                );
+            });
         }
 
         public static void ProjectileRain()
@@ -1466,40 +1379,19 @@ namespace Qubit.Mods
 
         public static void SnowballParticleGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
-
                 if (GetGunInput(true))
-                    SendProjectile(GetGrowingSnowballProjectileEntry(), GunData.NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, 0f, 0f));
-            }
+                SendProjectile(GetGrowingSnowballProjectileEntry(), GunData.NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, 0f, 0f));
+            });
         }
 
         public static void SnowballImpactEffectGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    BetaSnowballImpact(lockTarget.GetPlayer());
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                BetaSnowballImpact(lockTarget.GetPlayer());
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void SnowballPunchMod()
@@ -1511,7 +1403,7 @@ namespace Qubit.Mods
                     Vector3 targetDirection = GorillaTagger.Instance.headCollider.transform.position - rig.headMesh.transform.position;
                     SendProjectile(GetGrowingSnowballProjectileEntry(), GorillaTagger.Instance.headCollider.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z).normalized / 1.7f, new Vector3(0f, -500f, 0f), null, -1, new RaiseEventOptions() { TargetActors = new int[] { rig.GetPlayer().ActorNumber } });
 
-                    if (Buttons.GetIndex("Graphic Punch Mod").enabled)
+                    if (Manager.GetIndex("Graphic Punch Mod").enabled)
                         SendProjectile(FindProjectile("Apple"), rig.head.rigTarget.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
                 }
             }
@@ -1621,42 +1513,21 @@ namespace Qubit.Mods
 
         public static void SnowballProtectGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
+                foreach (VRRig rig in ActiveRigs)
                 {
-                    foreach (VRRig rig in ActiveRigs)
+                    if (lockTarget != rig && lockTarget.IsNear(rig))
                     {
-                        if (lockTarget != rig && lockTarget.IsNear(rig))
-                        {
-                            Vector3 targetDirection = rig.head.rigTarget.position - lockTarget.head.rigTarget.position;
-                            SendProjectile(
-                                GetGrowingSnowballProjectileEntry(),
-                                lockTarget.head.rigTarget.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z).normalized / 1.7f,
-                                new Vector3(0f, -500f, 0f)
-                            );
-                        }
+                        Vector3 targetDirection = rig.head.rigTarget.position - lockTarget.head.rigTarget.position;
+                        SendProjectile(
+                            GetGrowingSnowballProjectileEntry(),
+                            lockTarget.head.rigTarget.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z).normalized / 1.7f,
+                            new Vector3(0f, -500f, 0f)
+                        );
                     }
                 }
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+            }, new GunLibrary.GunSettings { locks = true });
 
         }
 
@@ -1665,29 +1536,10 @@ namespace Qubit.Mods
 
         public static void SnowballFlingGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    FlingPlayer(lockTarget);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                FlingPlayer(lockTarget);
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static readonly List<GameObject> flingZones = new List<GameObject>();
@@ -1753,28 +1605,10 @@ namespace Qubit.Mods
 
         public static void SnowballFlingVerticalGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    SendProjectile(GetGrowingSnowballProjectileEntry(), lockTarget.headMesh.transform.position + new Vector3(0f, -0.7f, 0f), new Vector3(0f, -500f, 0f));
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                SendProjectile(GetGrowingSnowballProjectileEntry(), lockTarget.headMesh.transform.position + new Vector3(0f, -0.7f, 0f), new Vector3(0f, -500f, 0f));
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void SnowballFlingVerticalAll()
@@ -1789,60 +1623,29 @@ namespace Qubit.Mods
 
         public static void SnowballBringGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                {
-                    Player plr = NetPlayerToPlayer(GetPlayerFromVRRig(GetTargetPlayer(0.5f)));
-                    Vector3 targetDirection = (NewPointer.transform.position - GetVRRigFromPlayer(plr).headMesh.transform.position).normalized;
-                    SendProjectile(GetGrowingSnowballProjectileEntry(), GetVRRigFromPlayer(plr).transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(-targetDirection.x, 0f, -targetDirection.z) / 1.7f, new Vector3(0f, -500f, 0f));
-                }
-            }
+                Player plr = NetPlayerToPlayer(GetPlayerFromVRRig(GetTargetPlayer(0.5f)));
+                Vector3 targetDirection = (NewPointer.transform.position - GetVRRigFromPlayer(plr).headMesh.transform.position).normalized;
+                SendProjectile(GetGrowingSnowballProjectileEntry(), GetVRRigFromPlayer(plr).transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(-targetDirection.x, 0f, -targetDirection.z) / 1.7f, new Vector3(0f, -500f, 0f));
+            });
         }
 
         public static void SnowballPushGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                    SendProjectile(GetGrowingSnowballProjectileEntry(), NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, -500f, 0f));
-
-            }
+                SendProjectile(GetGrowingSnowballProjectileEntry(), NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, -500f, 0f));
+            });
         }
 
         public static void SnowballBringPlayerGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    Vector3 targetDirection = (lockTarget.headMesh.transform.position - GorillaTagger.Instance.headCollider.transform.position).normalized;
-                    SendProjectile(GetGrowingSnowballProjectileEntry(), lockTarget.headMesh.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z) * 1.5f, new Vector3(0f, -100f, 0f));
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                Vector3 targetDirection = (lockTarget.headMesh.transform.position - GorillaTagger.Instance.headCollider.transform.position).normalized;
+                SendProjectile(GetGrowingSnowballProjectileEntry(), lockTarget.headMesh.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z) * 1.5f, new Vector3(0f, -100f, 0f));
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void SnowballBringAllPlayers()
@@ -1856,31 +1659,11 @@ namespace Qubit.Mods
 
         public static void SnowballPushPlayerGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    Vector3 targetDirection = (GorillaTagger.Instance.headCollider.transform.position - lockTarget.headMesh.transform.position).normalized;
-                    SendProjectile(GetGrowingSnowballProjectileEntry(), lockTarget.headMesh.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z) * 1.5f, new Vector3(0f, -100f, 0f));
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                Vector3 targetDirection = (GorillaTagger.Instance.headCollider.transform.position - lockTarget.headMesh.transform.position).normalized;
+                SendProjectile(GetGrowingSnowballProjectileEntry(), lockTarget.headMesh.transform.position + new Vector3(0f, 0.5f, 0f) + new Vector3(targetDirection.x, 0f, targetDirection.z) * 1.5f, new Vector3(0f, -100f, 0f));
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void SnowballPushAllPlayers()
@@ -1897,7 +1680,7 @@ namespace Qubit.Mods
             Safety.AntiReport((vrrig, position) =>
             {
                 SendProjectile(GetGrowingSnowballProjectileEntry(), position, new Vector3(0f, -500f, 0f));
-                NotificationManager.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + vrrig.Creator.NickName + " attempted to report you, they have been flung.");
+                Notifications.SendNotification("<color=grey>[</color><color=purple>ANTI-REPORT</color><color=grey>]</color> " + vrrig.Creator.NickName + " attempted to report you, they have been flung.");
             });
         }
 
@@ -1994,5 +1777,70 @@ namespace Qubit.Mods
             ClearNetworkedProjectile();
             VRRig.LocalRig.SetThrowableProjectileColor(false, Color.white);
         }
+
+        public static Dictionary<string, SnowballThrowable> snowballDict;
+        private static bool allSnowballsInitialized;
+
+        /// <summary>
+        /// Retrieves a SnowballThrowable instance by its projectile name.
+        /// </summary>
+        /// <param name="projectileName">The name of the projectile to retrieve.</param>
+        /// <returns>The matching SnowballThrowable instance if found; otherwise, null.</returns>
+        public static SnowballThrowable GetProjectile(string projectileName)
+        {
+            if (CosmeticsV2Spawner_Dirty.isPrepared)
+            {
+                var throwables = ((AllCosmeticsArraySO)CosmeticsController.instance.v2_allCosmeticsInfoAssetRef.Asset).sturdyAssetRefs.Where(x => x.obj != null && x.obj.info.isThrowable).Select(x => x.obj.info.playFabID).Distinct().ToList();
+                if (snowballDict == null || snowballDict.Count != (throwables.Count - 3)) // lazy fix
+                {
+                    if (!CosmeticsV2Spawner_Dirty.isPrepared)
+                        return null;
+
+                    if (!GorillaComputer.instance.isConnectedToMaster)
+                        return null;
+
+                    if (!allSnowballsInitialized &&
+                        (CosmeticsV2Spawner_Dirty.materialIndexToSnowballThrowablePlayfabIdStringLeft.Count >= 1 &&
+                         CosmeticsV2Spawner_Dirty.materialIndexToSnowballThrowablePlayfabIdStringRight.Count >= 1))
+                    {
+                        allSnowballsInitialized = true;
+
+                        CosmeticsV2Spawner_Dirty.materialIndexToSnowballThrowablePlayfabIdStringLeft.ForEach(v => VRRig.LocalRig.cosmeticsObjectRegistry.Cosmetic(v.Value));
+                        CosmeticsV2Spawner_Dirty.materialIndexToSnowballThrowablePlayfabIdStringRight.ForEach(v => VRRig.LocalRig.cosmeticsObjectRegistry.Cosmetic(v.Value));
+
+                        return null;
+                    }
+
+                    snowballDict = new Dictionary<string, SnowballThrowable>();
+                    foreach (SnowballMaker Maker in new[] { SnowballMaker.leftHandInstance, SnowballMaker.rightHandInstance })
+                    {
+                        foreach (SnowballThrowable Throwable in Maker.snowballs)
+                        {
+                            try
+                            {
+                                string key = Throwable.transform.parent.gameObject.name;
+                                snowballDict.Add(key, Throwable);
+                            }
+                            catch (Exception e)
+                            {
+                                Logs.LogError($"Failed to add projectile to snowballDict: {e.Message}");
+                            }
+                        }
+                    }
+                }
+
+                projectileName += "(Clone)";
+                if (!snowballDict.TryGetValue(projectileName, out var projectile))
+                {
+                    Logs.LogWarning($"Projectile not found: {projectileName}");
+                    return null;
+                }
+
+                return projectile;
+            }
+            return null;
+        }
+
+        public static float ShootStrength = 19.44f;
     }
 }

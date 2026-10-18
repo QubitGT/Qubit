@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/SceneMap.cs
+ * Qubit Menu  Modules/Classes/ClampPosition.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,18 +19,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using UnityEngine;
 
-namespace Qubit.Mods.CustomMaps
+namespace Qubit.Modules.Classes
 {
-    public class SceneMap
+    public class ClampPosition : MonoBehaviour
     {
-        public long MapID { get; }
-        public string SceneName { get; }
+        public void Start() =>
+            Update();
 
-        public SceneMap(long mapID, string sceneName)
+        public void Update()
         {
-            MapID = mapID;
-            SceneName = sceneName;
+            if (targetTransform == null || targetTransform.gameObject == null)
+                Destroy(this);
+
+            transform.position = targetTransform.position;
+            transform.rotation = targetTransform.rotation;
         }
+
+        public Transform targetTransform;
     }
 }

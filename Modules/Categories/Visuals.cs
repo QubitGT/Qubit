@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Mods/Visuals.cs
+ * Qubit Menu  Modules/Categories/Visuals.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -28,13 +28,14 @@ using GorillaTag.Rendering;
 using GorillaTagScripts;
 using HarmonyLib;
 using Photon.Pun;
-using Qubit.Classes.Menu;
-using Qubit.Classes.Mods;
+using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Libraries.Controls;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
+using Qubit.Modules.Classes;
 using Qubit.Patches.Menu;
-using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -47,13 +48,21 @@ using UnityEngine.Rendering;
 using UnityEngine.TextCore;
 using UnityEngine.UI;
 using WebSocketSharp;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
-using static Qubit.Utilities.GameModeUtilities;
-using static Qubit.Utilities.RigUtilities;
+using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.Players;
+using static Qubit.Extensions.Strings;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Resources.Fonts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameModes;
+using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public class Visuals
     {
@@ -77,7 +86,7 @@ namespace Qubit.Mods
             visualizeGO.transform.localScale = scale;
             visualizeGO.transform.rotation = rotation;
 
-            if (Buttons.GetIndex("Hidden on Camera").enabled)
+            if (Manager.GetIndex("Hidden on Camera").enabled)
                 visualizeGO.layer = 19;
 
             Renderer visualizeRenderer = visualizeGO.GetComponent<Renderer>();
@@ -87,44 +96,7 @@ namespace Qubit.Mods
             visualizeRenderer.material.color = clr;
         }
 
-        private static float debugUpdateTimer;
-
-        public static void ConductDebug()
-        {
-            if (Time.time < debugUpdateTimer) return;
-            debugUpdateTimer = Time.time + 1f;
-
-            TextMeshPro title = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>();
-            TextMeshPro body = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>();
-            title.text = "DEBUG INFO";
-            body.richText = true;
-            string text = "";
-            text += $"<color=blue><b>Qubit</b></color> {PluginInfo.Version}  <color=grey>|</color>  Users Online:  {ServerData.onlineUsers}" + "\\n \\n";
-            string red = "<color=red>" + MathF.Floor(PlayerPrefs.GetFloat("redValue") * 255f) + "</color>";
-            string green = ", <color=green>" + MathF.Floor(PlayerPrefs.GetFloat("greenValue") * 255f) + "</color>";
-            string blue = ", <color=blue>" + MathF.Floor(PlayerPrefs.GetFloat("blueValue") * 255f) + "</color>";
-            string redS = "<color=red>" + MathF.Round(PlayerPrefs.GetFloat("redValue") * 9f) + "</color>";
-            string greenS = ", <color=green>" + MathF.Round(PlayerPrefs.GetFloat("greenValue") * 9f) + "</color>";
-            string blueS = ", <color=blue>" + MathF.Round(PlayerPrefs.GetFloat("blueValue") * 9f) + "</color>";
-            text += "<color=green>Color</color><color=grey>:</color> " + red + green + blue + " <color=grey>[</color>" + redS + greenS + blueS + "<color=grey>]</color>\\n";
-            string master = NetworkSystem.Instance.InRoom && PhotonNetwork.IsMasterClient ? "<color=grey> [</color><color=red>Master</color><color=grey>]</color>" : "";
-            text += "<color=green>Name</color><color=grey>:</color> " + PhotonNetwork.LocalPlayer?.NickName + master + "\\n";
-            text += "<color=green>ID</color><color=grey>:</color> " + (Settings.hideId ? "Hidden" : PhotonNetwork.LocalPlayer?.UserId) + "\\n";
-            string clip = GUIUtility.systemCopyBuffer;
-            text += "<color=green>Clip</color><color=grey>:</color> " + (clip?.Length > 35 ? clip[..35] : clip) + "\\n";
-            text += lastDeltaTime + " <color=green>FPS</color> <color=grey>|</color> " + PhotonNetwork.GetPing() + " <color=green>Ping</color>\\n";
-            string room = NetworkSystem.Instance.InRoom ? NetworkSystem.Instance.SessionIsPrivate ? "Private" : "Public" : "Not in room";
-            text += "<color=green>" + NetworkSystem.Instance.regionNames[NetworkSystem.Instance.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " <color=green>Players</color> <color=grey>|</color> " + room + "\\n \\n";
-            string admin = "";
-            if (Time.time > 5f)
-            {
-                if (ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer?.UserId ?? string.Empty, out var administrator))
-                    admin = " <color=grey>|</color> <color=red>Console " + (ServerData.SuperAdministrators.Contains(administrator) ? "Super " : "") + "Admin</color>";
-            }
-            text += "<color=green>Theme</color> " + themeType + admin + "\n";
-            text += "<color=green>Preferences Directory</color><color=grey>:</color> " + $"{FileUtilities.GetGamePath()}/{PluginInfo.BaseDirectory}";
-            body.SafeSetText(text);
-        }
+        public static float debugUpdateTimer;
 
         public static void ToggleSnow(bool enable)
         {
@@ -195,10 +167,10 @@ namespace Qubit.Mods
             float timeUntilStrike = GetTimeUntilNextLightningStrike();
             if (timeUntilStrike < 0f)
             {
-                NotificationManager.information.Remove("Lightning");
+                Notifications.information.Remove("Lightning");
                 return;
             }
-            NotificationManager.information["Lightning"] = $"{timeUntilStrike:F1}s";
+            Notifications.information["Lightning"] = $"{timeUntilStrike:F1}s";
         }
         */
 
@@ -207,14 +179,14 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : new Color(0.41f, 0.05f, 0.70f);
             if (tt)
                 coreESPColor.a = 0.5f;
 
-            List<GameEntity> cores = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.typeId == Overpowered.ObjectByName["GhostReactorCollectibleCore"]).ToList();
+            List<GameEntity> cores = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.typeId == Fun.ObjectByName["GhostReactorCollectibleCore"]).ToList();
             if (cores.Count <= 0)
                 return;
 
@@ -230,8 +202,8 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             Color critterESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
             if (tt)
@@ -253,8 +225,8 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             Color critterESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
             if (tt)
@@ -276,8 +248,8 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : new Color(0.41f, 0.05f, 0.70f);
             if (tt)
@@ -299,8 +271,8 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             Color coreESPColor = fmt ? backgroundColor.GetCurrentColor() : Color.green;
             if (tt)
@@ -533,7 +505,7 @@ namespace Qubit.Mods
             }
             else
             {
-                LogManager.LogError("Watch text component not found");
+                Logs.LogError("Watch text component not found");
             }
         }
 
@@ -548,7 +520,7 @@ namespace Qubit.Mods
         }
 
         public static void CustomSkyboxColor() =>
-            GetObject("Environment Objects/LocalObjects_Prefab/Standard Sky").GetComponent<Renderer>().material = CustomBoardManager.BoardMaterial;
+            GetObject("Environment Objects/LocalObjects_Prefab/Standard Sky").GetComponent<Renderer>().material = CustomBoards.BoardMaterial;
 
         public static void UnCustomSkyboxColor()
         {
@@ -559,9 +531,8 @@ namespace Qubit.Mods
         public static TrailRenderer trailRenderer;
         public static void DrawGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun(GTPlayer.Instance.locomotionEnabledLayers);
                 GameObject NewPointer = GunData.NewPointer;
 
                 if (trailRenderer == null)
@@ -589,7 +560,7 @@ namespace Qubit.Mods
 
                 trailRenderer.emitting = GetGunInput(true);
                 trailRenderer.gameObject.transform.position = NewPointer.transform.position;
-            }
+            }, new GunLibrary.GunSettings { layerMask = GTPlayer.Instance.locomotionEnabledLayers });
         }
 
         public static void DisableDrawGun()
@@ -614,9 +585,9 @@ namespace Qubit.Mods
             if (Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, position) > 20f)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             GameObject cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
             Object.Destroy(cube.GetComponent<Collider>());
@@ -747,7 +718,7 @@ namespace Qubit.Mods
             if (!labelDictionary.TryGetValue(codeName, out GameObject go))
             {
                 go = new GameObject(codeName);
-                if (Buttons.GetIndex("Hidden Labels").enabled)
+                if (Manager.GetIndex("Hidden Labels").enabled)
                     go.layer = 19;
 
                 go.transform.localScale = Vector3.one * (0.25f * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f));
@@ -776,7 +747,7 @@ namespace Qubit.Mods
         private static float playtime;
         public static void UpdatePlaytime()
         {
-            CoroutineManager.instance.StartCoroutine(Updateplaytime());
+            Coroutines.instance.StartCoroutine(Updateplaytime());
         }
         private static IEnumerator Updateplaytime()
         {
@@ -795,15 +766,15 @@ namespace Qubit.Mods
                 NetworkSystem.Instance.CurrentRoom.CustomProps.TryGetValue("language", out var language);
                 NetworkSystem.Instance.CurrentRoom.CustomProps.TryGetValue("mmrTier", out var mmrTier);
 
-                NotificationManager.information["Language"] = language?.ToString() ?? "Unknown";
-                NotificationManager.information["Platform"] = platform?.ToString() ?? "Unknown";
+                Notifications.information["Language"] = language?.ToString() ?? "Unknown";
+                Notifications.information["Platform"] = platform?.ToString() ?? "Unknown";
                 if (mmrTier != null)
-                    NotificationManager.information["MMR Tier"] = mmrTier.ToString();
+                    Notifications.information["MMR Tier"] = mmrTier.ToString();
             }
             else
             {
-                NotificationManager.information.Remove("Language");
-                NotificationManager.information.Remove("MMR Tier");
+                Notifications.information.Remove("Language");
+                Notifications.information.Remove("MMR Tier");
             }
         }
 
@@ -876,11 +847,11 @@ namespace Qubit.Mods
             VRRig masterRig = PhotonNetwork.MasterClient?.VRRig();
             if (!NetworkSystem.Instance.InRoom || PhotonNetwork.IsMasterClient || masterRig == null || !playerPing.ContainsKey(masterRig))
             {
-                NotificationManager.information["Ping"] = PhotonNetwork.GetPing() + "ms";
+                Notifications.information["Ping"] = PhotonNetwork.GetPing() + "ms";
                 return;
             }
 
-            NotificationManager.information["Ping"] = (masterRig.GetPing() + PhotonNetwork.GetPing()) + "ms";
+            Notifications.information["Ping"] = (masterRig.GetPing() + PhotonNetwork.GetPing()) + "ms";
         }
 
         public static void NearbyTaggerOverlay()
@@ -888,7 +859,7 @@ namespace Qubit.Mods
             if (DoPerformanceCheck())
                 return;
             float closest = float.MaxValue;
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.IsTagged() != VRRig.LocalRig.IsTagged())
                 {
@@ -898,28 +869,27 @@ namespace Qubit.Mods
                 }
             }
             if (!Mathf.Approximately(closest, float.MaxValue))
-                NotificationManager.information["Nearby"] = $"{closest:F1}m";
+                Notifications.information["Nearby"] = $"{closest:F1}m";
             else
-                NotificationManager.information.Remove("Nearby");
+                Notifications.information.Remove("Nearby");
         }
 
         public static void InfoOverlayGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
                 {
-                    NotificationManager.information["Name"] = lockTarget.GetName();
-                    NotificationManager.information["Color"] = lockTarget.GetColor().ToRGBString();
-                    NotificationManager.information["ID"] = lockTarget.GetPlayer().UserId;
-                    NotificationManager.information["Platform"] = lockTarget.GetPlatform().ToString();
-                    NotificationManager.information["Ping"] = lockTarget.GetPing().ToString();
-                    NotificationManager.information["FPS"] = lockTarget.fps.ToString();
-                    NotificationManager.information["Creation Date"] = lockTarget.GetCreationDate();
-                    NotificationManager.information["Turn"] = $"{lockTarget.turnType.ToTitleCase()} {lockTarget.turnFactor}";
+                    Notifications.information["Name"] = lockTarget.GetName();
+                    Notifications.information["Color"] = lockTarget.GetColor().ToRGBString();
+                    Notifications.information["ID"] = lockTarget.GetPlayer().UserId;
+                    Notifications.information["Platform"] = lockTarget.GetPlatform().ToString();
+                    Notifications.information["Ping"] = lockTarget.GetPing().ToString();
+                    Notifications.information["FPS"] = lockTarget.fps.ToString();
+                    Notifications.information["Creation Date"] = lockTarget.GetCreationDate();
+                    Notifications.information["Turn"] = $"{lockTarget.turnType.ToTitleCase()} {lockTarget.turnFactor}";
                 }
 
                 if (GetGunInput(true))
@@ -931,21 +901,20 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    NotificationManager.information.Remove("Name");
-                    NotificationManager.information.Remove("Color");
-                    NotificationManager.information.Remove("ID");
-                    NotificationManager.information.Remove("Platform");
-                    NotificationManager.information.Remove("Ping");
-                    NotificationManager.information.Remove("FPS");
-                    NotificationManager.information.Remove("Creation Date");
-                    NotificationManager.information.Remove("Turn");
-                }
-            }
+                    if (gunLocked)
+                    {
+                        Notifications.information.Remove("Name");
+                        Notifications.information.Remove("Color");
+                        Notifications.information.Remove("ID");
+                        Notifications.information.Remove("Platform");
+                        Notifications.information.Remove("Ping");
+                        Notifications.information.Remove("FPS");
+                        Notifications.information.Remove("Creation Date");
+                        Notifications.information.Remove("Turn");
+                    }
+                } });
         }
 
         public static void EnableDebugHUD()
@@ -982,7 +951,7 @@ namespace Qubit.Mods
             if (!VRRig.LocalRig.IsTagged())
             {
                 float closest = float.MaxValue;
-                foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+                foreach (VRRig vrrig in Players.ActiveRigs)
                 {
                     if (vrrig.IsTagged() != VRRig.LocalRig.IsTagged())
                     {
@@ -1143,7 +1112,7 @@ namespace Qubit.Mods
         {
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var lines in predictions.Where(lines => !VRRigExtensions.ActiveRigs.Contains(lines.Key)))
+            foreach (var lines in predictions.Where(lines => !Players.ActiveRigs.Contains(lines.Key)))
             {
                 toRemove.Add(lines.Key);
                 Object.Destroy(lines.Value.gameObject);
@@ -1152,12 +1121,12 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 predictions.Remove(rig);
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
                 if (!predictions.TryGetValue(rig, out LineRenderer Line))
                 {
@@ -1214,13 +1183,13 @@ namespace Qubit.Mods
         private static readonly Dictionary<VRRig, GameObject> hitboxESP = new Dictionary<VRRig, GameObject>();
         public static void HitboxPredictions()
         {
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var box in hitboxESP.Where(box => !VRRigExtensions.ActiveRigs.Contains(box.Key)))
+            foreach (var box in hitboxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
                 toRemove.Add(box.Key);
                 Object.Destroy(box.Value);
@@ -1229,7 +1198,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 hitboxESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!hitboxESP.TryGetValue(vrrig, out GameObject box))
                 {
@@ -1275,10 +1244,10 @@ namespace Qubit.Mods
 
         public static void PaintbrawlTrajectories()
         {
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             List<SlingshotProjectile> toRemoveTrajectories = new List<SlingshotProjectile>();
             foreach (KeyValuePair<SlingshotProjectile, LineRenderer> key in trajectoryPool)
@@ -1355,7 +1324,7 @@ namespace Qubit.Mods
 
             LoopProjectileArray(ProjectileTracker.m_localProjectiles);
 
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (rig.IsLocal()) continue;
 
@@ -1629,13 +1598,13 @@ namespace Qubit.Mods
         public static void NameTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = nametags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 nametags.Remove(nametag.Key);
             }
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal || selfNameTag))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal || selfNameTag))
             {
                 if (!nametags.ContainsKey(vrrig))
                 {
@@ -1681,13 +1650,13 @@ namespace Qubit.Mods
         public static void VelocityTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = velnametags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 velnametags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -1739,13 +1708,13 @@ namespace Qubit.Mods
         public static void FPSTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = fpsNametags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 fpsNametags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -1796,13 +1765,13 @@ namespace Qubit.Mods
         public static void TargetFPSTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = targetFPSNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 targetFPSNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -1854,13 +1823,13 @@ namespace Qubit.Mods
         public static void IDTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = idNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 idNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -1912,13 +1881,13 @@ namespace Qubit.Mods
         public static void PlatformTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = platformTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 platformTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -1972,7 +1941,7 @@ namespace Qubit.Mods
             List<KeyValuePair<VRRig, GameObject>> kidNameTagsCopy = kidNameTags.ToList();
             foreach (KeyValuePair<VRRig, GameObject> nametag in kidNameTagsCopy)
             {
-                if (!VRRigExtensions.ActiveRigs.Contains(nametag.Key))
+                if (!Players.ActiveRigs.Contains(nametag.Key))
                 {
                     Object.Destroy(nametag.Value);
                     kidNameTags.Remove(nametag.Key);
@@ -1987,7 +1956,7 @@ namespace Qubit.Mods
                 }
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2043,7 +2012,7 @@ namespace Qubit.Mods
             List<KeyValuePair<VRRig, GameObject>> subNameTagsCopy = subNameTags.ToList();
             foreach (KeyValuePair<VRRig, GameObject> nametag in subNameTagsCopy)
             {
-                if (!VRRigExtensions.ActiveRigs.Contains(nametag.Key))
+                if (!Players.ActiveRigs.Contains(nametag.Key))
                 {
                     Object.Destroy(nametag.Value);
                     subNameTags.Remove(nametag.Key);
@@ -2058,7 +2027,7 @@ namespace Qubit.Mods
                 }
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2113,13 +2082,13 @@ namespace Qubit.Mods
         public static void CreationDateTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = creationDateTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 creationDateTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2171,13 +2140,13 @@ namespace Qubit.Mods
         public static void PingTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = pingNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 pingNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2229,13 +2198,13 @@ namespace Qubit.Mods
         public static void TurnTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = turnNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 turnNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2260,7 +2229,7 @@ namespace Qubit.Mods
 
                         if (NameTagOptimize())
                         {
-                            tmp.SafeSetText(turnType == "NONE" ? "None" : ToTitleCase(turnType) + " " + turnFactor);
+                            tmp.SafeSetText(turnType == "NONE" ? "None" : Strings.ToTitleCase(turnType) + " " + turnFactor);
                             tmp.color = vrrig.GetColor();
                             tmp.SafeSetFontStyle(activeFontStyle);
                             tmp.SafeSetFont(activeFont);
@@ -2290,13 +2259,13 @@ namespace Qubit.Mods
         public static void TaggedTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = taggedNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 taggedNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2446,13 +2415,13 @@ namespace Qubit.Mods
         public static void ModTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = modNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 modNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2551,13 +2520,13 @@ namespace Qubit.Mods
         public static void CosmeticTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = cosmeticNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 cosmeticNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2723,13 +2692,13 @@ namespace Qubit.Mods
         public static void VerifiedTags()
         {
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = verifiedNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 verifiedNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2799,7 +2768,7 @@ namespace Qubit.Mods
             List<KeyValuePair<VRRig, GameObject>> crashedNameTagsCopy = crashedNameTags.ToList();
             foreach (KeyValuePair<VRRig, GameObject> nametag in crashedNameTagsCopy)
             {
-                if (!VRRigExtensions.ActiveRigs.Contains(nametag.Key))
+                if (!Players.ActiveRigs.Contains(nametag.Key))
                 {
                     Object.Destroy(nametag.Value);
                     crashedNameTags.Remove(nametag.Key);
@@ -2815,7 +2784,7 @@ namespace Qubit.Mods
                 }
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -2891,13 +2860,13 @@ namespace Qubit.Mods
 
         public static string GetPrettyPlatform(VRRig vrrig)
         {
-            VRRigExtensions.PlatformType platform = vrrig.GetPlatform();
+            Players.PlatformType platform = vrrig.GetPlatform();
 
             return platform switch
             {
-                VRRigExtensions.PlatformType.Rift => "<color=#00FFFF>Rift</color>",
-                VRRigExtensions.PlatformType.Steam => " <color=blue>Steam</color>",
-                VRRigExtensions.PlatformType.Quest => "<color=green>Quest</color>",
+                Players.PlatformType.Rift => "<color=#00FFFF>Rift</color>",
+                Players.PlatformType.Steam => " <color=blue>Steam</color>",
+                Players.PlatformType.Quest => "<color=green>Quest</color>",
                 _ => platform.ToString(),
             };
         }
@@ -2918,9 +2887,9 @@ namespace Qubit.Mods
 
         public static void CompactTags()
         {
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = compactNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 Object.Destroy(compactTagBackgrounds[nametag.Key]);
@@ -2928,7 +2897,7 @@ namespace Qubit.Mods
                 compactTagBackgrounds.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -3100,10 +3069,10 @@ namespace Qubit.Mods
 
         public static void MinecraftTags()
         {
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
 
             List<KeyValuePair<VRRig, GameObject>> tagCopy = minecraftNameTags.ToList();
-            foreach (var tag in tagCopy.Where(tag => !VRRigExtensions.ActiveRigs.Contains(tag.Key)))
+            foreach (var tag in tagCopy.Where(tag => !Players.ActiveRigs.Contains(tag.Key)))
             {
                 Object.Destroy(tag.Value);
                 Object.Destroy(minecraftTagBackgrounds[tag.Key]);
@@ -3111,7 +3080,7 @@ namespace Qubit.Mods
                 minecraftTagBackgrounds.Remove(tag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.isLocal && !selfNameTag)
                     continue;
@@ -3192,16 +3161,16 @@ namespace Qubit.Mods
 
         public static void CastingTags()
         {
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
 
             List<KeyValuePair<VRRig, GameObject>> nametagsCopy = castingNameTags.ToList();
-            foreach (var nametag in nametagsCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 castingNameTags.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 try
                 {
@@ -3225,10 +3194,7 @@ namespace Qubit.Mods
                         GameObject nameTag = castingNameTags[vrrig];
                         TextMeshPro tmp = nameTag.GetOrAddComponent<TextMeshPro>();
 
-                        if (hoc)
-                            nameTag.layer = 19;
-                        else
-                            nameTag.layer = 0;
+                        nameTag.layer = hoc ? 19 : 0;
 
                         if (NameTagOptimize())
                         {
@@ -3266,7 +3232,7 @@ namespace Qubit.Mods
 
         public static void FixRigColors()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => vrrig.mainSkin.sharedMaterial.name.Contains("gorilla_body") && vrrig.mainSkin.sharedMaterial.shader == Shader.Find("GorillaTag/UberShader")))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => vrrig.mainSkin.sharedMaterial.name.Contains("gorilla_body") && vrrig.mainSkin.sharedMaterial.shader == Shader.Find("GorillaTag/UberShader")))
                 vrrig.mainSkin.material.color = vrrig.playerColor;
         }
 
@@ -3429,7 +3395,7 @@ namespace Qubit.Mods
 
         public static void NoSmoothRigs()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 vrrig.lerpValueBody = 2f;
                 vrrig.lerpValueFingers = 1f;
@@ -3438,7 +3404,7 @@ namespace Qubit.Mods
 
         public static void ReSmoothRigs()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 vrrig.lerpValueBody = VRRig.LocalRig.lerpValueBody;
                 vrrig.lerpValueFingers = VRRig.LocalRig.lerpValueFingers;
@@ -3486,9 +3452,9 @@ namespace Qubit.Mods
         public static void BetterRigLerping(VRRig rig)
         {
             if (rigLerpCoroutines.TryGetValue(rig, out Coroutine coroutine))
-                CoroutineManager.instance.StopCoroutine(coroutine);
+                Coroutines.instance.StopCoroutine(coroutine);
 
-            rigLerpCoroutines[rig] = CoroutineManager.instance.StartCoroutine(LerpRig(rig));
+            rigLerpCoroutines[rig] = Coroutines.instance.StartCoroutine(LerpRig(rig));
         }
 
         private static readonly Dictionary<VRRig, GameObject> cosmeticIndicators = new Dictionary<VRRig, GameObject>();
@@ -3497,7 +3463,7 @@ namespace Qubit.Mods
         public static void CosmeticIndicators()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = cosmeticIndicators.ToList();
-            foreach (var nametag in indicatorCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in indicatorCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 cosmeticIndicators.Remove(nametag.Key);
@@ -3513,7 +3479,7 @@ namespace Qubit.Mods
                 ("LBANI.", "aa")
             };
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 string currentCosmetic = null;
                 foreach (var (codename, name) in cosmetics)
@@ -3573,10 +3539,10 @@ namespace Qubit.Mods
         {
             return rig.GetPlatform() switch
             {
-                VRRigExtensions.PlatformType.Steam => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/steam.png", "Images/Mods/Visuals/steam.png"),
-                VRRigExtensions.PlatformType.Quest => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/meta.png", "Images/Mods/Visuals/meta.png"),
-                VRRigExtensions.PlatformType.Rift => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/oculus.png", "Images/Mods/Visuals/oculus.png"),
-                VRRigExtensions.PlatformType.PC => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/pc.png", "Images/Mods/Visuals/pc.png"),
+                Players.PlatformType.Steam => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/steam.png", "Images/Mods/Visuals/steam.png"),
+                Players.PlatformType.Quest => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/meta.png", "Images/Mods/Visuals/meta.png"),
+                Players.PlatformType.Rift => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/oculus.png", "Images/Mods/Visuals/oculus.png"),
+                Players.PlatformType.PC => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/pc.png", "Images/Mods/Visuals/pc.png"),
                 _ => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/unknown.png", "Images/Mods/Visuals/unknown.png"),
             };
         }
@@ -3586,13 +3552,13 @@ namespace Qubit.Mods
         public static void PlatformIndicators()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = platformIndicators.ToList();
-            foreach (var nametag in indicatorCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in indicatorCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 platformIndicators.Remove(nametag.Key);
             }
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal || selfNameTag))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal || selfNameTag))
             {
                 if (!platformIndicators.TryGetValue(vrrig, out GameObject indicator))
                 {
@@ -3627,13 +3593,13 @@ namespace Qubit.Mods
         public static void PlatformESP()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = platformIndicators.ToList();
-            foreach (var nametag in indicatorCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in indicatorCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 platformIndicators.Remove(nametag.Key);
             }
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal || selfNameTag))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal || selfNameTag))
             {
                 if (!platformIndicators.TryGetValue(vrrig, out GameObject indicator))
                 {
@@ -3674,13 +3640,13 @@ namespace Qubit.Mods
         public static void VoiceIndicators()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = voiceIndicators.ToList();
-            foreach (var nametag in indicatorCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in indicatorCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 voiceIndicators.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (!vrrig.isLocal || selfNameTag)
                 {
@@ -3737,13 +3703,13 @@ namespace Qubit.Mods
         public static void VoiceESP()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = voiceIndicators.ToList();
-            foreach (var nametag in indicatorCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in indicatorCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 voiceIndicators.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (!vrrig.isLocal)
                 {
@@ -3798,13 +3764,13 @@ namespace Qubit.Mods
         public static void GripESP()
         {
             List<KeyValuePair<VRRig, GameObject>> indicatorCopy = gripIndicators.ToList();
-            foreach (var nametag in indicatorCopy.Where(nametag => !VRRigExtensions.ActiveRigs.Contains(nametag.Key)))
+            foreach (var nametag in indicatorCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
             {
                 Object.Destroy(nametag.Value);
                 gripIndicators.Remove(nametag.Key);
             }
 
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.IsLocal())
                     continue;
@@ -3887,8 +3853,8 @@ namespace Qubit.Mods
 
         public static void NoLimbMode()
         {
-            l.transform.position = ControllerUtilities.GetTrueLeftHand().position;
-            r.transform.position = ControllerUtilities.GetTrueRightHand().position;
+            l.transform.position = Controllers.GetTrueLeftHand().position;
+            r.transform.position = Controllers.GetTrueRightHand().position;
             VRRig.LocalRig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
             VRRig.LocalRig.mainSkin.material.color = new Color(VRRig.LocalRig.mainSkin.sharedMaterial.color.r, VRRig.LocalRig.mainSkin.sharedMaterial.color.g, VRRig.LocalRig.mainSkin.sharedMaterial.color.b, 0f);
             UpdateLimbColor();
@@ -3910,14 +3876,14 @@ namespace Qubit.Mods
 
         public static void CasualBoneESP()
         {
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var boness in boneESP.Where(boness => !VRRigExtensions.ActiveRigs.Contains(boness.Key)))
+            foreach (var boness in boneESP.Where(boness => !Players.ActiveRigs.Contains(boness.Key)))
             {
                 toRemove.Add(boness.Key);
 
@@ -3928,7 +3894,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 boneESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boneESP.TryGetValue(vrrig, out List<LineRenderer> Lines))
                 {
@@ -4000,15 +3966,15 @@ namespace Qubit.Mods
 
         public static void InfectionBoneESP()
         {
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
             bool selfTagged = VRRig.LocalRig.IsTagged();
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var boness in boneESP.Where(boness => !VRRigExtensions.ActiveRigs.Contains(boness.Key)))
+            foreach (var boness in boneESP.Where(boness => !Players.ActiveRigs.Contains(boness.Key)))
             {
                 toRemove.Add(boness.Key);
 
@@ -4019,7 +3985,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 boneESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boneESP.TryGetValue(vrrig, out List<LineRenderer> Lines))
                 {
@@ -4100,16 +4066,16 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
-            GorillaHuntManager hunt = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
 
-            foreach (var boness in boneESP.Where(boness => !VRRigExtensions.ActiveRigs.Contains(boness.Key)))
+            foreach (var boness in boneESP.Where(boness => !Players.ActiveRigs.Contains(boness.Key)))
             {
                 toRemove.Add(boness.Key);
 
@@ -4120,7 +4086,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 boneESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boneESP.TryGetValue(vrrig, out List<LineRenderer> Lines))
                 {
@@ -4207,20 +4173,20 @@ namespace Qubit.Mods
 
         public static void CasualSkeletonESP()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 vrrig.skeleton.renderer.enabled = true;
                 vrrig.skeleton.renderer.material.shader = Shader.Find("GUI/Text Shader");
                 vrrig.skeleton.renderer.material.color = vrrig.playerColor;
-                if (Buttons.GetIndex("Follow Menu Theme").enabled) { vrrig.skeleton.renderer.material.color = backgroundColor.GetCurrentColor(); }
-                if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.material.color.r, vrrig.skeleton.renderer.material.color.g, vrrig.skeleton.renderer.material.color.b, 0.5f); }
+                if (Manager.GetIndex("Follow Menu Theme").enabled) { vrrig.skeleton.renderer.material.color = backgroundColor.GetCurrentColor(); }
+                if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.material.color.r, vrrig.skeleton.renderer.material.color.g, vrrig.skeleton.renderer.material.color.b, 0.5f); }
             }
         }
 
         public static void InfectionSkeletonESP()
         {
             bool isInfectedPlayers = false;
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.IsTagged())
                 {
@@ -4232,15 +4198,15 @@ namespace Qubit.Mods
             {
                 if (!VRRig.LocalRig.IsTagged())
                 {
-                    foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+                    foreach (VRRig vrrig in Players.ActiveRigs)
                     {
                         if (vrrig.IsTagged() && !vrrig.isLocal)
                         {
                             vrrig.skeleton.renderer.enabled = true;
                             vrrig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
                             vrrig.skeleton.renderer.material.color = vrrig.GetColor();
-                            if (Buttons.GetIndex("Follow Menu Theme").enabled) { vrrig.skeleton.renderer.material.color = backgroundColor.GetCurrentColor(); }
-                            if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.material.color.r, vrrig.skeleton.renderer.material.color.g, vrrig.skeleton.renderer.material.color.b, 0.5f); }
+                            if (Manager.GetIndex("Follow Menu Theme").enabled) { vrrig.skeleton.renderer.material.color = backgroundColor.GetCurrentColor(); }
+                            if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.material.color.r, vrrig.skeleton.renderer.material.color.g, vrrig.skeleton.renderer.material.color.b, 0.5f); }
                         }
                         else
                         {
@@ -4253,19 +4219,19 @@ namespace Qubit.Mods
                 }
                 else
                 {
-                    foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.IsTagged() && !vrrig.isLocal))
+                    foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.IsTagged() && !vrrig.isLocal))
                     {
                         vrrig.skeleton.renderer.enabled = true;
                         vrrig.skeleton.renderer.material.shader = Shader.Find("GUI/Text Shader");
                         vrrig.skeleton.renderer.material.color = vrrig.playerColor;
-                        if (Buttons.GetIndex("Follow Menu Theme").enabled) { vrrig.skeleton.renderer.material.color = backgroundColor.GetCurrentColor(); }
-                        if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.sharedMaterial.color.r, vrrig.skeleton.renderer.sharedMaterial.color.g, vrrig.skeleton.renderer.sharedMaterial.color.b, 0.5f); }
+                        if (Manager.GetIndex("Follow Menu Theme").enabled) { vrrig.skeleton.renderer.material.color = backgroundColor.GetCurrentColor(); }
+                        if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.sharedMaterial.color.r, vrrig.skeleton.renderer.sharedMaterial.color.g, vrrig.skeleton.renderer.sharedMaterial.color.b, 0.5f); }
                     }
                 }
             }
             else
             {
-                foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+                foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
                 {
                     vrrig.skeleton.renderer.enabled = true;
                     vrrig.skeleton.renderer.material.shader = Shader.Find("GUI/Text Shader");
@@ -4280,7 +4246,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
-            GorillaHuntManager sillyComputer = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
             foreach (NetPlayer player in PhotonNetwork.PlayerList)
             {
@@ -4290,8 +4256,8 @@ namespace Qubit.Mods
                     vrrig.skeleton.renderer.enabled = true;
                     vrrig.skeleton.renderer.material.shader = Shader.Find("GUI/Text Shader");
                     vrrig.skeleton.renderer.material.color = vrrig.playerColor;
-                    if (Buttons.GetIndex("Follow Menu Theme").enabled) { vrrig.skeleton.renderer.material.color = backgroundColor.GetCurrentColor(); }
-                    if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.sharedMaterial.color.r, vrrig.skeleton.renderer.sharedMaterial.color.g, vrrig.skeleton.renderer.sharedMaterial.color.b, 0.5f); }
+                    if (Manager.GetIndex("Follow Menu Theme").enabled) { vrrig.skeleton.renderer.material.color = backgroundColor.GetCurrentColor(); }
+                    if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.sharedMaterial.color.r, vrrig.skeleton.renderer.sharedMaterial.color.g, vrrig.skeleton.renderer.sharedMaterial.color.b, 0.5f); }
                 }
                 else
                 {
@@ -4300,7 +4266,7 @@ namespace Qubit.Mods
                         vrrig.skeleton.renderer.enabled = true;
                         vrrig.skeleton.renderer.material.shader = Shader.Find("GUI/Text Shader");
                         vrrig.skeleton.renderer.material.color = Color.red;
-                        if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.sharedMaterial.color.r, vrrig.skeleton.renderer.sharedMaterial.color.g, vrrig.skeleton.renderer.sharedMaterial.color.b, 0.5f); }
+                        if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.skeleton.renderer.material.color = new Color(vrrig.skeleton.renderer.sharedMaterial.color.r, vrrig.skeleton.renderer.sharedMaterial.color.g, vrrig.skeleton.renderer.sharedMaterial.color.b, 0.5f); }
                     }
                     else
                     {
@@ -4315,7 +4281,7 @@ namespace Qubit.Mods
 
         public static void DisableSkeletonESP()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 vrrig.skeleton.renderer.enabled = false;
                 vrrig.skeleton.renderer.material.shader = Shader.Find("GorillaTag/UberShader");
@@ -4329,7 +4295,7 @@ namespace Qubit.Mods
         {
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var lines in wireframes.Where(lines => !VRRigExtensions.ActiveRigs.Contains(lines.Key)))
+            foreach (var lines in wireframes.Where(lines => !Players.ActiveRigs.Contains(lines.Key)))
             {
                 toRemove.Add(lines.Key);
                 Object.Destroy(lines.Value);
@@ -4338,11 +4304,11 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 wireframes.Remove(rig);
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
                 if (!wireframes.TryGetValue(rig, out SkinnedWireframeRenderer wireframe))
                 {
@@ -4391,7 +4357,7 @@ namespace Qubit.Mods
         {
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var lines in wireframes.Where(lines => !VRRigExtensions.ActiveRigs.Contains(lines.Key)))
+            foreach (var lines in wireframes.Where(lines => !Players.ActiveRigs.Contains(lines.Key)))
             {
                 toRemove.Add(lines.Key);
                 Object.Destroy(lines.Value);
@@ -4400,12 +4366,12 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 wireframes.Remove(rig);
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool selfTagged = VRRig.LocalRig.IsTagged();
 
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
                 if (!wireframes.TryGetValue(rig, out SkinnedWireframeRenderer wireframe))
                 {
@@ -4459,7 +4425,7 @@ namespace Qubit.Mods
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var lines in wireframes.Where(lines => !VRRigExtensions.ActiveRigs.Contains(lines.Key)))
+            foreach (var lines in wireframes.Where(lines => !Players.ActiveRigs.Contains(lines.Key)))
             {
                 toRemove.Add(lines.Key);
                 Object.Destroy(lines.Value);
@@ -4468,14 +4434,14 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 wireframes.Remove(rig);
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
-            GorillaHuntManager hunt = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
 
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
                 if (!wireframes.TryGetValue(rig, out SkinnedWireframeRenderer wireframe))
                 {
@@ -4645,7 +4611,7 @@ namespace Qubit.Mods
 
         public static void Chams()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal && vrrig.colorInitialized && vrrig.initializedCosmetics && vrrig.mainSkin.material.shader.name != "Custom/UberChams"))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal && vrrig.colorInitialized && vrrig.initializedCosmetics && vrrig.mainSkin.material.shader.name != "Custom/UberChams"))
             {
                 if (!uberChams)
                     uberChams = LoadAsset<Shader>("UberChams");
@@ -4702,7 +4668,7 @@ namespace Qubit.Mods
                     originalMaterials[faceRenderer] = new[] { new Material(faceRenderer.material) };
                 updateShader(faceRenderer.sharedMaterial, originalMaterials[faceRenderer][0], Color.white, true);
 
-                if (Buttons.GetIndex("Show Cosmetics").enabled)
+                if (Manager.GetIndex("Show Cosmetics").enabled)
                 {
                     foreach (GameObject obj in vrrig.cosmetics)
                     {
@@ -4725,7 +4691,7 @@ namespace Qubit.Mods
 
         public static void DisableShaderChams()
         {
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (!vrrig.isLocal)
                 {
@@ -4767,21 +4733,21 @@ namespace Qubit.Mods
 
         public static void CasualChams()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 FixRigMaterialESPColors(vrrig);
 
                 vrrig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
                 vrrig.mainSkin.material.color = vrrig.playerColor;
-                if (Buttons.GetIndex("Follow Menu Theme").enabled) { vrrig.mainSkin.material.color = backgroundColor.GetCurrentColor(); }
-                if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
+                if (Manager.GetIndex("Follow Menu Theme").enabled) { vrrig.mainSkin.material.color = backgroundColor.GetCurrentColor(); }
+                if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
             }
         }
 
         public static void InfectionChams()
         {
             bool isInfectedPlayers = false;
-            foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig vrrig in Players.ActiveRigs)
             {
                 if (vrrig.IsTagged())
                 {
@@ -4793,7 +4759,7 @@ namespace Qubit.Mods
             {
                 if (!VRRig.LocalRig.IsTagged())
                 {
-                    foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+                    foreach (VRRig vrrig in Players.ActiveRigs)
                     {
                         if (vrrig.IsTagged() && !vrrig.isLocal)
                         {
@@ -4801,8 +4767,8 @@ namespace Qubit.Mods
 
                             vrrig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
                             vrrig.mainSkin.material.color = vrrig.GetColor();
-                            if (Buttons.GetIndex("Follow Menu Theme").enabled) { vrrig.mainSkin.material.color = backgroundColor.GetCurrentColor(); }
-                            if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
+                            if (Manager.GetIndex("Follow Menu Theme").enabled) { vrrig.mainSkin.material.color = backgroundColor.GetCurrentColor(); }
+                            if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
                         }
                         else
                         {
@@ -4814,20 +4780,20 @@ namespace Qubit.Mods
                 }
                 else
                 {
-                    foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.IsTagged() && !vrrig.isLocal))
+                    foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.IsTagged() && !vrrig.isLocal))
                     {
                         FixRigMaterialESPColors(vrrig);
 
                         vrrig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
                         vrrig.mainSkin.material.color = vrrig.playerColor;
-                        if (Buttons.GetIndex("Follow Menu Theme").enabled) { vrrig.mainSkin.material.color = backgroundColor.GetCurrentColor(); }
-                        if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
+                        if (Manager.GetIndex("Follow Menu Theme").enabled) { vrrig.mainSkin.material.color = backgroundColor.GetCurrentColor(); }
+                        if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
                     }
                 }
             }
             else
             {
-                foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+                foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
                 {
                     FixRigMaterialESPColors(vrrig);
 
@@ -4843,7 +4809,7 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
-            GorillaHuntManager sillyComputer = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
             foreach (NetPlayer player in PhotonNetwork.PlayerList)
             {
@@ -4854,8 +4820,8 @@ namespace Qubit.Mods
 
                     vrrig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
                     vrrig.mainSkin.material.color = vrrig.playerColor;
-                    if (Buttons.GetIndex("Follow Menu Theme").enabled) { vrrig.mainSkin.material.color = backgroundColor.GetCurrentColor(); }
-                    if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
+                    if (Manager.GetIndex("Follow Menu Theme").enabled) { vrrig.mainSkin.material.color = backgroundColor.GetCurrentColor(); }
+                    if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
                 }
                 else
                 {
@@ -4863,7 +4829,7 @@ namespace Qubit.Mods
                     {
                         vrrig.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
                         vrrig.mainSkin.material.color = Color.red;
-                        if (Buttons.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
+                        if (Manager.GetIndex("Transparent Theme").enabled) { vrrig.mainSkin.material.color = new Color(vrrig.mainSkin.material.color.r, vrrig.mainSkin.material.color.g, vrrig.mainSkin.material.color.b, 0.5f); }
                     }
                     else
                     {
@@ -4877,7 +4843,7 @@ namespace Qubit.Mods
 
         public static void DisableChams()
         {
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 foreach (Material mat in vrrig.mainSkin.sharedMaterials)
                     mat.shader = Shader.Find("GorillaTag/UberShader");
@@ -4889,13 +4855,13 @@ namespace Qubit.Mods
         private static readonly Dictionary<VRRig, GameObject> boxESP = new Dictionary<VRRig, GameObject>();
         public static void CasualBoxESP()
         {
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var box in boxESP.Where(box => !VRRigExtensions.ActiveRigs.Contains(box.Key)))
+            foreach (var box in boxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
                 toRemove.Add(box.Key);
                 Object.Destroy(box.Value);
@@ -4904,7 +4870,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 boxESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boxESP.TryGetValue(vrrig, out GameObject box))
                 {
@@ -4934,14 +4900,14 @@ namespace Qubit.Mods
 
         public static void InfectionBoxESP()
         {
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
             bool selfTagged = VRRig.LocalRig.IsTagged();
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var box in boxESP.Where(box => !VRRigExtensions.ActiveRigs.Contains(box.Key)))
+            foreach (var box in boxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
                 toRemove.Add(box.Key);
                 Object.Destroy(box.Value);
@@ -4950,7 +4916,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 boxESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boxESP.TryGetValue(vrrig, out GameObject box))
                 {
@@ -4986,15 +4952,15 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
-            GorillaHuntManager hunt = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
 
-            foreach (var box in boxESP.Where(box => !VRRigExtensions.ActiveRigs.Contains(box.Key)))
+            foreach (var box in boxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
                 toRemove.Add(box.Key);
                 Object.Destroy(box.Value);
@@ -5003,7 +4969,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 boxESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!boxESP.TryGetValue(vrrig, out GameObject box))
                 {
@@ -5047,14 +5013,14 @@ namespace Qubit.Mods
         private static readonly Dictionary<VRRig, GameObject> hollowBoxESP = new Dictionary<VRRig, GameObject>();
         public static void CasualHollowBoxESP()
         {
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var box in hollowBoxESP.Where(box => !VRRigExtensions.ActiveRigs.Contains(box.Key)))
+            foreach (var box in hollowBoxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
                 toRemove.Add(box.Key);
                 Object.Destroy(box.Value);
@@ -5063,7 +5029,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 hollowBoxESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!hollowBoxESP.TryGetValue(vrrig, out GameObject box))
                 {
@@ -5128,15 +5094,15 @@ namespace Qubit.Mods
 
         public static void HollowInfectionBoxESP()
         {
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
             bool selfTagged = VRRig.LocalRig.IsTagged();
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var box in hollowBoxESP.Where(box => !VRRigExtensions.ActiveRigs.Contains(box.Key)))
+            foreach (var box in hollowBoxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
                 toRemove.Add(box.Key);
                 Object.Destroy(box.Value);
@@ -5145,7 +5111,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 hollowBoxESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!hollowBoxESP.TryGetValue(vrrig, out GameObject box))
                 {
@@ -5216,16 +5182,16 @@ namespace Qubit.Mods
             if (!NetworkSystem.Instance.InRoom || GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             List<VRRig> toRemove = new List<VRRig>();
-            GorillaHuntManager hunt = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
 
-            foreach (var box in hollowBoxESP.Where(box => !VRRigExtensions.ActiveRigs.Contains(box.Key)))
+            foreach (var box in hollowBoxESP.Where(box => !Players.ActiveRigs.Contains(box.Key)))
             {
                 toRemove.Add(box.Key);
                 Object.Destroy(box.Value);
@@ -5234,7 +5200,7 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 hollowBoxESP.Remove(rig);
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!hollowBoxESP.TryGetValue(vrrig, out GameObject box))
                 {
@@ -5314,7 +5280,7 @@ namespace Qubit.Mods
         {
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var lines in breadcrumbs.Where(lines => !VRRigExtensions.ActiveRigs.Contains(lines.Key)))
+            foreach (var lines in breadcrumbs.Where(lines => !Players.ActiveRigs.Contains(lines.Key)))
             {
                 toRemove.Add(lines.Key);
                 Object.Destroy(lines.Value);
@@ -5323,13 +5289,13 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 breadcrumbs.Remove(rig);
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
-            bool shortBreadcrumbs = Buttons.GetIndex("Short Breadcrumbs").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
+            bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
 
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
                 if (!breadcrumbs.TryGetValue(rig, out TrailRenderer trail))
                 {
@@ -5371,7 +5337,7 @@ namespace Qubit.Mods
         {
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var lines in breadcrumbs.Where(lines => !VRRigExtensions.ActiveRigs.Contains(lines.Key)))
+            foreach (var lines in breadcrumbs.Where(lines => !Players.ActiveRigs.Contains(lines.Key)))
             {
                 toRemove.Add(lines.Key);
                 Object.Destroy(lines.Value);
@@ -5380,14 +5346,14 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 breadcrumbs.Remove(rig);
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
-            bool shortBreadcrumbs = Buttons.GetIndex("Short Breadcrumbs").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
+            bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
             bool selfTagged = VRRig.LocalRig.IsTagged();
 
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
                 if (!breadcrumbs.TryGetValue(rig, out TrailRenderer trail))
                 {
@@ -5434,7 +5400,7 @@ namespace Qubit.Mods
 
             List<VRRig> toRemove = new List<VRRig>();
 
-            foreach (var lines in breadcrumbs.Where(lines => !VRRigExtensions.ActiveRigs.Contains(lines.Key)))
+            foreach (var lines in breadcrumbs.Where(lines => !Players.ActiveRigs.Contains(lines.Key)))
             {
                 toRemove.Add(lines.Key);
                 Object.Destroy(lines.Value);
@@ -5443,16 +5409,16 @@ namespace Qubit.Mods
             foreach (VRRig rig in toRemove)
                 breadcrumbs.Remove(rig);
 
-            bool fmt = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool hoc = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool tt = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
-            bool shortBreadcrumbs = Buttons.GetIndex("Short Breadcrumbs").enabled;
+            bool fmt = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool hoc = Manager.GetIndex("Hidden on Camera").enabled;
+            bool tt = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
+            bool shortBreadcrumbs = Manager.GetIndex("Short Breadcrumbs").enabled;
 
-            GorillaHuntManager hunt = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager hunt = ManagerRegistry.GorillaHuntManager;
             NetPlayer target = hunt.GetTargetOf(NetworkSystem.Instance.LocalPlayer);
 
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.isLocal))
+            foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
             {
                 if (!breadcrumbs.TryGetValue(rig, out TrailRenderer trail))
                 {
@@ -5598,13 +5564,13 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance == null)
                 return;
 
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            float lineWidth = (Buttons.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
-            foreach (VRRig playerRig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig playerRig in Players.ActiveRigs)
             {
                 if (playerRig.isLocal)
                     continue;
@@ -5636,15 +5602,15 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance == null)
                 return;
 
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            float lineWidth = (Buttons.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
             float distance = float.MaxValue;
             VRRig playerRig = VRRig.LocalRig;
-            foreach (var rig in VRRigExtensions.ActiveRigs.Where(rig => distance > Vector3.Distance(rig.transform.position, VRRig.LocalRig.transform.position) && !rig.isLocal))
+            foreach (var rig in Players.ActiveRigs.Where(rig => distance > Vector3.Distance(rig.transform.position, VRRig.LocalRig.transform.position) && !rig.isLocal))
             {
                 distance = Vector3.Distance(rig.transform.position, VRRig.LocalRig.transform.position);
                 playerRig = rig;
@@ -5679,13 +5645,13 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance == null)
                 return;
 
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            float lineWidth = (Buttons.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
 
             bool LocalTagged = VRRig.LocalRig.IsTagged();
             bool NoInfected = InfectedList().Count == 0;
 
-            foreach (VRRig playerRig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig playerRig in Players.ActiveRigs)
             {
                 if (playerRig.isLocal)
                     continue;
@@ -5733,17 +5699,17 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
-            GorillaHuntManager sillyComputer = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
 
             if (sillyComputer == null)
                 return;
 
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            float lineWidth = (Buttons.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f);
 
             NetPlayer currentTarget = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
 
-            foreach (var playerRig in VRRigExtensions.ActiveRigs.Where(playerRig => !playerRig.isLocal))
+            foreach (var playerRig in Players.ActiveRigs.Where(playerRig => !playerRig.isLocal))
             {
                 if (GetPlayerFromVRRig(playerRig) == currentTarget)
                 {
@@ -5789,14 +5755,14 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance == null)
                 return;
 
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            _ = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            _ = Manager.GetIndex("Hidden on Camera").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
-            foreach (VRRig playerRig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig playerRig in Players.ActiveRigs)
             {
                 if (playerRig.isLocal)
                     continue;
@@ -5829,17 +5795,17 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance == null)
                 return;
 
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            _ = Buttons.GetIndex("Hidden on Camera").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            _ = Manager.GetIndex("Hidden on Camera").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             bool LocalTagged = VRRig.LocalRig.IsTagged();
             bool NoInfected = InfectedList().Count == 0;
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
-            foreach (VRRig playerRig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig playerRig in Players.ActiveRigs)
             {
                 if (playerRig.isLocal)
                     continue;
@@ -5891,20 +5857,20 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
-            GorillaHuntManager sillyComputer = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
 
             if (sillyComputer == null)
                 return;
 
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            bool thinTracers = Buttons.GetIndex("Thin Tracers").enabled;
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
             NetPlayer currentTarget = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
 
-            foreach (var playerRig in VRRigExtensions.ActiveRigs.Where(playerRig => !playerRig.isLocal))
+            foreach (var playerRig in Players.ActiveRigs.Where(playerRig => !playerRig.isLocal))
             {
                 if (GetPlayerFromVRRig(playerRig) == currentTarget)
                 {
@@ -5957,13 +5923,13 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance == null)
                 return;
 
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            bool hiddenOnCamera = Buttons.GetIndex("Hidden on Camera").enabled;
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            bool hiddenOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
-            foreach (VRRig playerRig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig playerRig in Players.ActiveRigs)
             {
                 if (playerRig.isLocal) // Skip local player
                     continue;
@@ -6006,16 +5972,16 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance == null)
                 return;
 
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            bool hiddenOnCamera = Buttons.GetIndex("Hidden on Camera").enabled;
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            bool hiddenOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
 
             bool LocalTagged = VRRig.LocalRig.IsTagged();
             bool NoInfected = InfectedList().Count == 0;
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
-            foreach (VRRig playerRig in VRRigExtensions.ActiveRigs)
+            foreach (VRRig playerRig in Players.ActiveRigs)
             {
                 if (playerRig.isLocal) //skip local player
                     continue;
@@ -6080,15 +6046,15 @@ namespace Qubit.Mods
             if (GorillaGameManager.instance.GameType() != GameModeType.HuntDown)
                 return;
 
-            GorillaHuntManager sillyComputer = (GorillaHuntManager)GorillaGameManager.instance;
+            GorillaHuntManager sillyComputer = ManagerRegistry.GorillaHuntManager;
 
             if (sillyComputer == null)
                 return;
 
             // Cache these here so your not finding the values from Buttons.GetIndex every call (Buttons.GetIndex is fucking slow)
-            bool followMenuTheme = Buttons.GetIndex("Follow Menu Theme").enabled;
-            bool transparentTheme = Buttons.GetIndex("Transparent Theme").enabled;
-            bool hiddenOnCamera = Buttons.GetIndex("Hidden on Camera").enabled;
+            bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
+            bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
+            bool hiddenOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
 
             Color menuColor = backgroundColor.GetCurrentColor();
 
@@ -6096,7 +6062,7 @@ namespace Qubit.Mods
 
             // Color bgColor = backgroundColor.GetCurrentColor(); //dont need to call this function twice, just use a variable
 
-            foreach (var playerRig in VRRigExtensions.ActiveRigs.Where(playerRig => !playerRig.isLocal))
+            foreach (var playerRig in Players.ActiveRigs.Where(playerRig => !playerRig.isLocal))
             {
                 if (GetPlayerFromVRRig(playerRig) == currentTarget) // Use ID for quick comparison
                 {
@@ -6258,7 +6224,7 @@ namespace Qubit.Mods
 
         public static LineRenderer GetLineRender()
         {
-            bool hideOnCamera = Buttons.GetIndex("Hidden on Camera").enabled;
+            bool hideOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
 
             if (lineRenderHolder == null)
                 lineRenderHolder = new GameObject("LineRender_Holder");
@@ -6321,7 +6287,7 @@ namespace Qubit.Mods
 
             Color userColor = Color.red;
 
-            NotificationManager.SendNotification("<color=grey>[</color><color=purple>ADMIN</color><color=grey>]</color> " + sender.NickName + " is using " + menuName + " version " + version + ".", 3000);
+            Notifications.SendNotification("<color=grey>[</color><color=purple>ADMIN</color><color=grey>]</color> " + sender.NickName + " is using " + menuName + " version " + version + ".", 3000);
             VRRig.LocalRig.PlayHandTapLocal(29, false, 99999f);
             VRRig.LocalRig.PlayHandTapLocal(29, true, 99999f);
             GameObject line = new GameObject("Line");
@@ -6332,6 +6298,63 @@ namespace Qubit.Mods
             liner.SetPosition(1, vrrig.transform.position - new Vector3(0f, 9999f, 0f));
             liner.material.shader = Shader.Find("GUI/Text Shader");
             Object.Destroy(line, 3f);
+        }
+
+        public static void CleanVisualsOnLeave(VRRig rig = null)
+        {
+            if (rig)
+            {
+                playerPing.Remove(rig);
+                Visuals.ntDistanceList.Remove(rig);
+                Visuals.convertedRigs.Remove(rig);
+            }
+            else
+            {
+                playerPing.Clear();
+                Visuals.ntDistanceList.Clear();
+                Visuals.convertedRigs.Clear();
+            }
+        }
+
+        public static void ModChecker(NetPlayer player)
+        {
+            Dictionary<string, object> customProps = new Dictionary<string, object>();
+            foreach (DictionaryEntry dictionaryEntry in player.GetCustomProperties())
+                customProps[dictionaryEntry.Key.ToString().ToLower()] = dictionaryEntry.Value;
+            List<Module> buttons = new List<Module>
+            {
+                new Module
+                {
+                    buttonText = "Exit Mod Checker",
+                    method =() => Settings.NavigatePlayer(player),
+                    isTogglable = false
+                }
+            };
+            var mods = Visuals.modDictionary
+               .Where(mod => customProps.ContainsKey(mod.Key.ToLower()))
+               .Select((mod, index) => new Module
+               {
+                   buttonText = $"Mod{index}",
+                   overlapText = mod.Value,
+                   label = true
+               });
+            if (mods.Any())
+                buttons.AddRange(mods);
+            else
+                buttons.Add(new Module
+                {
+                    buttonText = "No mods detected",
+                    label = true
+                });
+
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
+        }
+
+        public static void Initialize()
+        {
+            for (int i = 0; i < 2; i++)
+                InstantiateWatch();
         }
     }
 }

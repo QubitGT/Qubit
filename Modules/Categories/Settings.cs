@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/Settings.cs
+ * Qubit Menu  Modules/Categories/Settings.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -23,10 +23,15 @@ using GorillaExtensions;
 using GorillaLocomotion;
 using Photon.Pun;
 using Photon.Realtime;
-using Qubit.Classes.Menu;
+using Qubit.Backend;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Frontend.Classes;
+using Qubit.Frontend.Colors;
+using Qubit.Libraries.Audio;
+using Qubit.Libraries.Controls;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
+using Qubit.Libraries.Language;
 using Qubit.Patches.Menu;
 using Qubit.Utilities;
 using System;
@@ -44,14 +49,32 @@ using UnityEngine.UI;
 using UnityEngine.Video;
 using UnityEngine.Windows.Speech;
 using UnityEngine.XR;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
-using static Qubit.Utilities.RigUtilities;
-using Console = Qubit.Classes.Menu.Console;
+using WebSocketSharp;
+using static Qubit.Backend.Preferences;
+using static Qubit.Core.Security;
+using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.Players;
+using static Qubit.Extensions.Strings;
+using static Qubit.Frontend.Core;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Resources.Fonts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Audio.Transcription;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.LocalPlayer;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Modules.Categories.Visuals;
+using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Modules.Manager;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameObj;
+using Console = Qubit.Backend.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Settings
     {
@@ -81,7 +104,7 @@ namespace Qubit.Mods
                 lastPressedKeys.Add(Key.Q);
 
             if (!isKeyboardPc && VRKeyboard == null)
-                VRKeyboard = QubitKeyboardView.Create();
+                VRKeyboard = Qubit.Frontend.Keyboard.View.Create();
 
             if (lKeyReference == null)
             {
@@ -92,7 +115,7 @@ namespace Qubit.Mods
                 lKeyReference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
                 lKeyCollider = lKeyReference.GetComponent<SphereCollider>();
 
-                ColorChanger colorChanger = lKeyReference.AddComponent<ColorChanger>();
+                ObjectColors colorChanger = lKeyReference.AddComponent<ObjectColors>();
                 colorChanger.colors = backgroundColor;
             }
 
@@ -105,7 +128,7 @@ namespace Qubit.Mods
                 rKeyReference.transform.localScale = new Vector3(0.01f, 0.01f, 0.01f);
                 rKeyCollider = rKeyReference.GetComponent<SphereCollider>();
 
-                ColorChanger colorChanger = rKeyReference.AddComponent<ColorChanger>();
+                ObjectColors colorChanger = rKeyReference.AddComponent<ObjectColors>();
                 colorChanger.colors = backgroundColor;
             }
         }
@@ -144,9 +167,9 @@ namespace Qubit.Mods
 
         public static void GlobalReturn()
         {
-            NotificationManager.ClearAllNotifications();
-            Toggle(Buttons.buttons[Buttons.CurrentCategoryIndex][Buttons.GetCategory("Main")].buttonText, true);
-            SoundManager.Play("Return");
+            Notifications.ClearAllNotifications();
+            Toggle(Manager.modules[Manager.CurrentCategoryName][0].buttonText, true);
+            Sounds.Play("Return");
 
             if (prompts.Count > 0)
                 StopCurrentPrompt();
@@ -168,19 +191,19 @@ namespace Qubit.Mods
             TutorialObject.transform.rotation = GorillaTagger.Instance.bodyCollider.transform.rotation * Quaternion.Euler(0f, 180f, 0f);
 
             string videoName = "q2";
-            switch (ControllerUtilities.GetLeftControllerType())
+            switch (Controllers.GetLeftControllerType())
             {
-                case ControllerUtilities.ControllerType.Unknown:
-                case ControllerUtilities.ControllerType.Quest2:
+                case Controllers.ControllerType.Unknown:
+                case Controllers.ControllerType.Quest2:
                     videoName = "q2";
                     break;
-                case ControllerUtilities.ControllerType.Quest3:
+                case Controllers.ControllerType.Quest3:
                     videoName = "q3";
                     break;
-                case ControllerUtilities.ControllerType.ValveIndex:
+                case Controllers.ControllerType.ValveIndex:
                     videoName = "index";
                     break;
-                case ControllerUtilities.ControllerType.VIVE:
+                case Controllers.ControllerType.VIVE:
                     videoName = "vive";
                     break;
             }
@@ -219,7 +242,7 @@ namespace Qubit.Mods
             TutorialSelector.startColor = BrightenColor(new Color32(255, 128, 0, 128));
             TutorialSelector.endColor = BrightenColor(new Color32(255, 102, 0, 128));
 
-            Vector3 Direction = ControllerUtilities.GetTrueRightHand().forward;
+            Vector3 Direction = Controllers.GetTrueRightHand().forward;
             Physics.Raycast(GorillaTagger.Instance.rightHandTransform.position + Direction / 4f, Direction, out var Ray, 512f, NoInvisLayerMask());
             if (!XRSettings.isDeviceActive)
             {
@@ -271,22 +294,22 @@ namespace Qubit.Mods
 
         public static void ShowDebug()
         {
-            int category = Buttons.GetCategory("Temporary Category");
+            string category = "Temporary Category";
 
             string version = PluginInfo.Version;
             if (PluginInfo.BetaBuild) version = "<color=blue>Beta</color> " + version;
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "Exit Info Screen", method = () => Toggle("Info Screen"), isTogglable = false, toolTip = "Returns you back to the main page." });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugMenuName", overlapText = "<color=grey><b>Qubit Menu </b></color>" + version, label = true });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugColor", overlapText = "Loading...", label = true });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugName", overlapText = "Loading...", label = true });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugId", overlapText = "Loading...", label = true });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugClip", overlapText = "Loading...", label = true });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugFps", overlapText = "Loading...", label = true });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugRoomA", overlapText = "Loading...", label = true });
-            Buttons.AddButton(category, new ButtonInfo { buttonText = "DebugRoomB", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "Exit Info Screen", method = () => Toggle("Info Screen"), isTogglable = false, toolTip = "Returns you back to the main page." });
+            Manager.AddModule(category, new Module { buttonText = "DebugMenuName", overlapText = "<color=grey><b>Qubit Menu </b></color>" + version, label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugColor", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugName", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugId", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugClip", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugFps", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugRoomA", overlapText = "Loading...", label = true });
+            Manager.AddModule(category, new Module { buttonText = "DebugRoomB", overlapText = "Loading...", label = true });
 
             Debug();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static bool hideId;
@@ -295,40 +318,40 @@ namespace Qubit.Mods
             string red = "<color=red>" + MathF.Floor(PlayerPrefs.GetFloat("redValue") * 255f) + "</color>";
             string green = ", <color=green>" + MathF.Floor(PlayerPrefs.GetFloat("greenValue") * 255f) + "</color>";
             string blue = ", <color=blue>" + MathF.Floor(PlayerPrefs.GetFloat("blueValue") * 255f) + "</color>";
-            Buttons.GetIndex("DebugColor").overlapText = "Color: " + red + green + blue;
+            Manager.GetIndex("DebugColor").overlapText = "Color: " + red + green + blue;
 
             string master = NetworkSystem.Instance.InRoom && PhotonNetwork.IsMasterClient ? "<color=red> [Master]</color>" : "";
-            Buttons.GetIndex("DebugName").overlapText = PhotonNetwork.LocalPlayer.NickName + master;
+            Manager.GetIndex("DebugName").overlapText = PhotonNetwork.LocalPlayer.NickName + master;
 
-            Buttons.GetIndex("DebugId").overlapText = "<color=green>ID: </color>" + (hideId ? "Hidden" : PhotonNetwork.LocalPlayer.UserId);
-            Buttons.GetIndex("DebugClip").overlapText = "<color=green>Clip: </color>" + (GUIUtility.systemCopyBuffer.Length > 25 ? GUIUtility.systemCopyBuffer[..25] : GUIUtility.systemCopyBuffer);
-            Buttons.GetIndex("DebugFps").overlapText = "<b>" + lastDeltaTime + "</b> FPS <b>" + PhotonNetwork.GetPing() + "</b> Ping";
-            Buttons.GetIndex("DebugRoomA").overlapText = "<color=blue>" + NetworkSystem.Instance.regionNames[NetworkSystem.Instance.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " Players";
+            Manager.GetIndex("DebugId").overlapText = "<color=green>ID: </color>" + (hideId ? "Hidden" : PhotonNetwork.LocalPlayer.UserId);
+            Manager.GetIndex("DebugClip").overlapText = "<color=green>Clip: </color>" + (GUIUtility.systemCopyBuffer.Length > 25 ? GUIUtility.systemCopyBuffer[..25] : GUIUtility.systemCopyBuffer);
+            Manager.GetIndex("DebugFps").overlapText = "<b>" + lastDeltaTime + "</b> FPS <b>" + PhotonNetwork.GetPing() + "</b> Ping";
+            Manager.GetIndex("DebugRoomA").overlapText = "<color=blue>" + NetworkSystem.Instance.regionNames[NetworkSystem.Instance.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " Players";
 
             string priv = NetworkSystem.Instance.InRoom ? NetworkSystem.Instance.SessionIsPrivate ? "Private" : "Public" : "";
-            Buttons.GetIndex("DebugRoomB").overlapText = "<color=blue>" + priv + "</color> " + (NetworkSystem.Instance.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room");
+            Manager.GetIndex("DebugRoomB").overlapText = "<color=blue>" + priv + "</color> " + (NetworkSystem.Instance.InRoom ? PhotonNetwork.CurrentRoom.Name : "Not in room");
         }
         public static void HideDebug()
         {
-            int category = Buttons.GetCategory("Temporary Category");
+            string category = "Temporary Category";
 
-            Buttons.RemoveButton(category, "DebugMenuName");
-            Buttons.RemoveButton(category, "DebugColor");
-            Buttons.RemoveButton(category, "DebugName");
-            Buttons.RemoveButton(category, "DebugId");
-            Buttons.RemoveButton(category, "DebugClip");
-            Buttons.RemoveButton(category, "DebugFps");
-            Buttons.RemoveButton(category, "DebugRoomA");
-            Buttons.RemoveButton(category, "DebugRoomB");
-            Buttons.CurrentCategoryName = "Main";
+            Manager.RemoveModule(category, "DebugMenuName");
+            Manager.RemoveModule(category, "DebugColor");
+            Manager.RemoveModule(category, "DebugName");
+            Manager.RemoveModule(category, "DebugId");
+            Manager.RemoveModule(category, "DebugClip");
+            Manager.RemoveModule(category, "DebugFps");
+            Manager.RemoveModule(category, "DebugRoomA");
+            Manager.RemoveModule(category, "DebugRoomB");
+            Manager.CurrentCategoryName = "Main";
         }
 
         public static void PlayersTab()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo {
+            List<Module> buttons = new List<Module> {
+                new Module {
                     buttonText = "Exit Players",
-                    method =() => Buttons.CurrentCategoryName = "Main",
+                    method =() => Manager.CurrentCategoryName = "Main",
                     isTogglable = false,
                     toolTip = "Returns you back to the main page.",
                     legal = true,
@@ -336,7 +359,7 @@ namespace Qubit.Mods
             };
 
             if (!NetworkSystem.Instance.InRoom)
-                buttons.Add(new ButtonInfo { buttonText = "Not in a Room", label = true, legal = true });
+                buttons.Add(new Module { buttonText = "Not in a Room", label = true, legal = true });
             else
             {
                 for (int i = 0; i < NetworkSystem.Instance.PlayerListOthers.Length; i++)
@@ -349,7 +372,7 @@ namespace Qubit.Mods
                     }
                     catch { }
 
-                    buttons.Add(new ButtonInfo
+                    buttons.Add(new Module
                     {
                         buttonText = $"PlayerButton{i}",
                         overlapText = $"<color={playerColor}>" + player.NickName + "</color>",
@@ -361,8 +384,8 @@ namespace Qubit.Mods
                 }
             }
 
-            Buttons.buttons[Buttons.GetCategory("Players")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Players";
+            Manager.modules["Players"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Players";
         }
 
         public static void NavigatePlayer(NetPlayer player)
@@ -371,8 +394,8 @@ namespace Qubit.Mods
 
             VRRig playerRig = GetVRRigFromPlayer(player) ?? null;
 
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo {
+            List<Module> buttons = new List<Module> {
+                new Module {
                     buttonText = "Exit PlayerInspect",
                     overlapText = $"Exit {targetName}",
                     method =() => PlayersTab(),
@@ -381,7 +404,7 @@ namespace Qubit.Mods
                     legal = true
                 },
 
-                new ButtonInfo {
+                new Module {
                     buttonText = "Spectate Player",
                     overlapText = $"Spectate {targetName}",
                     method =() => SpectatePlayer(playerRig),
@@ -389,7 +412,7 @@ namespace Qubit.Mods
                     toolTip = $"Shows you what {targetName} sees.",
                     legal = true
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Block Player",
                     overlapText = $"Block {targetName}",
                     enableMethod = () => BlockPlayer(playerRig),
@@ -399,96 +422,96 @@ namespace Qubit.Mods
                     toolTip = $"Blocks {targetName}.",
                     legal = true
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Teleport to Player",
                     overlapText = $"Teleport to {targetName}",
                     method =() => Movement.TeleportToPlayer(player),
                     isTogglable = false,
                     toolTip = $"Teleports you to {targetName}."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Give Player Guns",
                     overlapText = $"Give {targetName} Guns",
                     method =() => GiveGunTarget = playerRig,
                     disableMethod =() => GiveGunTarget = null,
                     toolTip = $"Gives {targetName} every gun on the menu."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Copy Movement",
                     overlapText = $"Copy Movement {targetName}",
                     method =() => Movement.CopyMovementPlayer(player),
                     disableMethod = Movement.EnableRig,
                     toolTip = $"Copies the movement of {targetName}."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Follow Player",
                     overlapText = $"Follow {targetName}",
                     method =() => Movement.FollowPlayer(player),
                     disableMethod = Movement.EnableRig,
                     toolTip = $"Follows {targetName}."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Tag Player",
                     overlapText = $"Tag {targetName}",
                     method =() => Advantages.TagPlayer(player),
                     disableMethod = Movement.EnableRig,
                     toolTip = $"Tags {targetName}."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Snowball Fling Player",
                     overlapText = $"Snowball Fling {targetName}",
                     method =() => Projectiles.FlingPlayer(player.VRRig()),
                     toolTip = $"Flings {targetName} with snowballs."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Projectile Blind Player",
                     overlapText = $"Projectile Blind {targetName}",
                     method =() => Projectiles.ProjectileBlindPlayer(player),
                     toolTip = $"Blinds {targetName} using the egg projectiles."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Projectile Lag Player",
                     overlapText = $"Projectile Lag {targetName}",
                     method =() => Projectiles.ProjectileLagPlayer(player),
                     toolTip = $"Lags {targetName} using the firework projectiles."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Lag Player",
                     overlapText = $"Lag {targetName}",
                     method =() => Overpowered.LagPlayer(player),
                     toolTip = $"Lags {targetName}."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Destroy Player",
                     overlapText = $"Destroy {targetName}",
                     method =() => Overpowered.DestroyPlayer(player),
                     toolTip = $"Stops all new players from seeing {targetName}."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Guardian Bring Player",
                     overlapText = $"Guardian Bring {targetName}",
                     method =() => Overpowered.GuardianBringPlayer(player),
                     toolTip = $"Brings {targetName} to you."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Guardian Bring Player Gun",
                     overlapText = $"Guardian Bring {targetName} Gun",
                     method =() => Overpowered.GuardianBringPlayerGun(player),
                     toolTip = $"Brings {targetName} to wherever your hand desires."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Guardian Kick Player",
                     overlapText = $"Guardian Kick {targetName}",
                     method =() => Overpowered.GuardianKickTarget(player),
                     toolTip = $"Kicks {targetName}."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Guardian Obliterate Player",
                     overlapText = $"Guardian Obliterate {targetName}",
                     method =() => Overpowered.GuardianObliteratePlayer(player),
                     toolTip = $"Obliterates {targetName}."
                 },
-                new ButtonInfo {
+                new Module {
                     buttonText = "Guardian Crash Player",
                     overlapText = $"Guardian Crash {targetName}",
                     method =() => Overpowered.GuardianCrashPlayer(player),
@@ -501,13 +524,13 @@ namespace Qubit.Mods
                 buttons.AddRange(
                     new[]
                     {
-                        new ButtonInfo {
+                        new Module {
                             buttonText = "Vibrate Player",
                             overlapText = $"Vibrate {targetName}",
                             method =() => Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } }),
                             toolTip = $"Vibrates {targetName}'s controllers."
                         },
-                        new ButtonInfo {
+                        new Module {
                             buttonText = "Slow Player",
                             overlapText = $"Slow {targetName}",
                             method =() => Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } } ),
@@ -522,7 +545,7 @@ namespace Qubit.Mods
                 buttons.AddRange(
                     new[]
                     {
-                        new ButtonInfo {
+                        new Module {
                             buttonText = "Admin Kick Player",
                             overlapText = $"Admin Kick {targetName}",
                             method =() => Console.ExecuteCommand("kick", ReceiverGroup.All, player.UserId),
@@ -530,7 +553,7 @@ namespace Qubit.Mods
                             toolTip = $"Kicks {targetName} if they're using the menu.",
                             legal = true
                         },
-                        new ButtonInfo {
+                        new Module {
                             buttonText = "Admin Bring Player",
                             overlapText = $"Admin Bring {targetName}",
                             method =() => Console.ExecuteCommand("tp", player.ActorNumber, GorillaTagger.Instance.headCollider.transform.position),
@@ -538,7 +561,7 @@ namespace Qubit.Mods
                             toolTip = $"Brings {targetName} to you if they're using the menu.",
                             legal = true
                         },
-                        new ButtonInfo {
+                        new Module {
                             buttonText = "Admin Crash Player",
                             overlapText = $"Admin Crash {targetName}",
                             method =() => Console.ExecuteCommand("crash", player.ActorNumber),
@@ -555,14 +578,14 @@ namespace Qubit.Mods
                 buttons.AddRange(
                     new[]
                     {
-                        new ButtonInfo
+                        new Module
                         {
                             buttonText = $"Check {player.NickName}'s Mods",
                             method = () => ModChecker(player),
                             isTogglable = false,
                             toolTip = $"View all of \"{player.NickName}\"'s mods."
                         },
-                        new ButtonInfo
+                        new Module
                         {
                             buttonText = "Player Name",
                             overlapText = $"Name: {player.NickName}",
@@ -571,7 +594,7 @@ namespace Qubit.Mods
                             toolTip = $"Sets your name to \"{player.NickName}\".",
                             legal = true
                         },
-                        new ButtonInfo
+                        new Module
                         {
                             buttonText = "Player Color",
                             overlapText =
@@ -581,13 +604,13 @@ namespace Qubit.Mods
                             toolTip = $"Sets your color to the same as {targetName}.",
                             legal = true
                         },
-                        new ButtonInfo
+                        new Module
                         {
                             buttonText = "Player User ID",
                             overlapText = $"User ID: {player.UserId}",
                             method = () =>
                             {
-                                NotificationManager.SendNotification(
+                                Notifications.SendNotification(
                                     $"<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully copied {player.UserId} to the clipboard!",
                                     5000);
                                 GUIUtility.systemCopyBuffer = player.UserId;
@@ -595,28 +618,28 @@ namespace Qubit.Mods
                             isTogglable = false,
                             toolTip = $"Copies {player.UserId} to your clipboard."
                         },
-                        new ButtonInfo
+                        new Module
                         {
                             buttonText = "Player Creation Date",
                             overlapText =
-                                $"Creation Date: {GetCreationDate(player.UserId, creationDate => { Buttons.GetIndex("Player Creation Date").overlapText = $"Creation Date: {creationDate}"; ReloadMenu(); })}",
+                                $"Creation Date: {GetCreationDate(player.UserId, creationDate => { Manager.GetIndex("Player Creation Date").overlapText = $"Creation Date: {creationDate}"; ReloadMenu(); })}",
                             label = true
                         },
-                        new ButtonInfo
+                        new Module
                         {
                             buttonText = "Player Platform",
                             overlapText =
                                 $"Platform: {playerRig.GetPlatform()}",
                             label = true
                         },
-                        new ButtonInfo
+                        new Module
                         {
                             buttonText = "Player FPS",
                             overlapText = $"FPS: {playerRig.GetFPS()}",
                             label = true,
                             legal = true
                         },
-                        new ButtonInfo
+                        new Module
                         {
                             buttonText = "Player Target FPS",
                             overlapText = $"Target FPS: {playerRig.GetTargetFPS()}",
@@ -626,8 +649,8 @@ namespace Qubit.Mods
                     }
                 );
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         private static RenderTexture spectateRenderTexture;
@@ -694,7 +717,7 @@ namespace Qubit.Mods
                     return true;
 
                 int[] blockedArs = Blocked.Select(rig => rig.Creator.ActorNumber).ToArray();
-                int[] normalArs = VRRigExtensions.ActiveRigs
+                int[] normalArs = Players.ActiveRigs
                     .Where(rig => !Blocked.Contains(rig))
                     .Select(rig => rig.Creator.ActorNumber)
                     .ToArray();
@@ -715,15 +738,15 @@ namespace Qubit.Mods
         }
         public static void CategorySettings()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> { new ButtonInfo { buttonText = "Exit Menu Settings", method = () => { Buttons.CurrentCategoryName = "Settings"; Buttons.buttons[Buttons.GetCategory("Temporary Category")] = Array.Empty<ButtonInfo>(); }, isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true } };
+            List<Module> buttons = new List<Module> { new Module { buttonText = "Exit Menu Settings", method = () => { Manager.CurrentCategoryName = "Settings"; Manager.modules["Temporary Category"] = Array.Empty<Module>(); }, isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true } };
 
-            foreach (var button in Buttons.buttons[Buttons.GetCategory("Main")])
+            foreach (var button in Manager.modules["Main"])
             {
 #if LEGAL || LEGAL_DEBUG
                 if (!button.legal)
                     continue;
 #endif
-                buttons.Add(new ButtonInfo
+                buttons.Add(new Module
                 {
                     buttonText = $"Category{button.buttonText.Hash()}",
                     overlapText = button.buttonText,
@@ -736,8 +759,8 @@ namespace Qubit.Mods
                 });
             }
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void RightHand()
@@ -747,13 +770,13 @@ namespace Qubit.Mods
             {
                 Toggle("Watch Menu");
                 Toggle("Watch Menu");
-                NotificationManager.ClearAllNotifications();
+                Notifications.ClearAllNotifications();
             }
 
-            if (!Buttons.GetIndex("Info Watch").enabled) return;
+            if (!Manager.GetIndex("Info Watch").enabled) return;
             Toggle("Info Watch");
             Toggle("Info Watch");
-            NotificationManager.ClearAllNotifications();
+            Notifications.ClearAllNotifications();
         }
 
         public static void LeftHand()
@@ -763,13 +786,13 @@ namespace Qubit.Mods
             {
                 Toggle("Watch Menu");
                 Toggle("Watch Menu");
-                NotificationManager.ClearAllNotifications();
+                Notifications.ClearAllNotifications();
             }
 
-            if (!Buttons.GetIndex("Info Watch").enabled) return;
+            if (!Manager.GetIndex("Info Watch").enabled) return;
             Toggle("Info Watch");
             Toggle("Info Watch");
-            NotificationManager.ClearAllNotifications();
+            Notifications.ClearAllNotifications();
         }
 
         public static void ClearAllKeybinds()
@@ -777,7 +800,7 @@ namespace Qubit.Mods
             foreach (KeyValuePair<string, List<string>> bind in ModBindings)
             {
                 foreach (string modName in bind.Value)
-                    Buttons.GetIndex(modName).customBind = null;
+                    Manager.GetIndex(modName).customBind = null;
 
                 bind.Value.Clear();
             }
@@ -800,12 +823,12 @@ namespace Qubit.Mods
 
         public static void RemoveRebinds()
         {
-            foreach (ButtonInfo[] buttonlist in Buttons.buttons)
+            foreach (Module[] buttonlist in Manager.modules.Values)
             {
-                foreach (ButtonInfo v in buttonlist)
+                foreach (Module v in buttonlist)
                     v.rebindKey = null;
             }
-            NotificationManager.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Removed all rebinds.");
+            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Removed all rebinds.");
         }
 
         // The code below is fully safe. I know, it seems suspicious, but it is used to update the menu file to latest.
@@ -876,7 +899,7 @@ exit";
                         string fileName = $"{PluginInfo.BaseDirectory}/UpdateScript.bat";
                         File.WriteAllText(fileName, updateScript);
 
-                        string filePath = FileUtilities.GetGamePath() + "/" + fileName;
+                        string filePath = Files.GetGamePath() + "/" + fileName;
                         Process.Start(filePath);
                         Application.Quit();
                         break;
@@ -986,7 +1009,7 @@ exit 0";
 
             if (!watchUsed && Time.time >= watchTimer)
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=purple>WATCH</color><color=grey>]</color> Seems that you got stuck using Watch Menu, automatically disabling..");
+                Notifications.SendNotification("<color=grey>[</color><color=purple>WATCH</color><color=grey>]</color> Seems that you got stuck using Watch Menu, automatically disabling..");
                 Toggle("Watch Menu");
             }
         }
@@ -1011,8 +1034,8 @@ exit 0";
         public static void ApplyMenuLanguage(int index)
         {
             langInd = index;
-            TranslationManager.translateCache.Clear();
-            TranslationManager.language = LanguageCodes[index];
+            Translations.translateCache.Clear();
+            Translations.language = LanguageCodes[index];
             translate = index != 0;
         }
 
@@ -3290,8 +3313,8 @@ exit 0";
 
         public static void ApplyMenuTheme(int themeType)
         {
-            Main.themeType = themeType;
-            ButtonInfo button = Buttons.GetIndex("Custom Menu Theme");
+            Frontend.Settings.themeType = themeType;
+            Module button = Manager.GetIndex("Custom Menu Theme");
             if (button != null && button.enabled)
                 return;
             if (themeType < 0 || themeType >= Themes.Count)
@@ -3326,32 +3349,32 @@ exit 0";
 
         public static void CustomMenuThemePage()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Custom Menu Theme", method = () => ExitCustomMenuTheme(), isTogglable = false, toolTip = "Returns you back to the settings menu." },
-                new ButtonInfo { buttonText = "Background", method = () => CMTBackground(), isTogglable = false, toolTip = "Choose what segment of the background you would like to modify." },
-                new ButtonInfo { buttonText = "Buttons", method = () => CMTButton(), isTogglable = false, toolTip = "Choose what segment of the button you would like to modify." },
-                new ButtonInfo { buttonText = "Text", method = () => CMTText(), isTogglable = false, toolTip = "Choose what segment of the text you would like to modify." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Custom Menu Theme", method = () => ExitCustomMenuTheme(), isTogglable = false, toolTip = "Returns you back to the settings menu." },
+                new Module { buttonText = "Background", method = () => CMTBackground(), isTogglable = false, toolTip = "Choose what segment of the background you would like to modify." },
+                new Module { buttonText = "Buttons", method = () => CMTButton(), isTogglable = false, toolTip = "Choose what segment of the button you would like to modify." },
+                new Module { buttonText = "Text", method = () => CMTText(), isTogglable = false, toolTip = "Choose what segment of the text you would like to modify." },
             };
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTBackground()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Background", method = () => CustomMenuThemePage(), isTogglable = false, toolTip = "Returns you back to the customize menu." },
-                new ButtonInfo { buttonText = "First Color", method = () => CMTBackgroundFirst(), isTogglable = false, toolTip = "Change the color of the first color of the background." },
-                new ButtonInfo { buttonText = "Second Color", method = () => CMTBackgroundSecond(), isTogglable = false, toolTip = "Change the color of the second color of the background." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Background", method = () => CustomMenuThemePage(), isTogglable = false, toolTip = "Returns you back to the customize menu." },
+                new Module { buttonText = "First Color", method = () => CMTBackgroundFirst(), isTogglable = false, toolTip = "Change the color of the first color of the background." },
+                new Module { buttonText = "Second Color", method = () => CMTBackgroundSecond(), isTogglable = false, toolTip = "Change the color of the second color of the background." },
             };
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
-        private static List<ButtonInfo> CreateColorButtons(Func<Color> getColor, Action<Color> setColor, string tooltipTarget)
+        private static List<Module> CreateColorModules(Func<Color> getColor, Action<Color> setColor, string tooltipTarget)
         {
-            ButtonInfo previewButton = new ButtonInfo
+            Module previewButton = new Module
             {
                 buttonText = "PreviewLabel",
                 overlapText = "<color=#" + ColorToHex(getColor()) + ">Preview</color>",
@@ -3365,7 +3388,7 @@ exit 0";
 
             void ApplyChannel(int channel, int v)
             {
-                if (!Buttons.GetIndex("Custom Menu Theme").enabled)
+                if (!Manager.GetIndex("Custom Menu Theme").enabled)
                     return;
 
                 Color c = getColor();
@@ -3379,7 +3402,7 @@ exit 0";
                 WriteCustomTheme();
             }
 
-            ButtonInfo redButton = ButtonHelper.CreateNumeric(
+            Module redButton = ButtonHelper.CreateNumeric(
                 "Red", 0, 10,
                 (int)Math.Round(getColor().r * 10f),
                 v => ApplyChannel(0, v),
@@ -3387,7 +3410,7 @@ exit 0";
                 $"Change the red of {tooltipTarget}.",
                 onCycle: _ => RefreshPreview());
 
-            ButtonInfo greenButton = ButtonHelper.CreateNumeric(
+            Module greenButton = ButtonHelper.CreateNumeric(
                 "Green", 0, 10,
                 (int)Math.Round(getColor().g * 10f),
                 v => ApplyChannel(1, v),
@@ -3395,7 +3418,7 @@ exit 0";
                 $"Change the green of {tooltipTarget}.",
                 onCycle: _ => RefreshPreview());
 
-            ButtonInfo blueButton = ButtonHelper.CreateNumeric(
+            Module blueButton = ButtonHelper.CreateNumeric(
                 "Blue", 0, 10,
                 (int)Math.Round(getColor().b * 10f),
                 v => ApplyChannel(2, v),
@@ -3403,187 +3426,187 @@ exit 0";
                 $"Change the blue of {tooltipTarget}.",
                 onCycle: _ => RefreshPreview());
 
-            return new List<ButtonInfo> { redButton, greenButton, blueButton, previewButton };
+            return new List<Module> { redButton, greenButton, blueButton, previewButton };
         }
         public static void CMTBackgroundFirst()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit First Color", method = () => CMTBackground(), isTogglable = false, toolTip = "Returns you back to the background menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit First Color", method = () => CMTBackground(), isTogglable = false, toolTip = "Returns you back to the background menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => backgroundColor.GetColor(0),
                 c => backgroundColor.SetColor(0, c),
                 "the first color of the background"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTBackgroundSecond()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Second Color", method = () => CMTBackground(), isTogglable = false, toolTip = "Returns you back to the background menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Second Color", method = () => CMTBackground(), isTogglable = false, toolTip = "Returns you back to the background menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => backgroundColor.GetColor(1),
                 c => backgroundColor.SetColor(1, c),
                 "the second color of the background"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTButtonEnabledFirst()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit First Color", method = () => CMTButtonEnabled(), isTogglable = false, toolTip = "Returns you back to the enabled button menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit First Color", method = () => CMTButtonEnabled(), isTogglable = false, toolTip = "Returns you back to the enabled button menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => buttonColors[1].GetColor(0),
                 c => buttonColors[1].SetColor(0, c),
                 "the first color of the enabled button color"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTButtonEnabledSecond()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Second Color", method = () => CMTButtonEnabled(), isTogglable = false, toolTip = "Returns you back to the enabled button menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Second Color", method = () => CMTButtonEnabled(), isTogglable = false, toolTip = "Returns you back to the enabled button menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => buttonColors[1].GetColor(1),
                 c => buttonColors[1].SetColor(1, c),
                 "the second color of the enabled button color"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTButtonDisabledFirst()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit First Color", method = () => CMTButtonDisabled(), isTogglable = false, toolTip = "Returns you back to the disabled button menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit First Color", method = () => CMTButtonDisabled(), isTogglable = false, toolTip = "Returns you back to the disabled button menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => buttonColors[0].GetColor(0),
                 c => buttonColors[0].SetColor(0, c),
                 "the first color of the disabled button color"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTButtonDisabledSecond()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Second Color", method = CMTButtonDisabled, isTogglable = false, toolTip = "Returns you back to the disabled button menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Second Color", method = CMTButtonDisabled, isTogglable = false, toolTip = "Returns you back to the disabled button menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => buttonColors[0].GetColor(1),
                 c => buttonColors[0].SetColor(1, c),
                 "the second color of the disabled button color"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTTextTitle()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Title", method = CMTText, isTogglable = false, toolTip = "Returns you back to the text menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Title", method = CMTText, isTogglable = false, toolTip = "Returns you back to the text menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => textColors[0].GetColor(0),
                 c => textColors[0].SetColors(c),
                 "the title color"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTTextEnabled()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Second Color", method = () => CMTText(), isTogglable = false, toolTip = "Returns you back to the text menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Second Color", method = () => CMTText(), isTogglable = false, toolTip = "Returns you back to the text menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => textColors[2].GetColor(0),
                 c => textColors[2].SetColors(c),
                 "the enabled text color"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTTextDisabled()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Second Color", method = () => CMTText(), isTogglable = false, toolTip = "Returns you back to the text menu." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Second Color", method = () => CMTText(), isTogglable = false, toolTip = "Returns you back to the text menu." },
             };
-            buttons.AddRange(CreateColorButtons(
+            buttons.AddRange(CreateColorModules(
                 () => textColors[1].GetColor(0),
                 c => textColors[1].SetColors(c),
                 "the disabled text color"));
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTButton()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Buttons", method = CustomMenuThemePage, isTogglable = false, toolTip = "Returns you back to the customize menu." },
-                new ButtonInfo { buttonText = "Enabled", method = CMTButtonEnabled, isTogglable = false, toolTip = "Choose what type of button color to modify." },
-                new ButtonInfo { buttonText = "Disabled", method = CMTButtonDisabled, isTogglable = false, toolTip = "Change the color of the second color of the background." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Buttons", method = CustomMenuThemePage, isTogglable = false, toolTip = "Returns you back to the customize menu." },
+                new Module { buttonText = "Enabled", method = CMTButtonEnabled, isTogglable = false, toolTip = "Choose what type of button color to modify." },
+                new Module { buttonText = "Disabled", method = CMTButtonDisabled, isTogglable = false, toolTip = "Change the color of the second color of the background." },
             };
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTButtonEnabled()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Enabled", method = CMTButton, isTogglable = false, toolTip = "Returns you back to the customize menu." },
-                new ButtonInfo { buttonText = "First Color", method = CMTButtonEnabledFirst, isTogglable = false, toolTip = "Change the color of the first color of the enabled button color." },
-                new ButtonInfo { buttonText = "Second Color", method = () => CMTButtonEnabledSecond(), isTogglable = false, toolTip = "Change the color of the second color of the enabled button color." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Enabled", method = CMTButton, isTogglable = false, toolTip = "Returns you back to the customize menu." },
+                new Module { buttonText = "First Color", method = CMTButtonEnabledFirst, isTogglable = false, toolTip = "Change the color of the first color of the enabled button color." },
+                new Module { buttonText = "Second Color", method = () => CMTButtonEnabledSecond(), isTogglable = false, toolTip = "Change the color of the second color of the enabled button color." },
             };
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTButtonDisabled()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Enabled", method = () => CMTButton(), isTogglable = false, toolTip = "Returns you back to the customize menu." },
-                new ButtonInfo { buttonText = "First Color", method = () => CMTButtonDisabledFirst(), isTogglable = false, toolTip = "Change the color of the first color of the disabled button color." },
-                new ButtonInfo { buttonText = "Second Color", method = () => CMTButtonDisabledSecond(), isTogglable = false, toolTip = "Change the color of the second color of the disabled button color." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Enabled", method = () => CMTButton(), isTogglable = false, toolTip = "Returns you back to the customize menu." },
+                new Module { buttonText = "First Color", method = () => CMTButtonDisabledFirst(), isTogglable = false, toolTip = "Change the color of the first color of the disabled button color." },
+                new Module { buttonText = "Second Color", method = () => CMTButtonDisabledSecond(), isTogglable = false, toolTip = "Change the color of the second color of the disabled button color." },
             };
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void CMTText()
         {
-            List<ButtonInfo> buttons = new List<ButtonInfo> {
-                new ButtonInfo { buttonText = "Exit Text", method = CustomMenuThemePage, isTogglable = false, toolTip = "Returns you back to the customize menu." },
-                new ButtonInfo { buttonText = "Title", method = CMTTextTitle, isTogglable = false, toolTip = "Change the color of the title." },
-                new ButtonInfo { buttonText = "Enabled", method = CMTTextEnabled, isTogglable = false, toolTip = "Change the color of the enabled text." },
-                new ButtonInfo { buttonText = "Disabled", method = CMTTextDisabled, isTogglable = false, toolTip = "Change the color of the disabled text." },
+            List<Module> buttons = new List<Module> {
+                new Module { buttonText = "Exit Text", method = CustomMenuThemePage, isTogglable = false, toolTip = "Returns you back to the customize menu." },
+                new Module { buttonText = "Title", method = CMTTextTitle, isTogglable = false, toolTip = "Change the color of the title." },
+                new Module { buttonText = "Enabled", method = CMTTextEnabled, isTogglable = false, toolTip = "Change the color of the enabled text." },
+                new Module { buttonText = "Disabled", method = CMTTextDisabled, isTogglable = false, toolTip = "Change the color of the disabled text." },
             };
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = buttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void ExitCustomMenuTheme()
         {
             pageNumber = previousPage;
-            Buttons.CurrentCategoryName = "Menu Settings";
+            Manager.CurrentCategoryName = "Menu Settings";
         }
 
         public static void ApplyTheme(Preferences.CustomThemeData theme)
@@ -3641,7 +3664,7 @@ exit 0";
         public static void FixTheme()
         {
             themeType--;
-            Buttons.GetIndex("Change Menu Theme").cycleValue(true);
+            Manager.GetIndex("Change Menu Theme").cycleValue(true);
         }
 
         public static void CustomMenuBackground()
@@ -3663,7 +3686,7 @@ exit 0";
 
         public static void EnableWatermark()
         {
-            bool enabled = Buttons.GetIndex("Custom Watermark").enabled;
+            bool enabled = Manager.GetIndex("Custom Watermark").enabled;
             if (enabled)
             {
                 if (!File.Exists($"{PluginInfo.BaseDirectory}/CustomWatermark.png"))
@@ -3705,12 +3728,12 @@ exit 0";
             string filePath = $"{PluginInfo.BaseDirectory}/CustomFont.ttf";
             if (!File.Exists(filePath))
             {
-                LogManager.Log("Downloading CustomFont.ttf");
+                Logs.Log("Downloading CustomFont.ttf");
                 WebClient stream = new WebClient();
                 stream.DownloadFile($"{PluginInfo.ServerResourcePath}/Fonts/LiberationSans.ttf", filePath);
             }
 
-            chosenFont = TMP_FontAsset.CreateFontAsset(new Font($"{FileUtilities.GetGamePath()}/{filePath}"));
+            chosenFont = TMP_FontAsset.CreateFontAsset(new Font($"{Files.GetGamePath()}/{filePath}"));
             PersistCustomFont();
         }
 
@@ -3723,7 +3746,7 @@ exit 0";
         public static void DisableCustomFont()
         {
             fontCycle--;
-            Buttons.GetIndex("Change Font Type").cycleValue(true);
+            Manager.GetIndex("Change Font Type").cycleValue(true);
         }
 
         public static void ApplyPageType(int index) { pageButtonType = index; buttonOffset = index == 2 ? 2 : 0; }
@@ -3731,65 +3754,12 @@ exit 0";
         public static void ApplyCharacterDistance(int index) => characterDistance = index;
         public static void ApplyArrowType(int index) => arrowType = index;
 
-        public static void ApplyFontType(int index)
-        {
-            fontCycle = index;
-            switch (index)
-            {
-                case 0:
-                    activeFont = AgencyFB;
-                    return;
-                case 1:
-                    activeFont = FreeSans;
-                    return;
-                case 2:
-                    activeFont = DejaVuSans;
-                    return;
-                case 3:
-                    activeFont = Utopium;
-                    return;
-                case 4:
-                    activeFont = ComicSans;
-                    return;
-                case 5:
-                    activeFont = CascadiaMono;
-                    return;
-                case 6:
-                    activeFont = Candara;
-                    return;
-                case 7:
-                    activeFont = MSGothic;
-                    return;
-                case 8:
-                    activeFont = Anton;
-                    return;
-                case 9:
-                    activeFont = SimSun;
-                    return;
-                case 10:
-                    activeFont = Minecraft;
-                    return;
-                case 11:
-                    activeFont = Terminal;
-                    return;
-                case 12:
-                    activeFont = OpenDyslexic;
-                    return;
-                case 13:
-                    activeFont = Taiko;
-                    return;
-                case 14:
-                    activeFont = LiberationSans;
-                    return;
-            }
-        }
-
         public static float fontTime;
         public static void ChangeFontRapid()
         {
             if (Time.time > fontTime)
             {
-                Buttons.GetIndex("Change Font Type").cycleValue(true);
+                Manager.GetIndex("Change Font Type").cycleValue(true);
                 fontTime = Time.time + 0.4f;
 
                 ReloadMenu();
@@ -3797,18 +3767,6 @@ exit 0";
         }
 
         public static int fontStyleType = 2;
-        public static void ApplyFontStyleType(int index)
-        {
-            fontStyleType = index;
-            activeFontStyle = index switch
-            {
-                0 => FontStyles.Normal,
-                1 => FontStyles.Bold,
-                2 => FontStyles.Italic,
-                3 => FontStyles.Bold | FontStyles.Italic,
-                _ => FontStyles.Normal
-            };
-        }
 
 
         public static readonly string[] InputColorNames = {
@@ -3827,14 +3785,14 @@ exit 0";
 
         public static void ApplyNotificationSound(string soundName)
         {
-            SoundManager.DefaultSounds["Notification"] = soundName;
-            Buttons.GetIndex("Change Notification Sound").overlapText =
+            Sounds.DefaultSounds["Notification"] = soundName;
+            Manager.GetIndex("Change Notification Sound").overlapText =
                 $"Change Notification Sound <color=grey>[</color><color=green>{soundName}</color><color=grey>]</color>";
         }
         public static void ChangeNotificationSound(bool positive = true, bool fromMenu = false)
         {
-            var notificationKeys = SoundManager.Sounds["Notifications"].Keys.ToArray();
-            string current = SoundManager.DefaultSounds["Notification"];
+            var notificationKeys = Sounds.SoundList["Notifications"].Keys.ToArray();
+            string current = Sounds.DefaultSounds["Notification"];
 
             int index = Array.IndexOf(notificationKeys, current);
             if (index < 0) index = 0;
@@ -3842,14 +3800,14 @@ exit 0";
 
             string newSound = notificationKeys[index];
             ApplyNotificationSound(newSound);
-            Buttons.GetIndex("Change Notification Sound").value = newSound;
+            Manager.GetIndex("Change Notification Sound").value = newSound;
 
             if (!fromMenu) return;
 
             var src = audioManager?.GetComponent<AudioSource>();
             src?.Stop();
 
-            SoundManager.Play(SoundManager.DefaultSounds["Notification"]);
+            Sounds.Play(Sounds.DefaultSounds["Notification"]);
         }
 
         public static readonly string[] NarratorNames = {
@@ -3869,15 +3827,6 @@ exit 0";
                 DictationRestart();
                 dRestartTime = Time.time + 1f;
             }
-        }
-
-
-        public static void KickToSpecificRoom()
-        {
-            if (Time.time < timeMenuStarted + 5f)
-                return;
-
-            PromptText("What would you like the room code to be?", () => Overpowered.specificRoom = keyboardInput.ToUpper(), () => Toggle("Kick to Specific Room"), "Done", "Cancel");
         }
         public static readonly Vector3[] PointerPositions = {
             new Vector3(0f, -0.1f, 0f),
@@ -3941,42 +3890,24 @@ exit 0";
             }
         }
 
-        public static void DisorganizeMenu()
-        {
-            if (!disorganized)
-            {
-                disorganized = true;
-                foreach (ButtonInfo[] buttonArray in Buttons.buttons)
-                {
-                    if (buttonArray.Length > 0)
-                    {
-                        for (int i = 0; i < buttonArray.Length; i++)
-                            Buttons.buttons[Buttons.GetCategory("Main")] = Buttons.buttons[Buttons.GetCategory("Main")].Concat(new[] { buttonArray[i] }).ToArray();
-
-                        Array.Clear(buttonArray, 0, buttonArray.Length);
-                    }
-                }
-            }
-        }
-
         public static void AnnoyingModeOff()
         {
             annoyingMode = false;
             themeType--;
-            Buttons.GetIndex("Change Menu Theme").cycleValue(true);
+            Manager.GetIndex("Change Menu Theme").cycleValue(true);
         }
 
         public static void DisablePageButtons()
         {
-            if (Buttons.GetIndex("Joystick Menu").enabled)
+            if (Manager.GetIndex("Joystick Menu").enabled)
             {
                 disablePageButtons = true;
             }
             else
             {
-                Buttons.GetIndex("Disable Page Buttons").SetEnabled(false);
+                Manager.GetIndex("Disable Page Buttons").SetEnabled(false);
                 ReloadMenu();
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>DISABLE</color><color=grey>]</color> Disable Page Buttons can only be used when using Joystick Menu.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>DISABLE</color><color=grey>]</color> Disable Page Buttons can only be used when using Joystick Menu.");
             }
         }
 
@@ -4009,7 +3940,7 @@ exit 0";
         public static void CheckFocus()
         {
             if (!Application.isFocused && lastFocused && Time.time > timeMenuStarted + 5f)
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not focused on Gorilla Tag. Voice transcription mods will not function. Please focus/click on the game.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not focused on Gorilla Tag. Voice transcription mods will not function. Please focus/click on the game.");
 
             lastFocused = Application.isFocused;
             if (Application.isFocused && lastFocused)
@@ -4035,14 +3966,14 @@ exit 0";
         {
             mainPhrases.Stop();
 
-            if (!Buttons.GetIndex("Chain Voice Commands").enabled)
-                timeoutCoroutine = CoroutineManager.instance.StartCoroutine(Timeout(string.Empty));
+            if (!Manager.GetIndex("Chain Voice Commands").enabled)
+                timeoutCoroutine = Coroutines.instance.StartCoroutine(Timeout(string.Empty));
 
             List<string> rawbuttonnames = cancelKeywords.ToList();
 
-            foreach (ButtonInfo[] buttonlist in Buttons.buttons)
+            foreach (Module[] buttonlist in Manager.modules.Values)
             {
-                foreach (ButtonInfo v in buttonlist)
+                foreach (Module v in buttonlist)
                 {
                     string buttonName = v.overlapText ?? v.buttonText;
 
@@ -4061,16 +3992,16 @@ exit 0";
             if (dynamicSounds)
                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/select.ogg", "Audio/Menu/select.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
 
-            NotificationManager.SendNotification("<color=grey>[</color><color=purple>VOICE</color><color=grey>]</color> Listening...", 3000);
+            Notifications.SendNotification("<color=grey>[</color><color=purple>VOICE</color><color=grey>]</color> Listening...", 3000);
         }
 
         public static void ExecuteVoiceCommand(PhraseRecognizedEventArgs args)
         {
-            if (!Buttons.GetIndex("Chain Voice Commands").enabled)
+            if (!Manager.GetIndex("Chain Voice Commands").enabled)
             {
                 modPhrases.Stop();
                 mainPhrases.Start();
-                CoroutineManager.instance.StopCoroutine(timeoutCoroutine);
+                Coroutines.instance.StopCoroutine(timeoutCoroutine);
             }
 
             if (cancelKeywords.Contains(args.text))
@@ -4082,12 +4013,12 @@ exit 0";
             string modTarget = null;
             bool exactMatch = false;
 
-            foreach (ButtonInfo[] buttonlist in Buttons.buttons)
+            foreach (Module[] buttonlist in Manager.modules.Values)
             {
                 if (exactMatch)
                     break;
 
-                foreach (ButtonInfo v in buttonlist)
+                foreach (Module v in buttonlist)
                 {
                     if (exactMatch)
                         break;
@@ -4112,8 +4043,8 @@ exit 0";
 
             if (modTarget != null)
             {
-                ButtonInfo mod = Buttons.GetIndex(modTarget);
-                NotificationManager.SendNotification("<color=grey>[</color><color=" + (mod.enabled ? "red" : "green") + ">VOICE</color><color=grey>]</color> " + (mod.enabled ? "Disabling " : "Enabling ") + (mod.overlapText ?? mod.buttonText) + "...", 3000);
+                Module mod = Manager.GetIndex(modTarget);
+                Notifications.SendNotification("<color=grey>[</color><color=" + (mod.enabled ? "red" : "green") + ">VOICE</color><color=grey>]</color> " + (mod.enabled ? "Disabling " : "Enabling ") + (mod.overlapText ?? mod.buttonText) + "...", 3000);
                 if (dynamicSounds)
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/confirm.ogg", "Audio/Menu/confirm.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
 
@@ -4125,7 +4056,7 @@ exit 0";
             }
             else
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>VOICE</color><color=grey>]</color> No command found (" + args.text + ").", 3000);
+                Notifications.SendNotification("<color=grey>[</color><color=red>VOICE</color><color=grey>]</color> No command found (" + args.text + ").", 3000);
                 if (dynamicSounds)
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
             }
@@ -4143,11 +4074,11 @@ exit 0";
             mainPhrases.Start();
             try
             {
-                CoroutineManager.instance.StopCoroutine(timeoutCoroutine);
+                Coroutines.instance.StopCoroutine(timeoutCoroutine);
             }
             catch { }
 
-            NotificationManager.SendNotification($"<color=grey>[</color><color=red>VOICE</color><color=grey>]</color> {(text == "i hate you" ? "I hate you too." : "Cancelling...")}", 3000);
+            Notifications.SendNotification($"<color=grey>[</color><color=red>VOICE</color><color=grey>]</color> {(text == "i hate you" ? "I hate you too." : "Cancelling...")}", 3000);
             if (dynamicSounds)
                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
         }
@@ -4171,7 +4102,7 @@ exit 0";
 
         public static IEnumerator DictationOn()
         {
-            ButtonInfo mod = Buttons.GetIndex("AI Assistant");
+            Module mod = Manager.GetIndex("AI Assistant");
 
             if (Application.platform == RuntimePlatform.WindowsPlayer && Environment.OSVersion.Version.Major < 10)
                 PromptSingle("Your version of Windows is too old for this mod to run.", () => mod.SetEnabled(false));
@@ -4179,7 +4110,7 @@ exit 0";
                 PromptSingle("You must be on Windows 10 or greater for this mod to run.", () => mod.SetEnabled(false));
 
 
-            ButtonInfo vc = Buttons.GetIndex("Voice Commands");
+            Module vc = Manager.GetIndex("Voice Commands");
             if (vc.enabled)
                 Prompt("You currently have Voice Commands enabled. These mods may overlap eachother. Would you like to disable it?", () => vc.SetEnabled(false), () => mod.SetEnabled(false));
             else if (PhraseRecognitionSystem.Status != SpeechSystemStatus.Stopped)
@@ -4198,14 +4129,14 @@ exit 0";
 
             krec = new KeywordRecognizer(kw);
 
-            krec.OnPhraseRecognized += (args) => CoroutineManager.instance.StartCoroutine(DictationRecognizer());
+            krec.OnPhraseRecognized += (args) => Coroutines.instance.StartCoroutine(DictationRecognizer());
             krec.Start();
             yield break;
         }
 
         public static IEnumerator DictationRecognizer()
         {
-            ButtonInfo mod = Buttons.GetIndex("AI Assistant");
+            Module mod = Manager.GetIndex("AI Assistant");
 
             PhraseRecognitionSystem.Shutdown();
             while (PhraseRecognitionSystem.Status != SpeechSystemStatus.Stopped)
@@ -4215,88 +4146,88 @@ exit 0";
             {
                 case "Mommy ASMR":
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/TTS/yes_sweetheart.ogg", "Audio/TTS/yes_sweetheart.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
-                    NotificationManager.SendNotification("<color=grey>[</color><color=#ffb6c1>MOMMY</color><color=grey>]</color> Yes, sweetheart?", 3000);
+                    Notifications.SendNotification("<color=grey>[</color><color=#ffb6c1>MOMMY</color><color=grey>]</color> Yes, sweetheart?", 3000);
                     break;
                 default:
                     LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/select.ogg", "Audio/Menu/select.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
-                    NotificationManager.SendNotification("<color=grey>[</color><color=purple>VOICE</color><color=grey>]</color> Listening...", 3000);
+                    Notifications.SendNotification("<color=grey>[</color><color=purple>VOICE</color><color=grey>]</color> Listening...", 3000);
                     break;
             }
 
             if (debugDictation)
-                LogManager.Log("Dictation listening");
+                Logs.Log("Dictation listening");
 
             drec = new DictationRecognizer();
             drec.DictationResult += (text, confidence) =>
             {
-                if (AIManager.generating)
+                if (LanguageModel.generating)
                     return;
 
                 if (debugDictation)
-                    LogManager.Log($"Dictation result: {text}");
+                    Logs.Log($"Dictation result: {text}");
                 if (cancelKeywords.Contains(text.ToLower()))
                 {
                     if (dynamicSounds)
                         LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
 
-                    NotificationManager.SendNotification($"<color=grey>[</color><color=red>AI</color><color=grey>]</color> {(text.ToLower() == "i hate you" ? "I hate you too." : "Cancelling...")}", 3000);
-                    CoroutineManager.instance.StartCoroutine(DictationRestart());
+                    Notifications.SendNotification($"<color=grey>[</color><color=red>AI</color><color=grey>]</color> {(text.ToLower() == "i hate you" ? "I hate you too." : "Cancelling...")}", 3000);
+                    Coroutines.instance.StartCoroutine(DictationRestart());
                     return;
                 }
 
                 switch (narratorName)
                 {
                     case "Mommy ASMR":
-                        NotificationManager.SendNotification($"<color=grey>[</color><color=#ffb6c1>MOMMY</color><color=grey>]</color> Let me get that for you..");
+                        Notifications.SendNotification($"<color=grey>[</color><color=#ffb6c1>MOMMY</color><color=grey>]</color> Let me get that for you..");
                         break;
                     default:
-                        NotificationManager.SendNotification($"<color=grey>[</color><color=blue>AI</color><color=grey>]</color> Generating response..");
+                        Notifications.SendNotification($"<color=grey>[</color><color=blue>AI</color><color=grey>]</color> Generating response..");
                         break;
 
                 }
 
 
-                CoroutineManager.instance.StartCoroutine(AIManager.AskAI(text));
+                Coroutines.instance.StartCoroutine(LanguageModel.AskAI(text));
                 return;
 
             };
 
             drec.DictationComplete += (completionCause) =>
             {
-                if (AIManager.generating)
+                if (LanguageModel.generating)
                     return;
                 if (debugDictation)
-                    LogManager.Log($"completion cause: {completionCause}");
+                    Logs.Log($"completion cause: {completionCause}");
                 if (completionCause.ToString() == "TimeoutExceeded")
                 {
                     if (dynamicSounds)
                         LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => DictationPlay(clip, buttonClickVolume / 10f));
-                    NotificationManager.SendNotification($"<color=grey>[</color><color=red>AI</color><color=grey>]</color> Cancelling...", 3000);
+                    Notifications.SendNotification($"<color=grey>[</color><color=red>AI</color><color=grey>]</color> Cancelling...", 3000);
                 }
             };
 
             drec.DictationError += (error, hresult) =>
             {
                 if (debugDictation)
-                    LogManager.LogError($"Dictation error: {error}");
+                    Logs.LogError($"Dictation error: {error}");
                 if (error.Contains("Dictation support is not enabled on this device"))
                 {
                     DictationOff();
 
-                    NotificationManager.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Online Speech Recognition is not enabled on this device. Either open the menu to enable it, or check your internet connection.", 3000);
+                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Online Speech Recognition is not enabled on this device. Either open the menu to enable it, or check your internet connection.", 3000);
                     Prompt("Online Speech Recognition is not enabled on your device. Would you like to open the Settings page to enable it?", () => { Process.Start("ms-settings:privacy-speech"); PromptSingle("Once you enable Online Speech Recognition, turn this mod back on!", () => mod.SetEnabled(false), "Ok"); }, () => PromptSingle("You will not be able to use this mod until you enable Online Speech Recognition.", () => mod.SetEnabled(false), "Ok"));
                 }
             };
 
             drec.DictationHypothesis += (text) =>
             {
-                if (AIManager.generating)
+                if (LanguageModel.generating)
                     return;
                 if (debugDictation)
-                    LogManager.Log($"Hypothesis: {text}");
+                    Logs.Log($"Hypothesis: {text}");
 
-                NotificationManager.ClearAllNotifications();
-                NotificationManager.SendNotification($"<color=grey>[</color><color=green>VOICE</color><color=grey>]</color> {text}");
+                Notifications.ClearAllNotifications();
+                Notifications.SendNotification($"<color=grey>[</color><color=green>VOICE</color><color=grey>]</color> {text}");
             };
 
             drec?.Start();
@@ -4308,7 +4239,7 @@ exit 0";
             DictationOff();
             while (PhraseRecognitionSystem.Status != SpeechSystemStatus.Stopped)
                 yield return null;
-            CoroutineManager.instance.StartCoroutine(DictationOn());
+            Coroutines.instance.StartCoroutine(DictationOn());
             yield break;
         }
         public static void DictationOff()
@@ -4321,11 +4252,11 @@ exit 0";
 
         public static void DictationPlay(AudioClip clip, float volume)
         {
-            bool enabled = Buttons.GetIndex("Global Dynamic Sounds").enabled;
+            bool enabled = Manager.GetIndex("Global Dynamic Sounds").enabled;
             switch (enabled)
             {
                 case true:
-                    Sound.PlayAudio(clip);
+                    Fun.PlayAudio(clip);
                     break;
                 case false:
                     Play2DAudio(clip, volume);
@@ -4356,13 +4287,13 @@ exit 0";
             clickGUI = true;
             ReloadMenu();
 
-            Buttons.OnCategoryChanged += ReloadOnCategoryChange;
+            Manager.OnCategoryChanged += ReloadOnCategoryChange;
         }
 
         public static void DisableClickGUI()
         {
             clickGUI = false;
-            Buttons.OnCategoryChanged -= ReloadOnCategoryChange;
+            Manager.OnCategoryChanged -= ReloadOnCategoryChange;
 
             if (clickGuiLine != null)
             {
@@ -4384,7 +4315,7 @@ exit 0";
             }
 
             Transform canvasTransform = canvas.gameObject.transform;
-            canvasTransform.Find("Main").AddComponent<UIColorChanger>().colors = backgroundColor;
+            canvasTransform.Find("Main").AddComponent<UIColors>().colors = backgroundColor;
 
             ExtGradient sidebarColor = buttonColors[1].Clone();
             for (int i = 0; i < sidebarColor.colors.Length; i++)
@@ -4393,8 +4324,8 @@ exit 0";
                 sidebarColor.colors[i] = new GradientColorKey { time = colorKey.time, color = DarkenColor(colorKey.color, 0.35f) };
             }
 
-            canvasTransform.Find("Main/Sidebar").AddComponent<UIColorChanger>().colors = sidebarColor;
-            canvasTransform.Find("Main/Separator").AddComponent<UIColorChanger>().colors = buttonColors[1];
+            canvasTransform.Find("Main/Sidebar").AddComponent<UIColors>().colors = sidebarColor;
+            canvasTransform.Find("Main/Separator").AddComponent<UIColors>().colors = buttonColors[1];
 
             canvasTransform.Find("Main/Sidebar/Watermark").localRotation = Quaternion.Euler(0f, 0f, rockWatermark ? Mathf.Sin(Time.time * 2f) * 10f : 0f);
 
@@ -4418,11 +4349,11 @@ exit 0";
                 sidebarTransform.Find(buttonName).GetComponent<Button>().onClick.AddListener(() =>
                 {
                     Toggle(buttonName);
-                    SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                    Sounds.Play(Sounds.DefaultSounds["Button"]);
                 });
 
             var selection = canvasTransform.Find("Main/Sidebar/Scroll View/Viewport/Content/Home/Selection");
-            selection.AddComponent<UIColorChanger>().colors = buttonColors[1];
+            selection.AddComponent<UIColors>().colors = buttonColors[1];
 
             bool movedSelection = false;
 
@@ -4451,7 +4382,7 @@ exit 0";
             };
 
             GameObject otherBase = canvasTransform.Find("Main/Sidebar/Scroll View/Viewport/Content/Other").gameObject;
-            foreach (ButtonInfo button in Buttons.buttons[Buttons.GetCategory("Main")])
+            foreach (Module button in Manager.modules["Main"])
             {
                 if (!ignoreButtons.Contains(button.buttonText))
                 {
@@ -4470,14 +4401,14 @@ exit 0";
                 toRecolor.Add(tab.transform.Find("Title").GetComponent<MaskableGraphic>());
                 toRecolor.Add(tab.transform.Find("Image").GetComponent<MaskableGraphic>());
 
-                tab.AddComponent<UIColorChanger>().colors = buttonColors[0];
+                tab.AddComponent<UIColors>().colors = buttonColors[0];
                 tab.GetComponent<Button>().onClick.AddListener(() =>
                 {
-                    Toggle(Buttons.buttons[Buttons.GetCategory("Main")].Where(button => button.buttonText.StartsWith(tab.name)).FirstOrDefault() ?? Buttons.GetIndex("Exit Settings"));
-                    SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                    Toggle(Manager.modules["Main"].Where(button => button.buttonText.StartsWith(tab.name)).FirstOrDefault() ?? Manager.GetIndex("Exit Settings"));
+                    Sounds.Play(Sounds.DefaultSounds["Button"]);
                 });
 
-                if (Buttons.CurrentCategoryName.StartsWith(tab.name == "Home" ? "Main" : tab.name))
+                if (Manager.CurrentCategoryName.StartsWith(tab.name == "Home" ? "Main" : tab.name))
                 {
                     movedSelection = true;
                     selection.SetParent(tab.transform, false);
@@ -4493,9 +4424,9 @@ exit 0";
                 selection.gameObject.SetActive(false);
 
             GameObject buttonTemplate = canvasTransform.Find("Main/Button").gameObject;
-            void AddButton(Transform parent, ButtonInfo info)
+            void AddButton(Transform parent, Module info)
             {
-                static void UpdateButton(GameObject button, ButtonInfo info)
+                static void UpdateButton(GameObject button, Module info)
                 {
                     Transform transform = button.transform;
                     string buttonText = info.overlapText ?? info.buttonText;
@@ -4542,23 +4473,23 @@ exit 0";
                         transform.Find("Increment").gameObject.SetActive(true);
                         transform.Find("Decrement").gameObject.SetActive(true);
 
-                        transform.Find("Increment").gameObject.GetOrAddComponent<UIColorChanger>().colors = buttonColors[0];
-                        transform.Find("Decrement").gameObject.GetOrAddComponent<UIColorChanger>().colors = buttonColors[0];
+                        transform.Find("Increment").gameObject.GetOrAddComponent<UIColors>().colors = buttonColors[0];
+                        transform.Find("Decrement").gameObject.GetOrAddComponent<UIColors>().colors = buttonColors[0];
 
-                        transform.Find("Increment/Image").gameObject.GetOrAddComponent<UIColorChanger>().colors = textColors[1];
-                        transform.Find("Decrement/Image").gameObject.GetOrAddComponent<UIColorChanger>().colors = textColors[1];
+                        transform.Find("Increment/Image").gameObject.GetOrAddComponent<UIColors>().colors = textColors[1];
+                        transform.Find("Decrement/Image").gameObject.GetOrAddComponent<UIColors>().colors = textColors[1];
                     }
                     else
                     {
                         transform.Find("Toggle").gameObject.SetActive(true);
                         transform.Find("Toggle/Image").gameObject.SetActive(info.enabled);
 
-                        transform.Find("Toggle").gameObject.GetOrAddComponent<UIColorChanger>().colors = info.enabled ? buttonColors[1] : buttonColors[0];
-                        transform.Find("Toggle/Image").gameObject.GetOrAddComponent<UIColorChanger>().colors = info.enabled ? textColors[2] : textColors[1];
+                        transform.Find("Toggle").gameObject.GetOrAddComponent<UIColors>().colors = info.enabled ? buttonColors[1] : buttonColors[0];
+                        transform.Find("Toggle/Image").gameObject.GetOrAddComponent<UIColors>().colors = info.enabled ? textColors[2] : textColors[1];
                     }
 
-                    transform.Find("Title").AddComponent<UIColorChanger>().colors = textColors[1];
-                    transform.Find("ToolTip").AddComponent<UIColorChanger>().colors = textColors[1];
+                    transform.Find("Title").AddComponent<UIColors>().colors = textColors[1];
+                    transform.Find("ToolTip").AddComponent<UIColors>().colors = textColors[1];
                 }
 
                 GameObject button = Object.Instantiate(buttonTemplate, parent, false);
@@ -4570,7 +4501,7 @@ exit 0";
                     GradientColorKey colorKey = buttonBackgroundColor.colors[i];
                     buttonBackgroundColor.colors[i] = new GradientColorKey { time = colorKey.time, color = DarkenColor(colorKey.color, 0.75f) };
                 }
-                button.AddComponent<UIColorChanger>().colors = buttonBackgroundColor;
+                button.AddComponent<UIColors>().colors = buttonBackgroundColor;
 
                 UpdateButton(button, info);
 
@@ -4580,13 +4511,13 @@ exit 0";
                     transform.Find("Increment").GetComponent<Button>().onClick.AddListener(() =>
                     {
                         ToggleIncremental(info.buttonText, true);
-                        SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                        Sounds.Play(Sounds.DefaultSounds["Button"]);
                         UpdateButton(button, info);
                     });
                     transform.Find("Decrement").GetComponent<Button>().onClick.AddListener(() =>
                     {
                         ToggleIncremental(info.buttonText, false);
-                        SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                        Sounds.Play(Sounds.DefaultSounds["Button"]);
                         UpdateButton(button, info);
                     });
                 }
@@ -4595,7 +4526,7 @@ exit 0";
                     transform.Find("Toggle").GetComponent<Button>().onClick.AddListener(() =>
                     {
                         Toggle(info);
-                        SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                        Sounds.Play(Sounds.DefaultSounds["Button"]);
                         UpdateButton(button, info);
                     });
                 }
@@ -4619,11 +4550,11 @@ exit 0";
                 GameObject accept = canvasTransform.Find("Main/PromptTab/Accept").gameObject;
                 accept.transform.Find("Text").GetComponent<TextMeshProUGUI>().SafeSetText(CurrentPrompt.AcceptText);
                 accept.transform.Find("Text").GetComponent<TextMeshProUGUI>().Chams();
-                accept.GetOrAddComponent<UIColorChanger>().colors = buttonColors[0];
+                accept.GetOrAddComponent<UIColors>().colors = buttonColors[0];
                 accept.GetComponent<Button>().onClick.AddListener(() =>
                 {
                     Toggle("Accept Prompt");
-                    SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                    Sounds.Play(Sounds.DefaultSounds["Button"]);
                     ReloadMenu();
                 });
 
@@ -4631,11 +4562,11 @@ exit 0";
                 {
                     GameObject decline = canvasTransform.Find("Main/PromptTab/Decline").gameObject;
                     decline.transform.Find("Text").GetComponent<TextMeshProUGUI>().SafeSetText(CurrentPrompt.DeclineText);
-                    decline.GetOrAddComponent<UIColorChanger>().colors = buttonColors[0];
+                    decline.GetOrAddComponent<UIColors>().colors = buttonColors[0];
                     decline.GetComponent<Button>().onClick.AddListener(() =>
                     {
                         Toggle("Decline Prompt");
-                        SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+                        Sounds.Play(Sounds.DefaultSounds["Button"]);
                         ReloadMenu();
                     });
                 }
@@ -4650,12 +4581,12 @@ exit 0";
                     accept.transform.Find("Text").GetComponent<RectTransform>().localScale = new Vector3(rectTransform.localScale.y / 2.05f, rectTransform.localScale.y, rectTransform.localScale.z);
                 }
             }
-            else if (Buttons.CurrentCategoryIndex == 0)
+            else if (Manager.CurrentCategoryName == "Main")
             {
                 canvasTransform.Find("Main/HomeTab").gameObject.SetActive(true);
                 canvasTransform.Find("Main/HomeTab/Title").GetComponent<TextMeshProUGUI>().SafeSetText($"Hey, {PhotonNetwork.NickName ?? "null"}!");
 
-                if (Buttons.CurrentCategoryIndex == 0)
+                if (Manager.CurrentCategoryName == "Main")
                 {
                     foreach (string partName in new[]
                     {
@@ -4674,24 +4605,23 @@ exit 0";
 
                 Transform enabledModsTransform = canvasTransform.Find("Main/HomeTab/Enabled/Viewport/Content");
 
-                List<ButtonInfo> enabledMods = new List<ButtonInfo>();
-                int categoryIndex = 0;
-                foreach (ButtonInfo[] buttonList in Buttons.buttons)
+                List<Module> enabledMods = new List<Module>();
+                foreach (KeyValuePair<string, Module[]> categoryEntry in Manager.modules)
                 {
-                    enabledMods.AddRange(buttonList.Where(v => v.enabled && (!hideSettings || !Buttons.categoryNames[categoryIndex].Contains("Settings")) && (!hideMacros || !Buttons.categoryNames[categoryIndex].Contains("Macro"))));
-                    categoryIndex++;
+                    Module[] buttonList = categoryEntry.Value;
+                    enabledMods.AddRange(buttonList.Where(v => v.enabled && (!hideSettings || !categoryEntry.Key.Contains("Settings")) && (!hideMacros || !categoryEntry.Key.Contains("Macro"))));
                 }
                 enabledMods = enabledMods.OrderBy(v => v.overlapText ?? v.buttonText).ToList();
 
                 if (enabledMods.Count > 0)
                 {
                     canvasTransform.Find("Main/HomeTab/Enabled/Viewport/Content/None").gameObject.SetActive(false);
-                    foreach (ButtonInfo info in enabledMods)
+                    foreach (Module info in enabledMods)
                         AddButton(enabledModsTransform, info);
                 }
 
                 Transform favoritedModsTransform = canvasTransform.Find("Main/HomeTab/Favorites/Viewport/Content");
-                List<ButtonInfo> favoriteMods = StringsToInfos(favorites.ToArray()).ToList();
+                List<Module> favoriteMods = StringsToInfos(favorites.ToArray()).ToList();
 
                 if (favoriteMods.Count > 0)
                     favoriteMods.RemoveAt(0);
@@ -4699,7 +4629,7 @@ exit 0";
                 if (favoriteMods.Count > 0)
                 {
                     canvasTransform.Find("Main/HomeTab/Favorites/Viewport/Content/None").gameObject.SetActive(false);
-                    foreach (ButtonInfo info in favoriteMods)
+                    foreach (Module info in favoriteMods)
                         AddButton(favoritedModsTransform, info);
                 }
             }
@@ -4716,15 +4646,15 @@ exit 0";
                     })
                     toRecolor.Add(canvasTransform.Find(partName).GetComponent<MaskableGraphic>());
 
-                List<ButtonInfo> buttons = Buttons.buttons[Buttons.CurrentCategoryIndex].ToList();
+                List<Module> buttons = Manager.modules[Manager.CurrentCategoryName].ToList();
 
-                if (buttons.Count > 0 && ignoreButtons.Contains(Buttons.CurrentCategoryName))
+                if (buttons.Count > 0 && ignoreButtons.Contains(Manager.CurrentCategoryName))
                     buttons.RemoveAt(0);
 
                 if (buttons.Count > 0)
                 {
                     Transform modulesTransform = canvasTransform.Find("Main/ModuleTab/Modules/Viewport/Content");
-                    foreach (ButtonInfo button in buttons)
+                    foreach (Module button in buttons)
                         AddButton(modulesTransform, button);
                 }
 
@@ -4747,7 +4677,7 @@ exit 0";
             for (int i = 0; i < toRecolor.Count; i++)
             {
                 MaskableGraphic graphic = toRecolor[i];
-                graphic.gameObject.AddComponent<UIColorChanger>().colors = textColors[i <= 1 ? 0 : 1];
+                graphic.gameObject.AddComponent<UIColors>().colors = textColors[i <= 1 ? 0 : 1];
 
                 if (graphic is TMP_Text text)
                     text.Chams();
@@ -4759,7 +4689,7 @@ exit 0";
                 GradientColorKey colorKey = buttonBackgroundColor.colors[i];
                 buttonBackgroundColor.colors[i] = new GradientColorKey { time = colorKey.time, color = DarkenColor(colorKey.color, 0.75f) };
             }
-            canvasTransform.Find("Main/ModuleTab/Search").AddComponent<UIColorChanger>().colors = buttonBackgroundColor;
+            canvasTransform.Find("Main/ModuleTab/Search").AddComponent<UIColors>().colors = buttonBackgroundColor;
 
             Canvas.ForceUpdateCanvases();
         }
@@ -4788,7 +4718,7 @@ exit 0";
             {
                 canvas.transform.Find("Main/Sidebar/Watermark").localRotation = Quaternion.Euler(0f, 0f, rockWatermark ? Mathf.Sin(Time.time * 2f) * 10f : 0f);
 
-                if (isSearching && Buttons.CurrentCategoryIndex != 0)
+                if (isSearching && Manager.CurrentCategoryName != "Main")
                 {
                     Transform searchBar = canvas.transform.Find("Main/ModuleTab/Search");
                     TMP_InputField inputField = searchBar.GetComponent<TMP_InputField>();
@@ -4829,8 +4759,8 @@ exit 0";
                 bool useLeft = rightHand || (bothHands && ControllerInputPoller.instance.rightControllerSecondaryButton);
 
                 var (_, _, _, forward, _) = useLeft
-                    ? ControllerUtilities.GetTrueLeftHand()
-                    : ControllerUtilities.GetTrueRightHand();
+                    ? Controllers.GetTrueLeftHand()
+                    : Controllers.GetTrueRightHand();
 
                 Vector3 startPos = useLeft
                     ? GorillaTagger.Instance.leftHandTransform.position
@@ -4945,7 +4875,7 @@ exit 0";
             {
                 bool leftHand = rightHand || (bothHands && ControllerInputPoller.instance.rightControllerSecondaryButton);
 
-                var (_, _, _, forward, _) = leftHand ? ControllerUtilities.GetTrueLeftHand() : ControllerUtilities.GetTrueRightHand();
+                var (_, _, _, forward, _) = leftHand ? Controllers.GetTrueLeftHand() : Controllers.GetTrueRightHand();
                 bool canSelect = NetworkSystem.Instance.InRoom && menu != null && reference != null && Vector3.Distance(menu.transform.position, reference.transform.position) > 0.5f;
 
                 if (canSelect)
@@ -4953,7 +4883,7 @@ exit 0";
                     if (selectObject == null)
                         selectObject = new GameObject("Qubit_PingLine");
 
-                    Color targetColor = Buttons.GetIndex("Swap GUI Colors").enabled ? buttonColors[1].GetCurrentColor() : backgroundColor.GetCurrentColor();
+                    Color targetColor = Manager.GetIndex("Swap GUI Colors").enabled ? buttonColors[1].GetCurrentColor() : backgroundColor.GetCurrentColor();
                     Color lineColor = targetColor;
                     lineColor.a = 0.15f;
 
@@ -5016,7 +4946,7 @@ exit 0";
                             NavigatePlayer(GetPlayerFromVRRig(rigTarget));
                             ReloadMenu();
 
-                            NotificationManager.SendNotification($"<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Selected player {GetPlayerFromVRRig(rigTarget).NickName}.");
+                            Notifications.SendNotification($"<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Selected player {GetPlayerFromVRRig(rigTarget).NickName}.");
                         }
 
                         lastTriggerSelect = trigger;
@@ -5076,7 +5006,7 @@ exit 0";
 
             var main = particleSystem.main; // ????
             main.startColor = new ParticleSystem.MinMaxGradient(
-                Main.backgroundColor.GetColor(0)
+                Frontend.Settings.backgroundColor.GetColor(0)
             );
 
             void EndImmediately()
@@ -5124,7 +5054,7 @@ exit 0";
         }
 
         public static void MenuIntro() =>
-            CoroutineManager.instance.StartCoroutine(MenuIntroCoroutine());
+            Coroutines.instance.StartCoroutine(MenuIntroCoroutine());
 
         public static void ResetVoiceCommandsKeywords()
         {
@@ -5135,7 +5065,7 @@ exit 0";
         public static void ResetSystemPrompt()
         {
             if (!File.Exists($"{PluginInfo.BaseDirectory}/Qubit_SystemPrompt.txt"))
-                File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_SystemPrompt.txt", AIManager.SystemPrompt);
+                File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_SystemPrompt.txt", LanguageModel.SystemPrompt);
         }
 
         public static string SavePreferencesToText()
@@ -5143,9 +5073,9 @@ exit 0";
             string seperator = ";;";
 
             string enabledtext = "";
-            foreach (ButtonInfo[] buttonlist in Buttons.buttons)
+            foreach (Module[] buttonlist in Manager.modules.Values)
             {
-                foreach (ButtonInfo v in buttonlist)
+                foreach (Module v in buttonlist)
                 {
                     if (!v.detected && v.enabled && v.buttonText != "Save Preferences")
                     {
@@ -5183,7 +5113,7 @@ exit 0";
                 pcbg.ToString(),
                 Important.reconnectDelay.ToString(),
                 "0",//Safety.fpsSpoofValue.ToString(),
-                SoundManager.DefaultSounds["Button"],
+                Sounds.DefaultSounds["Button"],
                 buttonClickVolume.ToString(),
                 Safety.antiReportRangeIndex.ToString(),
                 Advantages.tagRangeIndex.ToString(),
@@ -5192,7 +5122,7 @@ exit 0";
                 langInd.ToString(),
                 inputTextColorInt.ToString(),
                 Movement.pullPowerInt.ToString(),
-                SoundManager.DefaultSounds["Notification"],
+                Sounds.DefaultSounds["Notification"],
                 Visuals.PerformanceModeStepIndex.ToString(),
                 gunVariation.ToString(),
                 GunDirection.ToString(),
@@ -5200,9 +5130,9 @@ exit 0";
                 Movement.predInt.ToString(),
                 gunLineQualityIndex.ToString(),
                 Projectiles.projDebounceIndex.ToString(),
-                Projectiles.red.ToString(),
-                Projectiles.green.ToString(),
-                Projectiles.blue.ToString(),
+                Fun.red.ToString(),
+                Fun.green.ToString(),
+                Fun.blue.ToString(),
                 Safety.rankIndex.ToString(),
                 Projectiles.SnowballSize.ToString(),
                 Overpowered.lagIndex.ToString(),
@@ -5238,8 +5168,8 @@ exit 0";
                 "0",//Safety.pingSpoofValue.ToString(),
                 Fun.soundboardVolumeIndex.ToString(),
                 Fun.soundboardSpeedIndex.ToString(),
-                SoundManager.DefaultSoundpack,
-                Sound.disableLocalSoundboard.ToString(),
+                Sounds.DefaultSoundpack,
+                Soundboard.disableLocalSoundboard.ToString(),
             };
 
             string settingstext = string.Join(seperator, settings);
@@ -5260,9 +5190,9 @@ exit 0";
             string quickActionString = string.Join(seperator, quickActions);
 
             string rebindingtext = "";
-            foreach (ButtonInfo[] buttonlist in Buttons.buttons)
+            foreach (Module[] buttonlist in Manager.modules.Values)
             {
-                foreach (ButtonInfo v in buttonlist)
+                foreach (Module v in buttonlist)
                 {
                     if (v.rebindKey != null)
                     {
@@ -5300,7 +5230,7 @@ exit 0";
 
         private static void Restore(string buttonName, object newValue)
         {
-            ButtonInfo button = Buttons.GetIndex(buttonName);
+            Module button = Manager.GetIndex(buttonName);
             if (button == null) return;
 
             try
@@ -5310,7 +5240,7 @@ exit 0";
             }
             catch (Exception e)
             {
-                LogManager.Log($"Failed to restore button '{buttonName}' to {newValue}. Just gonna leave it at the default ({e.Message})");
+                Logs.Log($"Failed to restore button '{buttonName}' to {newValue}. Just gonna leave it at the default ({e.Message})");
             }
         }
 
@@ -5384,7 +5314,7 @@ exit 0";
                 //Safety.fpsSpoofValue = string.IsNullOrWhiteSpace(data[15]) ? 85 : int.Parse(data[15]);
                 //RestoreCycle("Change FPS Spoof Value", Safety.fpsSpoofValue);
 
-                SoundManager.DefaultSounds["Button"] = data[16];
+                Sounds.DefaultSounds["Button"] = data[16];
                 RestoreNamedCycle("Change Button Sound", data[16]);
 
                 buttonClickVolume = int.Parse(data[17]);
@@ -5411,7 +5341,7 @@ exit 0";
                 Movement.pullPowerInt = int.Parse(data[24]);
                 RestoreCycle("Change Pull Mod Power", Movement.pullPowerInt);
 
-                SoundManager.DefaultSounds["Notification"] = data[25];
+                Sounds.DefaultSounds["Notification"] = data[25];
                 RestoreNamedCycle("Change Notification Sound", data[25]);
 
                 Visuals.PerformanceModeStepIndex = int.Parse(data[26]);
@@ -5432,14 +5362,14 @@ exit 0";
                 gunLineQualityIndex = int.Parse(data[31]);
                 RestoreCycle("Change Gun Line Quality", gunLineQualityIndex);
 
-                Projectiles.red = int.Parse(data[33]);
-                RestoreCycle("RedProj", Projectiles.red);
+                Fun.red = int.Parse(data[33]);
+                RestoreCycle("RedProj", Fun.red);
 
-                Projectiles.green = int.Parse(data[34]);
-                RestoreCycle("GreenProj", Projectiles.green);
+                Fun.green = int.Parse(data[34]);
+                RestoreCycle("GreenProj", Fun.green);
 
-                Projectiles.blue = int.Parse(data[35]);
-                RestoreCycle("BlueProj", Projectiles.blue);
+                Fun.blue = int.Parse(data[35]);
+                RestoreCycle("BlueProj", Fun.blue);
 
                 Safety.rankIndex = int.Parse(data[36]);
                 RestoreCycle("Change Ranked Tier", Safety.rankIndex);
@@ -5544,12 +5474,12 @@ exit 0";
                 Fun.soundboardSpeedIndex = float.Parse(data[70]);
                 RestoreCycle("Change Soundboard Speed", (int)Fun.soundboardSpeedIndex);
 
-                ButtonInfo soundpack = Buttons.GetIndex("Change Menu Soundpack");
+                Module soundpack = Manager.GetIndex("Change Menu Soundpack");
                 RestoreNamedCycle("Change Menu Soundpack", data[71]);
 
-                Sound.disableLocalSoundboard = bool.Parse(data[72]);
+                Soundboard.disableLocalSoundboard = bool.Parse(data[72]);
             }
-            catch (Exception e) { LogManager.Log("Save file out of date: " + e); }
+            catch (Exception e) { Logs.Log("Save file out of date: " + e); }
 
 
             pageButtonType = int.Parse(textData[3]);
@@ -5573,7 +5503,7 @@ exit 0";
                         for (int i = 1; i < BindData.Length; i++)
                         {
                             string ModName = BindData[i];
-                            if (Buttons.GetIndex(ModName) != null)
+                            if (Manager.GetIndex(ModName) != null)
                                 Binds.Add(ModName);
                         }
 
@@ -5588,7 +5518,7 @@ exit 0";
                 quickActions.Clear();
                 foreach (string quickAction in textData[7].Split(";;"))
                 {
-                    ButtonInfo button = Buttons.GetIndex(quickAction);
+                    Module button = Manager.GetIndex(quickAction);
                     if (button != null)
                         quickActions.Add(quickAction);
                 }
@@ -5601,7 +5531,7 @@ exit 0";
                 {
                     string rebindText = bind.Split(";")[0];
                     string rebindKey = bind.Split(";")[1];
-                    ButtonInfo button = Buttons.GetIndex(rebindText);
+                    Module button = Manager.GetIndex(rebindText);
                     if (button != null)
                         button.rebindKey = rebindKey;
                 }
@@ -5613,7 +5543,7 @@ exit 0";
                 skipButtons.Clear();
                 foreach (string skipButton in textData[9].Split(";;"))
                 {
-                    ButtonInfo button = Buttons.GetIndex(skipButton);
+                    Module button = Manager.GetIndex(skipButton);
                     if (button != null)
                         skipButtons.Add(skipButton);
                 }
@@ -5628,9 +5558,9 @@ exit 0";
         public static void Panic()
         {
             AnnoyingModeOff();
-            foreach (ButtonInfo[] buttonlist in Buttons.buttons)
+            foreach (Module[] buttonlist in Manager.modules.Values)
             {
-                foreach (ButtonInfo v in buttonlist)
+                foreach (Module v in buttonlist)
                 {
                     if (v.enabled)
                         Toggle(v.buttonText);
@@ -5705,28 +5635,28 @@ exit 0";
 
         public static void ApplyButtonSound(string soundName)
         {
-            SoundManager.DefaultSounds["Button"] = soundName;
-            Buttons.GetIndex("Change Button Sound").overlapText =
+            Sounds.DefaultSounds["Button"] = soundName;
+            Manager.GetIndex("Change Button Sound").overlapText =
                 $"Change Button Sound <color=grey>[</color><color=green>{soundName}</color><color=grey>]</color>";
         }
         public static void ChangeButtonSound(bool positive = true, bool fromMenu = false)
         {
-            var buttonKeys = SoundManager.Sounds["Buttons"].Keys.ToArray();
+            var buttonKeys = Sounds.SoundList["Buttons"].Keys.ToArray();
 
-            int index = Array.IndexOf(buttonKeys, SoundManager.DefaultSounds["Button"]);
+            int index = Array.IndexOf(buttonKeys, Sounds.DefaultSounds["Button"]);
             if (index < 0) index = 0;
             index = ButtonHelper.Wrap(index, 0, buttonKeys.Length - 1, positive);
 
             string newSound = buttonKeys[index];
             ApplyButtonSound(newSound);
-            Buttons.GetIndex("Change Button Sound").value = newSound;
+            Manager.GetIndex("Change Button Sound").value = newSound;
 
             if (!fromMenu) return;
             if (VRRig.LocalRig == null) return;
             if (VRRig.LocalRig.leftHandPlayer != null) VRRig.LocalRig.leftHandPlayer.Stop();
             if (VRRig.LocalRig.rightHandPlayer != null) VRRig.LocalRig.rightHandPlayer.Stop();
 
-            SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+            Sounds.Play(Sounds.DefaultSounds["Button"]);
         }
 
         public static void ApplyButtonVolume(int index) => buttonClickVolume = index;
@@ -5735,8 +5665,61 @@ exit 0";
             if (VRRig.LocalRig == null) return;
             VRRig.LocalRig.leftHandPlayer.Stop();
             VRRig.LocalRig.rightHandPlayer.Stop();
-            SoundManager.Play(SoundManager.DefaultSounds["Button"]);
+            Sounds.Play(Sounds.DefaultSounds["Button"]);
         }
-        public static void ApplyMenuSoundpack(string packName) => SoundManager.DefaultSoundpack = packName;
+        public static void ApplyMenuSoundpack(string packName) => Sounds.DefaultSoundpack = packName;
+
+        public static void ConductDebug()
+        {
+            if (Time.time < Visuals.debugUpdateTimer) return;
+            Visuals.debugUpdateTimer = Time.time + 1f;
+
+            TextMeshPro title = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>();
+            TextMeshPro body = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>();
+            title.text = "DEBUG INFO";
+            body.richText = true;
+            string text = "";
+            text += $"<color=blue><b>Qubit</b></color> {PluginInfo.Version}  <color=grey>|</color>  Users Online:  {ServerData.onlineUsers}" + "\\n \\n";
+            string red = "<color=red>" + MathF.Floor(PlayerPrefs.GetFloat("redValue") * 255f) + "</color>";
+            string green = ", <color=green>" + MathF.Floor(PlayerPrefs.GetFloat("greenValue") * 255f) + "</color>";
+            string blue = ", <color=blue>" + MathF.Floor(PlayerPrefs.GetFloat("blueValue") * 255f) + "</color>";
+            string redS = "<color=red>" + MathF.Round(PlayerPrefs.GetFloat("redValue") * 9f) + "</color>";
+            string greenS = ", <color=green>" + MathF.Round(PlayerPrefs.GetFloat("greenValue") * 9f) + "</color>";
+            string blueS = ", <color=blue>" + MathF.Round(PlayerPrefs.GetFloat("blueValue") * 9f) + "</color>";
+            text += "<color=green>Color</color><color=grey>:</color> " + red + green + blue + " <color=grey>[</color>" + redS + greenS + blueS + "<color=grey>]</color>\\n";
+            string master = NetworkSystem.Instance.InRoom && PhotonNetwork.IsMasterClient ? "<color=grey> [</color><color=red>Master</color><color=grey>]</color>" : "";
+            text += "<color=green>Name</color><color=grey>:</color> " + PhotonNetwork.LocalPlayer?.NickName + master + "\\n";
+            text += "<color=green>ID</color><color=grey>:</color> " + (Settings.hideId ? "Hidden" : PhotonNetwork.LocalPlayer?.UserId) + "\\n";
+            string clip = GUIUtility.systemCopyBuffer;
+            text += "<color=green>Clip</color><color=grey>:</color> " + (clip?.Length > 35 ? clip[..35] : clip) + "\\n";
+            text += lastDeltaTime + " <color=green>FPS</color> <color=grey>|</color> " + PhotonNetwork.GetPing() + " <color=green>Ping</color>\\n";
+            string room = NetworkSystem.Instance.InRoom ? NetworkSystem.Instance.SessionIsPrivate ? "Private" : "Public" : "Not in room";
+            text += "<color=green>" + NetworkSystem.Instance.regionNames[NetworkSystem.Instance.currentRegionIndex].ToUpper() + "</color> " + PhotonNetwork.PlayerList.Length + " <color=green>Players</color> <color=grey>|</color> " + room + "\\n \\n";
+            string admin = "";
+            if (Time.time > 5f)
+            {
+                if (ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer?.UserId ?? string.Empty, out var administrator))
+                    admin = " <color=grey>|</color> <color=red>Console " + (ServerData.SuperAdministrators.Contains(administrator) ? "Super " : "") + "Admin</color>";
+            }
+            text += "<color=green>Theme</color> " + themeType + admin + "\n";
+            text += "<color=green>Preferences Directory</color><color=grey>:</color> " + $"{Files.GetGamePath()}/{PluginInfo.BaseDirectory}";
+            body.SafeSetText(text);
+        }
+        public static bool watchUsed;
+        public static float watchTimer;
+        public static int pointerIndex;
+
+        public static void InitializePCControls()
+        {
+            try
+            {
+                LoadPCControls();
+            }
+            catch (Exception exc)
+            {
+                Logs.LogError(
+                $"Error with Settings.LoadPCControls() at {exc.StackTrace}: {exc.Message}");
+            }
+        }
     }
 }

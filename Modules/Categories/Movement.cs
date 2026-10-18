@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Mods/Movement.cs
+ * Qubit Menu  Modules/Categories/Movement.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -27,11 +27,13 @@ using GorillaLocomotion.Swimming;
 using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
-using Qubit.Classes.Menu;
-using Qubit.Classes.Mods;
 using Qubit.Extensions;
-using Qubit.Managers;
-using Qubit.Menu;
+using Qubit.Frontend.Colors;
+using Qubit.Libraries.Audio;
+using Qubit.Libraries.Controls;
+using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
+using Qubit.Modules.Classes;
 using Qubit.Patches.Menu;
 using Qubit.Utilities;
 using System;
@@ -47,14 +49,27 @@ using UnityEngine.InputSystem;
 using UnityEngine.Rendering;
 using UnityEngine.XR;
 using Valve.Newtonsoft.Json.Linq;
-using static Qubit.Menu.Main;
-using static Qubit.Utilities.AssetUtilities;
-using static Qubit.Utilities.RandomUtilities;
-using static Qubit.Utilities.RigUtilities;
+using WebSocketSharp;
+using static Qubit.Core.Security;
+using static Qubit.Extensions.Players;
+using static Qubit.Extensions.Random;
+using static Qubit.Extensions.Vectors;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Resources.Fonts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.LocalPlayer;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Modules.Manager;
+using static Qubit.Utilities.Assets;
+using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Qubit.Mods
+namespace Qubit.Modules.Categories
 {
     public static class Movement
     {
@@ -121,12 +136,12 @@ namespace Qubit.Mods
                     break;
             }
 
-            if (!Buttons.GetIndex("Non-Sticky Platforms").enabled)
+            if (!Manager.GetIndex("Non-Sticky Platforms").enabled)
                 FixStickyColliders(platform);
 
             if (platformRenderer.enabled && platform)
             {
-                ColorChanger colorChanger = platform.AddComponent<ColorChanger>();
+                ObjectColors colorChanger = platform.AddComponent<ObjectColors>();
                 colorChanger.colors = backgroundColor;
 
                 if (platformMode == 2 || platformMode == 3)
@@ -137,7 +152,7 @@ namespace Qubit.Mods
                 }
             }
 
-            if (Buttons.GetIndex("Platform Outlines").enabled)
+            if (Manager.GetIndex("Platform Outlines").enabled)
             {
                 GameObject gameObject = GameObject.CreatePrimitive(GetPlatformPrimitiveType());
                 Object.Destroy(gameObject.GetComponent<Collider>());
@@ -146,7 +161,7 @@ namespace Qubit.Mods
                 gameObject.transform.localRotation = Quaternion.identity;
                 gameObject.transform.localScale = new Vector3(0.95f, 1.05f, 1.05f);
 
-                ColorChanger outlineColorChanger = gameObject.AddComponent<ColorChanger>();
+                ObjectColors outlineColorChanger = gameObject.AddComponent<ObjectColors>();
                 outlineColorChanger.colors = buttonColors[0];
             }
             return platform;
@@ -154,12 +169,12 @@ namespace Qubit.Mods
 
         public static void SetPlatformPosition(GameObject platform, bool left)
         {
-            var (position, rotation, _, _, right) = left ? ControllerUtilities.GetTrueLeftHand() : ControllerUtilities.GetTrueRightHand();
+            var (position, rotation, _, _, right) = left ? Controllers.GetTrueLeftHand() : Controllers.GetTrueRightHand();
 
             platform.transform.position = position;
             platform.transform.rotation = rotation;
 
-            if (Buttons.GetIndex("Non-Sticky Platforms").enabled)
+            if (Manager.GetIndex("Non-Sticky Platforms").enabled)
                 platform.transform.position += right * ((left ? 1f : -1f) * ((0.025f + platform.transform.localScale.x / 2f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f)));
 
             //FriendManager.PlatformSpawned(true, platform.transform.position, platform.transform.rotation, platform.transform.localScale, GetPlatformPrimitiveType());
@@ -201,7 +216,7 @@ namespace Qubit.Mods
                     }
                 case false when platform != null:
                     {
-                        if (Buttons.GetIndex("Platform Gravity").enabled)
+                        if (Manager.GetIndex("Platform Gravity").enabled)
                         {
                             platform.AddComponent(typeof(Rigidbody));
                             Object.Destroy(platform.GetComponent<Collider>());
@@ -261,7 +276,7 @@ namespace Qubit.Mods
                     frozonicPlatformList.Add(platform);
                 }
 
-                var (position, rotation, _, _, right) = left ? ControllerUtilities.GetTrueLeftHand() : ControllerUtilities.GetTrueRightHand();
+                var (position, rotation, _, _, right) = left ? Controllers.GetTrueLeftHand() : Controllers.GetTrueRightHand();
 
                 platform.transform.position = position + (right * ((left ? 1f : -1f) * ((0.025f + platform.transform.localScale.x / 2f) * (scaleWithPlayer ? GTPlayer.Instance.scale : 1f))));
                 platform.transform.rotation = rotation;
@@ -311,24 +326,18 @@ namespace Qubit.Mods
 
         public static void PlatformGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true))
-                {
-                    GameObject platform = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    Object.Destroy(platform.GetComponent<BoxCollider>());
-                    platform.GetComponent<Renderer>().material.color = backgroundColor.GetCurrentColor();
-                    platform.GetComponent<Renderer>().material.shader = Shader.Find("GorillaTag/UberShader");
-                    platform.transform.localScale = new Vector3(0.025f, 0.3f, 0.4f);
-                    platform.transform.position = NewPointer.transform.position;
-                    platform.transform.rotation = Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360));
-                    Object.Destroy(platform, 1f);
-                    PhotonNetwork.RaiseEvent(69, new object[] { platform.transform.position, platform.transform.rotation }, new RaiseEventOptions { Receivers = ReceiverGroup.Others }, SendOptions.SendReliable);
-                }
-            }
+                GameObject platform = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Object.Destroy(platform.GetComponent<BoxCollider>());
+                platform.GetComponent<Renderer>().material.color = backgroundColor.GetCurrentColor();
+                platform.GetComponent<Renderer>().material.shader = Shader.Find("GorillaTag/UberShader");
+                platform.transform.localScale = new Vector3(0.025f, 0.3f, 0.4f);
+                platform.transform.position = NewPointer.transform.position;
+                platform.transform.rotation = Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360));
+                Object.Destroy(platform, 1f);
+                PhotonNetwork.RaiseEvent(69, new object[] { platform.transform.position, platform.transform.rotation }, new RaiseEventOptions { Receivers = ReceiverGroup.Others }, SendOptions.SendReliable);
+            });
         }
 
         public static readonly float[] FlySpeedAmounts = { 5f, 10f, 30f, 60f, 0.5f };
@@ -421,39 +430,18 @@ namespace Qubit.Mods
         {
             if (rightPrimary)
             {
-                GTPlayer.Instance.transform.position += ControllerUtilities.GetTrueRightHand().forward * (Time.deltaTime * FlySpeed);
+                GTPlayer.Instance.transform.position += Controllers.GetTrueRightHand().forward * (Time.deltaTime * FlySpeed);
                 GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
             }
         }
 
         public static void FlyTowardsGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    GTPlayer.Instance.transform.position += (lockTarget.transform.position - GorillaTagger.Instance.bodyCollider.transform.position) * (Time.deltaTime * FlySpeed);
-                    GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
-                }
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                GTPlayer.Instance.transform.position += (lockTarget.transform.position - GorillaTagger.Instance.bodyCollider.transform.position) * (Time.deltaTime * FlySpeed);
+                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void SlingshotFly()
@@ -487,7 +475,7 @@ namespace Qubit.Mods
 
         public static void WASDFly()
         {
-            bool stationary = !Buttons.GetIndex("Disable Stationary WASD Fly").enabled;
+            bool stationary = !Manager.GetIndex("Disable Stationary WASD Fly").enabled;
 
             bool W = UnityInput.GetKey(Key.W);
             bool A = UnityInput.GetKey(Key.A);
@@ -616,7 +604,7 @@ namespace Qubit.Mods
 
         public static void HardDrive()
         {
-            bool elevatedStickyDrive = Buttons.GetIndex("Elevated Sticky Drive").enabled;
+            bool elevatedStickyDrive = Manager.GetIndex("Elevated Sticky Drive").enabled;
             if ((Mathf.Abs(leftJoystick.x) > 0.05f || Mathf.Abs(leftJoystick.y) > 0.05f) && closePosition == Vector3.zero)
             {
                 Vector3 direction = GorillaTagger.Instance.bodyCollider.transform.forward * leftJoystick.y
@@ -720,7 +708,7 @@ namespace Qubit.Mods
             }
             if (Time.time > loaoalsode)
             {
-                NotificationManager.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must equip a balloon.");
+                Notifications.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You must equip a balloon.");
                 loaoalsode = Time.time + 1f;
             }
             return null;
@@ -1010,7 +998,7 @@ namespace Qubit.Mods
 
         public static void NetworkedGrappleMods()
         {
-            if (Buttons.GetIndex("Spider Man").enabled || Buttons.GetIndex("Grappling Hooks").enabled)
+            if (Manager.GetIndex("Spider Man").enabled || Manager.GetIndex("Grappling Hooks").enabled)
             {
                 if (isLeftGrappling || isRightGrappling)
                 {
@@ -1156,7 +1144,7 @@ namespace Qubit.Mods
                     }
                     portalToUse.transform.position = ray.point + ray.normal * 0.075f;
                     portalToUse.transform.rotation = Quaternion.LookRotation(ray.normal, Vector3.up) * Quaternion.Euler(90, 0, 0);
-                    CoroutineManager.instance.StartCoroutine(AnimatePortalScale(portalToUse, 0.3f));
+                    Coroutines.instance.StartCoroutine(AnimatePortalScale(portalToUse, 0.3f));
                     portalDelay = Time.time + 0.5f;
                 }
                 if (rightGrab && Time.time > flipDelay)
@@ -1178,7 +1166,7 @@ namespace Qubit.Mods
                     {
                         blueView.SetActive(true);
                         bluePortal.transform.Find("Rim/Static").gameObject.SetActive(false);
-                        if (Buttons.GetIndex("High Quality Portals").enabled)
+                        if (Manager.GetIndex("High Quality Portals").enabled)
                             UpdateCameraRes(bluePortal.transform.Find("Rim/Camera/Eye").GetComponent<Camera>());
                     }
 
@@ -1186,7 +1174,7 @@ namespace Qubit.Mods
                     {
                         orangeView.SetActive(true);
                         orangePortal.transform.Find("Rim/Static").gameObject.SetActive(false);
-                        if (Buttons.GetIndex("High Quality Portals").enabled)
+                        if (Manager.GetIndex("High Quality Portals").enabled)
                             UpdateCameraRes(orangePortal.transform.Find("Rim/Camera/Eye").GetComponent<Camera>());
                     }
 
@@ -1240,7 +1228,7 @@ namespace Qubit.Mods
                 GTPlayer.Instance.leftHand.isHolding = false;
                 foreach (GameObject _ in new[] { bluePortal, orangePortal })
                 {
-                    if (IsOverlapping(_.transform.Find("Rim/View").GetComponent<Collider>(), ControllerUtilities.GetTrueLeftHand().position, 0.1f))
+                    if (IsOverlapping(_.transform.Find("Rim/View").GetComponent<Collider>(), Controllers.GetTrueLeftHand().position, 0.1f))
                     {
                         GTPlayer.Instance.leftHand.isHolding = true;
                         break;
@@ -1250,7 +1238,7 @@ namespace Qubit.Mods
                 GTPlayer.Instance.rightHand.isHolding = false;
                 foreach (GameObject _ in new[] { bluePortal, orangePortal })
                 {
-                    if (IsOverlapping(_.transform.Find("Rim/View").GetComponent<Collider>(), ControllerUtilities.GetTrueRightHand().position, 0.1f))
+                    if (IsOverlapping(_.transform.Find("Rim/View").GetComponent<Collider>(), Controllers.GetTrueRightHand().position, 0.1f))
                     {
                         GTPlayer.Instance.rightHand.isHolding = true;
                         break;
@@ -1728,8 +1716,8 @@ namespace Qubit.Mods
                     leftGrip = leftGrab,
                     rightGrip = rightGrab,
 
-                    leftTrigger = false, // Main.leftTrigger > 0.5f, Disable due to being macro button
-                    rightTrigger = Main.rightTrigger > 0.5f
+                    leftTrigger = false, // ControllerInput.leftTrigger > 0.5f, Disable due to being macro button
+                    rightTrigger = Controllers.rightTrigger > 0.5f
                 };
 
             public readonly JObject ToJObject() => new JObject
@@ -1866,9 +1854,9 @@ namespace Qubit.Mods
                 macros[fileName] = macro;
             }
 
-            List<ButtonInfo> buttons = new List<ButtonInfo>
+            List<Module> buttons = new List<Module>
             {
-                new ButtonInfo { buttonText = "Exit Macros", method =() => Buttons.CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Returns you back to the movement mods."},
+                new Module { buttonText = "Exit Macros", method =() => Manager.CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Returns you back to the movement mods."},
             };
 
             int index = 0;
@@ -1877,16 +1865,16 @@ namespace Qubit.Mods
                 Macro macro = macroData.Value;
                 string macroName = macroData.Key;
 
-                buttons.Add(new ButtonInfo { buttonText = $"Macro{macroName}", overlapText = macro.name, enabled = macro.enabled, enableMethod = () => ToggleMacro(macroName, true), method = () => ExecuteMacroButton(macro), disableMethod = () => ToggleMacro(macroName, false), toolTip = $"Toggles on and off the {macro.name} macro." });
+                buttons.Add(new Module { buttonText = $"Macro{macroName}", overlapText = macro.name, enabled = macro.enabled, enableMethod = () => ToggleMacro(macroName, true), method = () => ExecuteMacroButton(macro), disableMethod = () => ToggleMacro(macroName, false), toolTip = $"Toggles on and off the {macro.name} macro." });
                 index++;
             }
 
             buttons.AddRange(new[]
             {
-                new ButtonInfo { buttonText = "Record <color=grey>[</color><color=green>LT</color><color=grey>]</color>", method = RecordMacro, toolTip = "Record your macros with your <color=green>left trigger</color>." },
-                new ButtonInfo { buttonText = "Open Macros Folder", method = OpenMacrosFolder, isTogglable = false, toolTip = "Opens the folder in which your plugins are located." },
-                new ButtonInfo { buttonText = "Reload Macros", method = LoadMacros, isTogglable = false, toolTip = "Reloads your macros." },
-                new ButtonInfo
+                new Module { buttonText = "Record <color=grey>[</color><color=green>LT</color><color=grey>]</color>", method = RecordMacro, toolTip = "Record your macros with your <color=green>left trigger</color>." },
+                new Module { buttonText = "Open Macros Folder", method = OpenMacrosFolder, isTogglable = false, toolTip = "Opens the folder in which your plugins are located." },
+                new Module { buttonText = "Reload Macros", method = LoadMacros, isTogglable = false, toolTip = "Reloads your macros." },
+                new Module
                 {
                     buttonText = "Enable All Macros",
                     method = () =>
@@ -1903,7 +1891,7 @@ namespace Qubit.Mods
                     isTogglable = false,
                     toolTip = "Enables all macros."
                 },
-                new ButtonInfo
+                new Module
                 {
                     buttonText = "Disable All Macro",
                     method = () =>
@@ -1923,12 +1911,12 @@ namespace Qubit.Mods
                 }
 
             });
-            Buttons.buttons[Buttons.GetCategory("Macros")] = buttons.ToArray();
+            Manager.modules["Macros"] = buttons.ToArray();
         }
 
         public static void OpenMacrosFolder()
         {
-            string filePath = FileUtilities.GetGamePath() + $"/{PluginInfo.BaseDirectory}/Macros";
+            string filePath = Files.GetGamePath() + $"/{PluginInfo.BaseDirectory}/Macros";
             Process.Start(filePath);
         }
 
@@ -1958,7 +1946,7 @@ namespace Qubit.Mods
                     recordingData.Clear();
                     recordingMacro = true;
 
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>RECORDING</color><color=grey>]</color> Started recording...");
+                    Notifications.SendNotification("<color=grey>[</color><color=green>RECORDING</color><color=grey>]</color> Started recording...");
                 }
 
                 ControllerInputPoller.instance.leftControllerIndexFloat = 0f;
@@ -1978,7 +1966,7 @@ namespace Qubit.Mods
                 {
                     recordingMacro = false;
 
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>RECORDING</color><color=grey>]</color> Stopped recording.");
+                    Notifications.SendNotification("<color=grey>[</color><color=green>RECORDING</color><color=grey>]</color> Stopped recording.");
                     FinalizeRecording();
                 }
             }
@@ -2058,8 +2046,8 @@ namespace Qubit.Mods
                 ControllerInputPoller.instance.leftControllerIndexFloat = Mathf.Lerp(lastPosition.leftTrigger ? 1f : 0f, currentPosition.leftTrigger ? 1f : 0f, t);
                 //ControllerInputPoller.instance.rightControllerIndexFloat = Mathf.Lerp(lastPosition.rightTrigger ? 1f : 0f, currentPosition.rightTrigger ? 1f : 0f, t);
 
-                NotificationManager.information["Macro Time"] = $"{macroEndTime - elapsed:F1}s";
-                NotificationManager.information["Macro Name"] = macro.name;
+                Notifications.information["Macro Time"] = $"{macroEndTime - elapsed:F1}s";
+                Notifications.information["Macro Name"] = macro.name;
 
                 yield return null;
 
@@ -2080,12 +2068,12 @@ namespace Qubit.Mods
         {
             if (activeMacro != null)
             {
-                CoroutineManager.instance.StopCoroutine(activeMacro);
+                Coroutines.instance.StopCoroutine(activeMacro);
                 activeMacro = null;
             }
 
-            NotificationManager.information.Remove("Macro Time");
-            NotificationManager.information.Remove("Macro Name");
+            Notifications.information.Remove("Macro Time");
+            Notifications.information.Remove("Macro Name");
         }
 
         public static void VisualizePlayerPosition(PlayerPosition position, Color color, float alpha = 0.15f, long indexIdOffset = 0)
@@ -2128,7 +2116,7 @@ namespace Qubit.Mods
             {
                 if (rightTriggerPressed && !frameStepperNotified)
                 {
-                    NotificationManager.SendNotification("<color=grey>[</color><color=green>MACRO</color><color=grey>]</color> Frame Stepper is on. Hit the A button to progress instead.");
+                    Notifications.SendNotification("<color=grey>[</color><color=green>MACRO</color><color=grey>]</color> Frame Stepper is on. Hit the A button to progress instead.");
                     frameStepperNotified = true;
                 }
                 if (!frameCompleted && rightPrimary)
@@ -2152,7 +2140,7 @@ namespace Qubit.Mods
                 return;
 
             if (Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, startPosition.position) < 1f)
-                activeMacro = CoroutineManager.instance.StartCoroutine(PlayMacro(macro, position));
+                activeMacro = Coroutines.instance.StartCoroutine(PlayMacro(macro, position));
         }
 
         private static Vector3 walkPos;
@@ -2198,7 +2186,7 @@ namespace Qubit.Mods
             {
                 RaycastHit ray = GTPlayer.Instance.lastHitInfoHand;
 
-                if (Physics.Raycast(ControllerUtilities.GetTrueLeftHand().position, -ray.normal, out var Ray, range, GTPlayer.Instance.locomotionEnabledLayers))
+                if (Physics.Raycast(Controllers.GetTrueLeftHand().position, -ray.normal, out var Ray, range, GTPlayer.Instance.locomotionEnabledLayers))
                     GorillaTagger.Instance.rigidbody.AddForce(Ray.normal * power, ForceMode.Acceleration);
             }
 
@@ -2206,7 +2194,7 @@ namespace Qubit.Mods
             {
                 RaycastHit ray = GTPlayer.Instance.lastHitInfoHand;
 
-                if (Physics.Raycast(ControllerUtilities.GetTrueRightHand().position, -ray.normal, out var Ray, range, GTPlayer.Instance.locomotionEnabledLayers))
+                if (Physics.Raycast(Controllers.GetTrueRightHand().position, -ray.normal, out var Ray, range, GTPlayer.Instance.locomotionEnabledLayers))
                     GorillaTagger.Instance.rigidbody.AddForce(Ray.normal * power, ForceMode.Acceleration);
             }
         }
@@ -2241,7 +2229,7 @@ namespace Qubit.Mods
 
         public static void ExitTeleportToMap()
         {
-            Buttons.CurrentCategoryName = "Movement Mods";
+            Manager.CurrentCategoryName = "Movement Mods";
             pageNumber = rememberPageNumber;
         }
 
@@ -2274,9 +2262,9 @@ namespace Qubit.Mods
         public static void EnterTeleportToMap()
         {
             rememberPageNumber = pageNumber;
-            List<ButtonInfo> tpbuttons = new List<ButtonInfo>
+            List<Module> tpbuttons = new List<Module>
             {
-                new ButtonInfo
+                new Module
                 {
                     buttonText = "Exit Teleport to Map",
                     method = ExitTeleportToMap,
@@ -2287,7 +2275,7 @@ namespace Qubit.Mods
 
             foreach (KeyValuePair<string, GTZone> entry in mapData)
             {
-                tpbuttons.Add(new ButtonInfo
+                tpbuttons.Add(new Module
                 {
                     buttonText = "TeleportMap" + tpbuttons.Count,
                     overlapText = entry.Key,
@@ -2297,8 +2285,8 @@ namespace Qubit.Mods
                 });
             }
 
-            Buttons.buttons[Buttons.GetCategory("Temporary Category")] = tpbuttons.ToArray();
-            Buttons.CurrentCategoryName = "Temporary Category";
+            Manager.modules["Temporary Category"] = tpbuttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
         }
 
         public static void TeleportToMap(GTZone zone)
@@ -2312,12 +2300,8 @@ namespace Qubit.Mods
         public static bool previousTeleportTrigger;
         public static void TeleportGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true) && !previousTeleportTrigger)
                 {
                     closePosition = Vector3.zero;
                     TeleportPlayer(NewPointer.transform.position + Vector3.up);
@@ -2325,17 +2309,13 @@ namespace Qubit.Mods
                 }
 
                 previousTeleportTrigger = GetGunInput(true);
-            }
+            }, new GunLibrary.GunSettings { when = () => !previousTeleportTrigger });
         }
 
         public static void Airstrike()
         {
-            if (GetGunInput(false))
+            GunLibrary.Point(NewPointer =>
             {
-                var GunData = RenderGun();
-                GameObject NewPointer = GunData.NewPointer;
-
-                if (GetGunInput(true) && !previousTeleportTrigger)
                 {
                     GorillaTagger.Instance.rigidbody.linearVelocity = new Vector3(0f, -20f, 0f);
                     TeleportPlayer(NewPointer.transform.position + new Vector3(0f, 30f, 0f));
@@ -2343,7 +2323,7 @@ namespace Qubit.Mods
                 }
 
                 previousTeleportTrigger = GetGunInput(true);
-            }
+            }, new GunLibrary.GunSettings { when = () => !previousTeleportTrigger });
         }
 
         public static GameObject CheckPoint;
@@ -2597,13 +2577,13 @@ namespace Qubit.Mods
             float jspt = jspeed;
             float jmpt = jmulti;
 
-            if (Buttons.GetIndex("Factored Speed Boost").enabled)
+            if (Manager.GetIndex("Factored Speed Boost").enabled)
             {
                 jspt = jspt / 6.5f * GTPlayer.Instance.maxJumpSpeed;
                 jmpt = jmpt / 1.1f * GTPlayer.Instance.jumpMultiplier;
             }
 
-            if (!Buttons.GetIndex("Disable Max Speed Modification").enabled)
+            if (!Manager.GetIndex("Disable Max Speed Modification").enabled)
                 GTPlayer.Instance.maxJumpSpeed = jspt;
 
             GTPlayer.Instance.jumpMultiplier = jmpt;
@@ -2616,7 +2596,7 @@ namespace Qubit.Mods
         {
             bool isTagged = VRRig.LocalRig.IsTagged();
 
-            VRRig closestRig = VRRigExtensions.ActiveRigs
+            VRRig closestRig = Players.ActiveRigs
                 .Where(rig => rig != null && !rig.isLocal &&
                                   (isTagged ? !rig.IsTagged() : rig.IsTagged()))
                 .OrderBy(rig => Vector3.Distance(rig.transform.position, GorillaTagger.Instance.bodyCollider.transform.position))
@@ -2630,7 +2610,7 @@ namespace Qubit.Mods
                 float jspt = jspeed;
                 float jmpt = jmulti;
 
-                if (Buttons.GetIndex("Factored Speed Boost").enabled)
+                if (Manager.GetIndex("Factored Speed Boost").enabled)
                 {
                     jspt = jspt / 6.5f * GTPlayer.Instance.maxJumpSpeed;
                     jmpt = jmpt / 1.1f * GTPlayer.Instance.jumpMultiplier;
@@ -2639,7 +2619,7 @@ namespace Qubit.Mods
                 jspt = Mathf.Lerp(GTPlayer.Instance.maxJumpSpeed, jspt, Mathf.Clamp(rigDistance, 1f, 15f) / 15f);
                 jmpt = Mathf.Lerp(GTPlayer.Instance.jumpMultiplier, jmpt, Mathf.Clamp(rigDistance, 1f, 15f) / 15f);
 
-                if (!Buttons.GetIndex("Disable Max Speed Modification").enabled)
+                if (!Manager.GetIndex("Disable Max Speed Modification").enabled)
                     GTPlayer.Instance.maxJumpSpeed = jspt;
 
                 GTPlayer.Instance.jumpMultiplier = jmpt;
@@ -2648,7 +2628,7 @@ namespace Qubit.Mods
 
         public static void AlwaysMaxVelocity()
         {
-            if (Buttons.GetIndex("Uncap Max Velocity").enabled)
+            if (Manager.GetIndex("Uncap Max Velocity").enabled)
                 Toggle("Uncap Max Velocity");
             else
                 GTPlayer.Instance.jumpMultiplier = 99999f;
@@ -2669,8 +2649,8 @@ namespace Qubit.Mods
 
         public static void Noclip()
         {
-            bool gripNoclip = Buttons.GetIndex("Grip Noclip").enabled;
-            if (gripNoclip ? rightGrab : rightTrigger > 0.5f || Buttons.GetIndex("Constant Noclip").enabled)
+            bool gripNoclip = Manager.GetIndex("Grip Noclip").enabled;
+            if (gripNoclip ? rightGrab : rightTrigger > 0.5f || Manager.GetIndex("Constant Noclip").enabled)
             {
                 if (!noclip)
                 {
@@ -2721,7 +2701,7 @@ namespace Qubit.Mods
         public static void Invisible()
         {
             bool hit = rightSecondary;
-            if (Buttons.GetIndex("Non-Togglable Invisible").enabled)
+            if (Manager.GetIndex("Non-Togglable Invisible").enabled)
                 invisMonke = hit;
             if (invisMonke)
             {
@@ -2743,7 +2723,7 @@ namespace Qubit.Mods
         public static void Ghost()
         {
             bool hit = rightPrimary;
-            if (Buttons.GetIndex("Non-Togglable Ghost").enabled)
+            if (Manager.GetIndex("Non-Togglable Ghost").enabled)
                 ghostMonke = hit;
 
             VRRig.LocalRig.enabled = !ghostMonke;
@@ -2761,9 +2741,8 @@ namespace Qubit.Mods
 
         public static void RigGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 GameObject NewPointer = GunData.NewPointer;
 
                 if (GetGunInput(true))
@@ -2773,7 +2752,7 @@ namespace Qubit.Mods
                 }
                 else
                     VRRig.LocalRig.enabled = true;
-            }
+            });
         }
 
         public static void GrabRig()
@@ -2882,8 +2861,8 @@ namespace Qubit.Mods
         {
             VRRig.LocalRig.enabled = false;
 
-            var (leftPosition, leftRotation, _, _, _) = ControllerUtilities.GetTrueLeftHand();
-            var (rightPosition, rightRotation, _, _, _) = ControllerUtilities.GetTrueRightHand();
+            var (leftPosition, leftRotation, _, _, _) = Controllers.GetTrueLeftHand();
+            var (rightPosition, rightRotation, _, _, _) = Controllers.GetTrueRightHand();
 
             VRRig.LocalRig.leftHand.rigTarget.transform.position = leftPosition;
             VRRig.LocalRig.rightHand.rigTarget.transform.position = rightPosition;
@@ -3289,39 +3268,28 @@ namespace Qubit.Mods
         private static bool hasAdded;
         public static void StareAtGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(gunTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
+                if (!hasAdded)
                 {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
+                    hasAdded = true;
+                    TorsoPatch.VRRigLateUpdate += StareAtTarget;
+                }
+
+                gunLocked = true;
+                lockTarget = gunTarget;
+            }, new GunLibrary.GunSettings { onIdle = () =>
+                {
+                    if (gunLocked)
                     {
-                        if (!hasAdded)
+                        gunLocked = false;
+                        if (hasAdded)
                         {
-                            hasAdded = true;
-                            TorsoPatch.VRRigLateUpdate += StareAtTarget;
+                            hasAdded = false;
+                            TorsoPatch.VRRigLateUpdate -= StareAtTarget;
                         }
-
-                        gunLocked = true;
-                        lockTarget = gunTarget;
                     }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    if (hasAdded)
-                    {
-                        hasAdded = false;
-                        TorsoPatch.VRRigLateUpdate -= StareAtTarget;
-                    }
-                }
-            }
+                } });
         }
 
         public static void StareAtAll()
@@ -3346,7 +3314,7 @@ namespace Qubit.Mods
 
         public static void EyeContact()
         {
-            foreach (VRRig rig in VRRigExtensions.ActiveRigs.Where(rig => !rig.IsLocal()))
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal()))
             {
                 if (Physics.SphereCast(rig.headMesh.transform.position + (rig.headMesh.transform.forward * 0.25f), 0.25f, rig.headMesh.transform.forward, out _, 512f, NoInvisLayerMask()))
                 {
@@ -3386,7 +3354,7 @@ namespace Qubit.Mods
         public static void SizeChanger()
         {
             float increment = 0.05f;
-            if (!Buttons.GetIndex("Disable Size Changer Buttons").enabled)
+            if (!Manager.GetIndex("Disable Size Changer Buttons").enabled)
             {
                 if (leftTrigger > 0.5f)
                     increment = 0.2f;
@@ -3485,8 +3453,8 @@ namespace Qubit.Mods
                 if (!vrrigJoystickRot.HasValue)
                     vrrigJoystickRot = VRRig.LocalRig.transform.rotation;
 
-                float yaw = stick.x * 200f * Buttons.GetIndex("Joystick Rotation Speed").GetValue<int>() * Time.deltaTime;
-                float pitch = -stick.y * 200f * Buttons.GetIndex("Joystick Rotation Speed").GetValue<int>() * Time.deltaTime;
+                float yaw = stick.x * 200f * Manager.GetIndex("Joystick Rotation Speed").GetValue<int>() * Time.deltaTime;
+                float pitch = -stick.y * 200f * Manager.GetIndex("Joystick Rotation Speed").GetValue<int>() * Time.deltaTime;
 
                 Quaternion rot = vrrigJoystickRot.Value;
                 rot = Quaternion.AngleAxis(yaw, Vector3.up) * rot;
@@ -3533,8 +3501,8 @@ namespace Qubit.Mods
                 if (!bodyJoystickRot.HasValue)
                     bodyJoystickRot = VRRig.LocalRig.transform.rotation;
 
-                float yaw = stick.x * yawSpeed * Buttons.GetIndex("Joystick Rotation Speed").GetValue<int>() * Time.deltaTime;
-                float pitch = -stick.y * pitchSpeed * Buttons.GetIndex("Joystick Rotation Speed").GetValue<int>() * Time.deltaTime;
+                float yaw = stick.x * yawSpeed * Manager.GetIndex("Joystick Rotation Speed").GetValue<int>() * Time.deltaTime;
+                float pitch = -stick.y * pitchSpeed * Manager.GetIndex("Joystick Rotation Speed").GetValue<int>() * Time.deltaTime;
 
                 Quaternion rot = bodyJoystickRot.Value;
                 rot = Quaternion.AngleAxis(yaw, Vector3.up) * rot;
@@ -3557,7 +3525,7 @@ namespace Qubit.Mods
 
         public static void Flip()
         {
-            bool silentFlip = Buttons.GetIndex("Silent Flip").enabled;
+            bool silentFlip = Manager.GetIndex("Silent Flip").enabled;
             if (!flipping && (rightPrimary || rightSecondary) && VRRig.LocalRig.enabled)
             {
                 if (GTPlayer.Instance.playerRigidBody)
@@ -3628,10 +3596,10 @@ namespace Qubit.Mods
                 stickpart.GetComponent<Renderer>().enabled = false;
             }
             if (GTPlayer.Instance.IsHandTouching(true))
-                stickpart.transform.position = ControllerUtilities.GetTrueLeftHand().position;
+                stickpart.transform.position = Controllers.GetTrueLeftHand().position;
 
             if (GTPlayer.Instance.IsHandTouching(false))
-                stickpart.transform.position = ControllerUtilities.GetTrueRightHand().position;
+                stickpart.transform.position = Controllers.GetTrueRightHand().position;
 
             if (GTPlayer.Instance.IsHandTouching(true) && GTPlayer.Instance.IsHandTouching(false))
                 stickpart.transform.position = Vector3.zero;
@@ -3719,7 +3687,7 @@ namespace Qubit.Mods
         public static void PunchMod()
         {
             int index = -1;
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 index++;
                 Vector3 localBodyPos = VRRig.LocalRig.bodyTransform.position;
@@ -3734,7 +3702,7 @@ namespace Qubit.Mods
 
                     if (distance < 0.25f)
                     {
-                        if (Buttons.GetIndex("Graphic Punch Mod").enabled)
+                        if (Manager.GetIndex("Graphic Punch Mod").enabled)
                         {
                             Projectiles.SendProjectile(
                                 Projectiles.FindProjectile("Apple"),
@@ -3759,7 +3727,7 @@ namespace Qubit.Mods
         {
             if (sithlord == null)
             {
-                foreach (VRRig vrrig in VRRigExtensions.ActiveRigs)
+                foreach (VRRig vrrig in Players.ActiveRigs)
                 {
                     try
                     {
@@ -3816,7 +3784,7 @@ namespace Qubit.Mods
         public static void SafetyBubble()
         {
             foreach (VRRig rig in
-                VRRigExtensions.ActiveRigs
+                Players.ActiveRigs
                     .Where(rig => rig != null && !rig.isLocal)
                     .OrderBy(rig => Vector3.Distance(rig.transform.position, GorillaTagger.Instance.bodyCollider.transform.position)))
             {
@@ -3836,7 +3804,7 @@ namespace Qubit.Mods
             List<VRRig> toRemove = new List<VRRig>();
             foreach (VRRig rig in RigColliders.Keys)
             {
-                if (!VRRigExtensions.ActiveRigs.Contains(rig))
+                if (!Players.ActiveRigs.Contains(rig))
                     toRemove.Add(rig);
             }
 
@@ -3848,7 +3816,7 @@ namespace Qubit.Mods
 
             toRemove.Clear();
 
-            foreach (var vrrig in VRRigExtensions.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
             {
                 if (!RigColliders.TryGetValue(vrrig, out List<GameObject> colliders))
                 {
@@ -4204,57 +4172,11 @@ namespace Qubit.Mods
         }
 
         public static int fakeLagDelayIndex = 10;
-        private static float fakeLagDelay = 1f;
+        public static float fakeLagDelay = 1f;
 
         public static void ApplyFakeLagStrength(int index) => fakeLagDelay = index / 10f;
 
-        public static void FakeLag()
-        {
-            PlayerSerializePatch.delay = Buttons.GetIndex("Fake Lag Others").enabled ? fakeLagDelay : (float?)null;
-
-            SerializePatch.OverrideSerialization = !Buttons.GetIndex("Disable Fake Lag Self").enabled
-                ? (() =>
-                {
-                    MassSerialize(true, delay: fakeLagDelay);
-                    return false;
-                })
-                : (Func<bool>)null;
-        }
-
-        public static void LagRange()
-        {
-            bool isTagged = VRRig.LocalRig.IsTagged();
-
-            VRRig closestRig = VRRigExtensions.ActiveRigs
-                .Where(rig => rig != null && !rig.isLocal &&
-                                  (isTagged ? !rig.IsTagged() : rig.IsTagged()))
-                .OrderBy(rig => Vector3.Distance(rig.transform.position, GorillaTagger.Instance.bodyCollider.transform.position))
-                .FirstOrDefault();
-
-            float rigDistance = closestRig == null ? float.MaxValue :
-                          Vector3.Distance(GorillaTagger.Instance.bodyCollider.transform.position, closestRig.transform.position);
-
-            if (rigDistance < 15f)
-            {
-                float lagPower = Mathf.Clamp(rigDistance, 1f, 15f) / 15f;
-                PhotonNetwork.SerializationRate = 4 + (int)Math.Ceiling(lagPower * 6f);
-            }
-        }
-
         public static bool isBlinking;
-        public static void Blink()
-        {
-            SerializePatch.OverrideSerialization = () => false;
-            PlayerSerializePatch.stopSerialization = true;
-            isBlinking = true;
-        }
-
-        public static void DisableBlink()
-        {
-            SerializePatch.OverrideSerialization = null;
-            PlayerSerializePatch.stopSerialization = false;
-            isBlinking = false;
-        }
 
         public static int timerPowerIndex = 15;
         public static void ApplyTimerSpeed(int index) => timerPower = index / 10f;
@@ -4307,7 +4229,7 @@ namespace Qubit.Mods
 
         public static void Strafe()
         {
-            Vector3 direction = Buttons.GetIndex("Hand Oriented Strafe").enabled
+            Vector3 direction = Manager.GetIndex("Hand Oriented Strafe").enabled
                 ? new Vector3(-GorillaTagger.Instance.rightHandTransform.up.x, 0f, -GorillaTagger.Instance.rightHandTransform.up.z).normalized
                 : GorillaTagger.Instance.bodyCollider.transform.forward;
 
@@ -4319,7 +4241,7 @@ namespace Qubit.Mods
 
         public static void DynamicStrafe()
         {
-            Vector3 direction = Buttons.GetIndex("Hand Oriented Strafe").enabled
+            Vector3 direction = Manager.GetIndex("Hand Oriented Strafe").enabled
                 ? new Vector3(-GorillaTagger.Instance.rightHandTransform.up.x, 0f, -GorillaTagger.Instance.rightHandTransform.up.z).normalized
                 : GorillaTagger.Instance.bodyCollider.transform.forward;
 
@@ -4449,31 +4371,11 @@ namespace Qubit.Mods
 
         public static void PiggybackGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Target(lockTarget =>
             {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    TeleportPlayer(lockTarget.transform.position + new Vector3(0f, 0.5f, 0f));
-                    GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                    gunLocked = false;
-            }
+                TeleportPlayer(lockTarget.transform.position + new Vector3(0f, 0.5f, 0f));
+                GorillaTagger.Instance.rigidbody.linearVelocity = Vector3.zero;
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void PiggybackAll()
@@ -4500,9 +4402,8 @@ namespace Qubit.Mods
 
         public static void CopyMovementGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -4517,15 +4418,14 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void CopyMovementPlayer(NetPlayer player, bool fingers = true)
@@ -4650,9 +4550,8 @@ namespace Qubit.Mods
 
         public static void FollowPlayerGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -4667,15 +4566,14 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static readonly Dictionary<VRRig, Vector3> followPositions = new Dictionary<VRRig, Vector3>();
@@ -4745,9 +4643,8 @@ namespace Qubit.Mods
 
         public static void OrbitPlayerGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -4791,15 +4688,14 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void OrbitAllPlayers()
@@ -4855,9 +4751,8 @@ namespace Qubit.Mods
 
         public static void JumpscareGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -4905,15 +4800,14 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void JumpscareAll()
@@ -4973,9 +4867,8 @@ namespace Qubit.Mods
 
         public static void AnnoyPlayerGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
@@ -5021,15 +4914,14 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void AnnoyAllPlayers()
@@ -5085,86 +4977,11 @@ namespace Qubit.Mods
             };
         }
 
-        public static void ConfusePlayerGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    VRRig.LocalRig.enabled = false;
-                    VRRig.LocalRig.transform.position = lockTarget.transform.position - new Vector3(0f, 2f, 0f);
-
-                    if (Time.time > Fun.splashDel)
-                    {
-                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlaySplashEffect", lockTarget.GetPlayer(), lockTarget.transform.position + RandomVector3(0.5f), RandomQuaternion(), 4f, 100f, true, false);
-                        RPCProtection();
-                        Fun.splashDel = Time.time + 0.1f;
-                    }
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
-        }
-
-        public static void ConfuseAllPlayers()
-        {
-            SerializePatch.OverrideSerialization = () =>
-            {
-                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
-
-                Vector3 archivePos = VRRig.LocalRig.transform.position;
-
-                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
-                {
-                    VRRig targetRig = GetVRRigFromPlayer(Player);
-
-                    VRRig.LocalRig.transform.position = targetRig.transform.position - Vector3.up * 2f;
-                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                }
-
-                RPCProtection();
-
-                VRRig.LocalRig.transform.position = archivePos;
-
-                return false;
-            };
-        }
-
-        public static void ConfuseAllPlayersSplash()
-        {
-            if (Time.time > Fun.splashDel)
-            {
-                Fun.splashDel = Time.time + 0.05f;
-                VRRig rig = GetRandomVRRig();
-                GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlaySplashEffect", rig.GetPlayer(), rig.transform.position + RandomVector3(0.5f), RandomQuaternion(), 4f, 100f, true, false);
-            }
-        }
-
-        public static bool tinnitusSelf;
-
         public static int targetHz = 4000;
         public static void ApplyTinnitusHz(int index) => targetHz = 4000 + index * 500;
         public static AudioClip CreateTinnitusSound(int targetHz, float seconds = 180f)
         {
-            var vm = VoiceManager.Get();
+            var vm = Voices.Get();
             int sampleRate = vm.OutputRate;
 
             int hz = Mathf.Clamp(targetHz, 1, (sampleRate / 2) - 1);
@@ -5182,398 +4999,22 @@ namespace Qubit.Mods
             return clip;
         }
 
-        public static Dictionary<Guid, VoiceManager.Clip> tinnitus = new Dictionary<Guid, VoiceManager.Clip>();
-        public static void TinnitusGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
+        public static Dictionary<Guid, Voices.Clip> tinnitus = new Dictionary<Guid, Voices.Clip>();
 
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && !gunLocked)
-                    {
-                        if (!NetworkSystem.Instance.InRoom) return;
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-
-                        if (tinnitus.Count == 0)
-                        {
-                            AudioClip audioClip = CreateTinnitusSound(targetHz);
-                            VoiceManager.Clip clip = VoiceManager.Get().AudioClip(audioClip);
-                            clip.Looping = true;
-                            tinnitus[clip.Id] = clip;
-                        }
-                        NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = tinnitusSelf;
-
-                        SerializePatch.OverrideSerialization = () =>
-                        {
-                            NetPlayer target = lockTarget.GetPlayer();
-                            MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
-
-                            Vector3 positionArchive = VRRig.LocalRig.transform.position;
-                            VRRig.LocalRig.transform.position = lockTarget.transform.position - (lockTarget.headMesh.transform.forward * 0.2f);
-                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
-
-                            VRRig.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
-                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => plr.ActorNumber != target.ActorNumber).Select(plr => plr.ActorNumber).ToArray() });
-
-                            RPCProtection();
-                            VRRig.LocalRig.transform.position = positionArchive;
-
-                            return false;
-                        };
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    Sound.FixMicrophone();
-                    SerializePatch.OverrideSerialization = null;
-                }
-            }
-        }
-
-        public static void TinnitusAll()
-        {
-            if (!NetworkSystem.Instance.InRoom) return;
-            if (tinnitus.Count == 0)
-            {
-                AudioClip audioClip = CreateTinnitusSound(targetHz);
-                VoiceManager.Clip clip = VoiceManager.Get().AudioClip(audioClip);
-                clip.Looping = true;
-                tinnitus[clip.Id] = clip;
-            }
-            NetworkSystem.Instance.VoiceConnection.PrimaryRecorder.DebugEchoMode = tinnitusSelf;
-
-            SerializePatch.OverrideSerialization = () =>
-            {
-                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
-
-                Vector3 archivePos = VRRig.LocalRig.transform.position;
-
-                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
-                {
-                    VRRig targetRig = GetVRRigFromPlayer(Player);
-
-                    VRRig.LocalRig.transform.position = targetRig.transform.position - (targetRig.headMesh.transform.forward * 0.2f);
-                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                }
-
-                RPCProtection();
-
-                VRRig.LocalRig.transform.position = archivePos;
-
-                return false;
-            };
-        }
-
-        public static void DisableTinnitus()
-        {
-            SerializePatch.OverrideSerialization = null;
-            foreach (VoiceManager.Clip clip in tinnitus.Values)
-                VoiceManager.Get().StopAudioClip(clip);
-            tinnitus.Clear();
-        }
-
-        private static float hoverboardSpawnDelay;
-        private static float soundSpamDelay;
-        public static void OverstimulateGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (Time.time > Fun.splashDel)
-                    {
-                        GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlaySplashEffect", lockTarget.GetPlayer(), lockTarget.headMesh.transform.TransformPoint(Vector3.forward * 0.2f), RandomQuaternion(), 4f, 100f, true, false);
-                        Fun.splashDel = Time.time + 0.1f;
-                    }
-
-                    if (Random.Range(0f, 1f) > 0.5f)
-                    {
-                        if (Time.time > soundSpamDelay)
-                        {
-                            soundSpamDelay = Time.time + 0.1f;
-                            GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", lockTarget.GetPhotonPlayer(), Random.Range(336, 338), false, 999999f);
-                        }
-                    }
-                    else
-                    {
-                        if (Time.time > soundSpamDelay)
-                        {
-                            int[] sounds = {
-                                Random.Range(40,54),
-                                Random.Range(214,221)
-                            };
-
-                            soundSpamDelay = Time.time + 0.1f;
-                            GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", lockTarget.GetPhotonPlayer(), sounds[Random.Range(0, 1)], false, 999999f);
-                        }
-                    }
-
-                    if (Time.time > hoverboardSpawnDelay)
-                    {
-                        hoverboardSpawnDelay = Time.time + 0.25f;
-
-                        FreeHoverboardManager.DataPerPlayer orCreatePlayerData = FreeHoverboardManager.instance.GetOrCreatePlayerData(NetworkSystem.Instance.LocalPlayer.ActorNumber);
-                        int boardIndex = orCreatePlayerData.board0.gameObject.activeSelf ? ((!orCreatePlayerData.board1.gameObject.activeSelf) ? 1 : (1 - FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex)) : 0;
-
-                        FreeHoverboardManager.instance.photonView.RPC("DropBoard_RPC", lockTarget.GetPhotonPlayer(), boardIndex == 1,
-                            BitPackUtils.PackWorldPosForNetwork(lockTarget.headMesh.transform.TransformPoint(Vector3.forward * 0.2f)),
-                            BitPackUtils.PackQuaternionForNetwork(RandomQuaternion()),
-                            BitPackUtils.PackWorldPosForNetwork(RandomVector3(3)), BitPackUtils.PackWorldPosForNetwork(RandomVector3(3)),
-                            BitPackUtils.PackColorForNetwork(RandomColor()));
-
-                        FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex = boardIndex;
-                    }
-
-                    RPCProtection();
-                }
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && !gunLocked)
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-
-                        SerializePatch.OverrideSerialization = () =>
-                        {
-                            NetPlayer target = lockTarget.GetPlayer();
-                            MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
-
-                            Vector3 positionArchive = VRRig.LocalRig.transform.position;
-                            VRRig.LocalRig.transform.position = lockTarget.transform.position + RandomVector3();
-                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
-
-                            RPCProtection();
-                            VRRig.LocalRig.transform.position = positionArchive;
-                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => plr.ActorNumber != target.ActorNumber).Select(plr => plr.ActorNumber).ToArray() });
-
-                            return false;
-                        };
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    SerializePatch.OverrideSerialization = null;
-                }
-            }
-        }
-
-        public static void OverstimulateAll()
-        {
-            SerializePatch.OverrideSerialization ??= () =>
-            {
-                MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
-                Vector3 archivePos = VRRig.LocalRig.transform.position;
-                foreach (NetPlayer Player in NetworkSystem.Instance.PlayerListOthers)
-                {
-                    VRRig targetRig = GetVRRigFromPlayer(Player);
-                    VRRig.LocalRig.transform.position = targetRig.transform.position + RandomVector3();
-                    SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                }
-                RPCProtection();
-                VRRig.LocalRig.transform.position = archivePos;
-                return false;
-            };
-
-            VRRig randomRig = GetRandomVRRig();
-
-            if (Time.time > Fun.splashDel)
-            {
-                GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlaySplashEffect", GetPlayerFromVRRig(randomRig), randomRig.headMesh.transform.TransformPoint(Vector3.forward * 0.2f), RandomQuaternion(), 4f, 100f, true, false);
-                Fun.splashDel = Time.time + 0.1f;
-            }
-
-            if (Random.Range(0f, 1f) > 0.5f)
-            {
-                if (Time.time > soundSpamDelay)
-                {
-                    soundSpamDelay = Time.time + 0.1f;
-                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", randomRig.GetPhotonPlayer(), Random.Range(336, 338), false, 999999f);
-                }
-            }
-            else
-            {
-                if (Time.time > soundSpamDelay)
-                {
-                    int[] sounds = {
-                        Random.Range(40,54),
-                        Random.Range(214,221)
-                    };
-
-                    soundSpamDelay = Time.time + 0.1f;
-                    GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", randomRig.GetPhotonPlayer(), sounds[Random.Range(0, 1)], false, 999999f);
-                }
-            }
-
-            if (Time.time > hoverboardSpawnDelay)
-            {
-                hoverboardSpawnDelay = Time.time + 0.25f;
-
-                FreeHoverboardManager.DataPerPlayer orCreatePlayerData = FreeHoverboardManager.instance.GetOrCreatePlayerData(NetworkSystem.Instance.LocalPlayer.ActorNumber);
-                int boardIndex = orCreatePlayerData.board0.gameObject.activeSelf ? ((!orCreatePlayerData.board1.gameObject.activeSelf) ? 1 : (1 - FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex)) : 0;
-
-                FreeHoverboardManager.instance.photonView.RPC("DropBoard_RPC", randomRig.GetPhotonPlayer(), boardIndex == 1,
-                    BitPackUtils.PackWorldPosForNetwork(randomRig.headMesh.transform.TransformPoint(Vector3.forward * 0.2f)),
-                    BitPackUtils.PackQuaternionForNetwork(RandomQuaternion()),
-                    BitPackUtils.PackWorldPosForNetwork(RandomVector3(3)), BitPackUtils.PackWorldPosForNetwork(RandomVector3(3)),
-                    BitPackUtils.PackColorForNetwork(RandomColor()));
-
-                FreeHoverboardManager.instance.localPlayerLastSpawnedBoardIndex = boardIndex;
-            }
-        }
-
-        public static void ShutdownHeadsetGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    Fun.HoverboardScreenTarget(lockTarget, Color.black);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-
-                        LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/shutdown.ogg", "Audio/Mods/Fun/shutdown.ogg", clip => Sound.PlayAudio(clip));
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
-        }
-
-        public static void ShutdownHeadsetAll() =>
-            Fun.HoverboardScreenAll(Color.black);
-
-        public static void ReverseSchizophrenicGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && !gunLocked)
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-
-                        SerializePatch.OverrideSerialization = () =>
-                        {
-                            NetPlayer target = lockTarget.GetPlayer();
-                            MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
-
-                            Vector3 positionArchive = VRRig.LocalRig.transform.position;
-                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => plr.ActorNumber != target.ActorNumber).Select(plr => plr.ActorNumber).ToArray() });
-
-                            VRRig.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
-                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
-
-                            RPCProtection();
-                            VRRig.LocalRig.transform.position = positionArchive;
-
-                            return false;
-                        };
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    SerializePatch.OverrideSerialization = null;
-                }
-            }
-        }
-
-        public static void SchizophrenicGun()
-        {
-            if (GetGunInput(false))
-            {
-                var GunData = RenderGun();
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal() && !gunLocked)
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-
-                        SerializePatch.OverrideSerialization = () =>
-                        {
-                            NetPlayer target = lockTarget.GetPlayer();
-                            MassSerialize(true, new[] { VRRig.LocalRig.GetPhotonView() });
-
-                            Vector3 positionArchive = VRRig.LocalRig.transform.position;
-                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { target.ActorNumber } });
-
-                            VRRig.LocalRig.transform.position = new Vector3(Random.Range(-99999f, 99999f), 99999f, Random.Range(-99999f, 99999f));
-                            SendSerialize(VRRig.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = PhotonNetwork.PlayerList.Where(plr => plr.ActorNumber != target.ActorNumber).Select(plr => plr.ActorNumber).ToArray() });
-
-                            RPCProtection();
-                            VRRig.LocalRig.transform.position = positionArchive;
-
-                            return false;
-                        };
-                    }
-                }
-            }
-            else
-            {
-                if (gunLocked)
-                {
-                    gunLocked = false;
-                    SerializePatch.OverrideSerialization = null;
-                }
-            }
-        }
+        public static float hoverboardSpawnDelay;
+        public static float soundSpamDelay;
 
         public static void IntercourseGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
                 {
                     VRRig.LocalRig.enabled = false;
 
-                    if (!Buttons.GetIndex("Reverse Intercourse").enabled)
+                    if (!Manager.GetIndex("Reverse Intercourse").enabled)
                     {
                         VRRig.LocalRig.transform.position = lockTarget.transform.position + lockTarget.transform.forward * -(0.2f + Mathf.Sin(Time.frameCount / 8f) * 0.1f);
                         VRRig.LocalRig.transform.rotation = lockTarget.transform.rotation;
@@ -5628,15 +5069,14 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void IntercourseNoises()
@@ -5647,7 +5087,7 @@ namespace Qubit.Mods
                 {
                     GorillaTagger.Instance.myVRRig.SendRPC("RPC_PlayHandTap", RpcTarget.All, 64, true, 999999f);
 
-                    if (Buttons.GetIndex("Splash Intercourse").enabled)
+                    if (Manager.GetIndex("Splash Intercourse").enabled)
                         Fun.BetaWaterSplash(VRRig.LocalRig.transform.position, VRRig.LocalRig.transform.rotation);
 
                     RPCProtection();
@@ -5678,7 +5118,7 @@ namespace Qubit.Mods
                 {
                     VRRig targetRig = GetVRRigFromPlayer(Player);
 
-                    if (!Buttons.GetIndex("Reverse Intercourse").enabled)
+                    if (!Manager.GetIndex("Reverse Intercourse").enabled)
                     {
                         VRRig.LocalRig.transform.position = targetRig.transform.position + targetRig.transform.forward * -(0.2f + Mathf.Sin(Time.frameCount / 8f) * 0.1f);
                         VRRig.LocalRig.transform.rotation = targetRig.transform.rotation;
@@ -5729,11 +5169,11 @@ namespace Qubit.Mods
         {
             Prompt("You have to be age verified to use this mod. Would you like to proceed to the age verification process?", () =>
             {
-                NotificationManager.SendNotification($"<color=grey>[</color><color=red>SEX</color><color=grey>]</color> A browser tab has been opened on your computer.");
+                Notifications.SendNotification($"<color=grey>[</color><color=red>SEX</color><color=grey>]</color> A browser tab has been opened on your computer.");
                 PromptSingle("A browser tab has been opened on your computer. Please go and verify your age.", null, "Ok frick off buddy");
                 Application.OpenURL("https://Qubit.software/age_verification");
 
-                CoroutineManager.instance.StartCoroutine(Sex());
+                Coroutines.instance.StartCoroutine(Sex());
             });
         }
 
@@ -5821,16 +5261,15 @@ namespace Qubit.Mods
 
         public static void HeadGun()
         {
-            if (GetGunInput(false))
+            GunLibrary.Aim(GunData =>
             {
-                var GunData = RenderGun();
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
                 {
                     VRRig.LocalRig.enabled = false;
 
-                    if (!Buttons.GetIndex("Reverse Intercourse").enabled)
+                    if (!Manager.GetIndex("Reverse Intercourse").enabled)
                     {
                         VRRig.LocalRig.transform.position = lockTarget.transform.position + lockTarget.transform.forward * (0.2f + Mathf.Sin(Time.frameCount / 8f) * 0.1f) + lockTarget.transform.up * -0.4f;
                         VRRig.LocalRig.transform.rotation = Quaternion.Euler(lockTarget.transform.rotation.eulerAngles + new Vector3(0f, 180f, 0f));
@@ -5885,15 +5324,14 @@ namespace Qubit.Mods
                         lockTarget = gunTarget;
                     }
                 }
-            }
-            else
-            {
-                if (gunLocked)
+            }, new GunLibrary.GunSettings { onIdle = () =>
                 {
-                    gunLocked = false;
-                    VRRig.LocalRig.enabled = true;
-                }
-            }
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        VRRig.LocalRig.enabled = true;
+                    }
+                } });
         }
 
         public static void HeadAll()
@@ -5917,7 +5355,7 @@ namespace Qubit.Mods
                 {
                     VRRig targetRig = GetVRRigFromPlayer(Player);
 
-                    if (!Buttons.GetIndex("Reverse Intercourse").enabled)
+                    if (!Manager.GetIndex("Reverse Intercourse").enabled)
                     {
                         VRRig.LocalRig.transform.position = targetRig.transform.position + targetRig.transform.forward * (0.2f + Mathf.Sin(Time.frameCount / 8f) * 0.1f) + targetRig.transform.up * -0.4f;
                         VRRig.LocalRig.transform.rotation = Quaternion.Euler(targetRig.transform.rotation.eulerAngles + new Vector3(0f, 180f, 0f));
@@ -6074,5 +5512,57 @@ namespace Qubit.Mods
 
         public static int multiplicationAmount = 15;
         public static void ApplyMultiplicationAmount(int index) => multiplicationAmount = index;
+        public static void SpinHead(string axis)
+        {
+            if (VRRig.LocalRig.enabled)
+            {
+                switch (axis.ToLower())
+                {
+                    case "x":
+                        VRRig.LocalRig.head.trackingRotationOffset.x += Fun.headSpinSpeed;
+                        break;
+                    case "y":
+                        VRRig.LocalRig.head.trackingRotationOffset.y += Fun.headSpinSpeed;
+                        break;
+                    case "z":
+                        VRRig.LocalRig.head.trackingRotationOffset.z += Fun.headSpinSpeed;
+                        break;
+                    default:
+                        return;
+                }
+            }
+            else
+            {
+                switch (axis.ToLower())
+                {
+                    case "x":
+                        VRRig.LocalRig.head.rigTarget.transform.rotation = Quaternion.Euler(VRRig.LocalRig.head.rigTarget.transform.rotation.eulerAngles + new Vector3(Fun.headSpinSpeed, 0f, 0f));
+                        break;
+                    case "y":
+                        VRRig.LocalRig.head.rigTarget.transform.rotation = Quaternion.Euler(VRRig.LocalRig.head.rigTarget.transform.rotation.eulerAngles + new Vector3(0f, Fun.headSpinSpeed, 0f));
+                        break;
+                    case "z":
+                        VRRig.LocalRig.head.rigTarget.transform.rotation = Quaternion.Euler(VRRig.LocalRig.head.rigTarget.transform.rotation.eulerAngles + new Vector3(0f, 0f, Fun.headSpinSpeed));
+                        break;
+                    default:
+                        return;
+                }
+            }
+        }
+
+        public static Material glass;
+
+        public static void Initialize()
+        {
+            try
+            {
+                LoadMacros();
+            }
+            catch (Exception exc)
+            {
+                Logs.LogError(
+                $"Error with Movement.LoadMacros() at {exc.StackTrace}: {exc.Message}");
+            }
+        }
     }
 }

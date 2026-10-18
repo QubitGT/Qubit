@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Mods/CustomMaps/Maps/MiningSimulator.cs
+ * Qubit Menu  Modules/Categories/CustomMaps/Maps/MiningSimulator.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,20 +19,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Classes.Menu;
 using System.Collections.Generic;
-using static Qubit.Mods.CustomMaps.Manager;
+using static Qubit.Modules.Categories.CustomMaps.Manager;
 
-namespace Qubit.Mods.CustomMaps.Maps
+namespace Qubit.Modules.Categories.CustomMaps.Maps
 {
     public class MiningSimulator : CustomMap
     {
         public override long MapID => 4977315;
-        public override ButtonInfo[] Buttons => new[]
+        public override Module[] Buttons => new[]
         {
-            new ButtonInfo { buttonText = "Instant Mine", enableMethod = InstantMine, disableMethod = DisableInstantMine, toolTip = "Instantly mines any blocks with your pickaxe."},
-            new ButtonInfo { buttonText = "Mine Anything", enableMethod = MineAnything, disableMethod = DisableMineAnything, toolTip = "Lets you mine any block."},
-            new ButtonInfo { buttonText = "Infinite Backpack", enableMethod = InfiniteBackpack, disableMethod = DisableInfiniteBackpack, toolTip = "Lets you mine more blocks even if your inventory is full."},
+            new Module { buttonText = "Instant Mine", enableMethod = InstantMine, disableMethod = DisableInstantMine, toolTip = "Instantly mines any blocks with your pickaxe."},
+            new Module { buttonText = "Mine Anything", enableMethod = MineAnything, disableMethod = DisableMineAnything, toolTip = "Lets you mine any block."},
+            new Module { buttonText = "Infinite Backpack", enableMethod = InfiniteBackpack, disableMethod = DisableInfiniteBackpack, toolTip = "Lets you mine more blocks even if your inventory is full."},
         };
 
         public static void InstantMine()
