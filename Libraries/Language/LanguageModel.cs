@@ -101,7 +101,7 @@ namespace Qubit.Libraries.Language
                 SystemPrompt += @"You are also a calm, confident, gently dominant mommy-style caretaker with a warm, slow, reassuring, and authoritative tone, offering structure, comfort, praise, soft correction, and clear caring boundaries; when the user asks for approval, reassurance, validation, or comfort, respond with immediate, direct affirmation and nurturing praise using simple, confident language. Avoid deflection, philosophy, questions, sexual content, explicit language, anger, cruelty, or references to minors.";
 
             text = URLEncode(text);
-            string prompt = URLEncode(string.Format(SystemPrompt, Frontend.Settings.fullModAmount, Frontend.Settings.serverLink, PluginInfo.Version));
+            string prompt = URLEncode(string.Format(SystemPrompt, Frontend.Settings.fullModAmount, PluginInfo.DiscordInvite, PluginInfo.Version));
             string api = "https://api.qubit.mom/ai";
 
             var payload = new
@@ -127,7 +127,7 @@ namespace Qubit.Libraries.Language
                     if (!string.IsNullOrEmpty(request.downloadHandler?.text))
                         Logs.LogError($"Response Body: {request.downloadHandler.text}");
                 }
-                Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> There was an issue generating your response. {request.error}", 4000);
+                Notifications.SendFormat("red", "ERROR", $"There was an issue generating your response. {request.error}", 4000);
                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => Modules.Categories.Settings.DictationPlay(clip, Frontend.Settings.buttonClickVolume / 10f));
                 if (!Manager.GetIndex("Chain Voice Commands").enabled)
                     Coroutines.instance.StartCoroutine(Modules.Categories.Settings.DictationRestart());
@@ -149,14 +149,14 @@ namespace Qubit.Libraries.Language
 
 
             string formatResponse = Regex.Replace(response, @"<([A-Z]+)(?:_""?([^"">]*)""?)?>", "").Replace("\n", "");
-            Notifications.ClearAllNotifications();
+            Notifications.Clear();
             switch (Transcription.narratorName)
             {
                 case "Mommy ASMR":
-                    Notifications.SendNotification($"<color=grey>[</color><color=#ffb6c1>MOMMY</color><color=grey>]</color> {formatResponse}", Duration(formatResponse));
+                    Notifications.SendFormat("#ffb6c1", "MOMMY", $"{formatResponse}", Duration(formatResponse));
                     break;
                 default:
-                    Notifications.SendNotification($"<color=grey>[</color><color=blue>AI</color><color=grey>]</color> {formatResponse}", Duration(formatResponse));
+                    Notifications.SendFormat("blue", "AI", $"{formatResponse}", Duration(formatResponse));
                     break;
             }
 
@@ -191,10 +191,10 @@ namespace Qubit.Libraries.Language
                                 if (!button.enabled)
                                     Manager.Toggle(button.buttonText, true);
                                 else
-                                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Mod is already enabled.");
+                                    Notifications.SendFormat("red", "ERROR", $"Mod is already enabled.");
                             }
                             else
-                                Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Mod \"{argument}\" does not exist.");
+                                Notifications.SendFormat("red", "ERROR", $"Mod \"{argument}\" does not exist.");
 
                             break;
                         }
@@ -211,10 +211,10 @@ namespace Qubit.Libraries.Language
                                 if (button.enabled)
                                     Manager.Toggle(button.buttonText, true);
                                 else
-                                    Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Mod is already enabled.");
+                                    Notifications.SendFormat("red", "ERROR", $"Mod is already enabled.");
                             }
                             else
-                                Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Mod \"{argument}\" does not exist.");
+                                Notifications.SendFormat("red", "ERROR", $"Mod \"{argument}\" does not exist.");
 
                             break;
                         }
@@ -225,7 +225,7 @@ namespace Qubit.Libraries.Language
                             if (button != null)
                                 Manager.Toggle(button.buttonText, true);
                             else
-                                Notifications.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Mod \"{argument}\" does not exist.");
+                                Notifications.SendFormat("red", "ERROR", $"Mod \"{argument}\" does not exist.");
                             break;
                         }
                     case "JOINROOM":

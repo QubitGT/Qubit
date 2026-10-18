@@ -18,6 +18,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+using System.Linq;
+using System.Reflection;
+using static Qubit.Extensions.Colors;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Networking.Serialization;
 using Qubit.Core;
 using Photon.Pun;
 using Qubit.Libraries.Core;
@@ -31,7 +36,7 @@ using static Qubit.Utilities.Assets;
 
 namespace Qubit.Libraries.Audio
 {
-    public class Sounds
+    public static class Sounds
     {
         public static GameObject audioManager;
 
@@ -400,6 +405,12 @@ namespace Qubit.Libraries.Audio
 
             return rawPath is int ? rawPath : null;
         }
+
+        public static void Play(this AudioClip clip, float volume = 1f) =>
+            Play2DAudio(clip, volume);
+
+        public static void PlayAt(this AudioClip clip, Vector3 position, float volume = 1f) =>
+            PlayPositionAudio(clip, position, volume);
 
     }
 }

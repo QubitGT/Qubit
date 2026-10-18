@@ -42,7 +42,7 @@ namespace Qubit.Libraries.Networking
             lastRoom = PhotonNetwork.CurrentRoom.Name;
 
             Notifications.RoomJoined(lastRoom);
-            OnMasterClientSwitch(References.Network.MasterClient);
+            OnMasterClientSwitch(ManagerRegistry.NetworkSystem.MasterClient);
             Security.RPCProtection();
         }
 
@@ -81,21 +81,21 @@ namespace Qubit.Libraries.Networking
 
         public static void Initialize()
         {
-            References.Network.OnJoinedRoomEvent += OnJoinRoom;
-            References.Network.OnReturnedToSinglePlayer += OnLeaveRoom;
-            References.Network.OnMasterClientSwitchedEvent += OnMasterClientSwitch;
+            ManagerRegistry.NetworkSystem.OnJoinedRoomEvent += OnJoinRoom;
+            ManagerRegistry.NetworkSystem.OnReturnedToSinglePlayer += OnLeaveRoom;
+            ManagerRegistry.NetworkSystem.OnMasterClientSwitchedEvent += OnMasterClientSwitch;
 
-            References.Network.OnPlayerJoined += OnPlayerJoin;
-            References.Network.OnPlayerLeft += OnPlayerLeave;
+            ManagerRegistry.NetworkSystem.OnPlayerJoined += OnPlayerJoin;
+            ManagerRegistry.NetworkSystem.OnPlayerLeft += OnPlayerLeave;
         }
 
         public static void Shutdown()
         {
-            References.Network.OnJoinedRoomEvent -= OnJoinRoom;
-            References.Network.OnReturnedToSinglePlayer -= OnLeaveRoom;
+            ManagerRegistry.NetworkSystem.OnJoinedRoomEvent -= OnJoinRoom;
+            ManagerRegistry.NetworkSystem.OnReturnedToSinglePlayer -= OnLeaveRoom;
 
-            References.Network.OnPlayerJoined -= OnPlayerJoin;
-            References.Network.OnPlayerLeft -= OnPlayerLeave;
+            ManagerRegistry.NetworkSystem.OnPlayerJoined -= OnPlayerJoin;
+            ManagerRegistry.NetworkSystem.OnPlayerLeft -= OnPlayerLeave;
         }
     }
 }

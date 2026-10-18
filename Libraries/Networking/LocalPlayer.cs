@@ -34,6 +34,11 @@ namespace Qubit.Libraries.Networking
 {
     public static class LocalPlayer
     {
+        public static string NickName
+        {
+            get => PhotonNetwork.LocalPlayer.NickName;
+            set => PhotonNetwork.LocalPlayer.NickName = value;
+        }
 
         public static void TeleportPlayer(Vector3 pos, bool keepVelocity = false) // Prevents your hands from getting stuck on trees
         {

@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using GorillaNetworking;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
@@ -33,6 +34,7 @@ using static Qubit.Frontend.Core;
 using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Utilities.GameObj;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Libraries.Interface
 {
@@ -64,7 +66,7 @@ namespace Qubit.Libraries.Interface
                 }
                 else
                 {
-                    foreach (GorillaNetworkJoinTrigger joinTrigger in PhotonNetworkController.Instance.allJoinTriggers)
+                    foreach (GorillaNetworkJoinTrigger joinTrigger in ManagerRegistry.PhotonNetworkController.allJoinTriggers)
                     {
                         try
                         {
@@ -249,7 +251,7 @@ namespace Qubit.Libraries.Interface
                         }
                     }
 
-                    foreach (GorillaNetworkJoinTrigger joinTrigger in PhotonNetworkController.Instance.allJoinTriggers)
+                    foreach (GorillaNetworkJoinTrigger joinTrigger in ManagerRegistry.PhotonNetworkController.allJoinTriggers)
                     {
                         try
                         {
@@ -271,7 +273,7 @@ namespace Qubit.Libraries.Interface
                         }
                         catch { }
                     }
-                    PhotonNetworkController.Instance.UpdateTriggerScreens();
+                    ManagerRegistry.PhotonNetworkController.UpdateTriggerScreens();
 
                     string[] objectsWithTMPro = {
                             "Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText",

@@ -100,7 +100,7 @@ namespace Qubit.Libraries.Core
                 return;
 
             LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/achievement.ogg", "Audio/Menu/achievement.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
-            Notifications.SendNotification($"<color=grey>[</color><color=purple>ACHIEVEMENT</color><color=grey>]</color> Achievement unlocked! \"{achievement.name}\"");
+            Notifications.SendFormat("purple", "ACHIEVEMENT", $"Achievement unlocked! \"{achievement.name}\"");
 
             List.Add(achievement);
             File.WriteAllText($"{PluginInfo.BaseDirectory}/Achievements/{achievement.name.Hash()}.json", achievement.ToJObject().ToString());

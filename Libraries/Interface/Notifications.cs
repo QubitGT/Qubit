@@ -312,7 +312,7 @@ namespace Qubit.Libraries.Interface
         /// the text will be translated before display.</param>
         /// <param name="clearTime">The time, in milliseconds, before the notification is cleared. Specify -1 to use the default notification
         /// decay time.</param>
-        public static void SendNotification(string notificationText, int clearTime = -1)
+        public static void Send(string notificationText, int clearTime = -1)
         {
             if (clearTime < 0)
                 clearTime = notificationDecayTime;
@@ -326,7 +326,7 @@ namespace Qubit.Libraries.Interface
                         notificationText = Translations.TranslateText(notificationText);
                     else
                     {
-                        Translations.TranslateText(notificationText, delegate { SendNotification(notificationText, clearTime); });
+                        Translations.TranslateText(notificationText, delegate { Send(notificationText, clearTime); });
                         return;
                     }
                 }
@@ -384,6 +384,17 @@ namespace Qubit.Libraries.Interface
             }
         }
 
+        /// <summary>
+        /// Sends a notification with the standard bracketed tag in front of the message.
+        /// </summary>
+        /// <param name="color">The color of the tag text, for example "green".</param>
+        /// <param name="tag">The tag text, for example "SUCCESS".</param>
+        /// <param name="message">The text shown after the tag.</param>
+        /// <param name="clearTime">The time, in milliseconds, before the notification is cleared. Specify -1 to use the default notification
+        /// decay time.</param>
+        public static void SendFormat(string color, string tag, string message, int clearTime = -1) =>
+            Send($"{tag.FormatTag(color)} {message}", clearTime);
+
         public static void PlayNotificationSound() =>
             Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, buttonClickVolume / 10f));
 
@@ -393,7 +404,7 @@ namespace Qubit.Libraries.Interface
         /// <remarks>Call this method to immediately remove all notification text and halt any scheduled
         /// notification clearing. This method is typically used to reset the notification system or when notifications
         /// are no longer relevant.</remarks>
-        public static void ClearAllNotifications()
+        public static void Clear()
         {
             activeNotifications.Clear();
             notificationText.SafeSetText("");
@@ -479,34 +490,34 @@ namespace Qubit.Libraries.Interface
         public static void RoomJoined(string room)
         {
             if (!Frontend.Settings.disableRoomNotifications)
-                SendNotification($"<color=grey>[</color><color=blue>JOIN ROOM</color><color=grey>]</color> Room Code: {room}");
+                SendFormat("blue", "JOIN ROOM", $"Room Code: {room}");
         }
 
         public static void RoomLeft(string room)
         {
             if (Frontend.Settings.clearNotificationsOnDisconnect)
-                ClearAllNotifications();
+                Clear();
 
             if (!Frontend.Settings.disableRoomNotifications)
-                SendNotification($"<color=grey>[</color><color=blue>LEAVE ROOM</color><color=grey>]</color> Room Code: {room}");
+                SendFormat("blue", "LEAVE ROOM", $"Room Code: {room}");
         }
 
         public static void MasterClientSwitched()
         {
             if (Qubit.Core.Networking.IsMasterClient)
-                SendNotification("<color=grey>[</color><color=purple>MASTER</color><color=grey>]</color> You are now master client.");
+                SendFormat("purple", "MASTER", "You are now master client.");
         }
 
         public static void PlayerJoined(NetPlayer player)
         {
             if (player != Qubit.Core.Networking.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
-                SendNotification($"<color=grey>[</color><color=green>JOIN</color><color=grey>]</color> Name: {Extensions.Players.CleanPlayerName(player.NickName)}");
+                SendFormat("green", "JOIN", $"Name: {Extensions.Players.CleanPlayerName(player.NickName)}");
         }
 
         public static void PlayerLeft(NetPlayer player)
         {
             if (player != Qubit.Core.Networking.LocalPlayer && !Frontend.Settings.disablePlayerNotifications)
-                SendNotification($"<color=grey>[</color><color=red>LEAVE</color><color=grey>]</color> Name: {Extensions.Players.CleanPlayerName(player.NickName)}");
+                SendFormat("red", "LEAVE", $"Name: {Extensions.Players.CleanPlayerName(player.NickName)}");
         }
     }
 }

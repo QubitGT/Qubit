@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Utilities;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
 using System;
@@ -148,7 +149,7 @@ namespace Qubit.Libraries.Core
             if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri) || uri.Scheme != Uri.UriSchemeHttps)
             {
                 Logs.Log($"Refused to download plugin '{name}': URL is not a valid HTTPS address ({url}).");
-                Notifications.SendNotification("<color=grey>[</color><color=red>FAILED</color><color=grey>]</color> Refused to download " + name + ": invalid or insecure URL.");
+                Notifications.SendFormat("red", "FAILED", "Refused to download " + name + ": invalid or insecure URL.");
                 return;
             }
 
@@ -156,7 +157,7 @@ namespace Qubit.Libraries.Core
             if (string.IsNullOrWhiteSpace(filename) || !filename.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
             {
                 Logs.Log($"Refused to download plugin '{name}': resolved filename '{filename}' is not a valid dll name.");
-                Notifications.SendNotification("<color=grey>[</color><color=red>FAILED</color><color=grey>]</color> Refused to download " + name + ": invalid file.");
+                Notifications.SendFormat("red", "FAILED", "Refused to download " + name + ": invalid file.");
                 return;
             }
 
@@ -174,12 +175,12 @@ namespace Qubit.Libraries.Core
             catch (Exception e)
             {
                 Logs.Log("Error downloading plugin " + name + ": " + e);
-                Notifications.SendNotification("<color=grey>[</color><color=red>FAILED</color><color=grey>]</color> Could not download " + name + ".");
+                Notifications.SendFormat("red", "FAILED", "Could not download " + name + ".");
                 return;
             }
 
             LoadPlugins();
-            Notifications.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully downloaded " + name + " to your plugins.");
+            Notifications.SendFormat("green", "SUCCESS", "Successfully downloaded " + name + " to your plugins.");
         }
 
         public static void TogglePlugin(Plugin plugin)
@@ -314,7 +315,7 @@ namespace Qubit.Libraries.Core
         }
 
         public static void OpenPluginsFolder() =>
-            Process.Start(GetGamePath() + $"/{PluginInfo.BaseDirectory}/Plugins");
+            Files.Start(GetGamePath() + $"/{PluginInfo.BaseDirectory}/Plugins");
 
         public static void LoadPluginLibrary()
         {

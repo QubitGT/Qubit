@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Libraries.Audio;
 using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
@@ -37,6 +38,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using static Qubit.Extensions.Players;
 using static Qubit.Utilities.Assets;
+using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Libraries.Networking
 {
@@ -75,7 +77,7 @@ namespace Qubit.Libraries.Networking
         {
             return !Qubit.Core.Networking.InRoom
                 ? Array.Empty<KeyValuePair<NetPlayer, PatreonMembership>>()
-                : References.Network.PlayerListOthers
+                : ManagerRegistry.NetworkSystem.PlayerListOthers
                 .Select(player => new { player, membership = instance.PatreonMembers.FirstOrDefault(m => m.UserId == player.UserId) })
                 .Where(x => x.membership.UserId != null)
                 .Select(x => new KeyValuePair<NetPlayer, PatreonMembership>(x.player, x.membership))
@@ -215,7 +217,7 @@ namespace Qubit.Libraries.Networking
         #region Patreon Mods
         public static void SetupPatreonMods(string patreonName)
         {
-            Notifications.SendNotification($"<color=grey>[</color><color=purple>PATREON</color><color=grey>]</color> Welcome, {patreonName}! Patreon mods have been enabled.", 10000);
+            Notifications.SendFormat("purple", "PATREON", $"Welcome, {patreonName}! Patreon mods have been enabled.", 10000);
 
             List<Module> buttons = Manager.modules["Main"].ToList();
             buttons.Add(new Module { buttonText = "Patreon Mods", method = () => Manager.CurrentCategoryName = "Patreon Mods", isTogglable = false, toolTip = "Opens the patreon mods." });
