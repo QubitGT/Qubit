@@ -162,7 +162,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Long Menu", enableMethod =() => longmenu = true, disableMethod =() => longmenu = false, toolTip = "Makes the menu long.", legal = true},
                 new Module { buttonText = "Flip Menu", enableMethod =() => flipMenu = true, disableMethod =() => flipMenu = false, toolTip = "Flips the menu to the back of your hand.", legal = true},
 
-                new Module { buttonText = "Legacy Menu", enableMethod =() => QubitMenuBody.qubitLoadFailed = true, disableMethod =() =>  QubitMenuBody.qubitLoadFailed = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
+                new Module { buttonText = "Legacy Menu", enableMethod =() => Legacy.Enabled = true, disableMethod =() => Legacy.Enabled = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
 
                 new Module { buttonText = "Round Menu", enableMethod =() => shouldRound = true, disableMethod =() => shouldRound = false, toolTip = "Makes the menu objects round.", legal = true},
                 new Module { buttonText = "Outline Menu", enableMethod =() => shouldOutline = true, disableMethod =() => shouldOutline = false, toolTip = "Gives the menu objects an outline.", legal = true},

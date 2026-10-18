@@ -192,8 +192,7 @@ public static Transform qubitFront;
         public static readonly List<(string Action, RectTransform Row)> qubitJoystickTargets = new List<(string, RectTransform)>();
         public static RectTransform qubitJoystickMarker;
         public static bool joystickSelectHeld;
- public static bool qubitLoadFailed;
-            public static bool UseQubit => !qubitLoadFailed && !clickGUI && CurrentPrompt == null;
+            public static bool UseQubit => !Legacy.Enabled && !clickGUI && CurrentPrompt == null;
         public const int QubitMaxRows = 8;
         public static int QubitRowCount => Mathf.Clamp(_pageSize, 4, QubitMaxRows);
         public static int QubitPageCapacity => QubitRowCount - (isSearching ? 1 : 0);
@@ -280,7 +279,7 @@ qubitFront = null;
         qubitJoystickTargets.Clear();
         qubitJoystickMarker = null;
        qubitClock = qubitDate = qubitStats = qubitSearch = null;
-  if (!UseQubit) return CreateLegacyMenu();
+  if (!UseQubit) return Legacy.CreateMenu();
                   try
     {
  if (qubitPrefab == null)
@@ -401,9 +400,9 @@ return menu;
     Logs.LogError("Qubit menu could not load; using the original menu. " + error);
  if (menu != null) { menu.SetActive(false); UnityEngine.Object.Destroy(menu); menu = null; }
 
-            qubitLoadFailed = true;
+            Legacy.Enabled = true;
    qubitFront = null;
-return CreateLegacyMenu();
+return Legacy.CreateMenu();
        }
   }
     }
