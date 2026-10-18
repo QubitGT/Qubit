@@ -151,7 +151,7 @@ namespace Qubit.Frontend
             {
                 GameObject button = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-                if (!UnityInput.GetKey(Key.Q) && !(inTextInput && isKeyboardPc))
+                if (!UnityInput.GetKey(Settings.KeyboardBind) && !(inTextInput && isKeyboardPc))
                     button.layer = 2;
 
                 button.GetComponent<BoxCollider>().isTrigger = true;
@@ -197,7 +197,7 @@ namespace Qubit.Frontend
                 if (arrowType == 11)
                     textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, textRect.sizeDelta.y * 6f);
 
-                if (NoAutoSizeText)
+                if (noAutoSizeText)
                     textRect.sizeDelta = new Vector2(9f, 0.015f);
 
                 if (hideTextOnCamera)
@@ -214,7 +214,7 @@ namespace Qubit.Frontend
             {
                 GameObject button = GameObject.CreatePrimitive(PrimitiveType.Cube);
 
-                if (!UnityInput.GetKey(Key.Q) && !(inTextInput && isKeyboardPc))
+                if (!UnityInput.GetKey(Settings.KeyboardBind) && !(inTextInput && isKeyboardPc))
                     button.layer = 2;
 
                 button.GetComponent<BoxCollider>().isTrigger = true;
@@ -260,7 +260,7 @@ namespace Qubit.Frontend
                 if (arrowType == 11)
                     textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, textRect.sizeDelta.y * 6f);
 
-                if (NoAutoSizeText)
+                if (noAutoSizeText)
                     textRect.sizeDelta = new Vector2(9f, 0.015f);
 
                 if (hideTextOnCamera)

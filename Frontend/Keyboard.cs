@@ -328,7 +328,7 @@ if (!clickGUI)
         public static void AddSearchButton()
         {
             GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            if (!UnityInput.GetKey(Key.Q) && !isKeyboardPc)
+            if (!UnityInput.GetKey(Settings.KeyboardBind) && !isKeyboardPc)
                 buttonObject.layer = 2;
 
             buttonObject.GetComponent<BoxCollider>().isTrigger = true;

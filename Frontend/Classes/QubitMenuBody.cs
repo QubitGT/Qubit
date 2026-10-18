@@ -206,7 +206,7 @@ public static Transform qubitFront;
   {
                   var hit = new GameObject("Hitbox " + action);
     hit.transform.SetParent(rect, false);
- hit.layer = !UnityInput.GetKey(Key.Q) && !isKeyboardPc ? 2 : 0;
+ hit.layer = !UnityInput.GetKey(Settings.KeyboardBind) && !isKeyboardPc ? 2 : 0;
             var box = hit.AddComponent<BoxCollider>();
 
    float w = width < 0 ? rect.rect.width : width;

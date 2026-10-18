@@ -36,7 +36,6 @@ using Qubit.Libraries.Interface;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Menu;
 using Qubit.Utilities;
 using System;
 using System.Collections;
@@ -240,7 +239,7 @@ namespace Qubit.Frontend
             }
             else
             {
-                if (doCustomMenuBackground)
+                if (customMenuBackground)
                 {
                     menuBackground.GetComponent<Renderer>().material.shader = Shader.Find("Universal Render Pipeline/Unlit");
                     menuBackground.GetComponent<Renderer>().material.color = Color.white;
@@ -268,7 +267,7 @@ namespace Qubit.Frontend
 
             canvasObj.AddComponent<GraphicRaycaster>();
 
-            if (!hidetitle)
+            if (!hideTitle)
             {
                 title = new GameObject
                 {
@@ -337,7 +336,7 @@ namespace Qubit.Frontend
                 RectTransform component = title.GetComponent<RectTransform>();
                 component.localPosition = Vector3.zero;
                 component.sizeDelta = new Vector2(0.28f, 0.05f);
-                if (NoAutoSizeText)
+                if (noAutoSizeText)
                     component.sizeDelta = new Vector2(0.28f, 0.015f);
 
                 if (hideTextOnCamera)
@@ -433,8 +432,8 @@ namespace Qubit.Frontend
                 fps.font = activeFont;
 
                 string textToSet = ftCount ? $"FT: {Mathf.Floor(1f / lastDeltaTime * 10000f) / 10f} ms" : $"FPS: {lastDeltaTime}";
-                if (hidetitle && !noPageNumber) textToSet += "      ";
-                if (hidetitle && !noPageNumber) textToSet += "Page " + (pageNumber + 1);
+                if (hideTitle && !noPageNumber) textToSet += "      ";
+                if (hideTitle && !noPageNumber) textToSet += "Page " + (pageNumber + 1);
 
                 fps.text = Strings.FollowMenuSettings(textToSet, false);
 
@@ -448,8 +447,8 @@ namespace Qubit.Frontend
                 fps.enableAutoSizing = true;
                 fps.fontSizeMin = 0;
                 RectTransform fpsTransform = fps.GetComponent<RectTransform>();
-                fpsTransform.sizeDelta = NoAutoSizeText ? new Vector2(9f, 0.015f) : new Vector2(0.28f, 0.02f);
-                fpsTransform.localPosition = new Vector3(0.06f, 0f, hidetitle ? 0.175f : 0.135f);
+                fpsTransform.sizeDelta = noAutoSizeText ? new Vector2(9f, 0.015f) : new Vector2(0.28f, 0.02f);
+                fpsTransform.localPosition = new Vector3(0.06f, 0f, hideTitle ? 0.175f : 0.135f);
                 fpsTransform.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
 
                 if (hideTextOnCamera)
@@ -551,7 +550,7 @@ namespace Qubit.Frontend
                 RectTransform textTransform = keyboardInputObject.GetComponent<RectTransform>();
                 textTransform.localPosition = Vector3.zero;
                 textTransform.sizeDelta = new Vector2(.2f, .03f * (ButtonDistance / 0.1f));
-                if (NoAutoSizeText)
+                if (noAutoSizeText)
                     textTransform.sizeDelta = new Vector2(9f, 0.015f);
 
                 if (hideTextOnCamera)
@@ -693,7 +692,7 @@ namespace Qubit.Frontend
                     if (Manager.GetIndex("Alphabetize Menu").enabled || isSearching)
                         renderButtons = StringsToInfos(Alphabetize(InfosToStrings(renderButtons)));
 
-                    if (!longmenu)
+                    if (!longMenu)
                         renderButtons = renderButtons
                             .Skip(pageNumber * (PageSize - buttonIndexOffset) + pageOffset)
                             .Take(PageSize - buttonIndexOffset)
@@ -757,5 +756,517 @@ namespace Qubit.Frontend
             menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? References.Player.scale * menuScale : menuScale;
             return menu;
         }
+    
+
+        public static void AddButton(float offset, int buttonIndex, Module method)
+        {
+            bool shouldCreate = false;
+#if LEGAL || LEGAL_DEBUG
+            shouldCreate = method.legal;
+#else
+            shouldCreate = true;
+#endif
+            if (!shouldCreate)
+                return;
+            if (method != null && !method.label)
+            {
+                GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                if (!UI.IsKeyboardActive())
+                    buttonObject.layer = 2;
+
+                buttonObject.GetComponent<BoxCollider>().isTrigger = true;
+                buttonObject.transform.parent = menu.transform;
+                buttonObject.transform.rotation = Quaternion.identity;
+
+                buttonObject.transform.localScale = thinMenu ? new Vector3(0.09f, 0.9f, ButtonDistance * 0.8f) : new Vector3(0.09f, 1.3f, ButtonDistance * 0.8f);
+
+                if (longMenu && buttonIndex >= PageSize)
+                {
+                    menuBackground.transform.localScale += new Vector3(0f, 0f, 0.1f);
+                    menuBackground.transform.localPosition += new Vector3(0f, 0f, -0.05f);
+                }
+
+                buttonObject.transform.localPosition = new Vector3(0.56f, 0f, 0.28f - offset);
+                if (checkMode && buttonIndex > -1)
+                {
+                    // The Checkbox Theorem ; TO BE THE SQUARE, YOU MUST circumvent the inconvenient menu localScale parameter
+                    // Variable calculations: (menu scale y)0.3825 / (menu scale z)0.3 = 1.275 = Y
+                    // 0.08 x Y = 0.102
+
+                    buttonObject.transform.localScale = new Vector3(0.09f, 0.102f, 0.08f);
+                    buttonObject.transform.localPosition = thinMenu ? new Vector3(0.56f, 0.399f, 0.28f - offset) : new Vector3(0.56f, 0.599f, 0.28f - offset);
+                }
+
+                ButtonCollider Button = buttonObject.AddComponent<ButtonCollider>();
+                Button.relatedText = method.buttonText;
+
+                if (incrementalButtons)
+                {
+                    if (method.incremental)
+                    {
+                        if (checkMode && buttonIndex > -1)
+                        {
+                            Button.incremental = true;
+                            Button.positive = false;
+
+                            RenderIncrementalText(false, offset);
+                            RenderIncrementalButton(true, offset, buttonIndex, method);
+                        }
+                        else
+                        {
+                            buttonObject.transform.localScale -= new Vector3(0f, 0.254f, 0f);
+                            UnityEngine.Object.Destroy(Button);
+
+                            RenderIncrementalButton(false, offset, buttonIndex, method);
+                            RenderIncrementalButton(true, offset, buttonIndex, method);
+                        }
+                    }
+                }
+
+                bool shouldSwap = swapButtonColors && buttonIndex < 0;
+
+                if (lastClickedName != method.buttonText)
+                {
+                    ObjectColors colorChanger = buttonObject.AddComponent<ObjectColors>();
+                    colorChanger.colors = buttonColors[shouldSwap ^ method.enabled ? 1 : 0];
+
+                    if (joystickMenu && buttonIndex == joystickButtonSelected)
+                    {
+                        joystickSelectedButton = method.buttonText;
+
+                        if (!colorChanger.colors.transparent)
+                        {
+                            ExtGradient gradient = colorChanger.colors.Clone();
+                            gradient.SetColor(0, Color.red);
+
+                            colorChanger.colors = gradient;
+                        }
+                    }
+                }
+                else
+                    Coroutines.instance.StartCoroutine(ButtonClick(buttonIndex, buttonObject.GetComponent<Renderer>()));
+
+                FollowMenuSettings(buttonObject, shouldSwap ? method.enabled : !method.enabled);
+            }
+            TextMeshPro buttonText = new GameObject
+            {
+                transform = { parent = canvasObj.transform }
+            }.AddComponent<TextMeshPro>();
+
+            UpdateButtonText updater = buttonText.gameObject.AddComponent<UpdateButtonText>();
+            updater.Init(method, buttonIndex, offset);
+            updater.UpdateText();
+        }
+
+        public static void AddDebugButton()
+        {
+            bool infoScreenEnabled = Manager.GetIndex("Info Screen").enabled;
+
+            GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            if (!UI.IsKeyboardActive())
+                buttonObject.layer = 2;
+
+            buttonObject.GetComponent<BoxCollider>().isTrigger = true;
+            buttonObject.transform.parent = menu.transform;
+            buttonObject.transform.rotation = Quaternion.identity;
+
+            buttonObject.transform.localScale = new Vector3(0.09f, 0.102f, 0.08f);
+            buttonObject.transform.localPosition = thinMenu ? new Vector3(0.56f, 0.450f, -0.58f) : new Vector3(0.56f, 0.7f, -0.58f);
+
+            buttonObject.AddComponent<ButtonCollider>().relatedText = "Info Screen";
+
+            ObjectColors colorChanger = buttonObject.AddComponent<ObjectColors>();
+            colorChanger.colors = buttonColors[infoScreenEnabled ^ swapButtonColors ? 0 : 1];
+
+            FollowMenuSettings(buttonObject, infoScreenEnabled ^ swapButtonColors);
+
+            Image debugImage = new GameObject
+            {
+                transform =
+                {
+                    parent = canvasObj.transform
+                }
+            }.AddComponent<Image>();
+            if (debugIcon == null)
+                debugIcon = LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.debug.png");
+
+            if (debugMat == null)
+                debugMat = new Material(debugImage.material);
+
+            debugImage.material = debugMat;
+            debugImage.material.SetTexture("_MainTex", debugIcon);
+            debugImage.AddComponent<UIColors>().colors = textColors[1];
+
+            RectTransform imageTransform = debugImage.GetComponent<RectTransform>();
+            imageTransform.localPosition = Vector3.zero;
+            imageTransform.sizeDelta = new Vector2(.03f, .03f);
+
+            imageTransform.localPosition = thinMenu ? new Vector3(.064f, 0.35f / 2.6f, -0.58f / 2.6f) : new Vector3(.064f, 0.54444444444f / 2.6f, -0.58f / 2.6f);
+
+            imageTransform.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
+
+            FollowMenuSettings(debugImage);
+        }
+
+        public static void AddDonateButton()
+        {
+            GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            if (!UI.IsKeyboardActive())
+                buttonObject.layer = 2;
+
+            buttonObject.GetComponent<BoxCollider>().isTrigger = true;
+            buttonObject.transform.parent = menu.transform;
+            buttonObject.transform.rotation = Quaternion.identity;
+
+            buttonObject.transform.localScale = new Vector3(0.09f, 0.102f, 0.08f);
+            buttonObject.transform.localPosition = thinMenu ? new Vector3(0.56f, 0.450f, -0.58f) : new Vector3(0.56f, 0.7f, -0.58f);
+
+            buttonObject.AddComponent<ButtonCollider>().relatedText = "Donate Button";
+
+            ObjectColors colorChanger = buttonObject.AddComponent<ObjectColors>();
+            colorChanger.colors = buttonColors[swapButtonColors ? 1 : 0];
+
+            FollowMenuSettings(buttonObject, !swapButtonColors);
+
+            Image donateImage = new GameObject
+            {
+                transform =
+                {
+                    parent = canvasObj.transform
+                }
+            }.AddComponent<Image>();
+            if (donateIcon == null)
+                donateIcon = LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.donate.png");
+
+            if (donateMat == null)
+                donateMat = new Material(donateImage.material);
+
+            donateImage.material = donateMat;
+            donateImage.material.SetTexture("_MainTex", donateIcon);
+            donateImage.AddComponent<UIColors>().colors = textColors[1];
+
+            RectTransform imageTransform = donateImage.GetComponent<RectTransform>();
+            imageTransform.localPosition = Vector3.zero;
+            imageTransform.sizeDelta = new Vector2(.03f, .03f);
+
+            imageTransform.localPosition = thinMenu ? new Vector3(.064f, 0.35f / 2.6f, -0.58f / 2.6f) : new Vector3(.064f, 0.54444444444f / 2.6f, -0.58f / 2.6f);
+
+            imageTransform.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
+
+            FollowMenuSettings(donateImage);
+        }
+
+        public static void AddUpdateButton()
+        {
+            GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            if (!UI.IsKeyboardActive())
+                buttonObject.layer = 2;
+
+            buttonObject.GetComponent<BoxCollider>().isTrigger = true;
+            buttonObject.transform.parent = menu.transform;
+            buttonObject.transform.rotation = Quaternion.identity;
+
+            buttonObject.transform.localScale = new Vector3(0.09f, 0.102f, 0.08f);
+            buttonObject.transform.localPosition = thinMenu ? new Vector3(0.56f, 0.450f, -0.58f) : new Vector3(0.56f, 0.7f, -0.58f);
+
+            buttonObject.AddComponent<ButtonCollider>().relatedText = "Update Button";
+
+            ObjectColors colorChanger = buttonObject.AddComponent<ObjectColors>();
+            colorChanger.colors = buttonColors[swapButtonColors ? 1 : 0];
+
+            FollowMenuSettings(buttonObject, !swapButtonColors);
+
+            Image updateImage = new GameObject
+            {
+                transform =
+                {
+                    parent = canvasObj.transform
+                }
+            }.AddComponent<Image>();
+            if (updateIcon == null)
+                updateIcon = LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.update.png");
+
+            if (updateMat == null)
+                updateMat = new Material(updateImage.material);
+
+            updateImage.material = updateMat;
+            updateImage.material.SetTexture("_MainTex", updateIcon);
+            updateImage.AddComponent<UIColors>().colors = textColors[1];
+
+            RectTransform imageTransform = updateImage.GetComponent<RectTransform>();
+            imageTransform.localPosition = Vector3.zero;
+            imageTransform.sizeDelta = new Vector2(.03f, .03f);
+
+            imageTransform.localPosition = thinMenu ? new Vector3(.064f, 0.35f / 2.6f, -0.58f / 2.6f) : new Vector3(.064f, 0.54444444444f / 2.6f, -0.58f / 2.6f);
+
+            imageTransform.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
+
+            FollowMenuSettings(updateImage);
+        }
+
+        public static void AddReturnButton(bool offcenteredPosition)
+        {
+            GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            if (!UI.IsKeyboardActive())
+                buttonObject.layer = 2;
+
+            buttonObject.GetComponent<BoxCollider>().isTrigger = true;
+            buttonObject.transform.parent = menu.transform;
+            buttonObject.transform.rotation = Quaternion.identity;
+
+            buttonObject.transform.localScale = new Vector3(0.09f, 0.102f, 0.08f);
+            buttonObject.transform.localPosition = thinMenu ? new Vector3(0.56f, -0.450f, -0.58f) : new Vector3(0.56f, -0.7f, -0.58f);
+
+            if (offcenteredPosition)
+                buttonObject.transform.localPosition += new Vector3(0f, 0.16f, 0f);
+
+            buttonObject.AddComponent<ButtonCollider>().relatedText = "Global Return";
+
+            if (lastClickedName != "Global Return")
+            {
+                ObjectColors colorChanger = buttonObject.AddComponent<ObjectColors>();
+                colorChanger.colors = colorChanger.colors = buttonColors[swapButtonColors ? 1 : 0];
+            }
+            else
+                Coroutines.instance.StartCoroutine(ButtonClick(-99, buttonObject.GetComponent<Renderer>()));
+
+            FollowMenuSettings(buttonObject, !swapButtonColors);
+
+            Image returnImage = new GameObject
+            {
+                transform =
+                {
+                    parent = canvasObj.transform
+                }
+            }.AddComponent<Image>();
+
+            if (returnIcon == null)
+                returnIcon = LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.return.png");
+
+            if (returnMat == null)
+                returnMat = new Material(returnImage.material);
+
+            returnImage.material = returnMat;
+            returnImage.material.SetTexture("_MainTex", returnIcon);
+            returnImage.AddComponent<UIColors>().colors = textColors[1];
+
+            RectTransform imageTransform = returnImage.GetComponent<RectTransform>();
+            imageTransform.localPosition = Vector3.zero;
+            imageTransform.sizeDelta = new Vector2(.03f, .03f);
+
+            imageTransform.localPosition = thinMenu ? new Vector3(.064f, -0.35f / 2.6f, -0.58f / 2.6f) : new Vector3(.064f, -0.54444444444f / 2.6f, -0.58f / 2.6f);
+
+            if (offcenteredPosition)
+                imageTransform.localPosition += new Vector3(0f, 0.0475f, 0f);
+
+            imageTransform.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
+
+            FollowMenuSettings(returnImage);
+        }
+
+        public static void RenderIncrementalButton(bool increment, float offset, int buttonIndex, Module method)
+        {
+            if (!method.label)
+            {
+                GameObject buttonObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                if (!UI.IsKeyboardActive())
+                    buttonObject.layer = 2;
+
+                buttonObject.GetComponent<BoxCollider>().isTrigger = true;
+                buttonObject.transform.parent = menu.transform;
+                buttonObject.transform.rotation = Quaternion.identity;
+
+                buttonObject.transform.localScale = new Vector3(0.09f, 0.102f, ButtonDistance * 0.8f);
+                buttonObject.transform.localPosition = thinMenu ? new Vector3(0.56f, 0.399f, 0.28f - offset) : new Vector3(0.56f, 0.599f, 0.28f - offset);
+
+                ButtonCollider button = buttonObject.AddComponent<ButtonCollider>();
+                button.relatedText = method.buttonText;
+                button.incremental = true;
+                button.positive = increment;
+
+                if (increment)
+                    buttonObject.transform.localPosition = new Vector3(buttonObject.transform.localPosition.x, -buttonObject.transform.localPosition.y, buttonObject.transform.localPosition.z);
+
+                if (lastClickedName != method.buttonText + (increment ? "+" : "-"))
+                {
+                    ObjectColors colorChanger = buttonObject.AddComponent<ObjectColors>();
+                    colorChanger.colors = buttonColors[0];
+                }
+                else
+                    Coroutines.instance.StartCoroutine(ButtonClick(buttonIndex, buttonObject.GetComponent<Renderer>()));
+
+                FollowMenuSettings(buttonObject);
+            }
+
+            RenderIncrementalText(increment, offset);
+        }
+
+        public static void RenderIncrementalText(bool increment, float offset)
+        {
+            TextMeshPro buttonText = new GameObject
+            {
+                transform =
+                {
+                    parent = canvasObj.transform
+                }
+            }.AddComponent<TextMeshPro>();
+
+            buttonText.font = activeFont;
+            buttonText.text = increment ? "+" : "-";
+            buttonText.richText = true;
+            buttonText.fontSize = 1;
+            buttonText.AddComponent<UIColors>().colors = textColors[1];
+
+            buttonText.alignment = TextAlignmentOptions.Center;
+            buttonText.fontStyle = activeFontStyle;
+            buttonText.enableAutoSizing = true;
+            buttonText.fontSizeMin = 0;
+
+            RectTransform textTransform = buttonText.GetComponent<RectTransform>();
+            textTransform.localPosition = Vector3.zero;
+            textTransform.sizeDelta = new Vector2(.2f, .03f * (ButtonDistance / 0.1f));
+            if (noAutoSizeText)
+                textTransform.sizeDelta = new Vector2(9f, 0.015f);
+
+            if (hideTextOnCamera)
+                textTransform.gameObject.layer = 19;
+
+            textTransform.localPosition = thinMenu ? new Vector3(.064f, increment ? -0.12f : 0.12f, .111f - offset / 2.6f) : new Vector3(.064f, increment ? -0.18f : 0.18f, .111f - offset / 2.6f);
+            textTransform.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
+
+            FollowMenuSettings(buttonText);
+        }
+
+        public static void AddPageButtons()
+        {
+            ExtGradient Gradient = buttonColors[swapButtonColors ? 1 : 0];
+
+            switch (pageButtonType)
+            {
+                case 1:
+                    CreatePageButtonPair(
+                        "PreviousPage", "NextPage",
+                        new Vector3(0.09f, 0.2f, 0.9f),
+                        new Vector3(0.56f, thinMenu ? 0.65f : 0.9f, 0f),
+                        new Vector3(0.56f, thinMenu ? -0.65f : -0.9f, 0f),
+                        new Vector3(0.064f, thinMenu ? 0.195f : 0.267f, 0f),
+                        new Vector3(0.064f, thinMenu ? -0.195f : -0.267f, 0f),
+                        Gradient
+                    );
+                    break;
+
+                case 2:
+                    CreatePageButtonPair(
+                        "PreviousPage", "NextPage",
+                        new Vector3(0.09f, thinMenu ? 0.9f : 1.3f, ButtonDistance * 0.8f),
+                        new Vector3(0.56f, 0f, 0.28f - ButtonDistance * (buttonOffset - 2)),
+                        new Vector3(0.56f, 0f, 0.28f - ButtonDistance * (buttonOffset - 1)),
+                        new Vector3(0.064f, 0f, 0.109f - ButtonDistance * (buttonOffset - 2) / 2.55f),
+                        new Vector3(0.064f, 0f, 0.109f - ButtonDistance * (buttonOffset - 1) / 2.55f),
+                        Gradient
+                    );
+                    break;
+
+                case 5:
+                    CreatePageButtonPair(
+                        "PreviousPage", "NextPage",
+                        new Vector3(0.09f, hideTitle ? 0.1f : 0.3f, 0.05f),
+                        new Vector3(0.56f, (thinMenu ? 0.299f : 0.499f) + (hideTitle ? 0.1f : 0f), 0.355f + (hideTitle ? 0.1f : 0f)),
+                        new Vector3(0.56f, (thinMenu ? -0.299f : -0.499f) - (hideTitle ? 0.1f : 0f), 0.355f + (hideTitle ? 0.1f : 0f)),
+                        new Vector3(0.064f, (thinMenu ? 0.09f : 0.15f) + (hideTitle ? 0.035f : 0f), 0.135f + (hideTitle ? 0.0375f : 0f)),
+                        new Vector3(0.064f, (thinMenu ? -0.09f : -0.15f) - (hideTitle ? 0.035f : 0f), 0.135f + (hideTitle ? 0.0375f : 0f)),
+                        Gradient
+                    );
+                    break;
+
+                case 6:
+                    CreatePageButtonPair(
+                        "PreviousPage", "NextPage",
+                        new Vector3(0.09f, 0.102f, 0.08f),
+                        new Vector3(0.56f, thinMenu ? 0.450f : 0.7f, -0.58f),
+                        new Vector3(0.56f, thinMenu ? 0.450f : 0.7f, -0.58f) - new Vector3(0f, 0.16f, 0f),
+                        new Vector3(0.064f, thinMenu ? 0.35f / 2.6f : 0.54444444444f / 2.6f, -0.58f / 2.7f),
+                        new Vector3(0.064f, thinMenu ? 0.35f / 2.6f : 0.54444444444f / 2.6f, -0.58f / 2.7f) - new Vector3(0f, 0.0475f, 0f),
+                        Gradient,
+                        new Vector2(0.03f, 0.03f)
+                    );
+                    break;
+            }
+        }
+
+        public static void CreatePageButtonPair(string prevButtonName, string nextButtonName, Vector3 buttonScale, Vector3 prevButtonPos, Vector3 nextButtonPos, Vector3 prevTextPos, Vector3 nextTextPos, ExtGradient color, Vector2? textSize = null)
+        {
+            AdvancedAddButton(prevButtonName, buttonScale, prevButtonPos, prevTextPos, color, textSize, 0);
+            AdvancedAddButton(nextButtonName, buttonScale, nextButtonPos, nextTextPos, color, textSize, 1);
+        }
+
+        public static GameObject AdvancedAddButton(string buttonName, Vector3 scale, Vector3 position, Vector3 textPosition, ExtGradient color, Vector2? textSize, int arrowIndex)
+        {
+            GameObject button = GameObject.CreatePrimitive(PrimitiveType.Cube);
+
+            if (!UI.IsKeyboardHeld())
+                button.layer = 2;
+
+            button.GetComponent<BoxCollider>().isTrigger = true;
+            button.transform.parent = menu.transform;
+            button.transform.rotation = Quaternion.identity;
+            button.transform.localScale = scale;
+            button.transform.localPosition = position;
+
+            button.AddComponent<ButtonCollider>().relatedText = buttonName;
+
+            if (lastClickedName != buttonName)
+            {
+                ObjectColors colorChanger = button.AddComponent<ObjectColors>();
+                colorChanger.colors = color;
+            }
+            else
+                Coroutines.instance.StartCoroutine(ButtonClick(-99, button.GetComponent<Renderer>()));
+
+            TextMeshPro text = new GameObject { transform = { parent = canvasObj.transform } }.AddComponent<TextMeshPro>();
+            text.font = activeFont;
+            text.text = arrowTypes[arrowType][arrowIndex];
+            text.fontSize = 1;
+            text.alignment = TextAlignmentOptions.Center;
+            text.enableAutoSizing = true;
+            text.fontSizeMin = 0;
+            text.spriteAsset = ButtonSpriteSheet;
+
+            text.AddComponent<UIColors>().colors = textColors[1];
+
+            RectTransform textRect = text.GetComponent<RectTransform>();
+            textRect.sizeDelta = textSize ?? new Vector2(0.2f, 0.03f);
+
+            if (arrowType == 11)
+                textRect.sizeDelta = new Vector2(textRect.sizeDelta.x, textRect.sizeDelta.y * 6f);
+
+            if (noAutoSizeText)
+                textRect.sizeDelta = new Vector2(9f, 0.015f);
+
+            if (hideTextOnCamera)
+                textRect.gameObject.layer = 19;
+
+            textRect.localPosition = textPosition;
+            textRect.rotation = Quaternion.Euler(new Vector3(180f, 90f, 90f));
+
+            FollowMenuSettings(text);
+            FollowMenuSettings(button, !swapButtonColors);
+
+            return button;
+        }
+        public static Material updateMat;
+        public static Material returnMat;
+        public static Material debugMat;
+        public static Material donateMat;
+
+        public static Material cannabisMat;
+        public static Texture2D cann;
+        public static Texture2D pride;
+        public static Texture2D trans;
+        public static Texture2D gay;
+        public static Texture2D returnIcon;
+        public static Texture2D debugIcon;
+        public static Texture2D donateIcon;
+        public static Texture2D updateIcon;
     }
 }

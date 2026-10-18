@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Core;
 using Qubit.Backend;
 using Qubit.Modules;
 using System;
@@ -237,6 +238,7 @@ namespace Qubit.Frontend.Resources
             };
         }
 
+        [RunOnLaunch(1)]
         public static void Initialize()
         {
             Register();

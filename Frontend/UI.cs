@@ -94,28 +94,22 @@ namespace Qubit.Frontend
             textInput = canvas.Find("ControlUI/TextInput")?.GetComponent<TMP_InputField>();
 
             Button queueButton = canvas.Find("ControlUI/QueueButton")?.GetComponent<Button>();
-            if (queueButton != null)
-                queueButton.onClick.AddListener(() => Modules.Categories.Room.QueueRoom(textInput?.text ?? ""));
+            queueButton?.onClick.AddListener(() => Modules.Categories.Room.QueueRoom(textInput?.text ?? ""));
 
             Button joinButton = canvas.Find("ControlUI/JoinButton")?.GetComponent<Button>();
-            if (joinButton != null)
-                joinButton.onClick.AddListener(() => ManagerRegistry.PhotonNetworkController?.AttemptToJoinSpecificRoom(textInput?.text ?? "", JoinType.Solo));
+            joinButton?.onClick.AddListener(() => ManagerRegistry.PhotonNetworkController?.AttemptToJoinSpecificRoom(textInput?.text ?? "", JoinType.Solo));
 
             Button colorButton = canvas.Find("ControlUI/ColorButton")?.GetComponent<Button>();
-            if (colorButton != null)
-            {
-                colorButton.onClick.AddListener(() =>
+            colorButton?.onClick.AddListener(() =>
                 {
                     if (byte.TryParse(r?.text, out byte red) &&
                         byte.TryParse(g?.text, out byte green) &&
                         byte.TryParse(b?.text, out byte blue))
                         ChangeColor(new Color32(red, green, blue, 255));
                 });
-            }
 
             Button nameButton = canvas.Find("ControlUI/NameButton")?.GetComponent<Button>();
-            if (nameButton != null)
-                nameButton.onClick.AddListener(() => ChangeName(textInput?.text ?? ""));
+            nameButton?.onClick.AddListener(() => ChangeName(textInput?.text ?? ""));
 
             TMP_InputField inputField = debugUI?.transform.Find("TextInput")?.gameObject.GetComponent<TMP_InputField>();
 
@@ -625,11 +619,11 @@ namespace Qubit.Frontend
                         References.LocalRig.transform.position + References.LocalRig.transform.forward * 1.2f
                     };
 
-                    TPC.transform.position = pcPositions[pcbg];
-                    if (pcbg != 4 && pcbg != 0)
+                    TPC.transform.position = pcPositions[pcBackgroundIndex];
+                    if (pcBackgroundIndex != 4 && pcBackgroundIndex != 0)
                         TPC.transform.rotation = Quaternion.identity;
 
-                    if (pcbg == 5)
+                    if (pcBackgroundIndex == 5)
                     {
                         if (pcBackground == null)
                         {
@@ -676,13 +670,13 @@ namespace Qubit.Frontend
         }
 
         public static bool IsKeyboardCondition() =>
-            (!QubitDesktopOverlay.IsInputFocused && UnityInput.GetKey(Key.Q)) || (inTextInput && isKeyboardPc);
+            (!QubitDesktopOverlay.IsInputFocused && UnityInput.GetKey(Settings.KeyboardBind)) || (inTextInput && isKeyboardPc);
 
         public static bool IsKeyboardActive() =>
-            UnityInput.GetKey(Key.Q) || isKeyboardPc;
+            UnityInput.GetKey(Settings.KeyboardBind) || isKeyboardPc;
 
         public static bool IsKeyboardHeld() =>
-            UnityInput.GetKey(Key.Q) || (inTextInput && isKeyboardPc);
+            UnityInput.GetKey(Settings.KeyboardBind) || (inTextInput && isKeyboardPc);
 
         public static void AimGunAtMouse(out RaycastHit hit, ref Vector3 direction)
         {
