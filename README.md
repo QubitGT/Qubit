@@ -1,7 +1,7 @@
 <p align="center">
   <br><br>
   <a href="#"><img src="Resources/GitHub/title.png" width="700"></a>
-  <br><sub>Forked from ii's Stupid Menu</sub><br>
+  <br><sub>Forked from Seralyth, ii's Stupid Menu</sub><br>
 </p>
 
 ---
