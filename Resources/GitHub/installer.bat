@@ -59,7 +59,7 @@ curl https://github.com/QubitGT/Qubit/raw/refs/heads/master/Resources/GitHub/Bep
 
 cls
 title Qubit Menu Installer // [#######---] Downloading menu
-for /f "tokens=*" %%i in ('powershell -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/Qubit/Qubit-Menu/releases/latest').assets | Where-Object { $_.name -like '*.dll' } | Select-Object -ExpandProperty browser_download_url"') do (
+for /f "tokens=*" %%i in ('powershell -Command "(Invoke-RestMethod -Uri 'https://api.github.com/repos/QubitGT/Qubit/releases/latest').assets | Where-Object { $_.name -like '*.dll' } | Select-Object -ExpandProperty browser_download_url"') do (
     set pluginUrl=%%i
 )
 
