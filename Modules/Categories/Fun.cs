@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Libraries.Entities;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
 using GorillaGameModes;
@@ -317,7 +318,6 @@ namespace Qubit.Modules.Categories
         public static List<string> ownedArchive;
         public static List<string> tryOnCosmetics;
 
-
         public static float delay;
 
         private static float delayonhold;
@@ -345,13 +345,6 @@ namespace Qubit.Modules.Categories
         public static Dictionary<string, int> ObjectByName { get => GameEntityManager.itemPrefabFactory.ToDictionary(prefab => prefab.Value.name, prefab => prefab.Key); }
 
         public static string textToRender;
-
-        public static Dictionary<string, int> GadgetByName
-        {
-            get =>
-                GameEntityManager.itemPrefabFactory
-                .ToDictionary(prefab => prefab.Value.name, prefab => prefab.Key);
-        }
 
         public static float lucyDelay;
 
@@ -483,7 +476,7 @@ namespace Qubit.Modules.Categories
             References.LocalRig.enabled = true;
         }
 
-        public static void BetaWaterSplash(Vector3 splashPosition, Quaternion splashRotation, float splashScale = 4, float boundingRadius = 100f, bool bigSplash = true, bool enteringWater = false, object general = null, bool bypassDelay = false)
+        public static void WaterSplash(Vector3 splashPosition, Quaternion splashRotation, float splashScale = 4, float boundingRadius = 100f, bool bigSplash = true, bool enteringWater = false, object general = null, bool bypassDelay = false)
         {
             if (CanCallWaterSplashNow() || bypassDelay)
             {
@@ -547,7 +540,7 @@ namespace Qubit.Modules.Categories
         {
             if (Time.time > splashDel && (rightGrab || leftGrab))
             {
-                BetaWaterSplash(rightGrab ? References.RightHand.position : References.LeftHand.position, rightGrab ? References.RightHand.rotation : References.LeftHand.rotation);
+                WaterSplash(rightGrab ? References.RightHand.position : References.LeftHand.position, rightGrab ? References.RightHand.rotation : References.LeftHand.rotation);
                 splashDel = Time.time + 0.1f;
             }
         }
@@ -563,7 +556,7 @@ namespace Qubit.Modules.Categories
                         Vector3 splashPosition = lockTarget.rightMiddle.calcT > 0.5f ? lockTarget.rightHandTransform.position : lockTarget.leftHandTransform.position;
                         Quaternion splashRotation = lockTarget.rightMiddle.calcT > 0.5f ? lockTarget.rightHandTransform.rotation : lockTarget.leftHandTransform.rotation;
 
-                        BetaWaterSplash(splashPosition, splashRotation);
+                        WaterSplash(splashPosition, splashRotation);
                         splashDel = Time.time + 0.1f;
                     }
                 }
@@ -594,16 +587,16 @@ namespace Qubit.Modules.Categories
         }
 
         public static void WaterSplashAura() =>
-            BetaWaterSplash(References.LocalRig.transform.position + RandomVector3(2f), RandomQuaternion());
+            WaterSplash(References.LocalRig.transform.position + RandomVector3(2f), RandomQuaternion());
 
         public static void OrbitWaterSplash() =>
-            BetaWaterSplash(References.HeadCollider.transform.position + new Vector3(MathF.Cos((float)Time.frameCount / 30), 1f, MathF.Sin((float)Time.frameCount / 30)), RandomQuaternion());
+            WaterSplash(References.HeadCollider.transform.position + new Vector3(MathF.Cos((float)Time.frameCount / 30), 1f, MathF.Sin((float)Time.frameCount / 30)), RandomQuaternion());
 
         public static void WaterSplashGun()
         {
             GunLibrary.Point(NewPointer =>
             {
-                BetaWaterSplash(NewPointer.transform.position, RandomQuaternion());
+                WaterSplash(NewPointer.transform.position, RandomQuaternion());
             });
         }
 
@@ -615,7 +608,7 @@ namespace Qubit.Modules.Categories
                 {
                     References.LocalRig.transform.position = rig.transform.position;
                     SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { rig.Creator.ActorNumber } });
-                    BetaWaterSplash(rig.head.rigTarget.position, RandomQuaternion(), bypassDelay: true);
+                    WaterSplash(rig.head.rigTarget.position, RandomQuaternion(), bypassDelay: true);
                 }
             }
         }
@@ -624,7 +617,7 @@ namespace Qubit.Modules.Categories
         {
             foreach (VRRig rig in Players.ActiveRigs)
                 if (!rig.IsLocal() && rig.IsBeingTouched())
-                    BetaWaterSplash(rig.head.rigTarget.position, RandomQuaternion());
+                    WaterSplash(rig.head.rigTarget.position, RandomQuaternion());
         }
 
         public static void WaterSplashWalk()
@@ -632,12 +625,12 @@ namespace Qubit.Modules.Categories
             if (References.Player.IsHandTouching(true))
             {
                 RaycastHit ray = References.Player.lastHitInfoHand;
-                BetaWaterSplash(References.LeftHand.position, Quaternion.Euler(ray.normal));
+                WaterSplash(References.LeftHand.position, Quaternion.Euler(ray.normal));
             }
             else if (References.Player.IsHandTouching(false))
             {
                 RaycastHit ray = References.Player.lastHitInfoHand;
-                BetaWaterSplash(References.RightHand.position, Quaternion.Euler(ray.normal));
+                WaterSplash(References.RightHand.position, Quaternion.Euler(ray.normal));
             }
         }
         public static void Boop(int sound = 84)
@@ -979,7 +972,6 @@ namespace Qubit.Modules.Categories
         public static void ApplyTargetFOV(int level) =>
             targetFOV = 70 + (level * 10);
 
-
         public static void CameraFOV()
         {
             if (TPC != null)
@@ -1248,7 +1240,6 @@ namespace Qubit.Modules.Categories
                     disableMethod = () => ReloadModsToSpoof(mod.Key, mod.Value, false),
                     toolTip = $"Show that you are using the mod {mod.Value} to other players."
                 }));
-
 
                 Manager.modules["Mod List"] = modList.ToArray();
                 Manager.CurrentCategoryName = "Mod List";
@@ -1581,7 +1572,6 @@ namespace Qubit.Modules.Categories
 
         public static void ApplyCustomQuestScore(int index) => targetQuestScore = index;
 
-
         public static void GrabIDCard()
         {
             if (rightGrab)
@@ -1722,7 +1712,6 @@ namespace Qubit.Modules.Categories
 
             if (VoiceRecorder.enabled)
                 Voices.Get().SamplingRate = samplingRate;
-
 
             Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
         }
@@ -2427,13 +2416,13 @@ namespace Qubit.Modules.Categories
                         }
                     case 4:
                     case 5:
-                        BetaDropBoard(References.RightHand.position, References.RightHand.rotation, GetGunDirection(References.RightHand) * ShootStrength, Vector3.zero, RandomColor());
+                        DropBoard(References.RightHand.position, References.RightHand.rotation, GetGunDirection(References.RightHand) * ShootStrength, Vector3.zero, RandomColor());
                         break;
                     case 6:
-                        Projectiles.SendProjectile(Projectiles.GetAll()[Random.Range(0, Projectiles.GetAll().Count)], References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength, RandomColor());
+                        Projectiles.SendProjectile(ThrowableProjectiles.GetAll()[Random.Range(0, ThrowableProjectiles.GetAll().Count)], References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength, RandomColor());
                         break;
                     case 7:
-                        Projectiles.SendProjectile(Projectiles.GetGrowingSnowballProjectileEntry(), References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength);
+                        Projectiles.SendProjectile(ThrowableProjectiles.GetGrowingSnowballProjectileEntry(), References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength);
                         break;
                 }
             }
@@ -3847,7 +3836,7 @@ namespace Qubit.Modules.Categories
         public static void SpamObjectGrip(int objectId)
         {
             if (rightGrab)
-                Overpowered.CreateItem(RpcTarget.All, objectId, References.RightHand.position, RandomQuaternion(), References.RightHand.forward * ShootStrength, Vector3.zero);
+                GameEntities.CreateItem(RpcTarget.All, objectId, References.RightHand.position, RandomQuaternion(), References.RightHand.forward * ShootStrength, Vector3.zero);
         }
 
         public static void SpamEntityGrip()
@@ -3872,7 +3861,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Point(NewPointer =>
             {
-                Overpowered.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero);
+                GameEntities.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero);
             });
         }
 
@@ -3885,38 +3874,38 @@ namespace Qubit.Modules.Categories
         public static void RainEntities()
         {
             int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
-            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, Vector3.down, Vector3.zero);
+            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, Vector3.down, Vector3.zero);
         }
 
         public static void EntityAura()
         {
             int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
-            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, Vector3.down, Vector3.zero);
+            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, Vector3.down, Vector3.zero);
         }
 
         public static void EntityFountain()
         {
             int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
-            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, RandomVector3(15f), Vector3.zero);
+            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, RandomVector3(15f), Vector3.zero);
         }
 
         public static void GhostReactorTextGun()
         {
             TextGun.Render(textToRender, position =>
-                Overpowered.CreateItems(RpcTarget.All, Enumerable.Repeat(ObjectByName["GhostReactorCollectibleFlower"], position.Count).ToArray(), position.ToArray(), Enumerable.Repeat(Quaternion.identity, position.Count).ToArray()));
+                GameEntities.CreateItems(RpcTarget.All, Enumerable.Repeat(ObjectByName["GhostReactorCollectibleFlower"], position.Count).ToArray(), position.ToArray(), Enumerable.Repeat(Quaternion.identity, position.Count).ToArray()));
         }
 
         public static void SuperInfectionTextGun()
         {
             TextGun.Render(textToRender, position =>
-                Overpowered.CreateItems(RpcTarget.All, Enumerable.Repeat(GadgetByName["SIGadgetDashYoyo"], position.Count).ToArray(), position.ToArray(), Enumerable.Repeat(Quaternion.identity, position.Count).ToArray(), null, ManagerRegistry.SuperInfection.GameEntityManager));
+                GameEntities.CreateItems(RpcTarget.All, Enumerable.Repeat(Gadgets.GadgetByName["SIGadgetDashYoyo"], position.Count).ToArray(), position.ToArray(), Enumerable.Repeat(Quaternion.identity, position.Count).ToArray(), null, ManagerRegistry.SuperInfection.GameEntityManager));
         }
 
         public static void GhostReactorDrawGun()
         {
             GunLibrary.Point(NewPointer =>
             {
-                Coroutines.instance.StartCoroutine(Overpowered.DrawSmallDelay(NewPointer.transform.position, ObjectByName["GhostReactorCollectibleCore"], ManagerRegistry.GhostReactor.GameEntityManager));
+                Coroutines.instance.StartCoroutine(GameEntities.DrawSmallDelay(NewPointer.transform.position, ObjectByName["GhostReactorCollectibleCore"], ManagerRegistry.GhostReactor.GameEntityManager));
             });
         }
 
@@ -3924,8 +3913,8 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Point(NewPointer =>
             {
-                int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
-                Coroutines.instance.StartCoroutine(Overpowered.DrawSmallDelay(NewPointer.transform.position, objectIds[Random.Range(0, objectIds.Length)], ManagerRegistry.SuperInfection.GameEntityManager));
+                int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
+                Coroutines.instance.StartCoroutine(GameEntities.DrawSmallDelay(NewPointer.transform.position, objectIds[Random.Range(0, objectIds.Length)], ManagerRegistry.SuperInfection.GameEntityManager));
             });
         }
         public static void DestroyEntityGun()
@@ -4039,20 +4028,20 @@ namespace Qubit.Modules.Categories
         public static void BlasterLaserSpam()
         {
             if (rightGrab)
-                Overpowered.BetaFireBlaster(References.RightHand.position, References.RightHand.forward);
+                Gadgets.FireBlaster(References.RightHand.position, References.RightHand.forward);
         }
 
         public static void BlasterFlingGun(Vector3 direction)
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.BetaFireBlaster(lockTarget.transform.position, direction.normalized);
+                Gadgets.FireBlaster(lockTarget.transform.position, direction.normalized);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void BlasterFlingAll(Vector3 direction)
         {
-            if (Overpowered.GetBlaster() == null)
+            if (Gadgets.GetBlaster() == null)
                 ViewSerialization.OverrideSerialization = null;
             else ViewSerialization.OverrideSerialization ??= () =>
             {
@@ -4078,7 +4067,7 @@ namespace Qubit.Modules.Categories
             foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
             {
                 VRRig targetRig = GetVRRigFromPlayer(Player);
-                Overpowered.BetaFireBlaster(targetRig.transform.position, direction, Player, true);
+                Gadgets.FireBlaster(targetRig.transform.position, direction, Player, true);
             }
         }
 
@@ -4086,13 +4075,13 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.BetaFireBlaster(lockTarget.transform.position, References.BodyCollider.transform.position - lockTarget.transform.position);
+                Gadgets.FireBlaster(lockTarget.transform.position, References.BodyCollider.transform.position - lockTarget.transform.position);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void BlasterFlingTowardsAll()
         {
-            if (Overpowered.GetBlaster() == null)
+            if (Gadgets.GetBlaster() == null)
                 ViewSerialization.OverrideSerialization = null;
             else ViewSerialization.OverrideSerialization ??= () =>
             {
@@ -4118,7 +4107,7 @@ namespace Qubit.Modules.Categories
             foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
             {
                 VRRig targetRig = GetVRRigFromPlayer(Player);
-                Overpowered.BetaFireBlaster(targetRig.transform.position, References.BodyCollider.transform.position - targetRig.transform.position, Player, true);
+                Gadgets.FireBlaster(targetRig.transform.position, References.BodyCollider.transform.position - targetRig.transform.position, Player, true);
             }
         }
 
@@ -4126,13 +4115,13 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.BetaFireBlaster(lockTarget.transform.position, lockTarget.transform.position - References.BodyCollider.transform.position);
+                Gadgets.FireBlaster(lockTarget.transform.position, lockTarget.transform.position - References.BodyCollider.transform.position);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void BlasterFlingAwayAll()
         {
-            if (Overpowered.GetBlaster() == null)
+            if (Gadgets.GetBlaster() == null)
                 ViewSerialization.OverrideSerialization = null;
             else ViewSerialization.OverrideSerialization ??= () =>
             {
@@ -4158,7 +4147,7 @@ namespace Qubit.Modules.Categories
             foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
             {
                 VRRig targetRig = GetVRRigFromPlayer(Player);
-                Overpowered.BetaFireBlaster(targetRig.transform.position, targetRig.transform.position - References.BodyCollider.transform.position, Player, true);
+                Gadgets.FireBlaster(targetRig.transform.position, targetRig.transform.position - References.BodyCollider.transform.position, Player, true);
             }
         }
 
@@ -4166,13 +4155,13 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.BetaFireBlaster(lockTarget.transform.position, lockTarget.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - lockTarget.transform.position).normalized : lockTarget.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left);
+                Gadgets.FireBlaster(lockTarget.transform.position, lockTarget.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - lockTarget.transform.position).normalized : lockTarget.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void BlasterKickAll()
         {
-            if (Overpowered.GetBlaster() == null)
+            if (Gadgets.GetBlaster() == null)
                 ViewSerialization.OverrideSerialization = null;
             else ViewSerialization.OverrideSerialization ??= () =>
             {
@@ -4198,7 +4187,7 @@ namespace Qubit.Modules.Categories
             foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
             {
                 VRRig targetRig = GetVRRigFromPlayer(Player);
-                Overpowered.BetaFireBlaster(targetRig.transform.position, targetRig.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - targetRig.transform.position).normalized : targetRig.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left, Player, true);
+                Gadgets.FireBlaster(targetRig.transform.position, targetRig.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - targetRig.transform.position).normalized : targetRig.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left, Player, true);
             }
         }
 
@@ -4206,13 +4195,13 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.BetaFireBlaster(lockTarget.transform.position, lockTarget.transform.position.y > 55f ? Vector3.right : Vector3.up);
+                Gadgets.FireBlaster(lockTarget.transform.position, lockTarget.transform.position.y > 55f ? Vector3.right : Vector3.up);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void BlasterCrashAll()
         {
-            if (Overpowered.GetBlaster() == null)
+            if (Gadgets.GetBlaster() == null)
                 ViewSerialization.OverrideSerialization = null;
             else ViewSerialization.OverrideSerialization ??= () =>
             {
@@ -4238,7 +4227,7 @@ namespace Qubit.Modules.Categories
             foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
             {
                 VRRig targetRig = GetVRRigFromPlayer(Player);
-                Overpowered.BetaFireBlaster(targetRig.transform.position, targetRig.transform.position.y > 55f ? Vector3.right : Vector3.up, Player, true);
+                Gadgets.FireBlaster(targetRig.transform.position, targetRig.transform.position.y > 55f ? Vector3.right : Vector3.up, Player, true);
             }
         }
 
@@ -4249,7 +4238,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null && lockTarget.Distance(References.BodyCollider.transform.position) > 0.5f)
-                    Overpowered.BetaFireBlaster(lockTarget.transform.position, References.BodyCollider.transform.position - lockTarget.transform.position);
+                    Gadgets.FireBlaster(lockTarget.transform.position, References.BodyCollider.transform.position - lockTarget.transform.position);
 
                 if (GetGunInput(true))
                 {
@@ -4270,56 +4259,56 @@ namespace Qubit.Modules.Categories
         public static void SpamGadgetGrip(int objectId)
         {
             if (rightGrab)
-                Overpowered.CreateItem(RpcTarget.All, objectId, References.RightHand.position, RandomQuaternion(), References.RightHand.forward * ShootStrength, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                GameEntities.CreateItem(RpcTarget.All, objectId, References.RightHand.position, RandomQuaternion(), References.RightHand.forward * ShootStrength, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
         }
 
         public static void SpamGadgetGun(int objectId)
         {
             GunLibrary.Point(NewPointer =>
             {
-                Overpowered.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                GameEntities.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
             });
         }
 
         public static void GadgetSpamGrip()
         {
-            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
+            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
             SpamGadgetGrip(objectIds[Random.Range(0, objectIds.Length)]);
         }
 
         public static void GadgetSpamGun()
         {
-            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
+            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
             SpamGadgetGun(objectIds[Random.Range(0, objectIds.Length)]);
         }
 
         public static void RainGadgets()
         {
-            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
-            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, Vector3.down, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
+            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, Vector3.down, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
         }
 
         public static void GadgetAura()
         {
-            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
-            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, Vector3.down, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
+            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, Vector3.down, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
         }
 
         public static void GadgetFountain()
         {
-            int[] objectIds = GadgetByName.Select(element => element.Value).ToArray();
-            Overpowered.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, RandomVector3(15f), Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
+            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, RandomVector3(15f), Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
         }
 
         public static void ResourceSpamGrip()
         {
-            int[] objectIds = GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
+            int[] objectIds = Gadgets.GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
             SpamGadgetGrip(objectIds[Random.Range(0, objectIds.Length)]);
         }
 
         public static void ResourceSpamGun()
         {
-            int[] objectIds = GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
+            int[] objectIds = Gadgets.GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
             SpamGadgetGun(objectIds[Random.Range(0, objectIds.Length)]);
         }
 
@@ -4362,8 +4351,6 @@ namespace Qubit.Modules.Categories
                 }
             });
         }
-
-        
 
         public static void SpawnBlueLucy()
         {
@@ -4572,6 +4559,35 @@ namespace Qubit.Modules.Categories
             else Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
 
+        private static float? originalLabDoorSpeed;
+        private static float? originalLabSingleDoorSpeed;
+
+        public static void InstantLabDoors()
+        {
+            foreach (GhostLab lab in GetAllType<GhostLab>())
+            {
+                originalLabDoorSpeed ??= lab.doorMoveSpeed;
+                originalLabSingleDoorSpeed ??= lab.singleDoorMoveSpeed;
+
+                lab.doorMoveSpeed = 99f;
+                lab.singleDoorMoveSpeed = 99f;
+            }
+        }
+
+        public static void SlowLabDoors()
+        {
+            if (originalLabDoorSpeed == null)
+                return;
+
+            foreach (GhostLab lab in GetAllType<GhostLab>())
+            {
+                lab.doorMoveSpeed = originalLabDoorSpeed.Value;
+                lab.singleDoorMoveSpeed = originalLabSingleDoorSpeed.Value;
+            }
+
+            originalLabDoorSpeed = originalLabSingleDoorSpeed = null;
+        }
+
         public static void SlowLucy()
         {
             HalloweenGhostChaser hgc = Overpowered.Lucy;
@@ -4585,7 +4601,7 @@ namespace Qubit.Modules.Categories
             GunLibrary.Aim(GunData =>
             {
                 if (GetGunInput(true))
-                Projectiles.SendBarrelProjectile(GunData.NewPointer.transform.position + Vector3.up, Vector3.zero, Quaternion.identity);
+                ThrowableProjectiles.SendBarrelProjectile(GunData.NewPointer.transform.position + Vector3.up, Vector3.zero, Quaternion.identity);
             });
         }
 
@@ -4659,7 +4675,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-
         public static void PlayAudio(string file)
         {
             if (Networking.InRoom)
@@ -4671,7 +4686,6 @@ namespace Qubit.Modules.Categories
             }
         }
         #endregion
-
 
         /*
         public static string consoleTyped = "";

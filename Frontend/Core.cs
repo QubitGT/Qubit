@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Libraries.Entities;
 using Qubit.Core;
 using GorillaExtensions;
 using HarmonyLib;
@@ -258,8 +259,8 @@ namespace Qubit.Frontend
                 
                 Watches.ForEach(watch => watch.Update());
 
-                
-                Projectiles.LoadProjectileCache();
+                // Load projectiles
+                ThrowableProjectiles.LoadProjectileCache();
 
                 
                 if (disorganized && Manager.CurrentCategoryName != "Main")
@@ -1141,7 +1142,6 @@ result = result.Where(b => b.legal || b.label);
                         catch { }
                     }
                 }
-
 
                 Destroy(menu, 5f);
                 menu = null;

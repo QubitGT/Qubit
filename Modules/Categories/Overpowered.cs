@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Libraries.Entities;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
 using GorillaGameModes;
@@ -90,8 +91,6 @@ namespace Qubit.Modules.Categories
         public static long? id;
         public static float setMapDelay;
 
-        public const int ItemCrashCount = 500;
-
         public static int masterVisualizationType;
         public static readonly string[] VisualizationTypeNames = { "Sphere", "Cube", "Tracer" };
 
@@ -104,31 +103,39 @@ namespace Qubit.Modules.Categories
 
         public static float resourceIncrementDelay;
 
-        public static int? spawnedNetId;
-        public static int spawnedFrame;
-
-        public static float blasterDelay;
-        public static Coroutine BlasterCoroutine;
-
-        public static readonly Dictionary<NetPlayer, float> perPlayerDictionary = new Dictionary<NetPlayer, float>();
-
         public static HalloweenGhostChaser _lucy;
+        private static float nextLucySearchTime;
         public static HalloweenGhostChaser Lucy
         {
             get
             {
-                _lucy ??= GameObject.Find("Environment Objects/05Maze_PersistentObjects/Ghosts/Halloween Ghost/FloatingChaseSkeleton").GetComponent<HalloweenGhostChaser>();
+                bool needsSearch = _lucy == null || _lucy.GetView.ViewID == 0 || (Networking.IsMasterClient && !_lucy.IsMine);
+                if (needsSearch && Time.time > nextLucySearchTime)
+                {
+                    nextLucySearchTime = Time.time + 5f;
+
+                    GameObject lucyObject = GameObject.Find("Environment Objects/05Maze_PersistentObjects/2025_Halloween1_PersistentObjects/Halloween Ghosts/Lucy/Halloween Ghost/FloatingChaseSkeleton");
+
+                    // Fall back to whichever spawned ghost we own (or is active) if the scene path changes again
+                    _lucy = lucyObject != null
+                        ? lucyObject.GetComponent<HalloweenGhostChaser>()
+                        : GetAllType<HalloweenGhostChaser>()
+                            .Where(ghost => ghost != null && ghost.HasView && ghost.GetView.ViewID != 0)
+                            .OrderByDescending(ghost => ghost.IsMine)
+                            .ThenBy(ghost => ghost.gameObject.activeInHierarchy ? 0 : 1)
+                            .FirstOrDefault();
+                }
+
                 return _lucy;
             }
             set => _lucy = value;
         }
 
-        private static float grabDelay = 0;
+        public static HalloweenGhostChaser GetChaser() => Lucy;
 
         private static float releaseDelay;
 
         private static float flingDelay;
-
 
         private static float antiReportFlingDelay;
 
@@ -184,18 +191,6 @@ namespace Qubit.Modules.Categories
                     1 => new object[] { float.NaN },
                     _ => default,
                 };
-            }
-        }
-
-        public static bool GrabStatus
-        {
-            get => HandLink.enabled;
-            set
-            {
-                HandLink.enabled = value;
-
-                if (!value && !References.LocalRig.enabled)
-                    References.LocalRig.enabled = true;
             }
         }
 
@@ -393,7 +388,7 @@ namespace Qubit.Modules.Categories
                     if (!tgi.manager || !tgi.manager.photonView) continue;
                     foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal && Vector3.Distance(rig.transform.position, tgi.transform.position) < 2f && Time.time > guardianProtectorDelay))
                     {
-                        BetaSetVelocityPlayer(rig.GetPlayer(), (rig.transform.position - tgi.transform.position).normalized * 50f);
+                        SetVelocityPlayer(rig.GetPlayer(), (rig.transform.position - tgi.transform.position).normalized * 50f);
                         guardianProtectorDelay = Time.time + 0.1f;
                     }
                 }
@@ -406,7 +401,7 @@ namespace Qubit.Modules.Categories
             {
                 crashAllDelay = Time.time + 0.1f;
                 VRRig rig = GetVRRigFromPlayer(target);
-                BetaSetVelocityPlayer(target, rig.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - rig.transform.position).normalized * 50f : rig.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left * 50f);
+                SetVelocityPlayer(target, rig.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - rig.transform.position).normalized * 50f : rig.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left * 50f);
                 RPCProtection();
             }
         }
@@ -417,7 +412,7 @@ namespace Qubit.Modules.Categories
                 if (Time.time > crashAllDelay)
                 {
                     crashAllDelay = Time.time + 0.1f;
-                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), lockTarget.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - lockTarget.transform.position).normalized * 50f : lockTarget.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left * 50f);
+                    SetVelocityPlayer(lockTarget.GetPlayer(), lockTarget.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - lockTarget.transform.position).normalized * 50f : lockTarget.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left * 50f);
                     RPCProtection();
                 }
             }, new GunLibrary.GunSettings { locks = true });
@@ -430,7 +425,7 @@ namespace Qubit.Modules.Categories
                 crashAllDelay = Time.time + 0.1f;
                 foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
                 {
-                    BetaSetVelocityPlayer(rig.GetPlayer(), rig.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - rig.transform.position).normalized * 50f : rig.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left * 50f);
+                    SetVelocityPlayer(rig.GetPlayer(), rig.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - rig.transform.position).normalized * 50f : rig.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left * 50f);
                     RPCProtection();
                 }
             }
@@ -443,7 +438,7 @@ namespace Qubit.Modules.Categories
             {
                 crashAllDelay = Time.time + 0.1f;
 
-                BetaSetVelocityPlayer(target, (rig.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
+                SetVelocityPlayer(target, (rig.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
                 RPCProtection();
             }
         }
@@ -455,7 +450,7 @@ namespace Qubit.Modules.Categories
                 if (Time.time > crashAllDelay && lockTarget.transform.position.x < -5)
                 {
                     crashAllDelay = Time.time + 0.1f;
-                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), (lockTarget.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
+                    SetVelocityPlayer(lockTarget.GetPlayer(), (lockTarget.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
                     RPCProtection();
                 }
             }, new GunLibrary.GunSettings { locks = true });
@@ -468,7 +463,7 @@ namespace Qubit.Modules.Categories
                 crashAllDelay = Time.time + 0.1f;
                 foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal && rig.transform.position.x < -5))
                 {
-                    BetaSetVelocityPlayer(rig.GetPlayer(), (rig.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
+                    SetVelocityPlayer(rig.GetPlayer(), (rig.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
                     RPCProtection();
                 }
             }
@@ -485,27 +480,6 @@ namespace Qubit.Modules.Categories
             }
 
             ManagerRegistry.VirtualStumpSerializer.photonView.OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
-        }
-        public static void GameEntityCrash(GameEntityManager manager, object target, Vector3? targetPosition = null)
-        {
-            if (manager == null)
-                return;
-
-            targetPosition ??= References.BodyCollider.transform.position;
-
-            int[] objectIds = GameEntityManager.itemPrefabFactory.Keys.ToArray();
-            int[] ids = new int[ItemCrashCount];
-            Vector3[] positions = new Vector3[ItemCrashCount];
-            Quaternion[] rotations = new Quaternion[ItemCrashCount];
-
-            for (int i = 0; i < ItemCrashCount; i++)
-            {
-                ids[i] = objectIds[Random.Range(0, objectIds.Length)];
-                positions[i] = targetPosition.Value;
-                rotations[i] = Quaternion.identity;
-            }
-
-            CreateItems(target, ids, positions, rotations, manager: manager);
         }
         public static void ApplyMasterVisualizationType(int index) => masterVisualizationType = index;
 
@@ -651,477 +625,12 @@ namespace Qubit.Modules.Categories
             {
                 crashAllDelay = Time.time + 0.1f;
                 VRRig rig = GetVRRigFromPlayer(target);
-                BetaSetVelocityPlayer(target, (rig.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
+                SetVelocityPlayer(target, (rig.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
                 RPCProtection();
             }
         }
 
-
-        public static void GiveFlyOnGrab()
-        {
-            foreach (VRRig rig in Players.ActiveRigs)
-            {
-                if (!rig.isLocal)
-                {
-                    if (rig.leftHandLink.grabbedPlayer == Networking.LocalPlayer || rig.rightHandLink.grabbedPlayer == Networking.LocalPlayer)
-                    {
-                        bool grabbedOnLeft = References.LocalRig.leftHandLink.grabbedPlayer == rig.GetPlayer();
-                        if (grabbedOnLeft ? rig.leftIndex.calcT > 0 : rig.rightIndex.calcT > 0)
-                        {
-                            References.Player.transform.position += rig.headMesh.transform.forward * (Time.deltaTime * Movement.FlySpeed);
-                            References.Rigidbody.linearVelocity = Vector3.zero;
-                        }
-                    }
-                }
-            }
-        }
-
-
-
-        public static void ForceGrab(Vector3 targetTransform)
-        {
-            foreach (VRRig rig in Players.ActiveRigs)
-                ForceGrab(rig, targetTransform);
-        }
-
-        public static bool ForceGrab(VRRig rig, Vector3 targetTransform, bool returnOnGrab = false, bool enableRigOnceDone = false)
-        {
-            if (rig == null || rig.IsLocal()) return false;
-
-            bool isLeftHand = rig.IsLeftHandGrabbable();
-            bool isRightHand = rig.IsRightHandGrabbable();
-
-            if (!isLeftHand && !isRightHand)
-            {
-                References.LocalRig.enabled = true;
-                return false;
-            }
-
-            References.LocalRig.enabled = false;
-            References.LocalRig.transform.position = rig.syncPos;
-
-            var localLink = isLeftHand ? References.LocalRig.leftHandLink : References.LocalRig.rightHandLink;
-            var remoteLink = isLeftHand ? rig.leftHandLink : rig.rightHandLink;
-
-            if (remoteLink.grabbedPlayer != Networking.LocalPlayer)
-            {
-                if (grabDelay == 0)
-                    grabDelay = remoteLink.rejectGrabsUntilTimestamp > Time.time ? remoteLink.rejectGrabsUntilTimestamp : Time.time + 1f;
-
-                if (Time.time > grabDelay)
-                {
-                    localLink.TentacleTryCreateLink(remoteLink);
-                    References.LocalRig.transform.position = targetTransform;
-                    Notifications.SendFormat("purple", "MENU", "Tried to grab " + rig.GetPlayer().NickName + ".");
-                    grabDelay = remoteLink.rejectGrabsUntilTimestamp > Time.time ? remoteLink.rejectGrabsUntilTimestamp : Time.time + 1f;
-                }
-            }
-            else if (returnOnGrab)
-            {
-                if (enableRigOnceDone && !References.LocalRig.enabled)
-                    References.LocalRig.enabled = true;
-                return true;
-            }
-
-            return false;
-        }
-
-
-        public static void FlingOnGrab()
-        {
-            if (References.LocalRig.IsBeingHeld())
-            {
-                Transform transform = References.LocalRig.leftHandLink.IsLinkActive() ? References.LocalRig.leftHandTransform : References.LocalRig.rightHandTransform;
-                VRRig rig = References.LocalRig.leftHandLink.grabbedPlayer.VRRig() ?? References.LocalRig.rightHandLink.grabbedPlayer.VRRig();
-                Vector3 velocity = rig.transform.up * 3f;
-                rig.GetNetView().SendRPC("DroppedByPlayer", rig.GetPlayer(), velocity);
-            }
-        }
-
-        public static void CreateItem(object target, int hash, Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 angVelocity, long sendData = 0L, GameEntityManager manager = null)
-        {
-            GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;
-            if (Networking.IsMasterClient)
-            {
-                if (gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
-                {
-                    int netId = gameEntityManager.CreateTypeNetId(hash);
-
-                    if (target is NetPlayer netPlayer)
-                        target = NetPlayerToPlayer(netPlayer);
-
-                    object[] createData = {
-                        new[] { netId },
-                        new[] { hash },
-                        new[] { BitPackUtils.PackWorldPosForNetwork(position) },
-                        new[] { BitPackUtils.PackQuaternionForNetwork(rotation) },
-                        new[] { sendData },
-                        new[] { gameEntityManager.GetInvalidNetId() }
-                    };
-
-                    switch (target)
-                    {
-                        case RpcTarget rpcTarget:
-                            gameEntityManager.photonView.RPC("CreateItemRPC", rpcTarget, createData);
-                            break;
-                        case Player player:
-                            gameEntityManager.photonView.RPC("CreateItemRPC", player, createData);
-                            break;
-                    }
-
-                    if ((velocity != Vector3.zero || angVelocity != Vector3.zero || Manager.GetIndex("Entity Gravity").enabled) && gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.ThrowEntity].CanCallNow())
-                    {
-
-                        velocity = velocity.ClampSqrMagnitude(1600f);
-
-                        object[] dropData = {
-                            netId,
-                            true,
-                            position,
-                            rotation,
-                            velocity,
-                            angVelocity,
-                            PhotonNetwork.LocalPlayer,
-                            PhotonNetwork.Time
-                        };
-
-                        switch (target)
-                        {
-                            case RpcTarget rpcTarget:
-                                gameEntityManager.photonView.RPC("ThrowEntityRPC", rpcTarget, dropData);
-                                break;
-                            case Player player:
-                                gameEntityManager.photonView.RPC("ThrowEntityRPC", player, dropData);
-                                break;
-                        }
-                    }
-                }
-
-                RPCProtection();
-            }
-            else
-            {
-                float maxDistance = 12f;
-                if (Vector3.Distance(ServerLeftHandPos, position) > maxDistance)
-                    position = ServerLeftHandPos + (position - ServerLeftHandPos).normalized * maxDistance;
-
-                GamePlayer gamePlayer = GamePlayer.GetGamePlayer(PhotonNetwork.LocalPlayer);
-                if (gamePlayer.IsHoldingEntity(gameEntityManager, true) && gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
-                {
-                    References.LocalRig.enabled = true;
-                    if (ServerLeftHandPos.Distance(position) < maxDistance)
-                        gameEntityManager.GetGameEntity(gamePlayer.GetGrabbedGameEntityId(GamePlayer.GetHandIndex(true))).RequestThrow(true, position, rotation, velocity, angVelocity, gameEntityManager);
-                    else
-                        return;
-                }
-
-                List<GameEntity> entities = gameEntityManager.entities.Where(e =>
-                    e != null &&
-                    e.typeId == hash &&
-                    Vector3.Distance(ServerLeftHandPos, e.transform.position) < maxDistance &&
-                    Vector3.Distance(References.BodyCollider.transform.position, e.transform.position) > 3f &&
-                    gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
-
-                if (entities.Count <= 0)
-                    entities = gameEntityManager.entities.Where(e =>
-                    e != null &&
-                    e.typeId == hash &&
-                    Vector3.Distance(ServerLeftHandPos, e.transform.position) < maxDistance &&
-                    gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
-
-                if (entities.Count <= 0)
-                    entities = gameEntityManager.entities.Where(e =>
-                    e != null &&
-                    e.typeId == hash &&
-                    gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
-
-                if (entities.Count <= 0) 
-                    entities = gameEntityManager.entities.Where(e =>
-                    e != null &&
-                    e.typeId == hash).ToList();
-
-                if (entities.Count <= 0)
-                    return;
-
-                GameEntity entity = entities.OrderByDescending(entity => entity.transform.position.Distance(References.BodyCollider.transform.position)).FirstOrDefault();
-
-                if (Vector3.Distance(entity.transform.position, References.BodyCollider.transform.position) > maxDistance)
-                {
-                    References.LocalRig.enabled = false;
-                    References.LocalRig.transform.position = entity.transform.position - Vector3.one * 5f;
-
-                    if (CritterCoroutine != null)
-                        Coroutines.instance.StopCoroutine(CritterCoroutine);
-
-                    CritterCoroutine = Coroutines.instance.StartCoroutine(RopeEnableRig());
-                }
-
-                if (Vector3.Distance(entity.transform.position, ServerPos) < maxDistance && gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
-                {
-                    entity.transform.position = References.RightHand.position;
-                    entity.transform.rotation = RandomQuaternion();
-
-                    entity.RequestGrab(true, Vector3.zero, Quaternion.identity, gameEntityManager);
-                    RPCProtection();
-                }
-            }
-        }
-
-        public static void CreateItems(object target, int[] hashes, Vector3[] positions, Quaternion[] rotations, long[] sendData = null, GameEntityManager manager = null)
-        {
-            GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;
-            if (Networking.IsMasterClient)
-            {
-                if (gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItems].CanCallNow())
-                {
-                    if (target is NetPlayer netPlayer)
-                        target = NetPlayerToPlayer(netPlayer);
-
-                    sendData ??= Enumerable.Repeat(0L, hashes.Length).ToArray();
-
-                    byte[] data = new byte[15360];
-                    MemoryStream memoryStream = new MemoryStream(data);
-                    BinaryWriter binaryWriter = new BinaryWriter(memoryStream);
-                    binaryWriter.Write(hashes.Length);
-
-                    for (int i = 0; i < hashes.Length; i++)
-                    {
-                        binaryWriter.Write(manager.CreateTypeNetId(hashes[i]));
-                        binaryWriter.Write(hashes[i]);
-                        binaryWriter.Write(BitPackUtils.PackWorldPosForNetwork(positions[i]));
-                        binaryWriter.Write(BitPackUtils.PackQuaternionForNetwork(rotations[i]));
-                        binaryWriter.Write(sendData[i]);
-                        binaryWriter.Write(gameEntityManager.GetInvalidNetId());
-                    }
-
-                    byte[] array = GZipStream.CompressBuffer(data);
-
-                    object[] createData = {
-                        (int)manager.zone,
-                        array
-                    };
-
-                    switch (target)
-                    {
-                        case RpcTarget rpcTarget:
-                            gameEntityManager.photonView.RPC("CreateItemsRPC", rpcTarget, createData);
-                            break;
-                        case Player player:
-                            gameEntityManager.photonView.RPC("CreateItemsRPC", player, createData);
-                            break;
-                    }
-
-                    RPCProtection();
-                }
-
-
-            }
-            else
-                CreateItem(target, hashes[0], positions[0], rotations[0], Vector3.zero, Vector3.zero, sendData.Length > 0 ? sendData[1] : 0L, manager);
-        }
-
-        public static IEnumerator DrawSmallDelay(Vector3 position, int id, GameEntityManager manager)
-        {
-            GameObject Temporary = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            Temporary.transform.localScale = new Vector3(0.2f, 0.2f, 0.2f);
-            Temporary.transform.position = position;
-            Object.Destroy(Temporary.GetComponent<Collider>());
-            yield return new WaitForSeconds(0.5f);
-            CreateItem(RpcTarget.All, id, Temporary.transform.position + new Vector3(0f, 0.1f, 0f), RandomQuaternion(), Vector3.zero, Vector3.zero, manager: manager);
-            Object.Destroy(Temporary);
-            RPCProtection();
-        }
-
-        public static SIGadgetChargeBlaster GetBlaster()
-        {
-            References.InputPoller.leftGrab = true;
-            References.InputPoller.leftControllerGripFloat = 1f;
-
-            int hash = Fun.GadgetByName["MegaChargeBlasterGadget"];
-
-            GameEntityManager gameEntityManager = ManagerRegistry.SuperInfection.GameEntityManager;
-            GamePlayer gamePlayer = GamePlayer.GetGamePlayer(PhotonNetwork.LocalPlayer);
-            if (gamePlayer.IsHoldingEntity(gameEntityManager, true))
-            {
-                GameEntity entity = gameEntityManager.GetGameEntity(gamePlayer.GetGrabbedGameEntityId(GamePlayer.GetHandIndex(true)));
-                if (entity.gameObject.TryGetComponent<SIGadgetChargeBlaster>(out var blaster))
-                    return blaster;
-                else
-                    entity.RequestThrow(true, entity.transform.position, entity.transform.rotation, Vector3.zero, Vector3.zero, gameEntityManager);
-            }
-            else
-            {
-                if (Networking.IsMasterClient)
-                {
-                    if (spawnedNetId != null && spawnedFrame > Time.frameCount - 10)
-                    {
-                        GameEntity entity = gameEntityManager.GetGameEntity(spawnedNetId.Value);
-                        entity.RequestGrab(true, Vector3.zero, Quaternion.identity, gameEntityManager);
-                        if (entity.gameObject.TryGetComponent<SIGadgetChargeBlaster>(out var blaster))
-                            return blaster;
-                    }
-
-                    if (!gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
-                        return null;
-
-
-                    int netId = gameEntityManager.CreateTypeNetId(hash);
-
-                    object[] createData = {
-                        new[] { netId },
-                        new[] { hash },
-                        new[] { BitPackUtils.PackWorldPosForNetwork(References.LeftHand.position) },
-                        new[] { BitPackUtils.PackQuaternionForNetwork(References.LeftHand.rotation) },
-                        new[] { 0L },
-                        new[] { gameEntityManager.GetInvalidNetId() }
-                    };
-
-                    gameEntityManager.photonView.RPC("CreateItemRPC", RpcTarget.All, createData);
-                    spawnedNetId = netId;
-                    spawnedFrame = Time.frameCount;
-
-                    RPCProtection();
-                }
-                else
-                {
-                    Vector3 position = References.LeftHand.position;
-
-                    float maxDistance = 12f;
-                    if (Vector3.Distance(ServerLeftHandPos, position) > maxDistance)
-                        position = ServerLeftHandPos + (position - ServerLeftHandPos).normalized * maxDistance;
-
-                    List<GameEntity> entities = gameEntityManager.entities.Where(e =>
-                        e != null &&
-                        e.typeId == hash &&
-                        Vector3.Distance(ServerLeftHandPos, e.transform.position) < maxDistance &&
-                        Vector3.Distance(References.BodyCollider.transform.position, e.transform.position) > 3f &&
-                        gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
-
-                    if (entities.Count <= 0)
-                        entities = gameEntityManager.entities.Where(e =>
-                        e != null &&
-                        e.typeId == hash &&
-                        Vector3.Distance(ServerLeftHandPos, e.transform.position) < maxDistance &&
-                        gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
-
-                    if (entities.Count <= 0)
-                        entities = gameEntityManager.entities.Where(e =>
-                        e != null &&
-                        e.typeId == hash &&
-                        gameEntityManager.ValidateGrab(e, PhotonNetwork.LocalPlayer.actorNumber, true)).ToList();
-
-                    if (entities.Count <= 0) 
-                        entities = gameEntityManager.entities.Where(e =>
-                        e != null &&
-                        e.typeId == hash).ToList();
-
-                    if (entities.Count <= 0)
-                        return null;
-
-                    GameEntity entity = entities.OrderByDescending(entity => entity.transform.position.Distance(References.BodyCollider.transform.position)).FirstOrDefault();
-
-                    if (Vector3.Distance(entity.transform.position, References.BodyCollider.transform.position) > maxDistance)
-                    {
-                        References.LocalRig.enabled = false;
-                        References.LocalRig.transform.position = entity.transform.position - Vector3.one * 5f;
-
-                        if (CritterCoroutine != null)
-                            Coroutines.instance.StopCoroutine(CritterCoroutine);
-
-                        CritterCoroutine = Coroutines.instance.StartCoroutine(RopeEnableRig());
-                    }
-
-                    if (Vector3.Distance(entity.transform.position, ServerPos) < maxDistance && gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.CreateItem].CanCallNow())
-                    {
-                        entity.transform.position = References.RightHand.position;
-                        entity.transform.rotation = RandomQuaternion();
-
-                        entity.RequestGrab(true, Vector3.zero, Quaternion.identity, gameEntityManager);
-                        RPCProtection();
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        public static void BetaFireBlaster(Vector3 position, Vector3 direction)
-        {
-            SIGadgetChargeBlaster blaster = GetBlaster();
-            if (blaster == null)
-                return;
-
-            Quaternion rotation = Quaternion.LookRotation(direction);
-            if (Time.time < blasterDelay)
-                return;
-
-            blasterDelay = Time.time + SIPlayer.LocalPlayer.clientToClientRPCLimiter.GetDelay();
-
-            if ((position - References.LeftHand.position).magnitude > blaster.blaster.maxLagDistance)
-            {
-                References.LocalRig.enabled = false;
-                References.LocalRig.transform.position = position - Vector3.one;
-
-                if (BlasterCoroutine != null)
-                    Coroutines.instance.StopCoroutine(BlasterCoroutine);
-
-                BlasterCoroutine = Coroutines.instance.StartCoroutine(RopeEnableRig());
-            }
-
-            blaster.blaster.lastFired = 0f;
-            blaster.FireProjectile(blaster.maxChargeDiff, blaster.blaster.NextFireId(), position, rotation);
-
-            RPCProtection();
-        }
-        public static void BetaFireBlaster(Vector3 position, Vector3 direction, NetPlayer target, bool ignoreDistnace = false)
-        {
-            perPlayerDictionary.TryGetValue(target, out float perPlayerDelay);
-
-            Quaternion rotation = Quaternion.LookRotation(direction);
-            if (Time.time < perPlayerDelay)
-                return;
-
-            SIGadgetChargeBlaster blaster = GetBlaster();
-            if (blaster == null)
-                return;
-
-            perPlayerDictionary[target] = Time.time + SIPlayer.LocalPlayer.clientToClientRPCLimiter.GetDelay();
-
-            if (!ignoreDistnace && (position - References.LeftHand.position).magnitude > blaster.blaster.maxLagDistance)
-            {
-                References.LocalRig.enabled = false;
-                References.LocalRig.transform.position = position - Vector3.one;
-
-                if (BlasterCoroutine != null)
-                    Coroutines.instance.StopCoroutine(BlasterCoroutine);
-
-                BlasterCoroutine = Coroutines.instance.StartCoroutine(RopeEnableRig());
-            }
-
-            blaster.blaster.lastFired = 0f;
-            SuperInfectionManager.GetSIManagerForZone(blaster.blaster.gameEntity.manager.zone)?.photonView.RPC("SIClientToClientRPC", target.GetPlayer(), new object[]
-            {
-                (int)SuperInfectionManager.ClientToClientRPC.CallEntityRPCData,
-                new object[]
-                {
-                    blaster.blaster.gameEntity.GetNetId(),
-                    0,
-                    new object[]
-                    {
-                        blaster.maxChargeDiff,
-                        blaster.blaster.NextFireId(),
-                        position,
-                        rotation
-                    }
-                }
-            });
-
-            RPCProtection();
-        }
-        public static HalloweenGhostChaser GetChaser() => Lucy;
-
-        
-        public static void BetaSetVelocityPlayer(NetPlayer victim, Vector3 velocity)
+        public static void SetVelocityPlayer(NetPlayer victim, Vector3 velocity)
         {
             if (velocity.sqrMagnitude > 20f)
                 velocity = Vector3.Normalize(velocity) * 20f;
@@ -1135,7 +644,7 @@ namespace Qubit.Modules.Categories
                 Notifications.SendFormat("red", "ERROR", "You must be guardian.");
         }
 
-        public static void BetaSetVelocityTargetGroup(RpcTarget victim, Vector3 velocity)
+        public static void SetVelocityTargetGroup(RpcTarget victim, Vector3 velocity)
         {
             if (velocity.sqrMagnitude > 20f)
                 velocity = Vector3.Normalize(velocity) * 20f;
@@ -1185,15 +694,15 @@ namespace Qubit.Modules.Categories
                 }
                 else
                     Notifications.SendFormat("red", "ERROR", "You must be guardian.");
-                grabDelay = Time.time + 0.1f;
-            }, new GunLibrary.GunSettings { when = () => Time.time > grabDelay });
+                Grabbing.grabDelay = Time.time + 0.1f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > Grabbing.grabDelay });
         }
 
         public static void GuardianGrabAll()
         {
-            if (rightGrab && Time.time > grabDelay)
+            if (rightGrab && Time.time > Grabbing.grabDelay)
             {
-                grabDelay = Time.time + 0.1f;
+                Grabbing.grabDelay = Time.time + 0.1f;
                 if (GameModes.IsGuardian(Networking.LocalPlayer))
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
@@ -1243,7 +752,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(gunTarget =>
             {
-                BetaSetVelocityPlayer(GetPlayerFromVRRig(gunTarget), new Vector3(0f, 19.9f, 0f));
+                SetVelocityPlayer(GetPlayerFromVRRig(gunTarget), new Vector3(0f, 19.9f, 0f));
                 RPCProtection();
                 flingDelay = Time.time + 0.1f;
             }, new GunLibrary.GunSettings { when = () => Time.time > flingDelay });
@@ -1255,7 +764,7 @@ namespace Qubit.Modules.Categories
             {
                 flingDelay = Time.time + 0.1f;
 
-                BetaSetVelocityTargetGroup(RpcTarget.Others, new Vector3(0f, 19.9f, 0f));
+                SetVelocityTargetGroup(RpcTarget.Others, new Vector3(0f, 19.9f, 0f));
                 RPCProtection();
             }
         }
@@ -1266,7 +775,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > flingDelay)
                 {
-                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), RandomVector3(50f));
+                    SetVelocityPlayer(lockTarget.GetPlayer(), RandomVector3(50f));
                     RPCProtection();
                     flingDelay = Time.time + 0.1f;
                 }
@@ -1278,7 +787,7 @@ namespace Qubit.Modules.Categories
             if (rightTrigger > 0.5f && Time.time > flingDelay)
             {
                 flingDelay = Time.time + 0.1f;
-                BetaSetVelocityTargetGroup(RpcTarget.Others, RandomVector3(50f));
+                SetVelocityTargetGroup(RpcTarget.Others, RandomVector3(50f));
                 RPCProtection();
             }
         }
@@ -1289,52 +798,10 @@ namespace Qubit.Modules.Categories
                 Safety.AntiReport((vrrig, position) =>
                 {
                     antiReportFlingDelay = Time.time + 0.1f;
-                    BetaSetVelocityPlayer(GetPlayerFromVRRig(vrrig), (vrrig.transform.position - position) * 50f);
+                    SetVelocityPlayer(GetPlayerFromVRRig(vrrig), (vrrig.transform.position - position) * 50f);
                     Notifications.SendFormat("purple", "ANTI-REPORT", "" + GetPlayerFromVRRig(vrrig).NickName + " attempted to report you, they have been flung.");
                 });
             }
-        }
-
-        public static bool SpecialTimeRPC(PhotonView photonView, int timeOffset, string method, RaiseEventOptions options, params object[] parameters)
-        {
-            if (photonView != null && parameters != null && !string.IsNullOrEmpty(method))
-            {
-                Hashtable rpcData = new Hashtable
-                {
-                    { 0, photonView.ViewID },
-                    { 2, PhotonNetwork.ServerTimestamp + timeOffset },
-                    { 3, method },
-                    { 4, parameters }
-                };
-
-                if (photonView.Prefix > 0)
-                    rpcData[1] = (short)photonView.Prefix;
-
-                if (PhotonNetwork.PhotonServerSettings.RpcList.Contains(method))
-                    rpcData[5] = (byte)PhotonNetwork.PhotonServerSettings.RpcList.IndexOf(method);
-
-                if (options.Receivers == ReceiverGroup.All || (options.TargetActors != null && options.TargetActors.Contains(Networking.LocalPlayer.ActorNumber)))
-                {
-                    if (options.Receivers == ReceiverGroup.All)
-                        options.Receivers = ReceiverGroup.Others;
-
-                    if (options.TargetActors != null && options.TargetActors.Contains(Networking.LocalPlayer.ActorNumber))
-                        options.TargetActors = options.TargetActors.Where(id => id != Networking.LocalPlayer.ActorNumber).ToArray();
-
-                    PhotonNetwork.ExecuteRpc(rpcData, PhotonNetwork.LocalPlayer);
-                }
-
-                else
-                {
-                    PhotonNetwork.NetworkingClient.LoadBalancingPeer.OpRaiseEvent(Photon.Pun.PunEvent.RPC, rpcData, options, new SendOptions
-                    {
-                        Reliability = true,
-                        DeliveryMode = DeliveryMode.ReliableUnsequenced,
-                        Encrypt = false
-                    });
-                }
-            }
-            return false;
         }
 
         public static void GuardianPhysicalFreezeGun()
@@ -1343,7 +810,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > flingDelay)
                 {
-                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), Vector3.zero);
+                    SetVelocityPlayer(lockTarget.GetPlayer(), Vector3.zero);
                     RPCProtection();
                     flingDelay = Time.time + 0.1f;
                 }
@@ -1355,7 +822,7 @@ namespace Qubit.Modules.Categories
             if (rightTrigger > 0.5f && Time.time > flingDelay)
             {
                 flingDelay = Time.time + 0.1f;
-                BetaSetVelocityTargetGroup(RpcTarget.Others, Vector3.zero);
+                SetVelocityTargetGroup(RpcTarget.Others, Vector3.zero);
                 RPCProtection();
             }
         }
@@ -1364,7 +831,7 @@ namespace Qubit.Modules.Categories
         {
             if (Time.time > flingDelay)
             {
-                BetaSetVelocityPlayer(player, (References.BodyCollider.transform.position - GetVRRigFromPlayer(player).transform.position).normalized * 20f);
+                SetVelocityPlayer(player, (References.BodyCollider.transform.position - GetVRRigFromPlayer(player).transform.position).normalized * 20f);
                 RPCProtection();
                 flingDelay = Time.time + 0.1f;
             }
@@ -1376,7 +843,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > flingDelay)
                 {
-                    BetaSetVelocityPlayer(player, Vector3.Normalize(NewPointer.transform.position - GetVRRigFromPlayer(player).transform.position) * 50f);
+                    SetVelocityPlayer(player, Vector3.Normalize(NewPointer.transform.position - GetVRRigFromPlayer(player).transform.position) * 50f);
                     RPCProtection();
                     flingDelay = Time.time + 0.2f;
                 }
@@ -1389,7 +856,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > flingDelay)
                 {
-                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), (References.BodyCollider.transform.position - lockTarget.transform.position).normalized * 20f);
+                    SetVelocityPlayer(lockTarget.GetPlayer(), (References.BodyCollider.transform.position - lockTarget.transform.position).normalized * 20f);
                     RPCProtection();
                     flingDelay = Time.time + 0.1f;
                 }
@@ -1403,7 +870,7 @@ namespace Qubit.Modules.Categories
                 flingDelay = Time.time + 0.2f;
                 foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                 {
-                    BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), (References.BodyCollider.transform.position - plr.transform.position).normalized * 20f);
+                    SetVelocityPlayer(GetPlayerFromVRRig(plr), (References.BodyCollider.transform.position - plr.transform.position).normalized * 20f);
                     RPCProtection();
                 }
             }
@@ -1415,7 +882,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > flingDelay)
                 {
-                    BetaSetVelocityPlayer(lockTarget.GetPlayer(), (lockTarget.transform.position - References.BodyCollider.transform.position).normalized * 20f);
+                    SetVelocityPlayer(lockTarget.GetPlayer(), (lockTarget.transform.position - References.BodyCollider.transform.position).normalized * 20f);
                     RPCProtection();
                     flingDelay = Time.time + 0.1f;
                 }
@@ -1429,7 +896,7 @@ namespace Qubit.Modules.Categories
                 flingDelay = Time.time + 0.2f;
                 foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                 {
-                    BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), (plr.transform.position - References.BodyCollider.transform.position).normalized * 20f);
+                    SetVelocityPlayer(GetPlayerFromVRRig(plr), (plr.transform.position - References.BodyCollider.transform.position).normalized * 20f);
                     RPCProtection();
                 }
             }
@@ -1449,7 +916,7 @@ namespace Qubit.Modules.Categories
                     float offset = 360f / rigs.Length * index;
                     Vector3 targetPosition = References.HeadCollider.transform.position + new Vector3(MathF.Cos(offset + Time.time) * scale, 2, MathF.Sin(offset + Time.time) * scale);
 
-                    BetaSetVelocityPlayer(rig.GetPlayer(), (targetPosition - rig.transform.position) * 1f);
+                    SetVelocityPlayer(rig.GetPlayer(), (targetPosition - rig.transform.position) * 1f);
                     RPCProtection();
                     index++;
                 }
@@ -1463,7 +930,7 @@ namespace Qubit.Modules.Categories
                 {
                     if (lockTarget.rightThumb.calcT > 0.5f)
                     {
-                        BetaSetVelocityPlayer(lockTarget.GetPlayer(), lockTarget.headMesh.transform.forward * Movement._flySpeed);
+                        SetVelocityPlayer(lockTarget.GetPlayer(), lockTarget.headMesh.transform.forward * Movement._flySpeed);
                         RPCProtection();
                     }
                     thingdeb = Time.time + 0.1f;
@@ -1478,7 +945,7 @@ namespace Qubit.Modules.Categories
                 thingdeb = Time.time + 0.1f;
                 foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal).Where(plr => plr.rightThumb.calcT > 0.5f))
                 {
-                    BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), plr.headMesh.transform.forward * Movement._flySpeed);
+                    SetVelocityPlayer(GetPlayerFromVRRig(plr), plr.headMesh.transform.forward * Movement._flySpeed);
                     RPCProtection();
                 }
             }
@@ -1497,11 +964,11 @@ namespace Qubit.Modules.Categories
                     {
                         Vector3 vel = rightHand ? References.Player.RightHand.velocityTracker.GetAverageVelocity(true, 0) : References.Player.LeftHand.velocityTracker.GetAverageVelocity(true, 0);
 
-                        BetaSetVelocityPlayer(rig.GetPlayer(), vel);
+                        SetVelocityPlayer(rig.GetPlayer(), vel);
                         thingdeb = Time.time + 0.1f;
 
                         if (Manager.GetIndex("Graphic Punch Mod").enabled)
-                            Projectiles.SendProjectile(Projectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
+                            Projectiles.SendProjectile(ThrowableProjectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
                     }
                 }
             }
@@ -1516,7 +983,7 @@ namespace Qubit.Modules.Categories
 
                 foreach (var targetDirection in from rig2 in Players.ActiveRigs where rig2 != rig1 where Vector3.Distance(rig2.leftHandTransform.position, rig1.headMesh.transform.position) < 0.25f || Vector3.Distance(rig2.rightHandTransform.position, rig1.headMesh.transform.position) < 0.25f select (rig1.headMesh.transform.position - rig2.headMesh.transform.position) * 20f)
                 {
-                    BetaSetVelocityPlayer(GetPlayerFromVRRig(rig1), targetDirection);
+                    SetVelocityPlayer(GetPlayerFromVRRig(rig1), targetDirection);
                     Projectiles.SetBoxingDelay(rig1);
                 }
             }
@@ -1529,7 +996,7 @@ namespace Qubit.Modules.Categories
                 if (Time.time > flingDelay)
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
-                        BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), Vector3.Normalize(NewPointer.transform.position - plr.transform.position) * 50f);
+                        SetVelocityPlayer(GetPlayerFromVRRig(plr), Vector3.Normalize(NewPointer.transform.position - plr.transform.position) * 50f);
 
                     RPCProtection();
                     flingDelay = Time.time + 0.2f;
@@ -1544,7 +1011,7 @@ namespace Qubit.Modules.Categories
                 if (Time.time > flingDelay)
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
-                        BetaSetVelocityPlayer(GetPlayerFromVRRig(plr), Vector3.Normalize(plr.transform.position - NewPointer.transform.position) * 50f);
+                        SetVelocityPlayer(GetPlayerFromVRRig(plr), Vector3.Normalize(plr.transform.position - NewPointer.transform.position) * 50f);
 
                     RPCProtection();
                     flingDelay = Time.time + 0.2f;
@@ -1563,7 +1030,7 @@ namespace Qubit.Modules.Categories
                         Vector3 stump = new Vector3(-66f, 12f, -79f);
                         if (Vector3.Distance(stump, rig.transform.position) < 3f)
                         {
-                            BetaSetVelocityPlayer(rig.GetPlayer(), (rig.transform.position - stump).normalized * 20f);
+                            SetVelocityPlayer(rig.GetPlayer(), (rig.transform.position - stump).normalized * 20f);
                             flingDelay = Time.time + 0.2f;
                         }
                     }
@@ -1626,21 +1093,19 @@ namespace Qubit.Modules.Categories
             });
         }
 
-        
-        
-        
+        private static float freezeAllDelay;
+        public static bool muteOnFreeze;
+        private static bool acknowledgedFreeze;
         public static void FreezeServer(float delay = 1f, int eventCount = 11, RaiseEventOptions options = null)
         {
-            return;
-            /*
-            if (!ManagerRegistry.NetworkSystem.InRoom) return;
+            if (!Networking.InRoom) return;
 
-            if (!acklowledgeFreeze)
+            if (!acknowledgedFreeze)
             {
-                acklowledgeFreeze = true;
+                acknowledgedFreeze = true;
                 PromptSingle("Using mods that rely on freezing the server could not work unless a player leaves or joins. Just so you know.");
             }
-                
+
             options ??= new RaiseEventOptions
             {
                 Flags = new WebFlags(byte.MaxValue),
@@ -1650,7 +1115,7 @@ namespace Qubit.Modules.Categories
             if (muteOnFreeze)
             {
                 for (int i = 0; i < 10; i++)
-                    MuteTarget(options);
+                    VoiceControl.MuteTarget(options);
             }
 
             if (Time.time > freezeAllDelay)
@@ -1661,7 +1126,6 @@ namespace Qubit.Modules.Categories
                 RPCProtection();
                 freezeAllDelay = Time.time + delay;
             }
-            */
         }
         public static void CloseRoom()
         {
@@ -1856,170 +1320,6 @@ namespace Qubit.Modules.Categories
             RPCProtection();
         }
 
-        public static void ForceGrabGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    ForceGrab(lockTarget, References.LocalRig.transform.position);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }, new GunLibrary.GunSettings { onIdle = () =>
-                {
-                    if (gunLocked)
-                        gunLocked = false;
-                    References.LocalRig.enabled = true;
-                } });
-        }
-
-        public static void GrabFlingGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    if (!lockTarget.IsBeingHeld())
-                    {
-                        if (!lockTarget.IsNear())
-                        {
-                            References.LocalRig.enabled = false;
-                            References.LocalRig.transform.position = lockTarget.transform.position;
-                        }
-                        else if (!References.LocalRig.enabled)
-                            References.LocalRig.enabled = true;
-                        References.LocalRig.rightHandLink.TentacleTryCreateLink(lockTarget.rightHandLink);
-                    }
-                    else if (lockTarget.IsBeingHeld(References.LocalRig))
-                    {
-                        if (lockTarget.rightHandLink.grabbedPlayer == References.LocalRig.GetPlayer())
-                        {
-                            Vector3 velocity = lockTarget.transform.up * 3f;
-                            lockTarget.GetNetView().SendRPC("DroppedByPlayer", lockTarget.GetPlayer(), velocity);
-                        }
-
-                    }
-                }
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }, new GunLibrary.GunSettings { onIdle = () =>
-                {
-                    if (gunLocked)
-                        gunLocked = false;
-                    References.LocalRig.enabled = true;
-                } });
-        }
-
-        public static void GrabFlingAll()
-        {
-            if (!References.LocalRig.IsBeingHeld() && !lockTarget.IsNear())
-            {
-                References.LocalRig.enabled = false;
-                References.LocalRig.transform.position = lockTarget.transform.position;
-                References.LocalRig.rightHandLink.TentacleTryCreateLink(lockTarget.rightHandLink);
-            }
-            else if (References.LocalRig.IsBeingHeld())
-            {
-                FlingOnGrab();
-                if (!References.LocalRig.enabled)
-                    References.LocalRig.enabled = true;
-            }
-        }
-
-        public static void BringPlayerGun()
-        {
-            GunLibrary.Target(lockTarget =>
-            {
-                ForceGrab(lockTarget, References.LocalRig.transform.position - References.LocalRig.transform.forward * 10f);
-            }, new GunLibrary.GunSettings { locks = true });
-        }
-
-        public static void BringAllPlayers() =>
-            ForceGrab(References.LocalRig.transform.position - References.LocalRig.transform.forward * 10f);
-
-        public static void PushPlayerGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                    ForceGrab(lockTarget, References.LocalRig.transform.position = lockTarget.transform.position - lockTarget.transform.forward * 10f);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }, new GunLibrary.GunSettings { onIdle = () =>
-                {
-                    if (gunLocked)
-                        gunLocked = false;
-                    References.LocalRig.enabled = true;
-                } });
-        }
-
-        public static void PushAllPlayers()
-        {
-            foreach (VRRig rig in Players.ActiveRigs)
-                ForceGrab(rig, rig.transform.position - rig.transform.forward * 10f);
-        }
-
-        public static void GrabCrashGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
-                float value = float.MaxValue / 4f;
-                if (gunLocked && lockTarget != null)
-                    ForceGrab(lockTarget, new Vector3(value, -value, value));
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }, new GunLibrary.GunSettings { onIdle = () =>
-                {
-                    if (gunLocked)
-                        gunLocked = false;
-                    References.LocalRig.enabled = true;
-                } });
-        }
-
-        public static void GrabCrashAll()
-        {
-            float value = float.MaxValue / 4f;
-            ForceGrab(new Vector3(value, -value, value));
-        }
-
         public static void LagGun()
         {
             GunLibrary.Target(lockTarget =>
@@ -2064,97 +1364,6 @@ namespace Qubit.Modules.Categories
                 LagPlayer(touchedPlayers);
         }
 
-        public static void MuteTarget(object target)
-        {
-            RaiseEventOptions raiseOptions = new RaiseEventOptions();
-
-            if (target is ReceiverGroup group)
-                raiseOptions.Receivers = group;
-            else if (target is int[] actors)
-                raiseOptions.TargetActors = actors;
-            else if (target is RaiseEventOptions options)
-                raiseOptions = options;
-            else
-                return;
-
-            SendOptions sendOptions = new SendOptions
-            {
-                Reliability = false,
-                Channel = 0
-            };
-
-
-            Dictionary<byte, object> voiceData = new Dictionary<byte, object>
-            {
-                { 1, 255 },
-                { 2, Voices.Get().SamplingRate },
-                { 3, 2 },
-                { 4, 20000 },
-                { 5, 30000 },
-                { 10, null },
-                { 11, (byte)0 },
-                { 12, Codec.AudioOpus }
-            };
-
-            object[] eventData =
-            {
-                (byte)0,
-                (byte)1,
-                new object[] { voiceData }
-            };
-
-            ManagerRegistry.PhotonVoiceNetwork.Client.OpRaiseEvent(
-                202,
-                eventData,
-                raiseOptions,
-                sendOptions
-            );
-        }
-
-        public static void ServerMuteAll()
-        {
-            for (int i = 0; i < 2; i++)
-                MuteTarget(ReceiverGroup.All);
-        }
-
-        public static void DeafenGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null)
-                {
-                    for (int i = 0; i < 2; i++)
-                        MuteTarget(new int[] { lockTarget.GetPlayer().ActorNumber });
-                }
-
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }, new GunLibrary.GunSettings { onIdle = () =>
-                {
-                    if (gunLocked)
-                    {
-                        gunLocked = false;
-                        References.LocalRig.enabled = true;
-                    }
-                } });
-        }
-
-        public static void DeafenAll()
-        {
-            for (int i = 0; i < 2; i++)
-                MuteTarget(ReceiverGroup.Others);
-        }
-
         public static void BarrelFlingGun()
         {
             GunLibrary.Aim(GunData =>
@@ -2162,7 +1371,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
-                    SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, Vector3.up * 15000, Random.rotation, new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
+                    ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, Vector3.up * 15000, Random.rotation, new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
 
                 if (GetGunInput(true))
                 {
@@ -2185,7 +1394,7 @@ namespace Qubit.Modules.Categories
         public static void BarrelFlingAll()
         {
             foreach (var TargetRig in Players.ActiveRigs.Where(TargetRig => !TargetRig.IsTagged()))
-                SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, Vector3.up * 15000, Random.rotation, new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
+                ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, Vector3.up * 15000, Random.rotation, new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
         }
         public static void BarrelObliterateGun()
         {
@@ -2194,7 +1403,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
-                    SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * int.MaxValue, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
+                    ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * int.MaxValue, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
 
                 if (GetGunInput(true))
                 {
@@ -2218,7 +1427,7 @@ namespace Qubit.Modules.Categories
         public static void BarrelObliterateAll()
         {
             foreach (var TargetRig in Players.ActiveRigs.Where(TargetRig => !TargetRig.IsTagged()))
-                SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * int.MaxValue, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
+                ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * int.MaxValue, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
         }
         public static void BarrelPunchMod()
         {
@@ -2227,10 +1436,10 @@ namespace Qubit.Modules.Categories
                 if (!rig.isLocal && (Vector3.Distance(References.LeftHand.position, rig.headMesh.transform.position) < 0.25f || Vector3.Distance(References.RightHand.position, rig.headMesh.transform.position) < 0.25f))
                 {
                     Vector3 targetDirection = rig.headMesh.transform.position - References.HeadCollider.transform.position;
-                    SendBarrelProjectile(rig.transform.position + (References.HeadCollider.transform.position - rig.headMesh.transform.position).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(rig.GetPlayer()).ActorNumber } });
+                    ThrowableProjectiles.SendBarrelProjectile(rig.transform.position + (References.HeadCollider.transform.position - rig.headMesh.transform.position).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(rig.GetPlayer()).ActorNumber } });
 
                     if (Manager.GetIndex("Graphic Punch Mod").enabled)
-                        Projectiles.SendProjectile(Projectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
+                        Projectiles.SendProjectile(ThrowableProjectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
                 }
             }
         }
@@ -2242,7 +1451,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
-                    SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * 10000f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
+                    ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * 10000f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
 
                 if (GetGunInput(true))
                 {
@@ -2266,7 +1475,7 @@ namespace Qubit.Modules.Categories
         public static void BarrelCrashAll()
         {
             foreach (var TargetRig in Players.ActiveRigs.Where(TargetRig => !TargetRig.IsTagged()))
-                SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * 10000f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
+                ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + Vector3.down * 0.2f, lockTarget.bodyTransform.up * 10000f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
         }
 
         public static void BarrelKickGun()
@@ -2278,7 +1487,7 @@ namespace Qubit.Modules.Categories
                 if (gunLocked && lockTarget != null)
                 {
                     Vector3 targetDirection = new Vector3(-71.33718f, 101.4977f, -93.09029f) - lockTarget.headMesh.transform.position;
-                    SendBarrelProjectile(lockTarget.transform.position + (lockTarget.headMesh.transform.position - new Vector3(-71.33718f, 101.4977f, -93.09029f)).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
+                    ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + (lockTarget.headMesh.transform.position - new Vector3(-71.33718f, 101.4977f, -93.09029f)).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { lockTarget.GetPlayer().ActorNumber } });
                 }
 
                 if (GetGunInput(true))
@@ -2307,7 +1516,7 @@ namespace Qubit.Modules.Categories
                 if (TargetRig.IsTagged()) continue;
 
                 Vector3 targetDirection = new Vector3(-71.33718f, 101.4977f, -93.09029f) - TargetRig.headMesh.transform.position;
-                SendBarrelProjectile(TargetRig.transform.position + (TargetRig.headMesh.transform.position - new Vector3(-71.33718f, 101.4977f, -93.09029f)).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
+                ThrowableProjectiles.SendBarrelProjectile(TargetRig.transform.position + (TargetRig.headMesh.transform.position - new Vector3(-71.33718f, 101.4977f, -93.09029f)).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
             }
         }
 
@@ -2318,7 +1527,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
-                    SendBarrelProjectile(lockTarget.transform.position + (References.HeadCollider.transform.position - lockTarget.headMesh.transform.position).normalized * 0.1f, (References.BodyCollider.transform.position - lockTarget.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(lockTarget.GetPlayer()).ActorNumber } });
+                    ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + (References.HeadCollider.transform.position - lockTarget.headMesh.transform.position).normalized * 0.1f, (References.BodyCollider.transform.position - lockTarget.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(lockTarget.GetPlayer()).ActorNumber } });
 
                 if (GetGunInput(true))
                 {
@@ -2342,7 +1551,7 @@ namespace Qubit.Modules.Categories
         public static void BarrelFlingTowardsAll()
         {
             foreach (var TargetRig in Players.ActiveRigs.Where(TargetRig => !TargetRig.IsTagged()))
-                SendBarrelProjectile(TargetRig.transform.position + (References.HeadCollider.transform.position - TargetRig.headMesh.transform.position).normalized * 0.1f, (References.BodyCollider.transform.position - TargetRig.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(TargetRig.GetPlayer()).ActorNumber } }, true);
+                ThrowableProjectiles.SendBarrelProjectile(TargetRig.transform.position + (References.HeadCollider.transform.position - TargetRig.headMesh.transform.position).normalized * 0.1f, (References.BodyCollider.transform.position - TargetRig.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(TargetRig.GetPlayer()).ActorNumber } }, true);
         }
 
         public static void CityKickGun()
@@ -2352,7 +1561,7 @@ namespace Qubit.Modules.Categories
                 RaycastHit Ray = GunData.Ray;
 
                 if (gunLocked && lockTarget != null)
-                    SendBarrelProjectile(lockTarget.transform.position + (lockTarget.transform.position - new Vector3(-71.14215f, 13.73829f, -95.17883f)).normalized * 0.1f, (new Vector3(-71.14215f, 13.73829f, -95.17883f) - lockTarget.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(lockTarget.GetPlayer()).ActorNumber } });
+                    ThrowableProjectiles.SendBarrelProjectile(lockTarget.transform.position + (lockTarget.transform.position - new Vector3(-71.14215f, 13.73829f, -95.17883f)).normalized * 0.1f, (new Vector3(-71.14215f, 13.73829f, -95.17883f) - lockTarget.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(lockTarget.GetPlayer()).ActorNumber } });
 
                 if (GetGunInput(true))
                 {
@@ -2378,7 +1587,7 @@ namespace Qubit.Modules.Categories
             foreach (VRRig TargetRig in Players.ActiveRigs)
             {
                 if (TargetRig.IsTagged()) continue;
-                SendBarrelProjectile(TargetRig.transform.position + (TargetRig.transform.position - new Vector3(-71.14215f, 13.73829f, -95.17883f)).normalized * 0.1f, (new Vector3(-71.14215f, 13.73829f, -95.17883f) - TargetRig.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
+                ThrowableProjectiles.SendBarrelProjectile(TargetRig.transform.position + (TargetRig.transform.position - new Vector3(-71.14215f, 13.73829f, -95.17883f)).normalized * 0.1f, (new Vector3(-71.14215f, 13.73829f, -95.17883f) - TargetRig.transform.position).normalized * 5000f, Quaternion.identity, new RaiseEventOptions { TargetActors = new[] { TargetRig.GetPlayer().ActorNumber } });
             }
         }
         public static bool IsModded(bool notify)
@@ -2393,7 +1602,7 @@ namespace Qubit.Modules.Categories
             return modded;
         }
 
-        public static void BetaNearbyFollowCommand(GorillaFriendCollider friendCollider, Player player)
+        public static void NearbyFollowCommand(GorillaFriendCollider friendCollider, Player player)
         {
             ManagerRegistry.PhotonNetworkController.FriendIDList.Add(player.UserId);
 
@@ -2467,7 +1676,7 @@ namespace Qubit.Modules.Categories
                     ManagerRegistry.PhotonNetworkController.shuffler = Random.Range(0, 99).ToString().PadLeft(2, '0') + Random.Range(0, 99999999).ToString().PadLeft(8, '0');
                     ManagerRegistry.PhotonNetworkController.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
 
-                    BetaNearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(player));
+                    NearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(player));
                     RPCProtection();
                 }, () =>
                 {
@@ -2492,7 +1701,7 @@ namespace Qubit.Modules.Categories
                     ManagerRegistry.PhotonNetworkController.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
 
                     foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && References.Computer.friendJoinCollider.playerIDsCurrentlyTouching.Contains(rig.GetPlayer().UserId)))
-                        BetaNearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(rig.GetPlayer()));
+                        NearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(rig.GetPlayer()));
 
                     RPCProtection();
                 }, () =>
@@ -2510,7 +1719,7 @@ namespace Qubit.Modules.Categories
                 elevatorKickDelay = Time.time + 0.5f;
 
                 if (PhotonNetwork.IsMasterClient)
-                    SpecialTimeRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { gunTarget.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
+                    SendTimedRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { gunTarget.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
                 else
                     ManagerRegistry.GRElevatorManager.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)ManagerRegistry.GRElevatorManager.currentLocation });
 
@@ -2521,7 +1730,7 @@ namespace Qubit.Modules.Categories
         public static void ElevatorKickAll()
         {
             if (PhotonNetwork.IsMasterClient)
-                SpecialTimeRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { Receivers = ReceiverGroup.Others }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 2, GRElevatorManager.LowestActorNumberInElevator());
+                SendTimedRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { Receivers = ReceiverGroup.Others }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 2, GRElevatorManager.LowestActorNumberInElevator());
             else
                 ManagerRegistry.GRElevatorManager.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)ManagerRegistry.GRElevatorManager.currentLocation });
         }
@@ -2544,7 +1753,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig nearbyPlayer in nearbyPlayers)
                 {
                     if (PhotonNetwork.IsMasterClient)
-                        SpecialTimeRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { nearbyPlayer.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
+                        SendTimedRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { nearbyPlayer.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
                     else
                         ManagerRegistry.GRElevatorManager.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)ManagerRegistry.GRElevatorManager.currentLocation });
 
@@ -2575,7 +1784,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig rig in touchedPlayers)
                 {
                     if (PhotonNetwork.IsMasterClient)
-                        SpecialTimeRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { rig.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
+                        SendTimedRPC(ManagerRegistry.GRElevatorManager.photonView, -750, "RemoteActivateTeleport", new RaiseEventOptions { TargetActors = new[] { rig.GetPlayer().ActorNumber } }, (int)ManagerRegistry.GRElevatorManager.currentLocation, 3, GRElevatorManager.LowestActorNumberInElevator());
                     else
                         ManagerRegistry.GRElevatorManager.SendRPC("RemoteElevatorButtonPress", RpcTarget.MasterClient, new[] { 3, (int)ManagerRegistry.GRElevatorManager.currentLocation });
 
@@ -2606,7 +1815,7 @@ namespace Qubit.Modules.Categories
             ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
         }
 
-        public static void BetaShuttleFollowCommand(Player player)
+        public static void ShuttleFollowCommand(Player player)
         {
             ManagerRegistry.PhotonNetworkController.FriendIDList.Add(player.UserId);
 
@@ -2934,7 +2143,7 @@ namespace Qubit.Modules.Categories
         public static void DestroyPlayer(NetPlayer player) =>
             PhotonNetwork.OpRemoveCompleteCacheOfPlayer(player.ActorNumber);
 
-        public static void BetaSetStatus(RoomSystem.StatusEffects state, RaiseEventOptions reo)
+        public static void SetStatus(RoomSystem.StatusEffects state, RaiseEventOptions reo)
         {
             if (!Networking.IsMasterClient)
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
@@ -2993,7 +2202,7 @@ namespace Qubit.Modules.Categories
             References.LocalRig.enabled = true;
         }
 
-        public static void BetaSetRopeVelocity(int RopeId, Vector3 Velocity)
+        public static void SetRopeVelocity(int RopeId, Vector3 Velocity)
         {
             Velocity = Velocity.ClampMagnitudeSafe(15f);
 
@@ -3030,8 +2239,8 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void BetaSetRopeVelocity(GorillaRopeSwing Rope, Vector3 Velocity) =>
-            BetaSetRopeVelocity(ManagerRegistry.RopeSwingManager.ropes.FirstOrDefault(x => x.Value == Rope).Key, Velocity);
+        public static void SetRopeVelocity(GorillaRopeSwing Rope, Vector3 Velocity) =>
+            SetRopeVelocity(ManagerRegistry.RopeSwingManager.ropes.FirstOrDefault(x => x.Value == Rope).Key, Velocity);
         public static GorillaRopeSwing GetRandomRope()
         {
             if (Time.time > randomRopeDelay)
@@ -3053,7 +2262,7 @@ namespace Qubit.Modules.Categories
                 RopeDelay = Time.time + 0.125f;
 
                 GorillaRopeSwing rope = GetRandomType<GorillaRopeSwing>(0.25f);
-                BetaSetRopeVelocity(rope, new Vector3(stick.x * 100f, stick.y * 100f, 0f));
+                SetRopeVelocity(rope, new Vector3(stick.x * 100f, stick.y * 100f, 0f));
             }
         }
 
@@ -3069,7 +2278,7 @@ namespace Qubit.Modules.Categories
                     if (gunTarget && Time.time > RopeDelay)
                     {
                         RopeDelay = Time.time + 0.25f;
-                        BetaSetRopeVelocity(gunTarget, RandomVector3(100f));
+                        SetRopeVelocity(gunTarget, RandomVector3(100f));
                     }
                 }
             });
@@ -3082,7 +2291,7 @@ namespace Qubit.Modules.Categories
                 RopeDelay = Time.time + 0.125f;
 
                 GorillaRopeSwing rope = GetRandomRope();
-                BetaSetRopeVelocity(rope, RandomVector3(100f));
+                SetRopeVelocity(rope, RandomVector3(100f));
             }
         }
 
@@ -3097,7 +2306,7 @@ namespace Qubit.Modules.Categories
                     .FirstOrDefault();
 
                 if (randomRig != null)
-                    BetaSetRopeVelocity(randomRig.currentRopeSwing, RandomVector3(100f));
+                    SetRopeVelocity(randomRig.currentRopeSwing, RandomVector3(100f));
             }
         }
 
@@ -3114,7 +2323,7 @@ namespace Qubit.Modules.Categories
                     if (gunTarget && Time.time > RopeDelay)
                     {
                         RopeDelay = Time.time + 0.125f;
-                        BetaSetRopeVelocity(gunTarget, RandomVector3(100f));
+                        SetRopeVelocity(gunTarget, RandomVector3(100f));
                     }
                 }
             });
@@ -3127,7 +2336,7 @@ namespace Qubit.Modules.Categories
                 RopeDelay = Time.time + 0.125f;
 
                 GorillaRopeSwing rope = GetRandomRope();
-                BetaSetRopeVelocity(rope, (NewPointer.transform.position - rope.transform.position).normalized * 100f);
+                SetRopeVelocity(rope, (NewPointer.transform.position - rope.transform.position).normalized * 100f);
             }, new GunLibrary.GunSettings { when = () => Time.time > RopeDelay });
         }
         public static void InstantParty()
@@ -3153,7 +2362,6 @@ namespace Qubit.Modules.Categories
                 }
             }
         }
-
 
         public static void KickToSpecificRoom()
         {

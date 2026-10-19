@@ -424,7 +424,6 @@ namespace Qubit.Utilities
         }
         #endregion
 
-
         public static void RequestGrab(this GameEntity gameEntity, bool isLeftHand, Vector3 localPosition, Quaternion localRotation, GameEntityManager manager = null)
         {
             GameEntityManager gameEntityManager = manager ?? ManagerRegistry.GhostReactor.GameEntityManager;

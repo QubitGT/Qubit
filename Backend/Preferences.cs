@@ -23,8 +23,10 @@ using Photon.Pun;
 using Qubit.Core;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Core;
+using Qubit.Libraries.Interface;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
+using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -295,6 +297,97 @@ namespace Qubit.Backend
             catch (Exception e) { Logs.Log($"Error reading saved state of {buttonText}: {e.Message}"); }
 
             return false;
+        }
+
+        // Folders in the Gorilla Tag folder where other menus keep their preferences
+        private static readonly string[] ExternalMenuFolders = { "iisStupidMenu", "SeralythMenu", "Poison" };
+
+        /// <summary>
+        /// Turns on every mod that was enabled in another menu and copies its layout settings.
+        /// </summary>
+        public static void ImportExternal()
+        {
+            try
+            {
+                var imported = new List<string>();
+                int enabledMods = 0;
+
+                foreach (string folder in ExternalMenuFolders)
+                {
+                    string directory = Path.Combine(Files.GetGamePath(), folder);
+                    if (!Directory.Exists(directory))
+                        continue;
+
+                    foreach (string path in Directory.GetFiles(directory, "*Preferences*.json"))
+                    {
+                        int count = ImportExternalFile(path);
+                        if (count < 0)
+                            continue;
+
+                        enabledMods += count;
+                        imported.Add(folder);
+                    }
+                }
+
+                if (imported.Count == 0)
+                {
+                    Notifications.SendFormat("red", "ERROR", $"No preferences found in {string.Join(", ", ExternalMenuFolders)}.");
+                    return;
+                }
+
+                Save();
+                Notifications.SendFormat("green", "SUCCESS", $"Imported {enabledMods} mods from {string.Join(", ", imported.Distinct())}.");
+            }
+            catch (Exception exception)
+            {
+                Logs.LogError($"Error importing external preferences: {exception.Message}");
+            }
+        }
+
+        /// <returns>The number of mods that were turned on, or -1 if the file couldn't be read.</returns>
+        private static int ImportExternalFile(string path)
+        {
+            PreferencesData data;
+            try
+            {
+                data = JsonConvert.DeserializeObject<PreferencesData>(File.ReadAllText(path));
+            }
+            catch (Exception exception)
+            {
+                Logs.Log($"Could not read preferences at '{path}': {exception.Message}");
+                return -1;
+            }
+
+            if (data == null)
+                return -1;
+
+            int enabledMods = 0;
+            RunWithoutSaving(() =>
+            {
+                if (data.misc != null)
+                {
+                    if (data.misc.TryGetValue("pageButtonType", out object pageButtons)) pageButtonType = SafeInt(pageButtons, pageButtonType);
+                    if (data.misc.TryGetValue("themeType", out object theme)) themeType = SafeInt(theme, themeType);
+                    if (data.misc.TryGetValue("fontCycle", out object font)) fontCycle = SafeInt(font, fontCycle);
+                    if (data.misc.TryGetValue("pageSize", out object size)) _pageSize = SafeInt(size, _pageSize);
+                }
+
+                foreach (KeyValuePair<string, SavedButtonState> saved in data.buttons ?? new Dictionary<string, SavedButtonState>())
+                {
+                    Module module = Manager.GetIndex(saved.Key);
+                    if (module == null || module.label || !module.isTogglable)
+                        continue;
+
+                    if (saved.Value.enabled == true && !module.enabled)
+                    {
+                        Toggle(module.buttonText);
+                        enabledMods++;
+                    }
+                }
+            });
+
+            Logs.Log($"Imported {enabledMods} mods from '{path}'.");
+            return enabledMods;
         }
 
         public static void Load()

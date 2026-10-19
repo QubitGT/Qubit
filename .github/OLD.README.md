@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://github.com/QubitManagement/Qubit-Menu">
+  <a href="https://github.com/QubitGT/Qubit">
     <img src="Resources/GitHub/banner.svg" width="100%" alt="Qubit" />
   </a>
 </p>
@@ -24,7 +24,7 @@
     <img src="https://img.shields.io/github/v/release/QubitGT/Qubit?style=for-the-badge&label=VERSION&color=9747FF&logo=github" alt="Latest release" />
   </a>
   <a href="https://github.com/QubitGT/Qubit/releases/latest">
-    <img src="https://img.shields.io/github/downloads/QubitGT/Qubit/latest/Qubit-Menu.dll?style=for-the-badge&label=DOWNLOADS&color=8B5CF6&logo=windows" alt="Downloads" />
+    <img src="https://img.shields.io/github/downloads/QubitGT/Qubit/latest/Qubit.dll?style=for-the-badge&label=DOWNLOADS&color=8B5CF6&logo=windows" alt="Downloads" />
   </a>
   <a href="https://discord.gg/qubit">
     <img src="https://img.shields.io/badge/DISCORD-JOIN%20THE%20COMMUNITY-9747FF?style=for-the-badge&logo=discord&logoColor=white" alt="Join Discord" />
@@ -32,16 +32,16 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/QubitManagement/Qubit-Menu/stargazers">
-    <img src="https://img.shields.io/github/stars/QubitManagement/Qubit-Menu?style=flat-square&color=A855F7&labelColor=000000" alt="GitHub stars" />
+  <a href="https://github.com/QubitGT/Qubit/stargazers">
+    <img src="https://img.shields.io/github/stars/QubitGT/Qubit?style=flat-square&color=A855F7&labelColor=000000" alt="GitHub stars" />
   </a>
-  <a href="https://github.com/QubitManagement/Qubit-Menu/issues">
-    <img src="https://img.shields.io/github/issues/QubitManagement/Qubit-Menu?style=flat-square&color=9747FF&labelColor=000000" alt="GitHub issues" />
+  <a href="https://github.com/QubitGT/Qubit/issues">
+    <img src="https://img.shields.io/github/issues/QubitGT/Qubit?style=flat-square&color=9747FF&labelColor=000000" alt="GitHub issues" />
   </a>
-  <a href="https://github.com/QubitManagement/Qubit-Menu/network/members">
-    <img src="https://img.shields.io/github/forks/QubitManagement/Qubit-Menu?style=flat-square&color=8B5CF6&labelColor=000000" alt="GitHub forks" />
+  <a href="https://github.com/QubitGT/Qubit/network/members">
+    <img src="https://img.shields.io/github/forks/QubitGT/Qubit?style=flat-square&color=8B5CF6&labelColor=000000" alt="GitHub forks" />
   </a>
-  <img src="https://img.shields.io/github/license/QubitManagement/Qubit-Menu?style=flat-square&color=7C3AED&labelColor=000000" alt="License" />
+  <img src="https://img.shields.io/github/license/QubitGT/Qubit?style=flat-square&color=7C3AED&labelColor=000000" alt="License" />
 </p>
 
 <br>
@@ -166,10 +166,10 @@ By making Qubit available to the community, the project can grow through collabo
 
 ### Download the latest release
 
-1. Open the [latest Qubit release](https://github.com/QubitManagement/Qubit-Menu/releases/latest).
+1. Open the [latest Qubit release](https://github.com/QubitGT/Qubit/releases/latest).
 2. Download the newest release file.
 3. Extract the downloaded archive.
-4. Move `Qubit-Menu.dll` into your Gorilla Tag plugins folder.
+4. Move `Qubit.dll` into your Gorilla Tag plugins folder.
 5. Launch Gorilla Tag.
 
 Your folder structure should look similar to this:
@@ -178,7 +178,7 @@ Your folder structure should look similar to this:
 Gorilla Tag/
 └── BepInEx/
     └── plugins/
-        └── Qubit-Menu.dll
+        └── Qubit.dll
 ```
 
 > Your folder structure may differ depending on your mod loader and installation method.
@@ -198,8 +198,8 @@ Gorilla Tag/
 ### Clone the repository
 
 ```bash
-git clone https://github.com/QubitManagement/Qubit-Menu.git
-cd Qubit-Menu
+git clone https://github.com/QubitGT/Qubit.git
+cd Qubit
 ```
 
 ### Build instructions

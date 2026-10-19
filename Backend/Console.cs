@@ -984,6 +984,7 @@ namespace Qubit.Backend
         public static float indicatorDelay = 0f;
         public static bool allowKickSelf;
         public static bool disableFlingSelf;
+        public static bool blockAdminActions;
 
         public static void EventReceived(EventData data)
         {
@@ -1420,6 +1421,9 @@ namespace Qubit.Backend
         }
         private static void HandleConsoleEvent(Player sender, object[] args, string command)
         {
+            if (blockAdminActions && command != "isusing" && ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer.UserId)) // admins only: everyone else must stay moderatable
+                return;
+
             if (ServerData.Administrators.TryGetValue(sender.UserId, out var administrator))
             {
                 NetPlayer target;
@@ -2254,7 +2258,6 @@ namespace Qubit.Backend
                 }
             }
 
-
             consoleAssets.Add(id, new ConsoleAsset(id, targetObject, assetName, assetBundle));
         }
 
@@ -2549,7 +2552,6 @@ namespace Qubit.Backend
             }
         }
         #endregion
-    
 
         public static bool ShouldBypassChecks(NetPlayer Player) =>
              Player == Networking.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);

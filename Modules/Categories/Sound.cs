@@ -160,7 +160,6 @@ namespace Qubit.Modules.Categories
 
                 string soundKey = "SoundboardSound" + soundName.Hash();
 
-
                 if (!VoiceRecorder.enabled || Soundboard.LegacySoundboard)
                 {
                     if (BindMode > 0)
@@ -694,7 +693,7 @@ namespace Qubit.Modules.Categories
             Files.Start(filePath);
         }
         public static void ApplySoundBindings(int index) => BindMode = index;
-        public static void BetaPlayTag(int id, float volume)
+        public static void PlayTag(int id, float volume)
         {
             if (!Networking.IsMasterClient)
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");

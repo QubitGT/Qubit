@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Libraries.Entities;
 using Qubit.Libraries.Networking;
 using Qubit.Core;
 using ExitGames.Client.Photon;
@@ -289,7 +290,6 @@ namespace Qubit.Modules.Categories
 
         public static Vector3 lastPosition = Vector3.zero;
 
-
         private static float driveSpeed;
         public static int driveInt;
         public static readonly float[] DriveSpeedAmounts = { 10f, 30f, 50f, 100f, 3f };
@@ -299,8 +299,6 @@ namespace Qubit.Modules.Categories
         public static readonly float[] FastRopesSpeedAmounts = { 5f, 10f, 30f };
         public static readonly string[] FastRopesSpeedNames = { "Normal", "Fast", "Ultra Fast" };
 
-
-
         public static Vector2 driveLerpDirection = Vector2.zero;
 
         private static bool previousDash;
@@ -309,7 +307,6 @@ namespace Qubit.Modules.Categories
         private static float nextrevTime = 0f;
 
         private static float flapTime;
-
 
         private static float loaoalsode;
 
@@ -379,7 +376,6 @@ namespace Qubit.Modules.Categories
 
         public static readonly float[] WallWalkStrengthAmounts = { 2f, 5f, 9.81f, 15f, 50f };
         public static readonly string[] WallWalkStrengthNames = { "Very Weak", "Weak", "Normal", "Strong", "Very Strong" };
-
 
         static Quaternion spiderRot;
         static Quaternion tappedRot;
@@ -463,7 +459,6 @@ namespace Qubit.Modules.Categories
         public static float sizeScale = 1f;
 
         private static Quaternion? vrrigJoystickRot;
-
 
         private static Quaternion? bodyJoystickRot;
 
@@ -3659,7 +3654,6 @@ namespace Qubit.Modules.Categories
                 GTPlayerTransform.ApplyRotationOverride(rot, Time.frameCount);
         }
 
-
         public static void SpiderCrawl() =>
             References.HeadCollider.transform.rotation = Quaternion.Euler(-270, References.HeadCollider.transform.rotation.eulerAngles.y, 0);
 
@@ -3795,7 +3789,7 @@ namespace Qubit.Modules.Categories
                         if (Manager.GetIndex("Graphic Punch Mod").enabled)
                         {
                             Projectiles.SendProjectile(
-                                Projectiles.FindProjectile("Apple"),
+                                ThrowableProjectiles.FindProjectile("Apple"),
                                 References.LocalRig.headMesh.transform.position,
                                 Vector3.down * 600f,
                                 new Color32(100, 0, 0, 255));
@@ -5109,7 +5103,7 @@ namespace Qubit.Modules.Categories
                     References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.All, 64, true, 999999f);
 
                     if (Manager.GetIndex("Splash Intercourse").enabled)
-                        Fun.BetaWaterSplash(References.LocalRig.transform.position, References.LocalRig.transform.rotation);
+                        Fun.WaterSplash(References.LocalRig.transform.position, References.LocalRig.transform.rotation);
 
                     RPCProtection();
                 }

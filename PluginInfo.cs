@@ -4,17 +4,17 @@
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
  * https://github.com/QubitGT/Qubit
- * 
+ *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
@@ -26,7 +26,7 @@ namespace Qubit
         public const string GUID = "org.qubit.gorillatag.qubitmenu";
         public const string Name = "Qubit";
         public const string Description = "Community powered mod menu for Gorilla Tag.";
-        public const string BuildTimestamp = "2026-10-19T01:22:46Z";
+        public const string BuildTimestamp = "2026-10-19T17:54:37Z";
         public const string Version = "5.0.2";
 
         public const string BaseDirectory =
@@ -42,13 +42,7 @@ namespace Qubit
         public static string ServerResourcePath => GitMaster.Replace("github.com", "raw.githubusercontent.com") + "/master/Resources/Server";
         public const string ServerAPI = "https://api.qubit.mom";
         public const string Logo = @"
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
+
                                                        .............................                                                       
                                                  /...../............................\....\                                                 
                                              ..../...../++++++++++++++++++++++++++++.....\....                                             
@@ -103,14 +97,8 @@ namespace Qubit
                                          ...\\...\+++++++++++++++++++++++++++++++++++.\\     .\\.+++++++++++++++++++\.\\                   
                                              ....\.....+++++++++++++++++++++++++++++...``      .\\\+++++++++++++++++++\\\                  
                                                  \................................../...         \\.....................``                 
-                                                       .............................              .......................                  
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
-                                                                                                                                           
+                                                       .............................              .......................
+
 ";
 
 #if DEBUG || LEGAL_DEBUG

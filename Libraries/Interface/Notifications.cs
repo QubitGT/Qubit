@@ -251,7 +251,6 @@ namespace Qubit.Libraries.Interface
                             .Select(t => t.text)
                             .ToArray();
 
-
                         var sb = new System.Text.StringBuilder();
                         for (int i = 0; i < sortedMods.Length; i++)
                         {

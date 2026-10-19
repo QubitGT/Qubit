@@ -133,7 +133,6 @@ namespace Qubit.Libraries.Language
                 yield break;
             }
 
-
             var parsed = JsonUtility.FromJson<Response>(request.downloadHandler.text);
             string response = parsed.response;
             if (Modules.Categories.Settings.debugDictation)
@@ -145,7 +144,6 @@ namespace Qubit.Libraries.Language
             {
                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/confirm.ogg", "Audio/Menu/confirm.ogg", clip => Modules.Categories.Settings.DictationPlay(clip, Frontend.Settings.buttonClickVolume / 10f));
             }
-
 
             string formatResponse = Regex.Replace(response, @"<([A-Z]+)(?:_""?([^"">]*)""?)?>", "").Replace("\n", "");
             Notifications.Clear();

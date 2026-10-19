@@ -61,7 +61,6 @@ namespace Qubit.Modules.Categories
         private static string previousNickName;
 
         public static float flushCooldown;
-        
 
         private static float lastCacheClearedTime;
 
@@ -117,7 +116,6 @@ namespace Qubit.Modules.Categories
         public static int rankIndex = 2;
 
         public static readonly string[] BadgeNames = { "Wood", "Rock", "Bronze", "Silver", "Gold", "Platinum", "Crystal", "Banana" };
-
 
         public static int targetElo = 4000;
         public static int targetBadge = 7;

@@ -103,7 +103,6 @@ namespace Qubit.Libraries.Audio
             ausrc.loop = true;
             ausrc.Play();
         }
-    
 
         public static readonly Dictionary<string, Dictionary<string, object>> SoundList = new Dictionary<string, Dictionary<string, object>>
         {

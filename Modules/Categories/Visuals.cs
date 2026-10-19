@@ -409,7 +409,6 @@ namespace Qubit.Modules.Categories
         public static readonly Dictionary<string, GameObject> labelDictionary = new Dictionary<string, GameObject>();
         public static readonly Dictionary<bool, List<int>> labelDistances = new Dictionary<bool, List<int>>();
 
-
         public static string OverallPlaytime;
         private static float playtime;
 
@@ -671,7 +670,6 @@ namespace Qubit.Modules.Categories
 
         private static readonly Dictionary<VRRig, GameObject> crashedNameTags = new Dictionary<VRRig, GameObject>();
 
-
         private static readonly Dictionary<VRRig, GameObject> compactNameTags = new Dictionary<VRRig, GameObject>();
         private static readonly Dictionary<VRRig, GameObject> compactTagBackgrounds = new Dictionary<VRRig, GameObject>();
 
@@ -764,7 +762,6 @@ namespace Qubit.Modules.Categories
         private static GameObject nameTagHolder;
 
         public static bool isNameTagQueued;
-
 
         private static readonly List<LineRenderer> linePool = new List<LineRenderer>();
 
@@ -881,7 +878,6 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-
             Color coreESPColor = ThemedColor(new Color(0.41f, 0.05f, 0.70f));
 
             List<GameEntity> cores = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.typeId == Fun.ObjectByName["GhostReactorCollectibleCore"]).ToList();
@@ -899,7 +895,6 @@ namespace Qubit.Modules.Categories
         {
             if (!Networking.InRoom)
                 return;
-
 
             Color critterESPColor = ThemedColor(Color.green);
 
@@ -919,7 +914,6 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-
             Color critterESPColor = ThemedColor(Color.green);
 
             ThrowableBug[] bugs = GetAllType<ThrowableBug>();
@@ -938,7 +932,6 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 return;
 
-
             Color coreESPColor = ThemedColor(new Color(0.41f, 0.05f, 0.70f));
 
             List<GameEntity> enemies = ManagerRegistry.GhostReactor.GameEntityManager.entities.Where(entity => entity != null && entity.gameObject.name.ToLower().Contains("enemy")).ToList();
@@ -952,11 +945,48 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void ResourceESP()
+        public static void LucyESP()
         {
             if (!Networking.InRoom)
                 return;
 
+            HalloweenGhostChaser lucy = Overpowered.Lucy;
+            if (lucy == null)
+                return;
+
+            Color lucyColor = ThemedColor(lucy.isSummoned ? new Color(0.75f, 0.1f, 0.1f) : new Color(0.6f, 0.8f, 1f));
+            Visualize(PrimitiveType.Sphere, lucy.transform.position, lucy.transform.rotation, Vector3.one * 0.75f, lucyColor, 778293, lucyColor.a);
+        }
+
+        public static void LucyOverlay()
+        {
+            HalloweenGhostChaser lucy = Overpowered.Lucy;
+            if (lucy == null)
+            {
+                DisableLucyOverlay();
+                return;
+            }
+
+            string state = lucy.currentState switch
+            {
+                HalloweenGhostChaser.ChaseState.Dormant => "Dormant",
+                HalloweenGhostChaser.ChaseState.InitialRise => "Rising",
+                HalloweenGhostChaser.ChaseState.Gong => "Gong",
+                HalloweenGhostChaser.ChaseState.Chasing => "Chasing",
+                HalloweenGhostChaser.ChaseState.Grabbing => "Grabbing",
+                _ => "Unknown"
+            };
+
+            Notifications.information["Lucy"] = $"{state} | {lucy.currentSpeed:F1}m/s | {lucy.targetPlayer?.NickName ?? "Nobody"}";
+        }
+
+        public static void DisableLucyOverlay() =>
+            Notifications.information.Remove("Lucy");
+
+        public static void ResourceESP()
+        {
+            if (!Networking.InRoom)
+                return;
 
             Color coreESPColor = ThemedColor(Color.green);
 
@@ -2569,7 +2599,6 @@ namespace Qubit.Modules.Categories
                             taggedNameTags.Add(vrrig, CreateNameTag("Qubit_Taggedtag"));
                         }
 
-
                         GameObject nameTag = taggedNameTags[vrrig];
                         TextMeshPro tmp = nameTag.GetOrAddComponent<TextMeshPro>();
 
@@ -2659,6 +2688,15 @@ namespace Qubit.Modules.Categories
                                 }
                             }
 
+                            if (VanillaPropsBaseline.IsLoaded)
+                            {
+                                foreach (string unknownKey in VanillaPropsBaseline.FindUnknownKeys(vrrig.GetPhotonPlayer().CustomProperties))
+                                {
+                                    string flag = $"Unknown:{unknownKey}";
+                                    specialMods = specialMods == null ? flag : specialMods + ", " + flag;
+                                }
+                            }
+
                             tmp.SafeSetText(specialMods);
 
                             StyleNameTag(tmp, vrrig);
@@ -2678,6 +2716,14 @@ namespace Qubit.Modules.Categories
                 }
                 catch { }
             }
+        }
+
+        public static void CaptureVanillaProps()
+        {
+            if (VanillaPropsBaseline.Capture())
+                Notifications.SendFormat("green", "SUCCESS", "Captured vanilla custom properties baseline. Mod Name Tags will now flag unknown props.");
+            else
+                Notifications.SendFormat("red", "ERROR", "Failed to capture vanilla props. Join a room first and ensure no spoofers are active.");
         }
 
         public static void DisableModTags()
@@ -3028,7 +3074,6 @@ namespace Qubit.Modules.Categories
                             infoTextTr.GetComponent<TextMeshPro>().SafeSetFontStyle(activeFontStyle);
                             infoTextTr.GetComponent<TextMeshPro>().SafeSetFont(activeFont);
                         }
-
 
                         TextMeshPro tm = infoTextTr.GetComponent<TextMeshPro>();
                         if (nameTagChams)
@@ -5166,7 +5211,6 @@ namespace Qubit.Modules.Categories
 
             float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? References.Player.scale : 1f);
 
-
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
                 if (playerRig.isLocal)
@@ -5196,7 +5240,6 @@ namespace Qubit.Modules.Categories
                 return;
 
             float lineWidth = (Manager.GetIndex("Thin Tracers").enabled ? 0.0075f : 0.025f) * (scaleWithPlayer ? References.Player.scale : 1f);
-
 
             float distance = float.MaxValue;
             VRRig playerRig = References.LocalRig;
@@ -5344,7 +5387,6 @@ namespace Qubit.Modules.Categories
             _ = Manager.GetIndex("Hidden on Camera").enabled;
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
 
-
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
                 if (playerRig.isLocal)
@@ -5379,7 +5421,6 @@ namespace Qubit.Modules.Categories
 
             bool LocalTagged = References.LocalRig.IsTagged();
             bool NoInfected = InfectedList().Count == 0;
-
 
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
@@ -5435,7 +5476,6 @@ namespace Qubit.Modules.Categories
                 return;
 
             bool thinTracers = Manager.GetIndex("Thin Tracers").enabled;
-
 
             NetPlayer currentTarget = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
 

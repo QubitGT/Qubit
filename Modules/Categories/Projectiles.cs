@@ -19,6 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using static Qubit.Libraries.Entities.ThrowableProjectiles;
+using GorillaLocomotion;
 using static Qubit.Modules.Categories.Overpowered;
 using GorillaTag.Cosmetics;
 using Qubit.Patches.Netcode;
@@ -61,27 +63,10 @@ namespace Qubit.Modules.Categories
     public static class Projectiles
     {
         #region Types
-        public class ProjectileEntry
-        {
-            public string Name;
-            public SnowballThrowable ThrowableLeft;
-            public SnowballThrowable ThrowableRight;
-            public SnowballThrowable Throwable => ThrowableRight;
-            public int ThrowableIndex => Throwable.throwableMakerIndex;
-        }
 
-        public enum ThrowableHand
-        {
-            Left,
-            Right,
-            Both,
-            Dynamic
-        }
         #endregion
 
         #region Settings
-        internal static List<ProjectileEntry> _cachedProjectileEntries;
-        private static bool _isBuildingCache = false;
 
         public static bool friendSided;
         public static int friendProjectileScale = 1;
@@ -89,6 +74,7 @@ namespace Qubit.Modules.Categories
 
         public static Coroutine ProjectileWatcherCoroutine;
         static int projectileFrameSent;
+        private static float nextLaunchWarning;
 
         private static int _projMode;
         public static int ProjectileMode
@@ -128,7 +114,6 @@ namespace Qubit.Modules.Categories
 
         public static int snowballMultiplicationFactor = 1;
 
-
         public static readonly Dictionary<bool, bool> previousGripHeld = new Dictionary<bool, bool>();
 
         public static GameObject FountainObject;
@@ -144,208 +129,9 @@ namespace Qubit.Modules.Categories
         #endregion
 
         #region Methods
-        public static void BuildProjectileCache(Action onComplete = null)
-        {
-            if (_cachedProjectileEntries != null)
-            {
-                onComplete?.Invoke();
-                return;
-            }
-            if (_isBuildingCache || !CosmeticsV2Spawner_Dirty.isPrepared)
-                return;
 
-            var allCosmeticsArraySO = ManagerRegistry.CosmeticsController.v2_allCosmeticsInfoAssetRef.Asset as AllCosmeticsArraySO;
-            if (allCosmeticsArraySO == null)
-                return;
-
-            _isBuildingCache = true;
-
-            try
-            {
-                var entries = new List<ProjectileEntry>();
-                var pending = new List<(CosmeticInfoV2 info, string rightId, string leftId)>();
-
-                foreach (var cosmeticRef in allCosmeticsArraySO.sturdyAssetRefs)
-                {
-                    CosmeticInfoV2 info = cosmeticRef.obj.info;
-                    if (!info.isThrowable)
-                        continue;
-                    if (pending.Exists(p => p.info.throwableIndex == info.throwableIndex))
-                        continue;
-
-                    bool hasRight = CosmeticsV2Spawner_Dirty.GetPlayfabIdFromThrowableIndex(false, info.throwableIndex, out string rightId);
-                    bool hasLeft = CosmeticsV2Spawner_Dirty.GetPlayfabIdFromThrowableIndex(true, info.throwableIndex, out string leftId);
-                    if (!hasRight && !hasLeft)
-                        continue;
-
-                    pending.Add((info, hasRight ? rightId : null, hasLeft ? leftId : null));
-                }
-
-                int remaining = pending.Count;
-                if (remaining == 0)
-                {
-                    _cachedProjectileEntries = entries;
-                    _isBuildingCache = false;
-                    onComplete?.Invoke();
-                    return;
-                }
-
-                void Finish()
-                {
-                    if (--remaining == 0)
-                    {
-                        _cachedProjectileEntries = entries;
-                        _isBuildingCache = false;
-                        Module projectileButton = Manager.GetIndex("Change Projectile");
-                        projectileButton?.onValueChanged?.Invoke();
-                        onComplete?.Invoke();
-                    }
-                }
-
-                async void ResolveThrowable((CosmeticInfoV2 info, string rightId, string leftId) item)
-                {
-                    try
-                    {
-                        string name = CleanProjectileName(item.info.displayName);
-                        if (name.Equals("Firework Mortar"))
-                        {
-                            Finish();
-                            return;
-                        }
-
-                        var registry = References.LocalRig?.cosmeticsObjectRegistry;
-                        if (registry == null)
-                        {
-                            Logs.LogError("CosmeticsItemRegistry on our rig is null??");
-                            Finish();
-                            return;
-                        }
-
-                        if (item.leftId != null) registry.Cosmetic(item.leftId);
-                        if (item.rightId != null) registry.Cosmetic(item.rightId);
-
-                        float start = Time.time;
-                        SnowballThrowable left = null, right = null;
-
-                        bool Satisfied() => (item.leftId == null || left != null) && (item.rightId == null || right != null);
-
-                        while (!Satisfied())
-                        {
-                            left = FindByThrowableIndex(SnowballMaker.leftHandInstance, item.info.throwableIndex);
-                            right = FindByThrowableIndex(SnowballMaker.rightHandInstance, item.info.throwableIndex);
-
-                            if (Satisfied())
-                                break;
-
-                            if (Time.time > start + 5f)
-                            {
-                                Logs.LogError($"Throwable (index: {item.info.throwableIndex}, right id: {item.rightId}, left id: {item.leftId}) took too long to spawn, so I'm just gonna go");
-                                break;
-                            }
-
-                            await Awaitable.EndOfFrameAsync(default);
-                        }
-
-                        if (left != null) left.velocityEstimator = SnowballMaker.leftHandInstance?.velocityEstimator;
-                        if (right != null) right.velocityEstimator = SnowballMaker.rightHandInstance?.velocityEstimator;
-
-                        entries.Add(new ProjectileEntry
-                        {
-                            Name = name,
-                            ThrowableLeft = left,
-                            ThrowableRight = right
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        Logs.LogError($"Trying to resolve throwable failed (index: {item.info.throwableIndex}, right id: {item.rightId}, left id: {item.leftId}): {ex}");
-                    }
-                    finally
-                    {
-                        Finish();
-                    }
-                }
-
-                foreach (var item in pending)
-                    ResolveThrowable(item);
-            }
-            catch (Exception ex)
-            {
-                Logs.LogError($"BuildProjectileCache failed: {ex}");
-                _isBuildingCache = false;
-            }
-        }
-
-        public static void LoadProjectileCache()
-        {
-            if (CosmeticsV2Spawner_Dirty.isPrepared && _cachedProjectileEntries == null)
-                BuildProjectileCache();
-        }
-
-        private static SnowballThrowable FindByThrowableIndex(SnowballMaker maker, int throwableIndex)
-        {
-            if (maker == null)
-                return null;
-            foreach (var sb in maker.snowballs)
-            {
-                if (sb != null && sb.throwableMakerIndex == throwableIndex)
-                    return sb;
-            }
-            return null;
-        }
-
-        public static IReadOnlyList<ProjectileEntry> GetAll()
-        {
-            if (_cachedProjectileEntries == null && !_isBuildingCache)
-                BuildProjectileCache();
-            return (IReadOnlyList<ProjectileEntry>)_cachedProjectileEntries ?? Array.Empty<ProjectileEntry>();
-        }
-
-        public static ProjectileEntry GetPreferredProjectileEntry() =>
-            GetAll()[ProjectileMode];
-        public static ProjectileEntry GetGrowingSnowballProjectileEntry()
-        {
-            ProjectileEntry entry = GetPreferredProjectileEntry();
-            return entry.Throwable is GrowingSnowballThrowable ? entry : FindProjectile("Growing Snowball");
-        }
-
-        public static ProjectileEntry FindProjectile(string name) =>
-            GetAll().FirstOrDefault(e => e.Name.Contains(name, StringComparison.OrdinalIgnoreCase));
-
-        public static string CleanProjectileName(string name)
-        {
-            name = name.Trim().TrimEnd('.');
-
-            name = Regex.Replace(name, "([a-z])([A-Z])", "$1 $2");
-            name = Regex.Replace(name, @"\s+", " ").Trim();
-
-            name = Regex.Replace(name, @"^Throwable\s+", "", RegexOptions.IgnoreCase);
-            name = Regex.Replace(
-                name,
-                @"(\s+(Right Hand|Left Hand|Right|Left|Projectile|Throwable|R|L))+$",
-                "",
-                RegexOptions.IgnoreCase);
-
-            name = name.Trim();
-            name = Regex.Replace(name, @"\s+", " ");
-            name = Strings.ToTitleCase(name);
-
-            switch (name)
-            {
-                case "Layerdip":
-                    return "Layer Dip";
-                case "Icecreamscoop":
-                    return "Ice Cream Scoop";
-                case "Portable Bonfire Stick":
-                    return "Bonfire Stick";
-                case "Tricktreat Piece":
-                    return "Trick or Treat";
-                default:
-                    break;
-            }
-            return name;
-        }
         public static void ApplyFriendProjectileScale(int index) => friendProjectileScale = index;
+
         private static RoomSystem.ProjectileSource ToProjectileSource(ThrowableHand hand)
         {
             switch (hand)
@@ -447,19 +233,27 @@ namespace Qubit.Modules.Categories
             }
             else
             {
-                if (projDebounceType > 0f)
-                {
-                    projDebounce = Time.time + projDebounceType;
-                    return true;
-                }
-                else
+                if (Time.time < projDebounce)
                     return false;
+                projDebounce = Time.time + projDebounceType;
+                return true;
             }
         }
         public static void SendProjectile(ProjectileEntry projectile, Vector3 position, Vector3 velocity, Color? color = null, int growingSnowballSize = -1, RaiseEventOptions options = null, ThrowableHand hand = ThrowableHand.Dynamic, bool bypassTeleport = false)
         {
             try
             {
+                SnowballThrowable Throwable = projectile?.Throwable;
+                if (Throwable == null)
+                {
+                    if (Time.unscaledTime >= nextLaunchWarning)
+                    {
+                        nextLaunchWarning = Time.unscaledTime + 10f;
+                        Logs.LogWarning($"Projectile '{projectile?.Name}' is waiting for its prefab (prepared={CosmeticsV2Spawner_Dirty.isPrepared}, left={SnowballMaker.leftHandInstance?.snowballs?.Length ?? 0}, right={SnowballMaker.rightHandInstance?.snowballs?.Length ?? 0}).");
+                    }
+                    return;
+                }
+
                 projectileFrameSent = Time.frameCount;
                 ProjectileWatcherCoroutine ??= Coroutines.instance.StartCoroutine(ProjectileWatcher());
 
@@ -480,7 +274,6 @@ namespace Qubit.Modules.Categories
                     if (!color.HasValue)
                         color = CalculateProjectileColor();
 
-                    SnowballThrowable Throwable = projectile.Throwable ?? throw new Exception("Throwable is null");
                     References.LocalRig.SetThrowableProjectileColor(true, color.Value);
                     UpdateNetworkedProjectile(projectile.ThrowableIndex, targetProjectileIndex, hand);
 
@@ -490,12 +283,12 @@ namespace Qubit.Modules.Categories
                     int index = GetProjectileIncrement(position, velocity, Throwable.transform.lossyScale.x);
                     if (Throwable is GrowingSnowballThrowable)
                     {
-                        GrowingSnowballThrowable GrowingSnowball = GetThrowableByHand(hand) as GrowingSnowballThrowable ?? throw new Exception("GrowingSnowball Throwable is null");
+                        GrowingSnowballThrowable GrowingSnowball = (GrowingSnowballThrowable)Throwable;
                         if (growingSnowballSize == -1)
                             growingSnowballSize = GrowingSnowball.MaxSizeLevel;
                         
 
-                        if (Networking.InRoom || friendSided)
+                        if ((Networking.InRoom && !clientSided) || friendSided)
                         {
                             if (friendSided)
                             {
@@ -597,7 +390,7 @@ namespace Qubit.Modules.Categories
             ProjectileWatcherCoroutine = null;
         }
 
-        public static void BetaFireImpact(Vector3 position, Color color = default)
+        public static void FireImpact(Vector3 position, Color color = default)
         {
             if (CanCallNow(FXType.Impact))
             {
@@ -620,7 +413,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void BetaSnowballImpact(NetPlayer Target)
+        public static void SnowballImpact(NetPlayer Target)
         {
             if (RoomSystem.callbackInstance.roomSettings.PlayerEffectLimiter.CanCallNow())
             {
@@ -881,13 +674,13 @@ namespace Qubit.Modules.Categories
         public static void ImpactSpam()
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
-                BetaFireImpact(References.RightHand.position);
+                FireImpact(References.RightHand.position);
         }
 
         public static void ImpactOrbit()
         {
             if (rightGrab || Mouse.current.leftButton.isPressed)
-                BetaFireImpact(References.HeadCollider.transform.position + new Vector3(MathF.Cos(Time.frameCount / 30f), 2f, MathF.Sin(Time.frameCount / 30f)));
+                FireImpact(References.HeadCollider.transform.position + new Vector3(MathF.Cos(Time.frameCount / 30f), 2f, MathF.Sin(Time.frameCount / 30f)));
         }
         public static void GrabProjectile()
         {
@@ -1409,7 +1202,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                BetaSnowballImpact(lockTarget.GetPlayer());
+                SnowballImpact(lockTarget.GetPlayer());
             }, new GunLibrary.GunSettings { locks = true });
         }
 
@@ -1776,7 +1569,6 @@ namespace Qubit.Modules.Categories
             References.LocalRig.rightMiddle.LerpFinger(1f, false);
             References.LocalRig.rightThumb.LerpFinger(1f, false);
 
-
             ProjectileEntry snowball = FindProjectile($"Growing Snowball");
             for (int i = 0; i < 2; i++)
             {
@@ -1853,7 +1645,6 @@ namespace Qubit.Modules.Categories
             return null;
         }
         #endregion
-    
 
         public static Coroutine DisableThrowableCoroutine;
 
@@ -2024,51 +1815,5 @@ namespace Qubit.Modules.Categories
                 SendThrowableProjectile(projectileIndex, NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, 0f, 0f), RandomQuaternion());
             });
         }
-
-        public static void SendBarrelProjectile(Vector3 pos, Vector3 vel, Quaternion rot, RaiseEventOptions options = null, bool disableCooldown = false)
-        {
-            options ??= new RaiseEventOptions { Receivers = ReceiverGroup.Others };
-
-            int index = BarrelIndex;
-
-            if (Projectiles.DisableThrowableCoroutine != null)
-                Coroutines.instance.StopCoroutine(Projectiles.DisableThrowableCoroutine);
-
-            Projectiles.DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(Projectiles.DisableThrowable(index));
-            TransferrableObject transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
-
-            if (transferrableObject == null)
-            {
-                if (!CosmeticsOwned.Contains("Lucky Smash Barrel"))
-                {
-                    References.LocalRig.transform.position = TryOnRoom.transform.position;
-                    ManagerRegistry.CosmeticsController.PressWardrobeItemButton(ManagerRegistry.CosmeticsController.allCosmetics.FirstOrDefault(c => string.Equals(c.overrideDisplayName, "Lucky Smash Barrel", StringComparison.OrdinalIgnoreCase)), false, false);
-                }
-                References.LocalRig.SetActiveTransferrableObjectIndex(1, index);
-                transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
-            }
-
-            if (transferrableObject == null)
-            {
-                Logs.LogError("Lucky smash barrel not found, cannot send barrel projectile.");
-                return;
-            }
-
-            DeployableObject barrel = transferrableObject.GetComponent<DeployableObject>();
-            if (!disableCooldown && barrel.m_spamChecker.CanCallNow(Time.unscaledTime))
-            {
-                transferrableObject.currentState = TransferrableObject.PositionState.InRightHand;
-
-                object[] data = {
-                    barrel._deploySignal._signalID,
-                    ManagerRegistry.NetworkSystem.ServerTimestamp,
-                    BitPackUtils.PackWorldPosForNetwork(pos),
-                    BitPackUtils.PackQuaternionForNetwork(rot),
-                    BitPackUtils.PackWorldPosForNetwork(vel)
-                };
-                PhotonNetwork.RaiseEvent(177, data, options, SendOptions.SendReliable);
-                barrel._child.Deploy(barrel, pos, rot, vel);
-                RPCProtection();
-            }
-        }}
+    }
 }

@@ -35,6 +35,7 @@ using Qubit.Patches.Rigs;
 using Qubit.Patches.Tagging;
 using Qubit.Patches.Terms;
 using Qubit.Patches.Voice;
+using Qubit.Patches.Safety.AntiGhost;
 using Qubit.Utilities;
 using GorillaLocomotion;
 using GorillaTagScripts.ObstacleCourse;
@@ -172,6 +173,8 @@ namespace Qubit.Modules
                 new Module { buttonText = "Thick Menu", enableMethod =() => thinMenu = false, disableMethod =() => thinMenu = true, toolTip = "Makes the menu thin.", legal = true},
                 new Module { buttonText = "Long Menu", enableMethod =() => longMenu = true, disableMethod =() => longMenu = false, toolTip = "Makes the menu long.", legal = true},
                 new Module { buttonText = "Flip Menu", enableMethod =() => flipMenu = true, disableMethod =() => flipMenu = false, toolTip = "Flips the menu to the back of your hand.", legal = true},
+
+                new Module { buttonText = "Legacy Menu", enableMethod =() => Legacy.Enabled = true, disableMethod =() => Legacy.Enabled = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
 
 
                 new Module { buttonText = "Round Menu", enableMethod =() => roundMenu = true, disableMethod =() => roundMenu = false, toolTip = "Makes the menu objects round.", legal = true},
@@ -366,6 +369,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Save Preferences", method = Preferences.Save, isTogglable = false, toolTip = "Saves your preferences to a file.", legal = true},
                 new Module { buttonText = "Load Preferences", method = Preferences.Load, isTogglable = false, toolTip = "Loads your preferences from a file.", legal = true},
                 new Module { buttonText = "Disable Autosave", enableMethod = () => Preferences.DisableAutoSave = true, disableMethod = () => Preferences.DisableAutoSave = false, toolTip = "Disables the auto save mechanism.", legal = true},
+                new Module { buttonText = "Import External Preferences", aliases = new[] { "Import Seralyth Settings", "Import Seralyth", "Import Untitled", "Import Poison", "Import iisStupidMenu" }, method = Preferences.ImportExternal, isTogglable = false, toolTip = "Copies your enabled mods and UI settings from iisStupidMenu, SeralythMenu, or Poison in your Gorilla Tag folder.", legal = true},
                 new Module { buttonText = "Panic", method = Modules.Categories.Settings.Panic, isTogglable = false, toolTip = "Disables every single active mod.", legal = true},
             },
 
@@ -435,7 +439,7 @@ namespace Qubit.Modules
             {
                 new Module { buttonText = "Exit Projectile Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true},
 
-                ButtonHelper.Create("Change Projectile", () => Projectiles.GetAll()?.Select(e => e.Name).ToArray() ?? Array.Empty<string>(), Projectiles.ProjectileMode, v => Projectiles.ProjectileMode = v, toolTip: "Changes the projectile of the projectile mods."),
+                ButtonHelper.Create("Change Projectile", () => ThrowableProjectiles.GetAll()?.Select(e => e.Name).ToArray() ?? Array.Empty<string>(), Projectiles.ProjectileMode, v => Projectiles.ProjectileMode = v, toolTip: "Changes the projectile of the projectile mods."),
                 new Module { buttonText = "Random Projectile", toolTip = "Makes the projectiles random." },
                 new Module { buttonText = "Random Direction", toolTip = "Makes the projectiles go everywhere." },
                 new Module { buttonText = "Random Color", toolTip = "Makes the projectiles random colors." },
@@ -444,7 +448,6 @@ namespace Qubit.Modules
                 new Module { buttonText = "Left Handed Projectiles", toolTip = "Allows you to shoot projectiles from your left hand as well." },
 
                 new Module { buttonText = "Both Handed Projectiles", toolTip = "Allows you to shoot projectiles from your both hands." },
-
 
                 ButtonHelper.Create("Change Shoot Speed", () => Projectiles.ShootStrengthNames, Projectiles.shootCycle, Projectiles.ApplyShootSpeed, "Changes the speed of shooting projectiles."),
                 new Module { buttonText = "Shoot Projectiles", toolTip = "Shoots projectiles like a gun." },
@@ -629,6 +632,8 @@ namespace Qubit.Modules
                 new Module { buttonText = "Anti Ban Crash", enableMethod =() => AntiBanCrash1.enabled = true, disableMethod =() => AntiBanCrash1.enabled = false, toolTip = "Prevents your game from crashing when you are banned."},
                 new Module { buttonText = "Anti Kick", enableMethod = Safety.OnlySerializeNecessary, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Only networks the necessities to prevent getting kicked."},
                 new Module { buttonText = "Anti Name Ban", enableMethod =() => BanPatches.enabled = true, method = Safety.AntiNameBan, disableMethod =() => BanPatches.enabled = false, toolTip = "Prevents you from getting banned for setting your name to bad things."},
+                new Module { buttonText = "Anti Ghost", enableMethod =() => GhostProtection.enabled = true, disableMethod =() => GhostProtection.enabled = false, toolTip = "Ignores ghost and isolate events that were not sent by the master client, keeping everyone visible.", legal = true},
+                new Module { buttonText = $"Anti Ghost {Bracket("green", "Notify")}", enableMethod =() => GhostProtection.Notify = true, disableMethod =() => GhostProtection.Notify = false, toolTip = "Notifies you whenever someone tries to ghost or isolate a player."},
                 new Module { buttonText = "Anti Stump Kick", enableMethod =() => GroupSearch.enabled = true, disableMethod =() => GroupSearch.enabled = false, toolTip = "Stops people from group kicking you.", legal = true},
                 new Module { buttonText = "Auto Clear Cache", method = Safety.AutoClearCache, toolTip = "Automatically clears your game's cache (garbage collector) every minute to prevent memory leaks.", legal = true},
                 new Module { buttonText = "Anti Moderator", method = Safety.AntiModerator, toolTip = "When someone with the stick joins, you get disconnected and their player ID and room code gets saved to a file."},
@@ -874,7 +879,6 @@ namespace Qubit.Modules
                 new Module { buttonText = "Eye Contact", enableMethod =() => Torso.VRRigLateUpdate += Movement.EyeContact, disableMethod =() => Torso.VRRigLateUpdate -= Movement.EyeContact, toolTip = "Makes you stare at anyone who is looking at you."},
                 new Module { buttonText = "Floating Rig", enableMethod = Movement.EnableFloatingRig, method = Movement.FloatingRig, disableMethod = Movement.DisableFloatingRig, toolTip = "Makes your rig float."},
 
-
                 new Module { buttonText = "Bees", method = Movement.Bees, disableMethod = Movement.EnableRig, toolTip = "Makes your rig teleport to random players, imitating the bees ghost."},
 
                 new Module { buttonText = "Piggyback Gun", aliases = new[] { "Ride Gun" }, method = Movement.PiggybackGun, toolTip = "Teleports you on top of whoever your hand desires repeatedly."},
@@ -961,6 +965,8 @@ namespace Qubit.Modules
                 new Module { buttonText = "Creature ESP", method = Visuals.CreatureESP, toolTip = "Puts dots on your screen at where all of the creatures are in forest and caves."},
                 new Module { buttonText = "Enemy ESP", method = Visuals.EnemyESP, toolTip = "Puts dots on your screen at where all of the cores in the ghost reactor map are."},
                 new Module { buttonText = "Resource ESP", method = Visuals.ResourceESP, toolTip = "Puts dots on your screen at where all of the resources are in the Super Infection gamemode."},
+                new Module { buttonText = "Lucy ESP", method = Visuals.LucyESP, toolTip = "Puts a dot on your screen at where Lucy is, even when she's hiding underground.", legal = true},
+                new Module { buttonText = "Lucy Overlay", method = Visuals.LucyOverlay, disableMethod = Visuals.DisableLucyOverlay, toolTip = "Displays Lucy's current state, speed, and target on your screen.", legal = true},
 
                 new Module { buttonText = "Enable Snow", aliases = new[] { "Winter" }, enableMethod =() => Visuals.ToggleSnow(true), disableMethod =() => Visuals.ToggleSnow(false), toolTip = "Forcibly enables the snow."},
                 new Module { buttonText = "Rainy Weather", aliases = new[] { "Enable Rain" }, method =() => Visuals.WeatherChange(true), toolTip = "Forces the weather to rain."},
@@ -1026,6 +1032,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Turn Name Tags", method = Visuals.TurnTags, disableMethod = Visuals.DisableTurnTags, toolTip = "Gives players name tags above their heads that show their turn settings."},
                 new Module { buttonText = "Tagged Name Tags", method = Visuals.TaggedTags, disableMethod = Visuals.DisableTaggedTags, toolTip = "Gives players name tags above their heads that show who tagged them."},
                 new Module { buttonText = "Mod Name Tags", method = Visuals.ModTags, disableMethod = Visuals.DisableModTags, toolTip = "Gives players name tags above their heads that show what mods they have."},
+                new Module { buttonText = "Capture Vanilla Props", method = Visuals.CaptureVanillaProps, isTogglable = false, toolTip = "Captures the current Photon player custom properties as the vanilla baseline. Run this once on a clean session (no mods/spoofers active) so Mod Name Tags can flag any non-vanilla props on other players."},
                 new Module { buttonText = "Cosmetic Name Tags", method = Visuals.CosmeticTags, disableMethod = Visuals.DisableCosmeticTags, toolTip = "Gives players name tags above their heads that show what special cosmetics they have."},
                 new Module { buttonText = "Verified Name Tags", method = Visuals.VerifiedTags, disableMethod = Visuals.DisableVerifiedTags, toolTip = "Gives players name tags above their heads if they are a verified player."},
                 new Module { buttonText = "Lag Name Tags", method = Visuals.CrashedTags, disableMethod = Visuals.DisableCrashedTags, toolTip = "Gives players name tags above their heads if they are lagging."},
@@ -1132,6 +1139,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "Loud Hand Taps", method = Fun.LoudHandTaps, disableMethod = Fun.FixHandTaps, toolTip = "Makes your hand taps really loud."},
                 new Module { buttonText = "Silent Hand Taps", aliases = new[] { "No Hand Taps" }, method = Fun.SilentHandTaps, disableMethod = Fun.FixHandTaps, toolTip = "Makes your hand taps really quiet."},
                 new Module { buttonText = "Instant Hand Taps", method =() => References.Tagger.tapCoolDown = 0f, disableMethod =() => References.Tagger.tapCoolDown = 0.33f, toolTip = "Removes the hand tap cooldown."},
+                new Module { buttonText = "Instant Lab Doors", enableMethod = Fun.InstantLabDoors, method = Fun.InstantLabDoors, disableMethod = Fun.SlowLabDoors, toolTip = "Makes the stump lab doors open at warp speed.", legal = true},
                 new Module { buttonText = "Silent Hand Taps on Tag", aliases = new[] { "No Hand Taps on Tag" }, method = Fun.SilentHandTapsOnTag, disableMethod = Fun.FixHandTaps, toolTip = "Makes your hand taps really quiet when you're tagged, good for ambush."},
 
                 new Module { buttonText = $"Water Splash Hands {Bracket("green", "G")}", method = Fun.WaterSplashHands, toolTip = "Splashes water when holding <color=green>grip</color>."},
@@ -1171,6 +1179,21 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Fast Lucy", method = Fun.FastLucy, toolTip = "Makes lucy become really fast." },
                 new Module { buttonText = "Slow Lucy", method = Fun.SlowLucy, toolTip = "Makes lucy become really slow." },
+
+                new Module { buttonText = "Restless Lucy", enableMethod = Lucy.EnableRestless, disableMethod = Lucy.DisableRestless, toolTip = "Makes Lucy rise way more often, never giving anyone a break. Requires master client." },
+                new Module { buttonText = "Hyper Lucy", enableMethod = Lucy.EnableHyper, disableMethod = Lucy.DisableHyper, toolTip = "Makes Lucy permanently accelerate, until she's breaking the sound barrier. Requires master client." },
+                new Module { buttonText = "Lucy Rain", method = Lucy.Rain, toolTip = "Makes Lucy gong teleport between her spawn points over and over. Requires master client." },
+                new Module { buttonText = "Banish Lucy", method = Lucy.Banish, isTogglable = false, toolTip = "Sends Lucy 50 meters into the ground. Requires master client." },
+                new Module { buttonText = "Rainbow Lucy", method = Lucy.RainbowColor, disableMethod = Lucy.ResetColor, toolTip = "Makes Lucy cycle through the colors of the rainbow." },
+
+                new Module { buttonText = "Lucy Pet", enableMethod = Lucy.EnablePet, disableMethod = Lucy.DisablePet, toolTip = "Makes Lucy follow you around like a pet, and she can never grab you. Requires master client." },
+                new Module { buttonText = "Lucy Steer Gun", method = Lucy.SteerGun, toolTip = "Remote control Lucy, sending her wherever your hand desires. Hold trigger to steer. Requires master client." },
+                new Module { buttonText = "Lucy Grab Gun", method = Lucy.GrabGun, toolTip = "Teleports Lucy straight at whoever your hand desires and makes her grab them. Requires master client." },
+                new Module { buttonText = "Lucy Bodyguard", method = Lucy.Bodyguard, disableMethod = Fun.DespawnLucy, toolTip = "Makes Lucy hunt down anyone who gets within 25 meters of you. Requires master client." },
+                new Module { buttonText = "Lucy Siege", method = Lucy.Siege, disableMethod = Fun.DespawnLucy, toolTip = "Makes Lucy grab a random player every 2 seconds, non stop. Requires master client." },
+
+                new Module { buttonText = "Carry Lucy", enableMethod = Lucy.EnableCarry, method = Lucy.Carry, disableMethod = Lucy.DisableCarry, toolTip = "Picks Lucy up and lets everyone watch you carry the ghost around in your hand. Requires master client." },
+                new Module { buttonText = "Lucy Flight", enableMethod = Lucy.EnableFlight, method = Lucy.Flight, disableMethod = Lucy.DisableFlight, toolTip = "Makes Lucy carry you up into the sky. Everyone sees you levitating, and she grabs you on your screen." },
 
                 new Module { buttonText = "Overstimulate Gun", method = Fun.OverstimulateGun, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Overstimulates whoever your hand desires."},
                 new Module { buttonText = "Overstimulate All", method = Fun.OverstimulateAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Overstimulates everyone in the room."},
@@ -1514,29 +1537,29 @@ namespace Qubit.Modules
                 new Module { buttonText = "Blaster Crash Gun", method = Fun.BlasterCrashGun, toolTip = "Crashes whoever your hand desires using the blasters." },
                 new Module { buttonText = $"Blaster Crash All {Bracket("green", "T")}", method = Fun.BlasterCrashAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Crashes everyone in the room when holding <color=green>trigger</color> using the blasters." },
 
-                new Module { buttonText = $"Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Turkey Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Motorized Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Thruster Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Yoyo Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Blaster Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Lobber Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Strider Tentacle Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Crawler Tentacle Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
-                new Module { buttonText = $"Platform Deployer Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Fun.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Turkey Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Motorized Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Thruster Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Yoyo Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Blaster Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Lobber Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Strider Tentacle Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Crawler Tentacle Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
+                new Module { buttonText = $"Platform Deployer Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers out of your hand when holding <color=green>grip</color>."},
                 new Module { buttonText = $"Gadget Spam {Bracket("green", "G")}", method = Fun.GadgetSpamGrip, toolTip = "Spawns random gadgets out of your hand when holding <color=green>grip</color>."},
                 new Module { buttonText = $"Resource Spam {Bracket("green", "G")}", method = Fun.ResourceSpamGrip, toolTip = "Spawns random resources out of your hand when holding <color=green>grip</color>."},
 
-                new Module { buttonText = "Stilt Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts at wherever your hand desires."},
-                new Module { buttonText = "Turkey Stilt Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts at wherever your hand desires."},
-                new Module { buttonText = "Motorized Stilt Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts at wherever your hand desires."},
-                new Module { buttonText = "Thruster Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters at wherever your hand desires."},
-                new Module { buttonText = "Yoyo Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos at wherever your hand desires."},
-                new Module { buttonText = "Blaster Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters at wherever your hand desires."},
-                new Module { buttonText = "Lobber Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers at wherever your hand desires."},
-                new Module { buttonText = "Strider Tentacle Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles at wherever your hand desires."},
-                new Module { buttonText = "Crawler Tentacle Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles at wherever your hand desires."},
-                new Module { buttonText = "Platform Deployer Gun", method =() => Fun.SpamGadgetGun(Fun.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers at wherever your hand desires."},
+                new Module { buttonText = "Stilt Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts at wherever your hand desires."},
+                new Module { buttonText = "Turkey Stilt Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts at wherever your hand desires."},
+                new Module { buttonText = "Motorized Stilt Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts at wherever your hand desires."},
+                new Module { buttonText = "Thruster Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters at wherever your hand desires."},
+                new Module { buttonText = "Yoyo Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos at wherever your hand desires."},
+                new Module { buttonText = "Blaster Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters at wherever your hand desires."},
+                new Module { buttonText = "Lobber Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers at wherever your hand desires."},
+                new Module { buttonText = "Strider Tentacle Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles at wherever your hand desires."},
+                new Module { buttonText = "Crawler Tentacle Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles at wherever your hand desires."},
+                new Module { buttonText = "Platform Deployer Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers at wherever your hand desires."},
                 new Module { buttonText = "Gadget Gun", method = Fun.GadgetSpamGun, toolTip = "Spawns random gadgets at wherever your hand desires."},
                 new Module { buttonText = "Resource Gun", method = Fun.ResourceSpamGun, toolTip = "Spawns random resources at wherever your hand desires."},
 
@@ -1907,8 +1930,6 @@ namespace Qubit.Modules
                 new Module { buttonText = "Snowball Push Player Gun", method = Projectiles.SnowballPushPlayerGun, toolTip = "Flings whoever your hand desires away from you."},
                 new Module { buttonText = "Snowball Push All Players", method = Projectiles.SnowballPushAllPlayers, toolTip = "Flings everyone away from you."},
 
-
-
                 new Module { buttonText = "Snowball Buttocks", method = Projectiles.SnowballButtocks, disableMethod = Projectiles.DisableSnowballGenitals, toolTip = "Gives you fake buttocks using the snowballs." },
                 new Module { buttonText = "Snowball Breasts", method = Projectiles.SnowballBreasts, disableMethod = Projectiles.DisableSnowballGenitals, toolTip = "Gives you fake breasts using the snowballs." },
 
@@ -2090,12 +2111,12 @@ namespace Qubit.Modules
                 new Module { buttonText = "Unlock Driver Gun", method =() => Master.DriverStatusGun(false), isTogglable = true, toolTip = "Unlocks the driver for whoever your hand desires in the virtual stump."},
                 new Module { buttonText = "Spaz Driver Gun", method = Master.SpazDriverStatusGun, isTogglable = true, toolTip = "Spaz makes and unmakes whoever your hand desires the driver in the virtual stump."},
 
-                new Module { buttonText = $"Bonk Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(4), toolTip = "Plays the bonk sound when holding <color=green>grip</color>." },
-                new Module { buttonText = $"Count Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(1), toolTip = "Plays the count sound when holding <color=green>grip</color>." },
-                new Module { buttonText = $"Brawl Count Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(6), toolTip = "Plays the brawl count sound when holding <color=green>grip</color>." },
-                new Module { buttonText = $"Brawl Start Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(7), toolTip = "Plays the brawl start sound when holding <color=green>grip</color>." },
-                new Module { buttonText = $"Tag Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(0), toolTip = "Plays the tag sound when holding <color=green>grip</color>." },
-                new Module { buttonText = $"Round End Sound Spam {Bracket("green", "G")}", method =() => Master.BetaSoundSpam(2), toolTip = "Plays the round end sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Bonk Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(4), toolTip = "Plays the bonk sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Count Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(1), toolTip = "Plays the count sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Brawl Count Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(6), toolTip = "Plays the brawl count sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Brawl Start Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(7), toolTip = "Plays the brawl start sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Tag Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(0), toolTip = "Plays the tag sound when holding <color=green>grip</color>." },
+                new Module { buttonText = $"Round End Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(2), toolTip = "Plays the round end sound when holding <color=green>grip</color>." },
 
                 new Module { buttonText = "Paintbrawl Start Game", method = Master.PaintbrawlStartGame, isTogglable = false, toolTip = "Starts a game of paintbrawl." },
                 new Module { buttonText = "Paintbrawl End Game", method = Master.PaintbrawlEndGame, isTogglable = false, toolTip = "Ends the current game of paintbrawl." },
@@ -2184,37 +2205,36 @@ namespace Qubit.Modules
                 
                 
 
-                new Module { buttonText = "Force Grab", method =()=> Overpowered.ForceGrab(References.LocalRig.transform.position), toolTip = "Attempts to grab the hand of anyone who presses their grips." },
-                new Module { buttonText = "Force Grab Gun", postMethod = Overpowered.ForceGrabGun, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Forcibly grab whoever your hand desires." },
-                new Module { buttonText = "Fling on Grab", method = Overpowered.FlingOnGrab, toolTip = "Flings the player when they grab you." },
-                new Module { buttonText = "Give Fly on Grab", method = Overpowered.GiveFlyOnGrab, toolTip = "When someone is holding you, they can fly by pressing their trigger." },
+                new Module { buttonText = "Force Grab", method =()=> Grabbing.ForceGrab(References.LocalRig.transform.position), toolTip = "Attempts to grab the hand of anyone who presses their grips." },
+                new Module { buttonText = "Force Grab Gun", postMethod = Grabbing.ForceGrabGun, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Forcibly grab whoever your hand desires." },
+                new Module { buttonText = "Fling on Grab", method = Grabbing.FlingOnGrab, toolTip = "Flings the player when they grab you." },
+                new Module { buttonText = "Give Fly on Grab", method = Grabbing.GiveFlyOnGrab, toolTip = "When someone is holding you, they can fly by pressing their trigger." },
 
-                
-                
-                
-                
+                new Module { buttonText = "Lag Server", method =() => Overpowered.FreezeServer(1f, 11), toolTip = "Lags the room." },
+                new Module { buttonText = "Freeze Server", enableMethod =() => ViewSerialization.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Freezes the room." },
+                new Module { buttonText = "Crash Server", enableMethod =() => ViewSerialization.OverrideSerialization = () => false, method =() => Overpowered.FreezeServer(0.5f, 40), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Crashes the room." },
+                new Module { buttonText = $"Za Warudo {Bracket("green", "T")}", enableMethod = Overpowered.ZaWarudo_enableMethod, method = Overpowered.ZaWarudo, toolTip = "Freeze all, but with special effects." },
 
                 new Module { buttonText = $"Anti Report {Bracket("green", "Fling")}", method = Overpowered.AntiReportFling, toolTip = "Flings whoever tries to report you."},
 
-                new Module { buttonText = "Grab Fling Gun", enableMethod =() => Overpowered.GrabStatus = true, method = Overpowered.GrabFlingGun, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to fling whoever your hand desires."},
-                new Module { buttonText = "Grab Fling All", enableMethod =() => Overpowered.GrabStatus = true, postMethod = Overpowered.GrabFlingAll, disableMethod =() => Overpowered.GrabStatus = false, toolTip = "Tries to fling everyone in the room."},
+                new Module { buttonText = "Grab Fling Gun", enableMethod =() => Grabbing.GrabStatus = true, method = Grabbing.GrabFlingGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to fling whoever your hand desires."},
+                new Module { buttonText = "Grab Fling All", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabFlingAll, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to fling everyone in the room."},
 
-                
-                
-                
+                //new ButtonInfo { buttonText = "Grab Bring Player Gun", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.BringPlayerGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to bring whoever your hand desires to you."},
+                //new ButtonInfo { buttonText = "Grab Bring All Players", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.BringAllPlayers, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to bring everyone in the room to you."},
+                //new ButtonInfo { buttonText = "Grab Push Player Gun", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.PushPlayerGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to push whoever your hand desires away from you."},
 
-                
-                
-
+                //new ButtonInfo { buttonText = "Grab Crash Gun", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabCrashGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to crash whoever your hand desires."},
+                //new ButtonInfo { buttonText = "Grab Crash All", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabCrashAll, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to crash everyone in the room."},
 
                 new Module { buttonText = "Lag Gun", method = Overpowered.LagGun, toolTip = "Lags whoever your hand desires."},
                 new Module { buttonText = "Lag All", method = Overpowered.LagAll, toolTip = "Lags everyone in the room."},
                 new Module { buttonText = "Lag Aura", method = Overpowered.LagAura, toolTip = "Lags players nearby."},
                 new Module { buttonText = "Lag On Touch", method = Overpowered.LagOnTouch, toolTip = "Lags whoever you touch." },
 
-                new Module { buttonText = "Server Mute All", method = Overpowered.ServerMuteAll, toolTip = "Mutes everyone in the server."},
-                new Module { buttonText = "Deafen Gun", method = Overpowered.DeafenGun, toolTip = "Makes whoever your hand deseries not be able to hear anyone else."},
-                new Module { buttonText = "Deafen All", method = Overpowered.DeafenAll, toolTip = "Makes everyone not be able to hear anyone except you."},
+                new Module { buttonText = "Server Mute All", method = VoiceControl.ServerMuteAll, toolTip = "Mutes everyone in the server."},
+                new Module { buttonText = "Deafen Gun", method = VoiceControl.DeafenGun, toolTip = "Makes whoever your hand deseries not be able to hear anyone else."},
+                new Module { buttonText = "Deafen All", method = VoiceControl.DeafenAll, toolTip = "Makes everyone not be able to hear anyone except you."},
 
                 
 
@@ -2479,6 +2499,7 @@ namespace Qubit.Modules
                 new Module { buttonText = "No Admin Indicator", enableMethod = Admin.EnableNoAdminIndicator, method = Admin.NoAdminIndicator, disableMethod = Admin.AdminIndicatorBack, toolTip = "Disables the cone that appears above your head to others with the menu.", legal = true},
                 new Module { buttonText = "Allow Kick Self", enableMethod =() => Console.allowKickSelf = true, disableMethod =() => Console.allowKickSelf = false, toolTip = "Lets other admins kick you.", legal = true},
                 new Module { buttonText = "Disable Fling Self", enableMethod =() => Console.disableFlingSelf = true, disableMethod =() => Console.disableFlingSelf = false, toolTip = "Other admins can't fling you.", legal = true},
+                new Module { buttonText = "Block Admin Actions", enableMethod =() => Console.blockAdminActions = true, disableMethod =() => Console.blockAdminActions = false, toolTip = "Blocks admins from doing anything to you with the console (kicks, flings, blocks, etc.)."},
 
                 new Module { buttonText = "Admin Platform Exclude Gun", method =() => Admin.AdminPlatToggleGun(true), toolTip = "Puts a player who is included for platform networking to be excluded.", legal = true},
                 new Module { buttonText = "Admin Platform Include Gun", method =() => Admin.AdminPlatToggleGun(false), toolTip = "Puts a player who is excluded for platform networking to be included.", legal = true},
@@ -2543,13 +2564,11 @@ namespace Qubit.Modules
                 new Module { buttonText = "Admin Blur Gun", method = Admin.BlurGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Blur All", method = Admin.BlurAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
-
                 new Module { buttonText = "Admin Tpose Gun", method = Admin.TposeGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Tpose All", method = Admin.TposeAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
                 new Module { buttonText = "Admin Headspin Gun", method = Admin.HeadspinGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Headspin All", method = Admin.HeadspinAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
-
 
                 new Module { buttonText = "Admin F&P Gun", method = Admin.FreezeandpullGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin F&P All", method = Admin.FreezeandpullAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
@@ -2557,20 +2576,17 @@ namespace Qubit.Modules
                 new Module { buttonText = "Admin Magnet Gun", method = Admin.MagnetGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Magnet All", method = Admin.MagnetAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
-
                 new Module { buttonText = "Admin Ragdoll Gun", method = Admin.RagdollGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Ragdoll All", method = Admin.RagdollAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
                 new Module { buttonText = "Admin Blackhole Gun", method = Admin.BlackholeGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Blackhole All", method = Admin.BlackholeAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
 
-
                 new Module { buttonText = "Admin Yeet Gun", method = Admin.YeetGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Yeet All", method = Admin.YeetAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
 
                 new Module { buttonText = "Admin Lastmoment Gun", method = Admin.LastmomentGun, toolTip = "Enables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Lastmoment All", method = Admin.LastmomentAllUsing, isTogglable = false, toolTip = "Enables all the Environment Objects for all using.", legal = true},
-
 
                 new Module { buttonText = "Admin Stun Gun", method = Admin.StunGun, toolTip = "Disables all the Environment Objects for that player.", legal = true},
                 new Module { buttonText = "Admin Stun All", method = Admin.StunAllUsing, isTogglable = false, toolTip = "Disables all the Environment Objects for all using.", legal = true},
@@ -2636,7 +2652,6 @@ namespace Qubit.Modules
                 ButtonHelper.CreateNumeric("Change Target FPS Spoof Value", 1, 120, 90, v => PlayerStats.TargetFPS = (short)v, toolTip: "Changes the target FPS used by the FPS Spoof mod."),
                 ButtonHelper.CreateNumeric("Change Ping Spoof Value", short.MinValue, short.MaxValue, 60, v => PlayerStats.Ping = (short)v, toolTip: "Changes the target ping for the Ping Spoof mod."),
 
-
                 new Module { buttonText = "Hide Anti Cheat Report Reasons", enableMethod =() => SendReport.AntiCheatReasonHide = true, disableMethod =() => SendReport.AntiCheatReasonHide = false, toolTip = "Hides the reason for Show Anti Cheat Reports."},
 
                 new Module { buttonText = "Visualize Anti Report", method = Safety.VisualizeAntiReport, toolTip = "Visualizes the distance threshold for the anti report mods."},
@@ -2666,8 +2681,8 @@ namespace Qubit.Modules
 
                 new Module { buttonText = "Graphic Punch Mod", toolTip = "Spawns blood projectiles when hitting other players with the allowed punch mods."},
 
-                
-                
+                new Module { buttonText = "No Freeze Za Warudo", toolTip = "Disables the freezing on the \"Za Warudo\" mod, turning it into a fun mod." },
+                //new ButtonInfo { buttonText = "Legacy Kick Freeze", enableMethod =() => Overpowered.legacyKickFreeze = true, disableMethod =() => Overpowered.legacyKickFreeze = false, toolTip = "Makes call overflow related kick methods freeze the rig instead of putting it in the low event state." },
 
                 ButtonHelper.Create("Change Lag Power", () => Overpowered.LagPowerNames, Overpowered.lagIndex, Overpowered.ApplyLagPower, "Changes the power of the lag mods."),
                 ButtonHelper.Create("Change Lag Type", () => Overpowered.LagTypeNames, Overpowered.lagTypeIndex, Overpowered.ApplyLagType, "Changes the method used to lag players."),
@@ -2860,7 +2875,6 @@ namespace Qubit.Modules
                 new Module { buttonText = "Detected Spam Ghost All", overlapText = "Spam Ghost All", method =() => { Detected.GhostAll(); Detected.UnghostAll(); }, isTogglable = false, detected = true, toolTip = "Spam makes everyone freeze and unfreeze again. Ghost and Unghost."},
                 new Module { buttonText = "Detected Spam Ghost Aura", overlapText = "Spam Ghost Aura", method =() => { Detected.GhostAura(); Detected.UnghostAura(); }, isTogglable = true, detected = true, toolTip = "Spam makes players nearby freeze and unfreeze again. Ghost and Unghost."},
                 new Module { buttonText = "Detected Spam Ghost On Touch", overlapText = "Spam Ghost On Touch", method =() => { Detected.GhostOnTouch(); Detected.UnghostOnTouch(); }, detected = true, toolTip = "Spam makes players you touch freeze and unfreeze again. Ghost and Unghost."},
-
 
                 new Module { buttonText = "Detected Isolate Gun", overlapText = "Isolate Gun", method = Detected.IsolateGun, detected = true, toolTip = "Makes whoever your hand desires only be able to see you."},
                 new Module { buttonText = "Detected Isolate All", overlapText = "Isolate All", method = Detected.IsolateAll, isTogglable = false, detected = true, toolTip = "Makes everyone only be able to see you."},
@@ -3595,7 +3609,6 @@ namespace Qubit.Modules
                             {
                                 Notifications.SendFormat("green", "INCREMENT", $"{target.toolTip}");
 
-
                                 if (target.enableMethod != null)
                                 {
                                     if (boost)
@@ -3944,7 +3957,6 @@ new ButtonInfo { buttonText = "Lag Master Client Gun", method = Overpowered.LagM
 new ButtonInfo { buttonText = "Kick Master Client", enableMethod = () => Overpowered.kickCoroutine = Coroutines.instance.StartCoroutine(Overpowered.KickMasterClient()), method =() => { if (Overpowered.kickCoroutine == null) Toggle("Kick Master Client"); }, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kicks the master client from the room." },
 new ButtonInfo { buttonText = "Kick Gun", method = Overpowered.KickGun, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kick whoever your hand desires, if they are master client. Credits to Rexon for making such a stupid mod." },
 new ButtonInfo { buttonText = "Kick All", enableMethod = () => Overpowered.kickCoroutine = Coroutines.instance.StartCoroutine(Overpowered.KickAll()), method =() => { if (Overpowered.kickCoroutine == null) Toggle("Kick All"); }, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kicks everyone above you from the room." },
-
 
 new ButtonInfo { buttonText = "Lightning Time Overlay", method = Visuals.StrikeTimeOverlay, disableMethod =() => Notifications.information.Remove("Lightning"), toolTip = "Displays the time until lightning strikes again."},
 new ButtonInfo { buttonText = "Spawn Lightning", method = Visuals.SpawnLightning, isTogglable = false, toolTip = "Spawns a manual lightning strike client sided." },

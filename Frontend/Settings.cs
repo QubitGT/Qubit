@@ -277,7 +277,6 @@ namespace Qubit.Frontend
         public static bool isMenuButtonHeld;
         public static bool shouldBePC;
 
-
         public static bool ToggleBindings = true;
         public static bool IsBinding;
         public static string BindInput = "";

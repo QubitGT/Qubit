@@ -460,14 +460,14 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.CreateItem(lockTarget.GetPlayer(), Fun.ObjectByName["GhostReactorEnergyCostGate"], lockTarget.headMesh.transform.position + RandomVector3(), RandomQuaternion(), Vector3.zero, Vector3.zero);
+                GameEntities.CreateItem(lockTarget.GetPlayer(), Fun.ObjectByName["GhostReactorEnergyCostGate"], lockTarget.headMesh.transform.position + RandomVector3(), RandomQuaternion(), Vector3.zero, Vector3.zero);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void GhostReactorFreezeAll()
         {
             VRRig randomPlayer = GetRandomVRRig();
-            Overpowered.CreateItem(randomPlayer.GetPlayer(), Fun.ObjectByName["GhostReactorEnergyCostGate"], randomPlayer.headMesh.transform.position + RandomVector3(), RandomQuaternion(), Vector3.zero, Vector3.zero);
+            GameEntities.CreateItem(randomPlayer.GetPlayer(), Fun.ObjectByName["GhostReactorEnergyCostGate"], randomPlayer.headMesh.transform.position + RandomVector3(), RandomQuaternion(), Vector3.zero, Vector3.zero);
         }
         public static void SetStateSelf(int state) =>
             Fun.SetPlayerState(PhotonNetwork.LocalPlayer, (GRPlayer.GRPlayerState)state);
@@ -1244,45 +1244,45 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.GameEntityCrash(ManagerRegistry.CustomMaps.GameEntityManager, lockTarget.GetPhotonPlayer(), lockTarget.transform.position);
+                GameEntities.GameEntityCrash(ManagerRegistry.CustomMaps.GameEntityManager, lockTarget.GetPhotonPlayer(), lockTarget.transform.position);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void MasterVirtualStumpCrashAll() =>
-            Overpowered.GameEntityCrash(ManagerRegistry.CustomMaps.GameEntityManager, RpcTarget.Others);
+            GameEntities.GameEntityCrash(ManagerRegistry.CustomMaps.GameEntityManager, RpcTarget.Others);
 
         public static void GhostReactorCrashGun()
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.GameEntityCrash(ManagerRegistry.GhostReactor.GameEntityManager, lockTarget.GetPhotonPlayer(), lockTarget.transform.position);
+                GameEntities.GameEntityCrash(ManagerRegistry.GhostReactor.GameEntityManager, lockTarget.GetPhotonPlayer(), lockTarget.transform.position);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void GhostReactorCrashAll() =>
-            Overpowered.GameEntityCrash(ManagerRegistry.GhostReactor.GameEntityManager, RpcTarget.Others);
+            GameEntities.GameEntityCrash(ManagerRegistry.GhostReactor.GameEntityManager, RpcTarget.Others);
 
         public static void SuperInfectionCrashGun()
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.GameEntityCrash(ManagerRegistry.SuperInfection.GameEntityManager, lockTarget.GetPhotonPlayer(), lockTarget.transform.position);
+                GameEntities.GameEntityCrash(ManagerRegistry.SuperInfection.GameEntityManager, lockTarget.GetPhotonPlayer(), lockTarget.transform.position);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void SuperInfectionCrashAll() =>
-            Overpowered.GameEntityCrash(ManagerRegistry.SuperInfection.GameEntityManager, RpcTarget.Others);
+            GameEntities.GameEntityCrash(ManagerRegistry.SuperInfection.GameEntityManager, RpcTarget.Others);
 
         public static void SuperInfectionBreakAudioGun()
         {
             GunLibrary.Target(lockTarget =>
             {
-                Overpowered.CreateItem(lockTarget.GetPlayer(), Fun.GadgetByName["WristJetGadgetPropellor"], lockTarget.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                GameEntities.CreateItem(lockTarget.GetPlayer(), Gadgets.GadgetByName["WristJetGadgetPropellor"], lockTarget.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
             }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void SuperInfectionBreakAudioAll() =>
-            Overpowered.CreateItem(RpcTarget.Others, Fun.GadgetByName["WristJetGadgetPropellor"], References.BodyCollider.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            GameEntities.CreateItem(RpcTarget.Others, Gadgets.GadgetByName["WristJetGadgetPropellor"], References.BodyCollider.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
         public static void SpazPropHuntObjects()
         {
             if (Time.time > Overpowered.propHuntSpazDelay)
@@ -1537,7 +1537,7 @@ namespace Qubit.Modules.Categories
         public static void SlowSelf()
         {
             NetPlayer player = PhotonNetwork.LocalPlayer;
-            Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
+            Overpowered.SetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
             RPCProtection();
         }
         public static void SlowGun()
@@ -1545,7 +1545,7 @@ namespace Qubit.Modules.Categories
             GunLibrary.Target(gunTarget =>
             {
                 NetPlayer player = GetPlayerFromVRRig(gunTarget);
-                Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
+                Overpowered.SetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
                 RPCProtection();
                 Overpowered.slowDelay = Time.time + 1f;
             }, new GunLibrary.GunSettings { when = () => Time.time > Overpowered.slowDelay });
@@ -1569,7 +1569,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig nearbyPlayer in nearbyPlayers)
                 {
                     NetPlayer player = GetPlayerFromVRRig(nearbyPlayer);
-                    Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
+                    Overpowered.SetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
                     RPCProtection();
                 }
             }
@@ -1597,7 +1597,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig rig in touchedPlayers)
                 {
                     NetPlayer player = rig.GetPlayer();
-                    Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
+                    Overpowered.SetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
                     RPCProtection();
                 }
             }
@@ -1607,7 +1607,7 @@ namespace Qubit.Modules.Categories
         {
             if (Time.time > Overpowered.slowDelay)
             {
-                Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { Receivers = ReceiverGroup.Others });
+                Overpowered.SetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { Receivers = ReceiverGroup.Others });
                 RPCProtection();
                 Overpowered.slowDelay = Time.time + 1f;
             }
@@ -1616,7 +1616,7 @@ namespace Qubit.Modules.Categories
         public static void VibrateSelf()
         {
             NetPlayer owner = PhotonNetwork.LocalPlayer;
-            Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { owner.ActorNumber } });
+            Overpowered.SetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { owner.ActorNumber } });
             RPCProtection();
         }
         public static void VibrateGun()
@@ -1624,7 +1624,7 @@ namespace Qubit.Modules.Categories
             GunLibrary.Target(gunTarget =>
             {
                 NetPlayer owner = GetPlayerFromVRRig(gunTarget);
-                Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { owner.ActorNumber } });
+                Overpowered.SetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { owner.ActorNumber } });
                 RPCProtection();
                 Overpowered.vibrateDelay = Time.time + 0.5f;
             }, new GunLibrary.GunSettings { when = () => Time.time > Overpowered.vibrateDelay });
@@ -1648,7 +1648,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig nearbyPlayer in nearbyPlayers)
                 {
                     NetPlayer owner = GetPlayerFromVRRig(nearbyPlayer);
-                    Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { owner.ActorNumber } });
+                    Overpowered.SetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { owner.ActorNumber } });
                     RPCProtection();
                 }
             }
@@ -1676,7 +1676,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig rig in touchedPlayers)
                 {
                     NetPlayer owner = rig.GetPlayer();
-                    Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { owner.ActorNumber } });
+                    Overpowered.SetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { owner.ActorNumber } });
                     RPCProtection();
                 }
             }
@@ -1686,16 +1686,16 @@ namespace Qubit.Modules.Categories
         {
             if (Time.time > Overpowered.vibrateDelay)
             {
-                Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { Receivers = ReceiverGroup.Others });
+                Overpowered.SetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { Receivers = ReceiverGroup.Others });
                 RPCProtection();
                 Overpowered.vibrateDelay = Time.time + 0.5f;
             }
         }
 
-        public static void BetaSoundSpam(int id)
+        public static void SoundSpam(int id)
         {
             if (rightGrab)
-                Sound.BetaPlayTag(id, 999999f);
+                Sound.PlayTag(id, 999999f);
         }
 
         public static void UpdateMasterLabel() =>

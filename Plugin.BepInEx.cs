@@ -55,7 +55,6 @@ namespace Qubit
             Bootstrapper.Initialize();
         }
 
-
         private void OnDestroy() =>
             Instance.UnloadMenu();
     }

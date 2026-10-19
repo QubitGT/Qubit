@@ -878,7 +878,6 @@ namespace Qubit.Libraries.Networking
                 LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/send.ogg", "Audio/Friends/send.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
             }
 
-
             Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully sent message.", 5000);
         }
 
@@ -953,7 +952,6 @@ namespace Qubit.Libraries.Networking
                     this.currentName = currentName;
                     this.currentUserID = currentUserID;
                 }
-
 
                 public bool online { get; }
                 public string currentRoom { get; }

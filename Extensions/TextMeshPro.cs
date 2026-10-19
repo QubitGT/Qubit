@@ -98,7 +98,6 @@ namespace Qubit.Extensions
                 tmp.alignment = mode;
         }
 
-
         private static Shader _tmpShader;
         public static Shader TmpShader
         {

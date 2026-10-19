@@ -56,6 +56,7 @@ namespace Qubit.Core
         Macros,
         Preferences,
         PCControls,
+        VanillaProps,
         Achievements,
         PatchReport,
     }

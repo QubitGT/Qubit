@@ -281,18 +281,13 @@ namespace Qubit.Libraries.Audio
             LoadSoundFromFile($"{directoryPath[$"{PluginInfo.BaseDirectory}/".Length..]}/{fileName}", onComplete);
         }
 
-        
-
-
-
         public static void NarrateText(string text) =>
             Coroutines.instance.StartCoroutine(TranscribeText(text, (audio) => Play2DAudio(audio, buttonClickSound / 10f)));
 
-
-        
-
-
-
+        /// <summary>
+        /// Initiates narration of the specified text by transcribing it to audio and playing it through your microphone.
+        /// </summary>
+        /// <param name="text">The text to be narrated.</param>
         public static void SpeakText(string text)
         {
             SpeakText(text, false);

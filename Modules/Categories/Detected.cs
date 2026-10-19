@@ -389,7 +389,6 @@ namespace Qubit.Modules.Categories
         {
             if (!Networking.InRoom) return;
 
-
             foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && !viewIdArchive.ContainsKey(rig) && rig.IsBeingTouched())
@@ -570,8 +569,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-
-
         public static void IsolateAura()
         {
             if (!Networking.InRoom) return;
@@ -725,7 +722,6 @@ namespace Qubit.Modules.Categories
         {
             if (!Networking.InRoom) return;
 
-
             foreach (VRRig rig in Players.ActiveRigs)
             {
                 if (!rig.IsLocal() && rig.IsBeingTouched() && Time.time > muteDelay)
@@ -734,7 +730,6 @@ namespace Qubit.Modules.Categories
                     muteDelay = Time.time + 0.15f;
                 }
             }
-
 
         }
 

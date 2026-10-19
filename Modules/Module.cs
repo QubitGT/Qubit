@@ -53,7 +53,6 @@ namespace Qubit.Modules
         public string customBind;
         public string rebindKey;
 
-
         public bool isSetting;
         public object value;
 

@@ -48,7 +48,6 @@ namespace Qubit.Patches.Weapons
                     .Where(rig => !infected.Contains(rig.GetPlayer()))
                     .ToList();
 
-
                 Transform head = References.HeadCollider.transform;
                 VRRig targetRig = rigs
                     .Where(rig => rig != null)

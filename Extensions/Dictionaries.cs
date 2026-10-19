@@ -73,7 +73,6 @@ namespace Qubit.Extensions
             return false;
         }
 
-
         private static bool TryGetKeyInternal<TKey, TValue>(IDictionary<TKey, TValue> dictionary, TKey key, out TKey actualKey, IEqualityComparer<TKey> comparer)
         {
             comparer ??= TryGetComparerFromDictionary(dictionary) ?? EqualityComparer<TKey>.Default;

@@ -2436,7 +2436,6 @@ namespace Qubit.Modules.Categories
 
         public static int fontStyleType = 2;
 
-
         public static readonly string[] InputColorNames = {
             "Red", "Orange", "Yellow", "Green", "Blue", "Cyan",
             "Purple", "Pink", "White", "Grey", "Black", "Rose"
@@ -2460,7 +2459,6 @@ namespace Qubit.Modules.Categories
             new Vector3(0f, 0.1f, -0.05f),
             new Vector3(0f, 0.0666f, 0.1f)
         };
-
 
         public static readonly string[] GunVariationNames = {
             "Default", "Lightning", "Wavy", "Blocky", "Zigzag", "Spring", "Bouncy", "Audio", "Bezier", "Rope"
@@ -2961,13 +2959,13 @@ namespace Qubit.Modules.Categories
                         new Module {
                             buttonText = "Vibrate Player",
                             overlapText = $"Vibrate {targetName}",
-                            method =() => Overpowered.BetaSetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } }),
+                            method =() => Overpowered.SetStatus(RoomSystem.StatusEffects.JoinedTaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } }),
                             toolTip = $"Vibrates {targetName}'s controllers."
                         },
                         new Module {
                             buttonText = "Slow Player",
                             overlapText = $"Slow {targetName}",
-                            method =() => Overpowered.BetaSetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } } ),
+                            method =() => Overpowered.SetStatus(RoomSystem.StatusEffects.TaggedTime, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } } ),
                             toolTip = $"Gives {targetName} tag freeze."
                         }
                     }
@@ -4069,7 +4067,6 @@ exit 0";
                 }
             }
 
-
             modPhrases = new KeywordRecognizer(rawbuttonnames.ToArray());
             modPhrases.OnPhraseRecognized += ExecuteVoiceCommand;
             modPhrases.Start();
@@ -4188,7 +4185,6 @@ exit 0";
             else if (Application.platform != RuntimePlatform.WindowsPlayer)
                 PromptSingle("You must be on Windows 10 or greater for this mod to run.", () => mod.SetEnabled(false));
 
-
             Module vc = Manager.GetIndex("Voice Commands");
             if (vc.enabled)
                 Prompt("You currently have Voice Commands enabled. These mods may overlap eachother. Would you like to disable it?", () => vc.SetEnabled(false), () => mod.SetEnabled(false));
@@ -4264,7 +4260,6 @@ exit 0";
                         break;
 
                 }
-
 
                 Coroutines.instance.StartCoroutine(LanguageModel.AskAI(text));
                 return;
@@ -5281,7 +5276,6 @@ exit 0";
             return finaltext;
         }
 
-
         [Obsolete("Replaced by Preferences.Save()")]
         public static void SavePreferences() =>
             Preferences.Save();
@@ -5538,7 +5532,6 @@ exit 0";
                 Soundboard.disableLocalSoundboard = bool.Parse(data[72]);
             }
             catch (Exception e) { Logs.Log("Save file out of date: " + e); }
-
 
             pageButtonType = int.Parse(textData[3]);
             RestoreCycle("Change Page Type", pageButtonType);

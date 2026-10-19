@@ -45,10 +45,9 @@ namespace Qubit.Libraries.Holdables
     public static class Hoverboards
     {
 
-
         public static Coroutine DisableHoverboardCoroutine;
-        
-        public static void BetaDropBoard(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 avelocity, Color boardColor)
+        // ReSharper disable once ParameterHidesMember
+        public static void DropBoard(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 avelocity, Color boardColor)
         {
             if (Vector3.Distance(References.BodyCollider.transform.position, position) > 5f)
             {
@@ -69,10 +68,9 @@ namespace Qubit.Libraries.Holdables
             GunLibrary.Point(NewPointer =>
             {
                 hoverboardGunDelay = Time.time + 0.25f;
-                BetaDropBoard(NewPointer.transform.position + Vector3.up, RandomQuaternion(), Vector3.zero, Vector3.zero, RandomColor());
+                DropBoard(NewPointer.transform.position + Vector3.up, RandomQuaternion(), Vector3.zero, Vector3.zero, RandomColor());
             }, new GunLibrary.GunSettings { when = () => Time.time > hoverboardGunDelay });
         }
-
 
         public static void FastHoverboard()
         {
@@ -192,7 +190,7 @@ namespace Qubit.Libraries.Holdables
 
         public static void SpawnHoverboard()
         {
-            BetaDropBoard(References.LocalRig.transform.position, References.LocalRig.transform.rotation, Vector3.zero, Vector3.zero, RandomColor());
+            DropBoard(References.LocalRig.transform.position, References.LocalRig.transform.rotation, Vector3.zero, Vector3.zero, RandomColor());
             References.Player.isHoverAllowed = true;
         }
         public static void HoverboardSpam()
@@ -201,7 +199,7 @@ namespace Qubit.Libraries.Holdables
             {
                 hoverboardSpamDelay = Time.time + 0.5f;
 
-                BetaDropBoard(References.RightHand.position, References.RightHand.rotation, GetGunDirection(References.RightHand) * ShootStrength, Vector3.zero, RandomColor());
+                DropBoard(References.RightHand.position, References.RightHand.rotation, GetGunDirection(References.RightHand) * ShootStrength, Vector3.zero, RandomColor());
             }
         }
 
@@ -217,7 +215,7 @@ namespace Qubit.Libraries.Holdables
                 offset = -25f;
                 Vector3 position2 = new Vector3(MathF.Cos(offset + (float)Time.frameCount / 30) * 2f, 1f, MathF.Sin(offset + (float)Time.frameCount / 30) * 2f);
 
-                BetaDropBoard(References.HeadCollider.transform.position + vector3, Quaternion.Euler((References.HeadCollider.transform.position - vector3).normalized), (position2 - vector3).normalized * 6.5f, new Vector3(0f, 360f, 0f), RandomColor());
+                DropBoard(References.HeadCollider.transform.position + vector3, Quaternion.Euler((References.HeadCollider.transform.position - vector3).normalized), (position2 - vector3).normalized * 6.5f, new Vector3(0f, 360f, 0f), RandomColor());
 
                 offset = 180f;
                 vector3 = new Vector3(MathF.Cos(offset + (float)Time.frameCount / 30) * 2f, 1f, MathF.Sin(offset + (float)Time.frameCount / 30) * 2f);
@@ -225,7 +223,7 @@ namespace Qubit.Libraries.Holdables
                 offset = 155f;
                 position2 = new Vector3(MathF.Cos(offset + (float)Time.frameCount / 30) * 2f, 1f, MathF.Sin(offset + (float)Time.frameCount / 30) * 2f);
 
-                BetaDropBoard(References.HeadCollider.transform.position + vector3, Quaternion.Euler((References.HeadCollider.transform.position - vector3).normalized), (position2 - vector3).normalized * 6.5f, new Vector3(0f, 360f, 0f), RandomColor());
+                DropBoard(References.HeadCollider.transform.position + vector3, Quaternion.Euler((References.HeadCollider.transform.position - vector3).normalized), (position2 - vector3).normalized * 6.5f, new Vector3(0f, 360f, 0f), RandomColor());
             }
         }
 
@@ -271,7 +269,7 @@ namespace Qubit.Libraries.Holdables
                 hoverboardAuraDelay = Time.time + 0.25f;
 
                 for (int i = 0; i < 2; i++)
-                    BetaDropBoard(References.HeadCollider.transform.position + RandomVector3(), RandomQuaternion(), RandomVector3() * 20f, RandomVector3() * 20f, RandomColor());
+                    DropBoard(References.HeadCollider.transform.position + RandomVector3(), RandomQuaternion(), RandomVector3() * 20f, RandomVector3() * 20f, RandomColor());
             }
         }
 

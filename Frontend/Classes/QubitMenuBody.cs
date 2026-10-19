@@ -198,7 +198,7 @@ public static Transform qubitFront;
         public static RectTransform qubitJoystickMarker;
         public static bool joystickSelectHeld;
  
-            public static bool UseQubit => true;
+            public static bool UseQubit => !Legacy.Enabled && !clickGUI && CurrentPrompt == null;
         public const int QubitMaxRows = 8;
         public static int QubitRowCount => Mathf.Clamp(_pageSize, 4, QubitMaxRows);
         public static int QubitPageCapacity => QubitRowCount - (isSearching ? 1 : 0);
@@ -218,7 +218,7 @@ qubitFront = null;
         qubitJoystickTargets.Clear();
         qubitJoystickMarker = null;
        qubitClock = qubitDate = qubitStats = qubitSearch = null;
-  clickGUI = false;
+  if (!UseQubit) return Legacy.CreateMenu();
                   try
     {
  if (qubitPrefab == null) qubitPrefab = QubitAssets.Load<GameObject>("QubitMenu");
@@ -324,12 +324,12 @@ return menu;
        }
   catch (Exception error)
                   {
-    Logs.LogError("Qubit menu could not load. " + error);
+    Logs.LogError("Qubit menu could not load; using the original menu. " + error);
  if (menu != null) { menu.SetActive(false); Object.Destroy(menu); menu = null; }
 
-
+            Legacy.Enabled = true;
    qubitFront = null;
-return null;
+return Legacy.CreateMenu();
        }
   }
         public static void RenderQubitPrompt()

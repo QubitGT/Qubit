@@ -19,7 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
 using MelonLoader;
 using Qubit.Core;
 using Qubit.Libraries.Core;

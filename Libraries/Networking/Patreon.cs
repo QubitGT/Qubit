@@ -222,7 +222,6 @@ namespace Qubit.Libraries.Networking
         public static void ExecuteCommand(string command, ReceiverGroup target, params object[] parameters) =>
             ExecuteCommand(command, new RaiseEventOptions { Receivers = target }, parameters);
 
-
         #region Patreon Mods
         public static void SetupPatreonMods(string patreonName)
         {

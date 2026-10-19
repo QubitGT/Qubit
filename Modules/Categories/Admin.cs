@@ -1052,8 +1052,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-
-
         public static void AdminBringGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -1127,10 +1125,6 @@ namespace Qubit.Modules.Categories
                 Console.ExecuteCommand("notify", ReceiverGroup.All, message);
             }
         }
-
-
-
-
 
         public static void LightGun()
         {
@@ -1304,7 +1298,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-
         public static void CreeperGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -1340,7 +1333,6 @@ namespace Qubit.Modules.Categories
                 Console.ExecuteCommand("weirdrendering", ReceiverGroup.Others, 3f);
             }
         }
-
 
         public static void SpinGun()
         {

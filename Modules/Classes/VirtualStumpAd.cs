@@ -46,7 +46,6 @@ namespace Qubit.Modules.Classes
 
         private SpriteRendererData cachedSpriteRendererData;
 
-
         private void Awake() => Instance = this;
 
         private void OnDisable()
@@ -83,7 +82,6 @@ namespace Qubit.Modules.Classes
                     videoPlayer.isLooping = true;
                 videoPlayer.Play();
             }
-
 
             if (hasSetupFeaturedMapVideo)
                 return;
