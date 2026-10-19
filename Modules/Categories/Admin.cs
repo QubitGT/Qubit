@@ -34,6 +34,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Qubit.Core.Security;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Keyboard;
@@ -44,7 +45,6 @@ using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Modules.Categories.Experimental;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameObj;
 using Console = Qubit.Backend.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
@@ -178,10 +178,13 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void AdminLagSpikeAll() =>
@@ -224,10 +227,13 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     gunLocked = false;
-                } });
+                }
+            });
         }
         public static void AdminGivePlatforms()
         {
@@ -264,10 +270,13 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void AdminGiveTriggerFlyGun()
@@ -297,10 +306,13 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     gunLocked = false;
-                } });
+                }
+            });
         }
         public static void AdminGiveSpeedGun()
         {
@@ -328,10 +340,13 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void AdminGiveLowGravity()
@@ -360,10 +375,13 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void AdminVibrateGun()
@@ -732,7 +750,9 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
@@ -742,7 +762,8 @@ namespace Qubit.Modules.Categories
                         Console.ExecuteCommand("tpnv", lockTarget.GetPlayer().ActorNumber, whereOriginalPlayerPos);
                         Console.ExecuteCommand("unmuteall", lockTarget.GetPlayer().ActorNumber);
                     }
-                } });
+                }
+            });
         }
 
         public static void EnableNoAdminIndicator()
@@ -771,7 +792,7 @@ namespace Qubit.Modules.Categories
             if (!userTagHooked)
             {
                 userTagHooked = true;
-                PhotonNetwork.NetworkingClient.EventReceived += AdminUserTagSys;
+                ManagerRegistry.NetworkingClient.EventReceived += AdminUserTagSys;
             }
         }
         public static void AdminMenuUserTags()
@@ -820,7 +841,7 @@ namespace Qubit.Modules.Categories
             if (!tracerTagHooked)
             {
                 tracerTagHooked = true;
-                PhotonNetwork.NetworkingClient.EventReceived += AdminTracerSys;
+                ManagerRegistry.NetworkingClient.EventReceived += AdminTracerSys;
             }
         }
 
@@ -891,7 +912,7 @@ namespace Qubit.Modules.Categories
 
             if (!Networking.InRoom)
             {
-                Room.JoinRandom();
+                Libraries.Networking.Rooms.JoinRandom();
                 isUserFound = false;
                 FindUserTime = Time.time + 7f;
             }

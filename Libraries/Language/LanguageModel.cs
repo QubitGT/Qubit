@@ -33,7 +33,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Networking;
-using static Qubit.Utilities.Assets;
 
 namespace Qubit.Libraries.Language
 {
@@ -83,7 +82,7 @@ namespace Qubit.Libraries.Language
                 ?? Manager.modules.Values.SelectMany(b => b).FirstOrDefault(b => (b.RenderName).Contains(spaced, StringComparison.OrdinalIgnoreCase))
                 ?? Manager.modules.Values.SelectMany(b => b).FirstOrDefault(b => spaced.ToLower().Split(' ').All(word => (b.RenderName).ToLower().Contains(word)));
         }
-         
+
         public static IEnumerator AskAI(string text)
         {
             generating = true;
@@ -131,7 +130,7 @@ namespace Qubit.Libraries.Language
                         Logs.LogError($"Response Body: {request.downloadHandler.text}");
                 }
                 Notifications.SendFormat("red", "ERROR", $"There was an issue generating your response. {request.error}", 4000);
-                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => Modules.Categories.Settings.DictationPlay(clip, Frontend.Settings.buttonClickVolume / 10f));
+                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/close.ogg", "Audio/Menu/close.ogg", clip => Modules.Categories.Settings.DictationPlay(clip, Frontend.Settings.buttonClickVolume / 10f));
                 if (!Manager.GetIndex("Chain Voice Commands").enabled)
                     Coroutines.instance.StartCoroutine(Modules.Categories.Settings.DictationRestart());
                 yield break;
@@ -145,9 +144,7 @@ namespace Qubit.Libraries.Language
             MatchCollection matches = Regex.Matches(response, @"<([A-Z]+)(?:_""?([^"">]*)""?)?>");
 
             if (Frontend.Settings.dynamicSounds)
-            {
-                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/confirm.ogg", "Audio/Menu/confirm.ogg", clip => Modules.Categories.Settings.DictationPlay(clip, Frontend.Settings.buttonClickVolume / 10f));
-            }
+                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/confirm.ogg", "Audio/Menu/confirm.ogg", clip => Modules.Categories.Settings.DictationPlay(clip, Frontend.Settings.buttonClickVolume / 10f));
 
             string formatResponse = Regex.Replace(response, @"<([A-Z]+)(?:_""?([^"">]*)""?)?>", "").Replace("\n", "");
             Notifications.Clear();
@@ -232,7 +229,7 @@ namespace Qubit.Libraries.Language
                     case "JOINROOM":
                         {
                             if (argument.ToLower() == "random")
-                                Room.JoinRandom();
+                                Libraries.Networking.Rooms.JoinRandom();
 
                             Room.QueueRoom(argument.ToUpper());
                             break;

@@ -19,45 +19,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using GorillaLocomotion;
-using static Qubit.Modules.Categories.Overpowered;
-using GorillaTag.Cosmetics;
-using Qubit.Patches.Netcode;
-using Qubit.Patches.Rigs;
-using Security = Qubit.Core.Security;
-using static Qubit.Modules.Categories.Fun;
-using Qubit.Core;
 using ExitGames.Client.Photon;
-using GorillaExtensions;
+using GorillaLocomotion;
 using GorillaTag.CosmeticSystem;
 using Photon.Pun;
 using Photon.Realtime;
-using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
-using Qubit.Libraries.Interface;
-using Qubit.Modules.Classes;
+using Qubit.Modules;
+using Qubit.Modules.Categories;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using WebSocketSharp;
 using static Qubit.Core.Security;
-using static Qubit.Extensions.Players;
-using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Settings;
-using static Qubit.Libraries.Controls.Controllers;
-using static Qubit.Libraries.Networking.Serialization;
-using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameObj;
-using static Qubit.Libraries.Entities.Cosmetics;
-using Object = UnityEngine.Object;
-using Random = UnityEngine.Random;
-using Qubit.Modules.Categories;
-using Qubit.Modules;
+using static Qubit.Modules.Categories.Overpowered;
 
 namespace Qubit.Libraries.Entities
 {
@@ -80,7 +59,7 @@ namespace Qubit.Libraries.Entities
                 get
                 {
                     Resolve();
-                    return ThrowableRight != null ? ThrowableRight : ThrowableLeft;
+                    return ThrowableRight ?? ThrowableLeft;
                 }
             }
 

@@ -4,13 +4,13 @@ namespace Qubit.Libraries.DiscordRPC.RPC.Payload
 {
     internal class ClosePayload : IPayload
     {
-        
+
 
 
         [JsonProperty("code")]
         public int Code { get; set; }
 
-        
+
 
 
         [JsonProperty("message")]

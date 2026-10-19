@@ -10,7 +10,7 @@ using System;
 namespace Qubit.Libraries.DiscordRPC
 {
 
-    
+
 
 
     public sealed class DiscordRpcClient : IDisposable
@@ -18,38 +18,38 @@ namespace Qubit.Libraries.DiscordRPC
         #region Properties
 
 
-        
+
 
 
 
         public bool HasRegisteredUriScheme { get; private set; }
 
-        
+
 
 
         public string ApplicationID { get; private set; }
 
-        
+
 
 
         public string SteamID { get; private set; }
 
-        
+
 
 
         public int ProcessID { get; private set; }
 
-        
+
 
 
         public int MaxQueueSize { get; private set; }
 
-        
+
 
 
         public bool IsDisposed { get; private set; }
 
-        
+
 
 
         public ILogger Logger
@@ -63,18 +63,18 @@ namespace Qubit.Libraries.DiscordRPC
         }
         private ILogger _logger;
 
-        
+
 
 
         public bool AutoEvents { get; private set; }
 
-        
+
 
 
         public bool SkipIdenticalPresence { get; set; }
         #endregion
 
-        
+
 
 
 
@@ -82,32 +82,32 @@ namespace Qubit.Libraries.DiscordRPC
 
         private readonly RpcConnection connection;
 
-        
+
 
 
         public RichPresence CurrentPresence { get; private set; }
 
-        
+
 
 
         public EventType Subscription { get; private set; }
 
-        
+
 
 
         public User CurrentUser { get; private set; }
 
-        
+
 
 
         public Configuration Configuration { get; private set; }
 
-        
+
 
 
         public bool IsInitialized { get; private set; }
 
-        
+
 
 
 
@@ -125,74 +125,74 @@ namespace Qubit.Libraries.DiscordRPC
 
         #region Events
 
-        
+
 
 
 
         public event OnReadyEvent OnReady;
 
-        
+
 
 
 
         public event OnCloseEvent OnClose;
 
-        
+
 
 
 
         public event OnErrorEvent OnError;
 
-        
+
 
 
 
         public event OnPresenceUpdateEvent OnPresenceUpdate;
 
-        
+
 
 
 
         public event OnSubscribeEvent OnSubscribe;
 
-        
+
 
 
 
         public event OnUnsubscribeEvent OnUnsubscribe;
 
-        
+
 
 
 
         public event OnJoinEvent OnJoin;
 
-        
+
 
 
 
         [Obsolete("Spectating is no longer supported by Discord.")]
         public event OnSpectateEvent OnSpectate;
 
-        
+
 
 
 
         public event OnJoinRequestedEvent OnJoinRequested;
 
-        
+
 
 
 
         public event OnConnectionEstablishedEvent OnConnectionEstablished;
 
-        
+
 
 
 
         public event OnConnectionFailedEvent OnConnectionFailed;
 
-        
+
 
 
         public event OnRpcMessageEvent OnRpcMessage;
@@ -200,13 +200,13 @@ namespace Qubit.Libraries.DiscordRPC
 
         #region Initialization
 
-        
+
 
 
 
         public DiscordRpcClient(string applicationID) : this(applicationID, -1) { }
 
-        
+
 
 
 
@@ -216,11 +216,11 @@ namespace Qubit.Libraries.DiscordRPC
 
         public DiscordRpcClient(string applicationID, int pipe = -1, ILogger logger = null, bool autoEvents = true, INamedPipeClient client = null)
         {
-            
+
             if (string.IsNullOrEmpty(applicationID))
                 throw new ArgumentNullException("applicationID");
 
-            
+
             ApplicationID = applicationID.Trim();
             TargetPipe = pipe;
             ProcessID = System.Diagnostics.Process.GetCurrentProcess().Id;
@@ -228,17 +228,17 @@ namespace Qubit.Libraries.DiscordRPC
             AutoEvents = autoEvents;
             SkipIdenticalPresence = true;
 
-            
+
             _logger = logger ?? new NullLogger();
 
-            
+
             connection = new RpcConnection(ApplicationID, ProcessID, TargetPipe, client ?? new ManagedNamedPipeClient(), autoEvents ? 0 : 128U)
             {
                 ShutdownOnly = _shutdownOnly,
                 Logger = _logger
             };
 
-            
+
             connection.OnRpcMessage += (sender, msg) =>
             {
                 if (OnRpcMessage != null)
@@ -252,7 +252,7 @@ namespace Qubit.Libraries.DiscordRPC
         #endregion
 
         #region Message Handling
-        
+
 
 
 
@@ -263,39 +263,39 @@ namespace Qubit.Libraries.DiscordRPC
             {
                 Logger.Error("Cannot Invoke client when AutomaticallyInvokeEvents has been set.");
                 return new IMessage[0];
-                
+
             }
 
-            
+
             IMessage[] messages = connection.DequeueMessages();
             for (int i = 0; i < messages.Length; i++)
             {
-                
+
                 var message = messages[i];
                 ProcessMessage(message);
             }
 
-            
+
             return messages;
         }
 
-        
 
 
 
-		private void ProcessMessage(IMessage message)
+
+        private void ProcessMessage(IMessage message)
         {
             if (message == null) return;
             switch (message.Type)
             {
-                
+
                 case MessageType.PresenceUpdate:
                     lock (_sync)
                     {
                         var pm = message as PresenceMessage;
                         if (pm != null)
                         {
-                            
+
                             if (pm.Presence == null)
                             {
                                 CurrentPresence = null;
@@ -309,7 +309,7 @@ namespace Qubit.Libraries.DiscordRPC
                                 CurrentPresence.Merge(pm.Presence);
                             }
 
-                            
+
                             pm.Presence = CurrentPresence;
                         }
                     }
@@ -319,7 +319,7 @@ namespace Qubit.Libraries.DiscordRPC
 
                     break;
 
-                
+
                 case MessageType.Ready:
                     var rm = message as ReadyMessage;
                     if (rm != null)
@@ -330,7 +330,7 @@ namespace Qubit.Libraries.DiscordRPC
                             CurrentUser = rm.User;
                         }
 
-                        
+
                         SynchronizeState();
                     }
 
@@ -349,11 +349,11 @@ namespace Qubit.Libraries.DiscordRPC
                         OnError.Invoke(this, message as ErrorMessage);
                     break;
 
-                
+
                 case MessageType.JoinRequest:
                     if (Configuration != null)
                     {
-                        
+
                         var jrm = message as JoinRequestMessage;
                         if (jrm != null) jrm.User.SetConfiguration(Configuration);
                     }
@@ -405,7 +405,7 @@ namespace Qubit.Libraries.DiscordRPC
                         OnConnectionFailed.Invoke(this, message as ConnectionFailedMessage);
                     break;
 
-                
+
                 default:
                     Logger.Error("Message was queued with no appropriate handle! {0}", message.Type);
                     break;
@@ -413,7 +413,7 @@ namespace Qubit.Libraries.DiscordRPC
         }
         #endregion
 
-        
+
 
 
 
@@ -422,7 +422,7 @@ namespace Qubit.Libraries.DiscordRPC
         public void Respond(JoinRequestMessage request, bool acceptRequest)
             => Respond(request.User.ID, acceptRequest);
 
-        
+
 
 
 
@@ -431,7 +431,7 @@ namespace Qubit.Libraries.DiscordRPC
         public void Respond(User user, bool acceptRequest)
             => Respond(user.ID, acceptRequest);
 
-        
+
 
 
 
@@ -455,7 +455,7 @@ namespace Qubit.Libraries.DiscordRPC
             });
         }
 
-        
+
 
 
 
@@ -470,17 +470,17 @@ namespace Qubit.Libraries.DiscordRPC
             if (!IsInitialized)
                 Logger.Warning("The client is not yet initialized, storing the presence as a state instead.");
 
-            
+
             if (presence == null)
             {
-                
+
                 if (!SkipIdenticalPresence || CurrentPresence != null)
                     connection.EnqueueCommand(new PresenceCommand() { PID = ProcessID, Presence = null });
             }
             else
             {
-                
-                
+
+
                 if (presence.HasSecrets() && !HasRegisteredUriScheme)
                     throw new BadPresenceException("Cannot send a presence with secrets as this object has not registered a URI scheme. Please enable the uri scheme registration in the DiscordRpcClient constructor.");
 
@@ -490,12 +490,12 @@ namespace Qubit.Libraries.DiscordRPC
                 if (presence.HasSecrets() && !presence.HasParty())
                     Logger.Warning("The presence has set the secrets but no buttons will show as there is no party available.");
 
-                
+
                 if (!SkipIdenticalPresence || !presence.Matches(CurrentPresence))
                     connection.EnqueueCommand(new PresenceCommand() { PID = ProcessID, Presence = presence.Clone() });
             }
 
-            
+
             lock (_sync)
             {
                 CurrentPresence = presence?.Clone();
@@ -504,7 +504,7 @@ namespace Qubit.Libraries.DiscordRPC
 
         #region Updates
 
-        
+
 
 
 
@@ -514,7 +514,7 @@ namespace Qubit.Libraries.DiscordRPC
             if (!IsInitialized)
                 throw new UninitializedException();
 
-            
+
             RichPresence presence;
             lock (_sync)
             {
@@ -527,27 +527,27 @@ namespace Qubit.Libraries.DiscordRPC
             return presence;
         }
 
-        
+
 
 
 
 
         public RichPresence UpdateType(ActivityType type) => Update(p => p.Type = type);
-        
+
 
 
 
 
         public RichPresence UpdateStatusDisplayType(StatusDisplayType type) => Update(p => p.StatusDisplay = type);
 
-        
+
 
 
 
 
         public RichPresence UpdateButtons(Button[] buttons = null) => Update(p => p.Buttons = buttons);
 
-        
+
 
 
 
@@ -555,28 +555,28 @@ namespace Qubit.Libraries.DiscordRPC
 
         public RichPresence SetButton(Button button, int index = 0) => Update(p => p.Buttons[index] = button);
 
-        
+
 
 
 
 
         public RichPresence UpdateDetails(string details) => Update(p => p.Details = details);
 
-        
+
 
 
 
 
         public RichPresence UpdateState(string state) => Update(p => p.State = state);
 
-        
+
 
 
 
 
         public RichPresence UpdateParty(Party party) => Update(p => p.Party = party);
 
-        
+
 
 
 
@@ -584,15 +584,15 @@ namespace Qubit.Libraries.DiscordRPC
 
         public RichPresence UpdatePartySize(int size) => Update(p =>
         {
-            
+
             if (p.Party == null)
                 throw new BadPresenceException("Cannot set the size of the party if the party does not exist");
 
-            
+
             p.Party.Size = size;
         });
 
-        
+
 
 
 
@@ -601,7 +601,7 @@ namespace Qubit.Libraries.DiscordRPC
 
         public RichPresence UpdatePartySize(int size, int max) => Update(p =>
         {
-            
+
             if (p.Party == null)
                 throw new BadPresenceException("Cannot set the size of the party if the party does not exist");
 
@@ -609,7 +609,7 @@ namespace Qubit.Libraries.DiscordRPC
             p.Party.Max = max;
         });
 
-        
+
 
 
 
@@ -623,7 +623,7 @@ namespace Qubit.Libraries.DiscordRPC
             p.Assets.LargeImageText = tooltip ?? p.Assets.LargeImageText;
         });
 
-        
+
 
 
 
@@ -637,20 +637,20 @@ namespace Qubit.Libraries.DiscordRPC
             p.Assets.SmallImageText = tooltip ?? p.Assets.SmallImageText;
         });
 
-        
+
 
 
 
 
         public RichPresence UpdateSecrets(Secrets secrets) => Update(p => p.Secrets = secrets);
 
-        
+
 
 
 
         public RichPresence UpdateStartTime() => UpdateStartTime(DateTime.UtcNow);
 
-        
+
 
 
 
@@ -662,13 +662,13 @@ namespace Qubit.Libraries.DiscordRPC
             p.Timestamps.Start = time;
         });
 
-        
+
 
 
 
         public RichPresence UpdateEndTime() => UpdateEndTime(DateTime.UtcNow);
 
-        
+
 
 
 
@@ -680,7 +680,7 @@ namespace Qubit.Libraries.DiscordRPC
             p.Timestamps.End = time;
         });
 
-        
+
 
 
 
@@ -688,7 +688,7 @@ namespace Qubit.Libraries.DiscordRPC
 
         #endregion
 
-        
+
 
 
         public void ClearPresence()
@@ -702,26 +702,26 @@ namespace Qubit.Libraries.DiscordRPC
             if (connection == null)
                 throw new ObjectDisposedException("Connection", "Cannot initialize as the connection has been deinitialized");
 
-            
+
             SetPresence(null);
         }
 
         #region Subscriptions
-        
+
 
 
 
 
         public void Subscribe(EventType type) { SetSubscription(Subscription | type); }
 
-        
+
 
 
 
 
         public void Unsubscribe(EventType type) { SetSubscription(Subscription & ~type); }
 
-        
+
 
 
 
@@ -730,7 +730,7 @@ namespace Qubit.Libraries.DiscordRPC
         {
             if (IsInitialized)
             {
-                
+
                 SubscribeToTypes(Subscription & ~type, true);
                 SubscribeToTypes(~Subscription & type, false);
             }
@@ -745,18 +745,18 @@ namespace Qubit.Libraries.DiscordRPC
             }
         }
 
-        
+
 
 
 
 
         private void SubscribeToTypes(EventType type, bool isUnsubscribe)
         {
-            
-            
+
+
             if (type == EventType.None) return;
 
-            
+
             if (IsDisposed)
                 throw new ObjectDisposedException("Discord IPC Client");
 
@@ -766,11 +766,11 @@ namespace Qubit.Libraries.DiscordRPC
             if (connection == null)
                 throw new ObjectDisposedException("Connection", "Cannot initialize as the connection has been deinitialized");
 
-            
+
             if (!HasRegisteredUriScheme)
                 throw new InvalidConfigurationException("Cannot subscribe/unsubscribe to an event as this application has not registered a URI Scheme. Call RegisterUriScheme().");
 
-            
+
 #pragma warning disable CS0618 // Type or member is obsolete
             if ((type & EventType.Spectate) == EventType.Spectate)
                 connection.EnqueueCommand(new SubscribeCommand() { Event = RPC.Payload.ServerEvent.ActivitySpectate, IsUnsubscribe = isUnsubscribe });
@@ -785,22 +785,22 @@ namespace Qubit.Libraries.DiscordRPC
 
         #endregion
 
-        
+
 
 
         public void SynchronizeState()
         {
-            
+
             if (!IsInitialized)
                 throw new UninitializedException();
 
-            
+
             SetPresence(CurrentPresence);
             if (HasRegisteredUriScheme)
                 SubscribeToTypes(Subscription, false);
         }
 
-        
+
 
 
 
@@ -815,7 +815,7 @@ namespace Qubit.Libraries.DiscordRPC
                 : (IsInitialized = connection.AttemptConnection());
         }
 
-        
+
 
 
         public void Deinitialize()
@@ -827,7 +827,7 @@ namespace Qubit.Libraries.DiscordRPC
             IsInitialized = false;
         }
 
-        
+
 
 
         public void Dispose()

@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using GorillaNetworking;
 using HarmonyLib;
+using Qubit.Core;
 using System;
 
 namespace Qubit.Patches.Safety.AntiBan

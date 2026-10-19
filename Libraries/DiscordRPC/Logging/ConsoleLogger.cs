@@ -2,22 +2,22 @@
 
 namespace Qubit.Libraries.DiscordRPC.Logging
 {
-    
+
 
 
     public class ConsoleLogger : ILogger
     {
-        
+
 
 
         public LogLevel Level { get; set; }
 
-        
+
 
 
         public bool Coloured { get; set; }
 
-        
+
 
 
         public bool Colored
@@ -26,7 +26,7 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             set => Coloured = value;
         }
 
-        
+
 
 
         public ConsoleLogger()
@@ -35,7 +35,7 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             Coloured = false;
         }
 
-        
+
 
 
 
@@ -45,7 +45,7 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             Level = level;
         }
 
-        
+
 
 
 
@@ -56,7 +56,7 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             Coloured = coloured;
         }
 
-        
+
 
 
 
@@ -79,7 +79,7 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             }
         }
 
-        
+
 
 
 
@@ -102,7 +102,7 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             }
         }
 
-        
+
 
 
 
@@ -125,7 +125,7 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             }
         }
 
-        
+
 
 
 

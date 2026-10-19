@@ -6,13 +6,13 @@ namespace Qubit.Libraries.DiscordRPC.RPC.Commands
 {
     internal class PresenceCommand : ICommand
     {
-        
+
 
 
         [JsonProperty("pid")]
         public int PID { get; set; }
 
-        
+
 
 
         [JsonProperty("activity")]

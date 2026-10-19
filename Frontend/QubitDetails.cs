@@ -19,28 +19,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Frontend.Classes;
 using Qubit.Frontend.Resources;
 using Qubit.Libraries.Controls;
 using Qubit.Modules;
 using System;
-using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
 namespace Qubit.Frontend
 {
-    
+
     public sealed class QubitDetails : MonoBehaviour
     {
-        
+
         private static QubitDetails current;
         private static string selectedMod;
         private static int mode, candidate, descriptionPage;
@@ -82,7 +81,8 @@ namespace Qubit.Frontend
             themeEnabled = Setting("Qubit Apply Theme Colors", "Applies the chosen menu theme to Qubit. Disable to restore the picture's purple and black colors.", false);
             themeEnabled.enableMethod = themeEnabled.disableMethod = () => { if (Frontend.Settings.menu != null) ApplyTheme(Frontend.Settings.menu); };
             purpleButtonText = Setting("Qubit Purple Button Text", "Uses the original purple mod button text instead of white.", false);
-            purpleButtonText.enableMethod = purpleButtonText.disableMethod = () => {
+            purpleButtonText.enableMethod = purpleButtonText.disableMethod = () =>
+            {
                 if (Frontend.Settings.menu != null) ApplyTheme(Frontend.Settings.menu);
                 if (current != null) current.PreviewColors();
             };
@@ -96,11 +96,13 @@ namespace Qubit.Frontend
         private static Module Number(string name, float[] values, float initial, string unit)
         {
             var b = new Module { name = name, toolTip = "Adjusts " + name.ToLowerInvariant() + ".", isSetting = true, legal = true, isTogglable = false, incremental = true, value = initial };
-            b.onValueChanged = () => {
+            b.onValueChanged = () =>
+            {
                 if (!values.Contains(b.GetValue<float>())) b.value = initial;
                 b.displayName = name + ": " + b.GetValue<float>().ToString("0.##") + " " + unit;
             };
-            b.cycleValue = forward => {
+            b.cycleValue = forward =>
+            {
                 int index = Array.IndexOf(values, b.GetValue<float>());
                 b.value = values[(index + (forward ? 1 : values.Length - 1)) % values.Length];
                 b.onValueChanged(); Preferences.SaveButton(b);

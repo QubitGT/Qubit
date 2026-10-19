@@ -28,14 +28,8 @@ using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
-using Qubit.Modules.Classes;
-using static Qubit.Frontend.Keyboard;
-using static Qubit.Frontend.Prompts;
-using static Qubit.Libraries.Audio.Sounds;
-using static Qubit.Extensions.Colors;
-using static Qubit.Frontend.Resources.Fonts;
 using Qubit.Modules.Categories;
-using Qubit.Utilities;
+using Qubit.Modules.Classes;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -52,14 +46,18 @@ using UnityEngine.Networking;
 using UnityEngine.Rendering;
 using Valve.Newtonsoft.Json;
 using Valve.Newtonsoft.Json.Linq;
+using static Qubit.Extensions.Colors;
 using static Qubit.Extensions.Players;
 using static Qubit.Frontend.Core;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
-using static Qubit.Utilities.Assets;
-using JoinType = GorillaNetworking.JoinType;
-using Module = Qubit.Modules.Module;
-using Manager = Qubit.Modules.Manager;
+using static Qubit.Libraries.Audio.Sounds;
 using Console = Qubit.Backend.Console;
+using JoinType = GorillaNetworking.JoinType;
+using Manager = Qubit.Modules.Manager;
+using Module = Qubit.Modules.Module;
 using Settings = Qubit.Modules.Categories.Settings;
 using TextMeshPro = TMPro.TextMeshPro;
 
@@ -103,7 +101,7 @@ namespace Qubit.Libraries.Networking
 
             if (!ServerData.ServerDataEnabled)
             {
-                enabled = false; 
+                enabled = false;
                 return;
             }
 
@@ -114,7 +112,7 @@ namespace Qubit.Libraries.Networking
             ManagerRegistry.NetworkSystem.OnJoinedRoomEvent += CheckAllPlayersFriends;
             ManagerRegistry.NetworkSystem.OnPlayerJoined += CheckPlayerFriends;
 
-            PhotonNetwork.NetworkingClient.EventReceived += EventReceived;
+            ManagerRegistry.NetworkingClient.EventReceived += EventReceived;
         }
 
         private static Material starMaterial;
@@ -205,7 +203,7 @@ namespace Qubit.Libraries.Networking
                         if (starMaterial == null)
                         {
                             if (starTexture == null)
-                                starTexture = LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.star.png");
+                                starTexture = Core.Assets.LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.star.png");
 
                             starMaterial = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
                             {
@@ -420,7 +418,7 @@ namespace Qubit.Libraries.Networking
             {
                 try
                 {
-                    NetPlayer sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
+                    NetPlayer sender = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
                     if (data.Code != FriendByte || (!IsPlayerFriend(sender) &&
                                                     !ServerData.Administrators.ContainsKey(sender.UserId) &&
                                                     !ServerData.Administrators.ContainsKey(PhotonNetwork.LocalPlayer
@@ -774,7 +772,7 @@ namespace Qubit.Libraries.Networking
                     Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Denied friend request.", 5000);
 
                     if (SoundEffects)
-                        LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/doorslam.ogg", "Audio/Friends/doorslam.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                        Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/doorslam.ogg", "Audio/Friends/doorslam.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
                 },
                 error => Console.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not deny friend request: {error}", 5000)
             ));
@@ -875,7 +873,7 @@ namespace Qubit.Libraries.Networking
 
             if (SoundEffects)
             {
-                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/send.ogg", "Audio/Friends/send.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/send.ogg", "Audio/Friends/send.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
             }
 
             Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully sent message.", 5000);
@@ -1015,7 +1013,7 @@ namespace Qubit.Libraries.Networking
             if (onlineFriends.Length > previousOnlineCount && onlineFriends.Length > 0)
             {
                 if (SoundEffects)
-                    LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/online.ogg", "Audio/Friends/online.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                    Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/online.ogg", "Audio/Friends/online.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                 Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> You have {onlineFriends.Length - (previousOnlineCount + (previousOnlineCount < 0 ? 1 : 0))}{(previousOnlineCount < 0 ? " " : " new ")}friend{(onlineFriends.Length > 1 ? "s" : "")} online.", 5000);
             }
@@ -1023,7 +1021,7 @@ namespace Qubit.Libraries.Networking
             if (instance.List.incoming.Values.Count > previousIncomingCount && instance.List.incoming.Values.Count > 0)
             {
                 if (SoundEffects)
-                    LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/dooropen.ogg", "Audio/Friends/dooropen.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                    Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/dooropen.ogg", "Audio/Friends/dooropen.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                 Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> You have {instance.List.incoming.Values.Count - (previousIncomingCount + (previousIncomingCount < 0 ? 1 : 0))}{(previousIncomingCount < 0 ? " " : " new ")}friend request{(instance.List.incoming.Values.Count > 1 ? "s" : "")}.", 5000);
             }
@@ -1193,7 +1191,7 @@ namespace Qubit.Libraries.Networking
                     {
                         name = $"JoinFriend{friendTarget}",
                         displayName = "Join Friend",
-                        method = () => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(instance.List.friends[friendTarget].currentRoom, JoinType.Solo),
+                        method = () => Rooms.JoinRoom(instance.List.friends[friendTarget].currentRoom, JoinType.Solo),
                         isTogglable = false,
                         toolTip = $"Joins the user {friend.currentName}'s current room.",
                         legal = true
@@ -1520,12 +1518,12 @@ namespace Qubit.Libraries.Networking
 
                             if (SoundEffects)
                             {
-                                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
                             }
 
                             Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has invited you to join them.", 5000);
 
-                            Prompt($"{friendName} has invited you to the room {to}, would you like to join them?", () => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(to, JoinType.Solo));
+                            Prompt($"{friendName} has invited you to the room {to}, would you like to join them?", () => Rooms.JoinRoom(to));
                             break;
                         }
                     case "reqinvite":
@@ -1537,7 +1535,7 @@ namespace Qubit.Libraries.Networking
                                 break;
 
                             if (SoundEffects)
-                                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                             Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has requested an invite from you.", 5000);
 
@@ -1550,7 +1548,7 @@ namespace Qubit.Libraries.Networking
                                 break;
 
                             if (SoundEffects)
-                                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                             Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has shared their preferences with you.", 5000);
 
@@ -1578,7 +1576,7 @@ namespace Qubit.Libraries.Networking
                                 break;
 
                             if (SoundEffects)
-                                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                             Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has shared their theme with you.", 5000);
 
@@ -1597,7 +1595,7 @@ namespace Qubit.Libraries.Networking
                                 break;
 
                             if (SoundEffects)
-                                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                             Movement.Macro macro = Movement.Macro.LoadJSON((string)obj["data"]);
                             Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has shared their macro " + macro.name + " with you.", 5000);
@@ -1610,7 +1608,7 @@ namespace Qubit.Libraries.Networking
                             int time = (int)obj["time"];
 
                             if (SoundEffects)
-                                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                             Console.SendNotification(message, time);
                             break;
@@ -1621,7 +1619,7 @@ namespace Qubit.Libraries.Networking
                                 break;
 
                             if (SoundEffects)
-                                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/receive.ogg", "Audio/Friends/receive.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/receive.ogg", "Audio/Friends/receive.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                             string message = (string)obj["message"];
                             string color = (string)obj["color"];

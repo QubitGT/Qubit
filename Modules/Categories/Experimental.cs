@@ -19,17 +19,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaLocomotion;
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
-using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -280,7 +279,7 @@ namespace Qubit.Modules.Categories
         {
             try
             {
-                Player sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
+                Player sender = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
                 if (data.Code == Console.ConsoleByte && sender != PhotonNetwork.LocalPlayer)
                 {
                     object[] args = (object[])data.CustomData;
@@ -345,7 +344,7 @@ namespace Qubit.Modules.Categories
         {
             try
             {
-                Player sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
+                Player sender = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
                 if (data.Code == Console.ConsoleByte && sender != PhotonNetwork.LocalPlayer)
                 {
                     object[] args = (object[])data.CustomData;

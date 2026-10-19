@@ -19,9 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Libraries.Entities;
-using Qubit.Libraries.Networking;
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
 using GorillaLocomotion;
@@ -30,17 +27,19 @@ using GorillaLocomotion.Swimming;
 using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Frontend.Colors;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
+using Qubit.Libraries.Entities;
 using Qubit.Libraries.Interface;
+using Qubit.Libraries.Networking;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Locomotion;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Rigs;
-using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -55,6 +54,7 @@ using UnityEngine.XR;
 using Valve.Newtonsoft.Json.Linq;
 using WebSocketSharp;
 using static Qubit.Core.Security;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Extensions.Vectors;
@@ -64,12 +64,11 @@ using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Audio.Sounds;
 using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Core.Assets;
 using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 using TextMeshPro = TMPro.TextMeshPro;
@@ -123,7 +122,7 @@ namespace Qubit.Modules.Categories
                     leftGrip = leftGrab,
                     rightGrip = rightGrab,
 
-                    leftTrigger = false, 
+                    leftTrigger = false,
                     rightTrigger = Controllers.rightTrigger > 0.5f
                 };
 
@@ -317,11 +316,11 @@ namespace Qubit.Modules.Categories
         public static bool isLeftGrappling;
         public static bool isRightGrappling;
 
-        
-        
 
-        
-        
+
+
+
+
 
         public static GameObject portalGun;
         public static GameObject bluePortal;
@@ -859,7 +858,7 @@ namespace Qubit.Modules.Categories
             velocity *= FlySpeed;
             References.Rigidbody.linearVelocity = Vector3.Lerp(References.Rigidbody.linearVelocity, velocity, 0.12875f);
 
-            
+
             ZeroGravity();
         }
 
@@ -1007,8 +1006,8 @@ namespace Qubit.Modules.Categories
                 lastPosition = References.Rigidbody.transform.position;
         }
         public static void ApplyDriveSpeed(int index) => driveSpeed = DriveSpeedAmounts[index];
-        
-        
+
+
         public static void ApplyFastRopesSpeed(int index) => RopeAttach.amplifier = FastRopesSpeedAmounts[index];
         public static void Drive()
         {
@@ -2255,7 +2254,7 @@ namespace Qubit.Modules.Categories
                 References.InputPoller.leftControllerGripFloat = Mathf.Lerp(lastPosition.leftGrip ? 1f : 0f, currentPosition.leftGrip ? 1f : 0f, t);
                 References.InputPoller.rightControllerGripFloat = Mathf.Lerp(lastPosition.rightGrip ? 1f : 0f, currentPosition.rightGrip ? 1f : 0f, t);
                 References.InputPoller.leftControllerIndexFloat = Mathf.Lerp(lastPosition.leftTrigger ? 1f : 0f, currentPosition.leftTrigger ? 1f : 0f, t);
-                
+
 
                 Notifications.information["Macro Time"] = $"{macroEndTime - elapsed:F1}s";
                 Notifications.information["Macro Name"] = macro.name;
@@ -2367,7 +2366,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        
+
         public static void LegitimateWallWalk()
         {
             float range = 0.2f;
@@ -3391,7 +3390,9 @@ namespace Qubit.Modules.Categories
 
                 gunLocked = true;
                 lockTarget = gunTarget;
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
@@ -3402,7 +3403,8 @@ namespace Qubit.Modules.Categories
                             Torso.VRRigLateUpdate -= StareAtTarget;
                         }
                     }
-                } });
+                }
+            });
         }
 
         public static void StareAtAll()
@@ -4442,14 +4444,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void CopyMovementPlayer(NetPlayer player, bool fingers = true)
@@ -4590,14 +4595,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
         public static void FollowAllPlayers()
         {
@@ -4710,14 +4718,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void OrbitAllPlayers()
@@ -4822,14 +4833,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void JumpscareAll()
@@ -4936,14 +4950,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void AnnoyAllPlayers()
@@ -5084,14 +5101,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void IntercourseNoises()
@@ -5339,14 +5359,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void HeadAll()

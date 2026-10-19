@@ -19,17 +19,129 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
+using GorillaGameModes;
+using GorillaNetworking;
+using GorillaTagScripts;
 using Photon.Pun;
+using Qubit.Core;
 using Qubit.Extensions;
+using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Categories;
+using System;
+using System.Collections;
+using System.Linq;
+using System.Threading.Tasks;
+using UnityEngine;
+using static Qubit.Extensions.Random;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Security = Qubit.Core.Security;
 
 namespace Qubit.Libraries.Networking
 {
     public static class Rooms
     {
+        public static void JoinRoom(string name, JoinType joinType = JoinType.Solo) =>
+            ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(name, joinType);
+
+        public static void JoinRandom()
+        {
+            if (Qubit.Core.Networking.InRoom)
+            {
+                ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
+                Coroutines.instance.StartCoroutine(JoinRandomDelay());
+                return;
+            }
+
+            GorillaNetworkJoinTrigger trigger = ManagerRegistry.PhotonNetworkController.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
+            ManagerRegistry.PhotonNetworkController.AttemptToJoinPublicRoom(trigger);
+        }
+
+        public static IEnumerator JoinRandomDelay()
+        {
+            yield return new WaitForSeconds(1.5f);
+            JoinRandom();
+        }
+
+        public static void CreateRoom(string roomName, bool isPublic, byte roomSize = 0, JoinType roomJoinType = JoinType.Solo)
+        {
+            if (roomSize > 10 && !roomName.StartsWith("@"))
+                roomName = $"@{roomName}";
+            var netTrigger = ManagerRegistry.PhotonNetworkController.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
+            RoomConfig roomConfig = new RoomConfig
+            {
+                createIfMissing = true,
+                isJoinable = true,
+                isPublic = isPublic,
+                MaxPlayers = roomSize == 0 ? RoomSystem.GetRoomSizeForCreate(netTrigger.zone, Enum.Parse<GameModeType>(References.Computer.currentGameMode.Value, true), !isPublic, SubscriptionManager.IsLocalSubscribed()) : roomSize,
+                CustomProps = new Hashtable
+                {
+                    { "platform", ManagerRegistry.PhotonNetworkController.platformTag },
+                    { "gameMode", netTrigger.GetFullDesiredGameModeString() },
+                    { "language", LocalisationManager.CurrentLanguage.ToString() },
+                    { "fan_club", SubscriptionManager.IsLocalSubscribed() ? "true" : "false" },
+                    { "queueName", References.Computer.currentQueue },
+                }
+            };
+
+            ManagerRegistry.PhotonNetworkController.currentJoinType = roomJoinType;
+
+            if (roomJoinType == JoinType.JoinWithParty || roomJoinType == JoinType.ForceJoinWithParty)
+                Task.Run(ManagerRegistry.PhotonNetworkController.SendPartyFollowCommands);
+
+            switch (roomJoinType)
+            {
+                case JoinType.JoinWithNearby:
+                case JoinType.JoinWithElevator:
+                    roomConfig.SetFriendIDs(ManagerRegistry.PhotonNetworkController.FriendIDList);
+                    break;
+                case JoinType.JoinWithParty:
+                case JoinType.ForceJoinWithParty:
+                    roomConfig.SetFriendIDs(ManagerRegistry.FriendshipGroupDetection.PartyMemberIDs.ToList());
+                    break;
+            }
+
+            if (Overpowered.instantCreate)
+            {
+                (ManagerRegistry.NetworkSystem as NetworkSystemPUN).internalState = NetworkSystemPUN.InternalState.Searching_Creating;
+                _ = ForceCreateRoom(roomName, roomConfig);
+            }
+            else
+                ManagerRegistry.NetworkSystem.ConnectToRoom(roomName, roomConfig);
+        }
+
+        public static void BroadcastRoom(string roomName, bool create, string key, string shuffler)
+        {
+            string text = NetworkSystem.ShuffleRoomName(roomName, shuffler.Substring(2, 8), true) + "|" + NetworkSystem.ShuffleRoomName("ABCDEFGHIJKLMNPQRSTUVWXYZ123456789".Substring(ManagerRegistry.NetworkSystem.currentRegionIndex, 1), shuffler[..2], true);
+
+            BroadcastMyRoomRequest broadcastMyRoomRequest = new BroadcastMyRoomRequest
+            {
+                KeyToFollow = key,
+                RoomToJoin = text,
+                Set = create
+            };
+
+            ManagerRegistry.GorillaServer.BroadcastMyRoom(broadcastMyRoomRequest, delegate { }, delegate { });
+        }
+
+        public static async Task ForceCreateRoom(string name, RoomConfig options)
+        {
+            if (Qubit.Core.Networking.InRoom)
+                await ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
+
+            await (ManagerRegistry.NetworkSystem as NetworkSystemPUN).TryCreateRoom(name, options);
+        }
+
+        public static string RandomRoomName()
+        {
+            while (true)
+            {
+                string text = RandomString();
+                if (References.Computer.CheckAutoBanListForName(text))
+                    return text;
+            }
+        }
+
         public static bool inRoomStatus;
         public static string lastRoom;
 

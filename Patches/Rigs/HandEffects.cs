@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using HarmonyLib;
 using Photon.Pun;
+using Qubit.Core;
 using UnityEngine;
 using Security = Qubit.Core.Security;
 

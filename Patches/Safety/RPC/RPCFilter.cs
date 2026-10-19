@@ -31,7 +31,7 @@ namespace Qubit.Patches.Safety.RPC
     [HarmonyPatch(typeof(PhotonNetwork), nameof(PhotonNetwork.RPC), typeof(PhotonView), typeof(string), typeof(RpcTarget), typeof(Player), typeof(bool), typeof(object[]))]
     public class RPCFilter
     {
-        
+
 
 
         public static Dictionary<string, Func<bool>> FilteredRPCs = new Dictionary<string, Func<bool>>();

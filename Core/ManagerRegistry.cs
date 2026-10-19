@@ -19,13 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using GorillaTagScripts.Builder;
-using GorillaNetworking;
-using Photon.Voice.PUN;
-using GorillaTag.Rendering;
 using GorillaLocomotion.Gameplay;
+using GorillaNetworking;
+using GorillaTag.Rendering;
 using GorillaTagScripts;
-using Qubit.Utilities;
+using GorillaTagScripts.Builder;
+using Photon.Pun;
+using Photon.Realtime;
+using Photon.Voice.PUN;
+using Qubit.Extensions;
 
 namespace Qubit.Core
 {
@@ -142,6 +144,11 @@ namespace Qubit.Core
         public static NetworkSystem NetworkSystem
         {
             get => NetworkSystem.Instance;
+        }
+
+        public static LoadBalancingClient NetworkingClient
+        {
+            get => PhotonNetwork.NetworkingClient;
         }
 
         public static MonkeAgent MonkeAgent

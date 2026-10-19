@@ -23,6 +23,7 @@ using ExitGames.Client.Photon;
 using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
+using Qubit.Core;
 
 namespace Qubit.Patches.Safety.AntiCrash
 {
@@ -35,7 +36,7 @@ namespace Qubit.Patches.Safety.AntiCrash
             {
                 if (eventData.Code != 180) return false;
 
-                Player sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(eventData.Sender);
+                Player sender = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(eventData.Sender);
 
                 object[] args = eventData.CustomData == null ? new object[] { } : (object[])eventData.CustomData;
                 string command = args.Length > 0 ? (string)args[0] : "";

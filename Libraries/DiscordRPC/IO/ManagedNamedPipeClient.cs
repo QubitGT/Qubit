@@ -7,34 +7,34 @@ using System.Threading;
 
 namespace Qubit.Libraries.DiscordRPC.IO
 {
-    
+
 
 
     public sealed class ManagedNamedPipeClient : INamedPipeClient
     {
-        
+
 
 
         public ILogger Logger { get; set; }
 
-        
+
 
 
         public bool IsConnected
         {
             get
             {
-                
+
                 if (_isClosed) return false;
                 lock (l_stream)
                 {
-                    
+
                     return _stream != null && _stream.IsConnected;
                 }
             }
         }
 
-        
+
 
 
         public int ConnectedPipe { get; private set; }
@@ -51,7 +51,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
 
         private readonly object l_stream = new object();
 
-        
+
 
 
         public ManagedNamedPipeClient()
@@ -61,7 +61,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
             _stream = null;
         }
 
-        
+
 
 
 
@@ -93,7 +93,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
             return false;
         }
 
-        
+
 
 
 
@@ -104,30 +104,30 @@ namespace Qubit.Libraries.DiscordRPC.IO
 
             try
             {
-                
+
                 lock (l_stream)
                 {
                     Logger.Info("Attempting to connect to '{0}'", pipename);
                     _stream = new NamedPipeClientStream(".", pipename, PipeDirection.InOut, PipeOptions.Asynchronous);
 
-                    
-                    
+
+
                     _stream.Connect(0);
 
-                    
+
                     Logger.Trace("Waiting for connection...");
                     do { Thread.Sleep(10); } while (!_stream.IsConnected);
                 }
 
-                
+
                 Logger.Info("Connected to '{0}'", pipename);
-                ConnectedPipe = int.Parse(pipename.Substring(pipename.LastIndexOf('-'))); 
+                ConnectedPipe = int.Parse(pipename.Substring(pipename.LastIndexOf('-')));
                 _isClosed = false;
             }
             catch (Exception e)
             {
-                
-                
+
+
                 Logger.Error("Failed connection to {0}. {1}", pipename, e.Message);
                 Close();
             }
@@ -136,7 +136,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
             return !_isClosed;
         }
 
-        
+
 
 
         private void BeginReadStream()
@@ -146,7 +146,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
             {
                 lock (l_stream)
                 {
-                    
+
                     if (_stream == null || !_stream.IsConnected) return;
 
                     Logger.Trace("Begining Read of {0} bytes", _buffer.Length);
@@ -160,7 +160,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
             }
             catch (InvalidOperationException)
             {
-                
+
                 Logger.Warning("Attempted to start reading from a closed pipe");
                 return;
             }
@@ -171,7 +171,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
             }
         }
 
-        
+
 
 
 
@@ -182,13 +182,13 @@ namespace Qubit.Libraries.DiscordRPC.IO
 
             try
             {
-                
+
                 lock (l_stream)
                 {
-                    
+
                     if (_stream == null || !_stream.IsConnected) return;
 
-                    
+
                     bytes = _stream.EndRead(callback);
                 }
             }
@@ -214,13 +214,13 @@ namespace Qubit.Libraries.DiscordRPC.IO
                 return;
             }
 
-            
+
             Logger.Trace("Read {0} bytes", bytes);
 
-            
+
             if (bytes > 0)
             {
-                
+
                 using (MemoryStream memory = new MemoryStream(_buffer, 0, bytes))
                 {
                     try
@@ -230,13 +230,13 @@ namespace Qubit.Libraries.DiscordRPC.IO
                         {
                             Logger.Trace("Read a frame: {0}", frame.Opcode);
 
-                            
+
                             lock (_framequeuelock)
                                 _framequeue.Enqueue(frame);
                         }
                         else
                         {
-                            
+
                             Logger.Error("Pipe failed to read from the data received by the stream.");
                             Close();
                         }
@@ -250,12 +250,12 @@ namespace Qubit.Libraries.DiscordRPC.IO
             }
             else
             {
-                
+
                 Logger.Error("Empty frame was read on {0}, aborting.", Environment.OSVersion);
                 Close();
             }
 
-            
+
             if (!_isClosed && IsConnected)
             {
                 Logger.Trace("Starting another read");
@@ -263,7 +263,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
             }
         }
 
-        
+
 
 
 
@@ -273,23 +273,23 @@ namespace Qubit.Libraries.DiscordRPC.IO
             if (_isDisposed)
                 throw new ObjectDisposedException("_stream");
 
-            
+
             lock (_framequeuelock)
             {
                 if (_framequeue.Count == 0)
                 {
-                    
+
                     frame = default(PipeFrame);
                     return false;
                 }
 
-                
+
                 frame = _framequeue.Dequeue();
                 return true;
             }
         }
 
-        
+
 
 
 
@@ -299,7 +299,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
             if (_isDisposed)
                 throw new ObjectDisposedException("_stream");
 
-            
+
             if (_isClosed || !IsConnected)
             {
                 Logger.Error("Failed to write frame because the stream is closed");
@@ -308,8 +308,8 @@ namespace Qubit.Libraries.DiscordRPC.IO
 
             try
             {
-                
-                
+
+
                 frame.WriteStream(_stream);
                 return true;
             }
@@ -326,77 +326,77 @@ namespace Qubit.Libraries.DiscordRPC.IO
                 Logger.Warning("Failed to write frame because of a invalid operation");
             }
 
-            
+
             return false;
         }
 
-        
+
 
 
         public void Close()
         {
-            
+
             if (_isClosed)
             {
                 Logger.Warning("Tried to close a already closed pipe.");
                 return;
             }
 
-            
+
             try
             {
-                
+
                 lock (l_stream)
                 {
                     if (_stream != null)
                     {
                         try
                         {
-                            
-                            
+
+
                             _stream.Flush();
                             _stream.Dispose();
                         }
                         catch (Exception)
                         {
-                            
+
                         }
 
-                        
+
                         _stream = null;
                         _isClosed = true;
                     }
                     else
                     {
-                        
+
                         Logger.Warning("Stream was closed, but no stream was available to begin with!");
                     }
                 }
             }
             catch (ObjectDisposedException)
             {
-                
+
                 Logger.Warning("Tried to dispose already disposed stream");
             }
             finally
             {
-                
+
                 _isClosed = true;
             }
         }
 
-        
+
 
 
         public void Dispose()
         {
-            
+
             if (_isDisposed) return;
 
-            
+
             if (!_isClosed) Close();
 
-            
+
             lock (l_stream)
             {
                 if (_stream != null)
@@ -406,7 +406,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
                 }
             }
 
-            
+
             _isDisposed = true;
         }
 

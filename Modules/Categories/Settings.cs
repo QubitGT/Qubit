@@ -19,21 +19,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using GorillaExtensions;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Frontend.Classes;
 using Qubit.Frontend.Colors;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
+using Qubit.Libraries.Entities;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Language;
 using Qubit.Patches.Netcode;
-using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -53,6 +53,7 @@ using WebSocketSharp;
 using static Qubit.Backend.Preferences;
 using static Qubit.Core.Security;
 using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Strings;
 using static Qubit.Frontend.Core;
@@ -63,14 +64,12 @@ using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Audio.Sounds;
 using static Qubit.Libraries.Audio.Transcription;
 using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Core.Assets;
 using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Categories.Visuals;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
-using Qubit.Libraries.Entities;
 using Console = Qubit.Backend.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
@@ -2528,7 +2527,7 @@ namespace Qubit.Modules.Categories
         #endregion
 
         #region Methods
-        public static void Search() 
+        public static void Search()
         {
             isSearching = !isSearching;
 
@@ -3257,7 +3256,7 @@ namespace Qubit.Modules.Categories
             Notifications.SendFormat("green", "SUCCESS", "Removed all rebinds.");
         }
 
-        
+
         public static void UpdateMenu()
         {
             switch (SystemInfo.operatingSystemFamily)
@@ -3806,7 +3805,7 @@ exit 0";
         public static void CustomMenuBackground()
         {
             if (!File.Exists($"{PluginInfo.BaseDirectory}/CustomBackground.png"))
-                LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomBackground.png", "CustomBackground.png"); 
+                LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomBackground.png", "CustomBackground.png");
 
             textureFileDirectory.Remove("CustomBackground.png");
 
@@ -3826,7 +3825,7 @@ exit 0";
             if (enabled)
             {
                 if (!File.Exists($"{PluginInfo.BaseDirectory}/CustomWatermark.png"))
-                    LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomWatermark.png", "CustomWatermark.png"); 
+                    LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomWatermark.png", "CustomWatermark.png");
 
                 textureFileDirectory.Remove("CustomWatermark.png");
                 customWatermark = LoadTextureFromFile("CustomWatermark.png");
@@ -3852,7 +3851,7 @@ exit 0";
         public static void CustomWatermark()
         {
             if (!File.Exists($"{PluginInfo.BaseDirectory}/CustomWatermark.png"))
-                LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomWatermark.png", "CustomWatermark.png"); 
+                LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/CustomWatermark.png", "CustomWatermark.png");
 
             textureFileDirectory.Remove("CustomWatermark.png");
             customWatermark = LoadTextureFromFile("CustomWatermark.png");
@@ -5059,7 +5058,7 @@ exit 0";
             Color backgroundColor = Color.white;
             Fun.HueShift(Color.white);
 
-            var main = particleSystem.main; 
+            var main = particleSystem.main;
             main.startColor = new ParticleSystem.MinMaxGradient(
                 Frontend.Settings.backgroundColor.GetColor(0)
             );
@@ -5363,8 +5362,8 @@ exit 0";
                 Important.reconnectDelay = int.Parse(data[14]);
                 RestoreCycle("Change Reconnect Time", Important.reconnectDelay);
 
-                
-                
+
+
 
                 Sounds.DefaultSounds["Button"] = data[16];
                 RestoreNamedCycle("Change Button Sound", data[16]);
@@ -5502,8 +5501,8 @@ exit 0";
                 Movement.fakeLagDelayIndex = int.Parse(data[62]);
                 RestoreCycle("Change Fake Lag Strength", Movement.fakeLagDelayIndex);
 
-                
-                
+
+
 
                 characterDistance = int.Parse(data[64]);
                 RestoreCycle("Change Character Distance", characterDistance);
@@ -5517,8 +5516,8 @@ exit 0";
                 Movement.targetHz = int.Parse(data[67]);
                 RestoreCycle("Change Tinnitus Hertz", Movement.targetHz);
 
-                
-                
+
+
 
                 Fun.soundboardVolumeIndex = float.Parse(data[69]);
                 RestoreCycle("Change Soundboard Volume", (int)Fun.soundboardVolumeIndex);
@@ -5643,7 +5642,7 @@ exit 0";
                         pcBindings[binding] = key;
                 }
 
-                bool addedDefaults = false; 
+                bool addedDefaults = false;
                 foreach (var pair in defaults)
                 {
                     if (pcBindings.ContainsKey(pair.Key)) continue;

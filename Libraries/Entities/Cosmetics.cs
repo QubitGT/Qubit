@@ -19,12 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Settings = Qubit.Modules.Categories.Settings;
-using Manager = Qubit.Modules.Manager;
-using Module = Qubit.Modules.Module;
-using Qubit.Patches.Economics;
-using Qubit.Patches.Rigs;
-using Console = Qubit.Backend.Console;
 using GorillaNetworking;
 using Photon.Pun;
 using Photon.Realtime;
@@ -34,7 +28,8 @@ using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
-using Qubit.Utilities;
+using Qubit.Patches.Economics;
+using Qubit.Patches.Rigs;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -46,8 +41,12 @@ using static Qubit.Frontend.Prompts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Modules.Categories.Fun;
+using Console = Qubit.Backend.Console;
+using Manager = Qubit.Modules.Manager;
+using Module = Qubit.Modules.Module;
 using Random = UnityEngine.Random;
 using Security = Qubit.Core.Security;
+using Settings = Qubit.Modules.Categories.Settings;
 
 namespace Qubit.Libraries.Entities
 {

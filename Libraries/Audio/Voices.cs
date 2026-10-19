@@ -108,7 +108,7 @@ namespace Qubit.Libraries.Audio
             StartRecording(device);
         }
 
-        
+
 
 
         public IReadOnlyList<Clip> AudioClips
@@ -122,7 +122,7 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-        
+
 
 
         public bool MuteMicrophone
@@ -131,7 +131,7 @@ namespace Qubit.Libraries.Audio
             set { muteMicrophone = value; }
         }
 
-        
+
 
 
         public int SamplingRate
@@ -144,7 +144,7 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-        
+
 
 
         public int OutputRate
@@ -157,7 +157,7 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-        
+
 
 
         public float Gain
@@ -166,7 +166,7 @@ namespace Qubit.Libraries.Audio
             set { gain = Mathf.Max(0f, value); }
         }
 
-        
+
 
 
         public float ClipVolume
@@ -175,7 +175,7 @@ namespace Qubit.Libraries.Audio
             set { clipVolume = Mathf.Max(0f, value); }
         }
 
-        
+
 
 
         public float Pitch
@@ -184,7 +184,7 @@ namespace Qubit.Libraries.Audio
             set => pitch = Mathf.Max(0.1f, value);
         }
 
-        
+
 
 
         public float ClipSpeed
@@ -193,12 +193,12 @@ namespace Qubit.Libraries.Audio
             set => clipSpeed = Mathf.Max(0.1f, value);
         }
 
-        
+
 
 
         public readonly Dictionary<string, Action<float[]>> PostProcessors = new Dictionary<string, Action<float[]>>();
 
-        
+
 
 
         public bool PostProcessClip { get; set; }
@@ -209,7 +209,7 @@ namespace Qubit.Libraries.Audio
 
         public static Voices Instance { get; private set; }
 
-        
+
 
 
 
@@ -219,7 +219,7 @@ namespace Qubit.Libraries.Audio
             return Instance ??= new Voices(loopLength, device);
         }
 
-        
+
 
 
 
@@ -276,7 +276,7 @@ namespace Qubit.Libraries.Audio
             return true;
         }
 
-        
+
 
 
         public bool StopRecording()
@@ -290,19 +290,19 @@ namespace Qubit.Libraries.Audio
             return true;
         }
 
-        
+
 
 
         public bool SwitchMicrophone(string device)
             => StopRecording() && StartRecording(device);
 
-        
+
 
 
         public bool RestartMicrophone()
             => StopRecording() && StartRecording(currentDevice);
 
-        
+
 
 
         public Clip AudioClip(AudioClip audioClip, bool disableMicrophone = false)
@@ -354,7 +354,7 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-        
+
 
 
         public static float[] Resample(float[] source, int sourceRate, int targetRate, int channels)
@@ -397,7 +397,7 @@ namespace Qubit.Libraries.Audio
             return target;
         }
 
-        
+
 
 
         public bool StopAudioClip(Clip clip)
@@ -407,7 +407,7 @@ namespace Qubit.Libraries.Audio
                 return audioClips.Remove(clip);
         }
 
-        
+
 
 
         public void StopAudioClips()
@@ -416,7 +416,7 @@ namespace Qubit.Libraries.Audio
                 audioClips.Clear();
         }
 
-        
+
 
 
 

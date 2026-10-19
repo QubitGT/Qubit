@@ -5,12 +5,12 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-    
+
 
 
     public class Button
     {
-        
+
 
 
 
@@ -26,7 +26,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _label;
 
-        
+
 
 
 

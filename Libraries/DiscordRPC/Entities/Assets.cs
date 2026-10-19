@@ -4,7 +4,7 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-    
+
 
 
     [Serializable]
@@ -13,7 +13,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         private const string EXTERNAL_KEY_PREFIX = "mp:external";
 
         #region Large Image
-        
+
 
 
 
@@ -27,13 +27,13 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 if (!BaseRichPresence.ValidateString(value, out _largeimagekey, false, 256))
                     throw new StringOutOfRangeException(256);
 
-                
+
                 LargeImageID = null;
             }
         }
         private string _largeimagekey;
 
-        
+
 
 
 
@@ -49,7 +49,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _largeimagetext;
 
-        
+
 
 
 
@@ -68,13 +68,13 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _largeimageurl;
 
-        
+
 
 
         [JsonIgnore]
         public string LargeImageID { get; private set; }
 
-        
+
 
 
         [JsonIgnore]
@@ -82,7 +82,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         #endregion
 
         #region Small Image
-        
+
 
 
 
@@ -96,13 +96,13 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 if (!BaseRichPresence.ValidateString(value, out _smallimagekey, false, 256))
                     throw new StringOutOfRangeException(256);
 
-                
+
                 SmallImageID = null;
             }
         }
         private string _smallimagekey;
 
-        
+
 
 
 
@@ -118,7 +118,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _smallimagetext;
 
-        
+
 
 
 
@@ -137,13 +137,13 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _smallimageurl;
 
-        
+
 
 
         [JsonIgnore]
         public string SmallImageID { get; private set; }
 
-        
+
 
 
         [JsonIgnore]
@@ -151,19 +151,19 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         #endregion
 
 
-        
+
 
 
 
         internal void Merge(Assets other)
         {
-            
+
             _smallimagetext = other._smallimagetext;
             _smallimageurl = other._smallimageurl;
             _largeimagetext = other._largeimagetext;
             _largeimageurl = other._largeimageurl;
 
-            
+
             string largeKey = other._largeimagekey ?? "";
             if (largeKey.StartsWith(EXTERNAL_KEY_PREFIX))
             {
@@ -182,8 +182,8 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 _largeimagekey = largeKey;
             }
 
-            
-            
+
+
             string smallKey = other._smallimagekey ?? "";
             if (smallKey.StartsWith(EXTERNAL_KEY_PREFIX))
             {

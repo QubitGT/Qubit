@@ -20,52 +20,16 @@
  */
 
 using ExitGames.Client.Photon;
-using GorillaExtensions;
-using GorillaGameModes;
-using GorillaLocomotion.Gameplay;
-using GorillaTag;
-using GorillaTagScripts;
-using Ionic.Zlib;
-using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice;
 using Qubit.Core;
 using Qubit.Extensions;
-using Qubit.Libraries.Audio;
-using Qubit.Libraries.Core;
-using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Locomotion;
-using Qubit.Patches.Netcode;
-using Qubit.Patches.Safety.RPC;
-using Qubit.Utilities;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Unity.XR.CoreUtils;
 using UnityEngine;
 using WebSocketSharp;
-using static Qubit.Core.Security;
 using static Qubit.Extensions.Players;
-using static Qubit.Extensions.Random;
-using static Qubit.Extensions.Vectors;
-using static Qubit.Frontend.Keyboard;
-using static Qubit.Frontend.Prompts;
-using static Qubit.Frontend.Settings;
-using static Qubit.Libraries.Controls.Controllers;
-using static Qubit.Libraries.Networking.LocalPlayer;
-using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
-using static Qubit.Modules.Categories.Projectiles;
-using static Qubit.Libraries.Entities.Critters;
-using Hashtable = ExitGames.Client.Photon.Hashtable;
-using JoinType = GorillaNetworking.JoinType;
-using Object = UnityEngine.Object;
-using Random = UnityEngine.Random;
 
 namespace Qubit.Libraries.Audio
 {
@@ -147,14 +111,17 @@ namespace Qubit.Libraries.Audio
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void DeafenAll()

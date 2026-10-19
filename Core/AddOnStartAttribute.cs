@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace Qubit.Core
 {
-    
+
 
 
 
@@ -40,7 +40,7 @@ namespace Qubit.Core
         public AddOnStartAttribute(bool condition = true) =>
             Condition = condition;
 
-        
+
 
 
 
@@ -53,7 +53,7 @@ namespace Qubit.Core
             }
             catch (ReflectionTypeLoadException exception)
             {
-                types = exception.Types.Where(type => type != null).ToArray(); 
+                types = exception.Types.Where(type => type != null).ToArray();
             }
 
             foreach (Type type in types)

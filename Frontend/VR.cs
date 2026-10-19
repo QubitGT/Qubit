@@ -123,7 +123,7 @@ namespace Qubit.Frontend
 
         public static void UpdatePhysicalReference()
         {
-            
+
             if (physicalMenu && menu != null)
             {
                 try

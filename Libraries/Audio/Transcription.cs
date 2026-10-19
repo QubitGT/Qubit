@@ -32,15 +32,15 @@ using Valve.Newtonsoft.Json;
 using static Qubit.Extensions.Strings;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Audio.Sounds;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.Files;
+using static Qubit.Libraries.Core.Assets;
+using static Qubit.Libraries.Core.Files;
 
 namespace Qubit.Libraries.Audio
 {
     public static class Transcription
     {
 
-        
+
 
 
 
@@ -68,7 +68,7 @@ namespace Qubit.Libraries.Audio
             {
                 switch (narratorIndex)
                 {
-                    
+
                     case 0:
                         {
                             string postData = JsonConvert.SerializeObject(new { text });
@@ -95,7 +95,7 @@ namespace Qubit.Libraries.Audio
                             break;
                         }
 
-                    
+
                     case 1:
                     case 2:
                     case 3:
@@ -133,7 +133,7 @@ namespace Qubit.Libraries.Audio
                             break;
                         }
 
-                    
+
                     case 9:
                     case 10:
                     case 11:
@@ -293,7 +293,7 @@ namespace Qubit.Libraries.Audio
             SpeakText(text, false);
         }
 
-        
+
 
 
 

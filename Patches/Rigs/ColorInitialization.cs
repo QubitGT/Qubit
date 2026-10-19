@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using HarmonyLib;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 
 namespace Qubit.Patches.Rigs

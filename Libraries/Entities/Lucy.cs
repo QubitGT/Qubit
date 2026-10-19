@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Categories;
 using Qubit.Patches.Events;

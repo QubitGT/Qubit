@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using HarmonyLib;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Frontend.Colors;
 using Qubit.Libraries.Core;
@@ -38,16 +38,16 @@ using UnityEngine.XR;
 using static Qubit.Extensions.Colors;
 using static Qubit.Extensions.Random;
 using static Qubit.Extensions.Strings;
+using static Qubit.Frontend.Core;
 using static Qubit.Frontend.Keyboard;
 using static Qubit.Frontend.Prompts;
 using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Core.Assets;
 using static Qubit.Modules.Manager;
-using static Qubit.Utilities.Assets;
 using ButtonCollider = Qubit.Frontend.Classes.ButtonCollider;
 using Random = UnityEngine.Random;
 using TextMeshPro = TMPro.TextMeshPro;
-using static Qubit.Frontend.Core;
 
 namespace Qubit.Frontend
 {

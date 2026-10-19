@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using GorillaTagScripts;
 using HarmonyLib;
+using Qubit.Core;
 
 namespace Qubit.Patches.Events
 {

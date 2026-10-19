@@ -40,7 +40,7 @@ namespace Qubit.Patches.Safety.AntiGhost
 
             try
             {
-                if (photonEvent == null || photonEvent.Code != (byte)PunEvent.DestroyPlayer)
+                if (photonEvent == null || photonEvent.Code != PunEvent.DestroyPlayer)
                     return true;
 
                 if (!(photonEvent.CustomData is Hashtable eventData))

@@ -1,21 +1,21 @@
 ﻿namespace Qubit.Libraries.DiscordRPC.Message
 {
-    
+
 
 
     public class CloseMessage : IMessage
     {
-        
+
 
 
         public override MessageType Type { get { return MessageType.Close; } }
 
-        
+
 
 
         public string Reason { get; internal set; }
 
-        
+
 
 
         public int Code { get; internal set; }

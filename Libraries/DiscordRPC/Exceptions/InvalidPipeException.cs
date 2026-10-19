@@ -2,7 +2,7 @@
 
 namespace Qubit.Libraries.DiscordRPC.Exceptions
 {
-    
+
 
 
     [Obsolete("Not actually used anywhere")]

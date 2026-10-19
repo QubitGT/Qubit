@@ -19,11 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
@@ -36,14 +36,13 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Audio.Sounds;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Serialization;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Random = UnityEngine.Random;
 using Security = Qubit.Core.Security;
@@ -273,7 +272,7 @@ namespace Qubit.Modules.Categories
                     if (rpcName == "RPC_PlayHandTap" && (int)args[0] == 67)
                     {
                         buttonClickTime = Time.frameCount;
-                        buttonClickPlayer = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender).UserId;
+                        buttonClickPlayer = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(data.Sender).UserId;
                     }
                 }
             }
@@ -282,13 +281,13 @@ namespace Qubit.Modules.Categories
 
         public static void EnableSmartAntiReport()
         {
-            PhotonNetwork.NetworkingClient.EventReceived += EventReceived_SmartAntiReport;
+            ManagerRegistry.NetworkingClient.EventReceived += EventReceived_SmartAntiReport;
             smartAntiReport = true;
         }
 
         public static void DisableSmartAntiReport()
         {
-            PhotonNetwork.NetworkingClient.EventReceived -= EventReceived_SmartAntiReport;
+            ManagerRegistry.NetworkingClient.EventReceived -= EventReceived_SmartAntiReport;
             smartAntiReport = false;
         }
 
@@ -374,7 +373,7 @@ namespace Qubit.Modules.Categories
             {
                 if (!(Time.time > antiReportDelay)) return;
 
-                Room.JoinRandom();
+                Libraries.Networking.Rooms.JoinRandom();
                 Security.RPCProtection();
 
                 antiReportDelay = Time.time + 1f;
@@ -388,7 +387,7 @@ namespace Qubit.Modules.Categories
             {
                 if (data.Code == Photon.Pun.PunEvent.RPC)
                 {
-                    var sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
+                    var sender = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
                     if (sender.IsLocal)
                         return;
 
@@ -398,7 +397,7 @@ namespace Qubit.Modules.Categories
                     {
                         VRRig target = GetVRRigFromPlayer(sender);
                         if (Vector3.Distance(target.leftHandTransform.position, target.rightHandTransform.position) < 0.1f)
-                            AntiReportFRT(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender));
+                            AntiReportFRT(ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(data.Sender));
                     }
                 }
             }
@@ -406,10 +405,10 @@ namespace Qubit.Modules.Categories
         }
 
         public static void EnableAntiOculusReport() =>
-            PhotonNetwork.NetworkingClient.EventReceived += EventReceived_AntiOculusReport;
+            ManagerRegistry.NetworkingClient.EventReceived += EventReceived_AntiOculusReport;
 
         public static void DisableAntiOculusReport() =>
-            PhotonNetwork.NetworkingClient.EventReceived -= EventReceived_AntiOculusReport;
+            ManagerRegistry.NetworkingClient.EventReceived -= EventReceived_AntiOculusReport;
         public static void AntiReportNotify()
         {
             if (!(Time.time > antiReportNotifyDelay)) return;
@@ -796,7 +795,7 @@ namespace Qubit.Modules.Categories
             ViewSerialization.OverrideSerialization = () =>
             {
                 SendSerialize(References.LocalRig.GetPhotonView());
-                
+
                 return false;
             };
         }
@@ -808,7 +807,7 @@ namespace Qubit.Modules.Categories
                 VRRig vrrig = Players.ActiveRigs.First(vrrig => !vrrig.IsLocal() && vrrig.IsSteam());
                 Notifications.SendFormat("red", "STEAM", $"{vrrig.GetName()} is on Steam.");
 
-                LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Safety/steam.ogg", "Audio/Mods/Safety/steam.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Safety/steam.ogg", "Audio/Mods/Safety/steam.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
             }
 
             Important.lastSteam = playerOnSteam;

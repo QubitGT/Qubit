@@ -19,11 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Libraries.Audio;
-using Qubit.Core;
 using HarmonyLib;
+using Qubit.Core;
+using Qubit.Libraries.Audio;
 using static Qubit.Frontend.Settings;
-using static Qubit.Utilities.Assets;
+using static Qubit.Libraries.Core.Assets;
 
 namespace Qubit.Patches.Weapons
 {

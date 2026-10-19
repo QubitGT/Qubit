@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using Photon.Pun;
+using Qubit.Core;
 using Qubit.Modules.Categories;
 using UnityEngine;
 using static Qubit.Core.Security;
@@ -38,7 +38,7 @@ namespace Qubit.Libraries.Networking
             set => PhotonNetwork.LocalPlayer.NickName = value;
         }
 
-        public static void TeleportPlayer(Vector3 pos, bool keepVelocity = false) 
+        public static void TeleportPlayer(Vector3 pos, bool keepVelocity = false)
         {
             References.Player.TeleportTo(World2Player(pos), References.Player.transform.rotation, keepVelocity);
             References.LocalRig.transform.position = pos;

@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using HarmonyLib;
 using Photon.Pun;
+using Qubit.Core;
 using Qubit.Libraries.Core;
 using System;
 
@@ -30,12 +30,12 @@ namespace Qubit.Patches.Netcode
     [HarmonyPatch(typeof(PhotonNetwork), nameof(PhotonNetwork.RunViewUpdate))]
     public class ViewSerialization
     {
-        
+
 
 
         public static event Action OnSerialize;
 
-        
+
 
 
         public static Func<bool> OverrideSerialization;

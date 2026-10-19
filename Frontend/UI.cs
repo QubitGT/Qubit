@@ -19,38 +19,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Libraries.Audio;
 using Photon.Pun;
-using Photon.Realtime;
 using Qubit.Backend;
 using Qubit.Core;
-using Qubit.Extensions;
-using Qubit.Frontend.Classes;
 using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
 using Qubit.Modules;
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 using UnityEngine.XR;
-using static Qubit.Extensions.Colors;
-using static Qubit.Extensions.Strings;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Frontend.Core;
 using static Qubit.Frontend.Keyboard;
 using static Qubit.Frontend.Prompts;
-using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
-using static Qubit.Libraries.Networking.LocalPlayer;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
 using ButtonCollider = Qubit.Frontend.Classes.ButtonCollider;
-using JoinType = GorillaNetworking.JoinType;
 
 namespace Qubit.Frontend
 {
@@ -178,7 +165,7 @@ namespace Qubit.Frontend
             }
         }
 
-        private void OnGUI() 
+        private void OnGUI()
         {
             if (isOpen)
                 Plugins.ExecuteOnGUI();

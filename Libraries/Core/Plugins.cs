@@ -20,7 +20,6 @@
  */
 
 using Qubit.Core;
-using Qubit.Utilities;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
 using System;
@@ -31,8 +30,8 @@ using System.Net.Http;
 using System.Reflection;
 using static Qubit.Core.Security;
 using static Qubit.Frontend.Keyboard;
+using static Qubit.Libraries.Core.Files;
 using static Qubit.Modules.Manager;
-using static Qubit.Utilities.Files;
 using Module = Qubit.Modules.Module;
 
 namespace Qubit.Libraries.Core
@@ -144,7 +143,7 @@ namespace Qubit.Libraries.Core
 
         public static void DownloadPlugin(string name, string url)
         {
-            
+
             if (!Uri.TryCreate(url, UriKind.Absolute, out Uri uri) || uri.Scheme != Uri.UriSchemeHttps)
             {
                 Logs.Log($"Refused to download plugin '{name}': URL is not a valid HTTPS address ({url}).");
@@ -349,5 +348,6 @@ namespace Qubit.Libraries.Core
                 Logs.LogError(
                 $"Error with PluginManager.LoadPlugins() at {exc.StackTrace}: {exc.Message}");
             }
-        }}
+        }
+    }
 }

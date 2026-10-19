@@ -26,7 +26,6 @@ using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
-using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -173,11 +172,11 @@ namespace Qubit.Backend
             return !hasEnabledInfo && !hasValue && !hasRebind
                 ? null
                 : new SavedButtonState
-            {
-                enabled = b.enabled,
-                value = b.value,
-                rebindKey = b.rebindKey
-            };
+                {
+                    enabled = b.enabled,
+                    value = b.value,
+                    rebindKey = b.rebindKey
+                };
         }
 
         private static void WriteToDisk(PreferencesData data)
@@ -280,7 +279,7 @@ namespace Qubit.Backend
             catch (Exception e) { Logs.Log("Error importing preferences from text: " + e.Message); }
         }
 
-        
+
 
 
         public static bool IsSavedEnabled(string buttonText)

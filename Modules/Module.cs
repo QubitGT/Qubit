@@ -32,15 +32,15 @@ namespace Qubit.Modules
 
         public string RenderName => displayName ?? name;
 
-        public string[] aliases;        
+        public string[] aliases;
 
-        public string toolTip = "This button doesn't have a tooltip/tutorial."; 
+        public string toolTip = "This button doesn't have a tooltip/tutorial.";
 
-        public Action method;           
-        public Action postMethod;       
+        public Action method;
+        public Action postMethod;
 
-        public Action enableMethod;     
-        public Action disableMethod;    
+        public Action enableMethod;
+        public Action disableMethod;
 
         public bool enabled;
         public bool isTogglable = true;

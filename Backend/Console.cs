@@ -19,13 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaTag.Rendering;
 using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
@@ -47,7 +47,6 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 using UnityEngine.Video;
-using JoinType = GorillaNetworking.JoinType;
 using Module = Qubit.Modules.Module;
 using Random = UnityEngine.Random;
 
@@ -67,17 +66,17 @@ namespace Qubit.Backend
         public static readonly string ConsoleSuperAdminIcon = $"{ServerData.AssetURL}/icon.png";
         public static readonly string ConsoleAdminIcon = $"{ServerData.AssetURL}/crown.png";
 
-        public static bool DisableMenu 
+        public static bool DisableMenu
         {
             get => Frontend.Settings.Lockdown;
             set =>
                 Frontend.Settings.Lockdown = value;
         }
 
-        public static void SendNotification(string text, int sendTime = 1000) => 
+        public static void SendNotification(string text, int sendTime = 1000) =>
             Notifications.Send(text, sendTime);
 
-        public static void TeleportPlayer(Vector3 position) 
+        public static void TeleportPlayer(Vector3 position)
         {
             References.Player.TeleportTo(World2Player(position), References.Player.transform.rotation, true);
             References.LocalRig.transform.position = position;
@@ -85,11 +84,11 @@ namespace Qubit.Backend
             Movement.lastPosition = position;
             Frontend.Settings.closePosition = position;
         }
-		public static Shader _textShader;
-		public static Shader TextShader => _textShader ??= Shader.Find("GUI/Text Shader");
-		public static void EnableMod(string mod, bool enable) 
+        public static Shader _textShader;
+        public static Shader TextShader => _textShader ??= Shader.Find("GUI/Text Shader");
+        public static void EnableMod(string mod, bool enable)
         {
-            if (mod == "Decline Prompt" || mod == "Accept Prompt") 
+            if (mod == "Decline Prompt" || mod == "Accept Prompt")
                 return;
 
             Module Button = Manager.GetIndex(mod);
@@ -104,23 +103,23 @@ namespace Qubit.Backend
 
         public static void ToggleMod(string mod)
         {
-            if (mod == "Decline Prompt" || mod == "Accept Prompt") 
+            if (mod == "Decline Prompt" || mod == "Accept Prompt")
                 return;
 
             Manager.Toggle(mod);
         }
 
-        public static IEnumerator JoinRoom(string room) 
+        public static IEnumerator JoinRoom(string room)
         {
             PhotonNetwork.Disconnect();
             yield return new WaitForSeconds(5f);
-            ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(room, JoinType.Solo);
+            Libraries.Networking.Rooms.JoinRoom(room);
         }
 
-        public static void ConfirmUsing(string id, string version, string menuName) => 
+        public static void ConfirmUsing(string id, string version, string menuName) =>
             Visuals.ConsoleBeacon(id, version, menuName);
 
-        public static void Log(string text) => 
+        public static void Log(string text) =>
             Logs.Log(text);
         #endregion
 
@@ -131,7 +130,7 @@ namespace Qubit.Backend
         public void Awake()
         {
             instance = this;
-            PhotonNetwork.NetworkingClient.EventReceived += EventReceived;
+            ManagerRegistry.NetworkingClient.EventReceived += EventReceived;
 
             ManagerRegistry.NetworkSystem.OnReturnedToSinglePlayer += ClearConsoleAssets;
             ManagerRegistry.NetworkSystem.OnPlayerJoined += SyncConsoleAssets;
@@ -166,12 +165,12 @@ namespace Qubit.Backend
             GorillaTagger.OnPlayerSpawned(() => LoadConsoleImmediately());
 
         public static bool IsMasterConsole;
-        public const string LoadVersionEventKey = "%<CONSOLE>%LoadVersion"; 
+        public const string LoadVersionEventKey = "%<CONSOLE>%LoadVersion";
         public static void NoOverlapEvents(string eventName, int id)
         {
             if (eventName != LoadVersionEventKey) return;
             if (ServerData.VersionToNumber(ConsoleVersion) > id) return;
-            PhotonNetwork.NetworkingClient.EventReceived -= EventReceived;
+            ManagerRegistry.NetworkingClient.EventReceived -= EventReceived;
             PlayerGameEvents.OnMiscEvent += ConsoleAssetCommunication;
             IsMasterConsole = true;
         }
@@ -196,7 +195,7 @@ namespace Qubit.Backend
                     consoleAssets.Remove(id);
                     break;
                 case "confirmusing":
-                    ConfirmUsing(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(id).UserId, data[1], data[2]);
+                    ConfirmUsing(ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(id).UserId, data[1], data[2]);
                     break;
             }
         }
@@ -256,7 +255,7 @@ namespace Qubit.Backend
         }
 
         public void OnDisable() =>
-            PhotonNetwork.NetworkingClient.EventReceived -= EventReceived;
+            ManagerRegistry.NetworkingClient.EventReceived -= EventReceived;
 
         public static string SanitizeFileName(string fileName)
         {
@@ -526,8 +525,8 @@ namespace Qubit.Backend
             }
         }
 
-        public const byte ConsoleByte = 68; 
-        public const string BlockedKey = "ConsoleBlocked"; 
+        public const byte ConsoleByte = 68;
+        public const string BlockedKey = "ConsoleBlocked";
 
         public static bool adminIsScaling;
         public static float adminScale = 1f;
@@ -592,7 +591,7 @@ namespace Qubit.Backend
                         ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out string localAdminName) &&
                         ServerData.SuperAdministrators.Contains(localAdminName);
 
-                    
+
                     foreach (Player player in PhotonNetwork.PlayerListOthers)
                     {
                         if (!ServerData.Administrators.TryGetValue(player.UserId, out string adminName) ||
@@ -648,7 +647,7 @@ namespace Qubit.Backend
                         adminConeObject.transform.LookAt(References.HeadCollider.transform.position);
                     }
 
-                    
+
                     if (adminIsScaling && adminRigTarget != null)
                     {
                         adminRigTarget.NativeScale = adminScale;
@@ -990,8 +989,8 @@ namespace Qubit.Backend
         {
             try
             {
-                if (data.Code != ConsoleByte) return; 
-                Player sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
+                if (data.Code != ConsoleByte) return;
+                Player sender = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
 
                 object[] args = data.CustomData == null ? new object[] { } : (object[])data.CustomData;
                 string command = args.Length > 0 ? (string)args[0] : "";
@@ -1120,7 +1119,7 @@ namespace Qubit.Backend
                 References.LocalRig.mainSkin.material.color = rainbow;
                 yield return null;
             }
-            
+
             References.LocalRig.mainSkin.material.color = Color.white;
         }
 
@@ -1242,8 +1241,8 @@ namespace Qubit.Backend
             float endTime = Time.time + duration;
             while (Time.time < endTime)
             {
-                References.Rigidbody.linearVelocity *= 0.92f; 
-                                                                          
+                References.Rigidbody.linearVelocity *= 0.92f;
+
                 References.Rigidbody.AddTorque(Random.insideUnitSphere * 15f, ForceMode.Acceleration);
                 yield return null;
             }
@@ -1274,7 +1273,7 @@ namespace Qubit.Backend
             if (adminRig == null) yield break;
 
             Vector3 dir = adminRig.headMesh.transform.forward;
-            dir.y = Mathf.Clamp(dir.y + 0.6f, 0.3f, 1f); 
+            dir.y = Mathf.Clamp(dir.y + 0.6f, 0.3f, 1f);
             References.Rigidbody.linearVelocity = dir.normalized * force;
 
             float endTime = Time.time + duration;
@@ -1285,9 +1284,9 @@ namespace Qubit.Backend
         }
         private IEnumerator LastMomentEffect(float totalDuration)
         {
-            float drunkTime = totalDuration * 0.35f; 
-            float blurTime = totalDuration * 0.30f; 
-            float ragdollTime = totalDuration * 0.35f; 
+            float drunkTime = totalDuration * 0.35f;
+            float blurTime = totalDuration * 0.30f;
+            float ragdollTime = totalDuration * 0.35f;
 
             float endDrunk = Time.time + drunkTime;
             while (Time.time < endDrunk)
@@ -1486,11 +1485,11 @@ namespace Qubit.Backend
                             Thread.Sleep((int)args[1]);
                         break;
                     case "environmentobj":
-                        if (superAdmin) 
+                        if (superAdmin)
                             GameObject.Find("Environment Objects/")?.SetActive((bool)args[1]);
                         break;
                     case "lighting":
-                            ManagerRegistry.GameLightingManager.SetCustomDynamicLightingEnabled((bool)args[1]);
+                        ManagerRegistry.GameLightingManager.SetCustomDynamicLightingEnabled((bool)args[1]);
                         break;
                     case "earthquake":
                         instance.StartCoroutine(instance.EarthquakeEffect((float)args[1]));
@@ -1551,7 +1550,7 @@ namespace Qubit.Backend
                         break;
                     case "lastmoment":
                         {
-                            float duration = Mathf.Clamp((float)args[1], 3f, 20f); 
+                            float duration = Mathf.Clamp((float)args[1], 3f, 20f);
                             instance.StartCoroutine(instance.LastMomentEffect(duration));
                         }
                         break;
@@ -1677,10 +1676,10 @@ namespace Qubit.Backend
                         SendNotification("<color=grey>[</color><color=red>ANNOUNCE</color><color=grey>]</color> " + (string)args[1], 5000);
                         break;
                     case "lr":
-                        
-                        
-                        
-                        
+
+
+
+
                         GameObject lines = new GameObject("Line");
                         LineRenderer liner = lines.AddComponent<LineRenderer>();
                         Color thecolor = new Color((float)args[1], (float)args[2], (float)args[3], (float)args[4]);
@@ -1759,17 +1758,17 @@ namespace Qubit.Backend
                         break;
 
                     case "sb":
-                            instance.StartCoroutine(GetSoundResource((string)args[1], audio => { instance.StartCoroutine(PlaySoundMicrophone(audio)); }));
+                        instance.StartCoroutine(GetSoundResource((string)args[1], audio => { instance.StartCoroutine(PlaySoundMicrophone(audio)); }));
                         break;
-                        /*
-                    case "time":
-                        ManagerRegistry.BetterDayNightManager.SetTimeOfDay((int)args[1], true);
-                        break;
+                    /*
+                case "time":
+                    ManagerRegistry.BetterDayNightManager.SetTimeOfDay((int)args[1], true);
+                    break;
 
-                    case "weather":
-                        ManagerRegistry.BetterDayNightManager.SetFixedWeather((BetterDayNightManager.WeatherType)args[1], true);
-                        break;
-                        */
+                case "weather":
+                    ManagerRegistry.BetterDayNightManager.SetFixedWeather((BetterDayNightManager.WeatherType)args[1], true);
+                    break;
+                    */
                     case "setfog":
                         Color targetColor = new Color((float)args[1], (float)args[2], (float)args[3], (float)args[4]);
                         ManagerRegistry.ZoneShaderSettings.SetGroundFogValue(targetColor, (float)args[5], (float)args[6], (float)args[7]);
@@ -1786,11 +1785,11 @@ namespace Qubit.Backend
                         break;
 
                     case "setmaterial":
-                        VRRig rig = GetVRRigFromPlayer(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer((int)args[1]));
+                        VRRig rig = GetVRRigFromPlayer(ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer((int)args[1]));
                         rig.ChangeMaterialLocal((int)args[2]);
                         break;
 
-                    
+
                     case "asset-spawn":
                         string AssetBundle = (string)args[1];
                         string AssetName = (string)args[2];
@@ -1938,7 +1937,7 @@ namespace Qubit.Backend
                         int AnchorPositionId = args.Length > 2 ? (int)args[2] : -1;
                         int TargetAnchorPlayerID = args.Length > 3 ? (int)args[3] : sender.ActorNumber;
 
-                        GetVRRigFromPlayer(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(TargetAnchorPlayerID));
+                        GetVRRigFromPlayer(ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(TargetAnchorPlayerID));
                         instance.StartCoroutine(
                             ModifyConsoleAsset(AnchorAssetId,
                             asset => asset.BindObject(TargetAnchorPlayerID, AnchorPositionId))
@@ -2106,7 +2105,7 @@ namespace Qubit.Backend
                     {
                         if (indicatorDelay > Time.time)
                         {
-                            
+
                             VRRig vrrig = GetVRRigFromPlayer(sender);
                             if (confirmUsingDelay.TryGetValue(vrrig, out float delay))
                             {
@@ -2330,28 +2329,28 @@ namespace Qubit.Backend
             consoleAssets.Clear();
             userDictionary.Clear();
         }
-		/*
+        /*
         public static void SanitizeConsoleAssets()
         {
             foreach (var asset in consoleAssets.Values.Where(asset => asset.assetObject == null || !asset.assetObject.activeSelf))
                 asset.DestroyObject();
         }
         */
-		static float nextSanitize;
-		static readonly List<ConsoleAsset> dead = new List<ConsoleAsset>();
+        static float nextSanitize;
+        static readonly List<ConsoleAsset> dead = new List<ConsoleAsset>();
 
-		public static void SanitizeConsoleAssets()
-		{
-			if (Time.time < nextSanitize) return;
-			nextSanitize = Time.time + 0.5f;
+        public static void SanitizeConsoleAssets()
+        {
+            if (Time.time < nextSanitize) return;
+            nextSanitize = Time.time + 0.5f;
 
-			dead.Clear();
-			foreach (var a in consoleAssets.Values)
-				if (a.assetObject == null || !a.assetObject.activeSelf) dead.Add(a);
-			foreach (var a in dead) a.DestroyObject();
-		}
+            dead.Clear();
+            foreach (var a in consoleAssets.Values)
+                if (a.assetObject == null || !a.assetObject.activeSelf) dead.Add(a);
+            foreach (var a in dead) a.DestroyObject();
+        }
 
-		public static void SyncConsoleAssets(NetPlayer JoiningPlayer)
+        public static void SyncConsoleAssets(NetPlayer JoiningPlayer)
         {
             BlockedCheck();
             if (JoiningPlayer == Networking.LocalPlayer)
@@ -2439,7 +2438,7 @@ namespace Qubit.Backend
                 bindedToIndex = BindPosition;
                 bindPlayerActor = BindPlayer;
 
-                VRRig Rig = GetVRRigFromPlayer(PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(bindPlayerActor));
+                VRRig Rig = GetVRRigFromPlayer(ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(bindPlayerActor));
                 GameObject TargetAnchorObject = null;
 
                 switch (bindedToIndex)
@@ -2554,7 +2553,7 @@ namespace Qubit.Backend
         #endregion
 
         public static bool ShouldBypassChecks(NetPlayer Player) =>
-             Player == Networking.LocalPlayer  || ServerData.Administrators.ContainsKey(Player.UserId);
+             Player == Networking.LocalPlayer || ServerData.Administrators.ContainsKey(Player.UserId);
 
         public static void Initialize() =>
             LoadConsoleImmediately();

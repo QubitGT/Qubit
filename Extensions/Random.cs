@@ -25,7 +25,7 @@ namespace Qubit.Extensions
 {
     public class Random
     {
-        
+
 
 
 
@@ -35,7 +35,7 @@ namespace Qubit.Extensions
                         UnityEngine.Random.Range(-range, range),
                         UnityEngine.Random.Range(-range, range));
 
-        
+
 
 
 
@@ -45,7 +45,7 @@ namespace Qubit.Extensions
                         UnityEngine.Random.Range(0f, range),
                         UnityEngine.Random.Range(0f, range));
 
-        
+
 
 
 
@@ -57,7 +57,7 @@ namespace Qubit.Extensions
                         (byte)UnityEngine.Random.Range(0, range),
                         alpha);
 
-        
+
 
 
 

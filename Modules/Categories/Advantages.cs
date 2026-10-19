@@ -28,21 +28,20 @@ using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Tagging;
-using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Qubit.Core.Security;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Core;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameModes;
-using static Qubit.Utilities.GameObj;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
@@ -211,14 +210,17 @@ namespace Qubit.Modules.Categories
                 }
                 else
                     Notifications.SendFormat("red", "ERROR", "You are not master client.");
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         TagReports.invinciblePlayers.Remove(lockTarget.GetPlayer());
                     }
-                } });
+                }
+            });
         }
         public static void ApplyTagAuraRange(int index) { tagAuraIndex = index; tagAuraDistance = TagAuraRangeDistances[index]; }
         public static void ApplyTagReachDistance(int index) { tagRangeIndex = index; tagReachDistance = TagReachDistances[index]; }
@@ -354,14 +356,17 @@ namespace Qubit.Modules.Categories
                         }
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
         public static void ReportTag(VRRig rig)
         {
@@ -727,23 +732,23 @@ namespace Qubit.Modules.Categories
                 if (!Networking.IsMasterClient)
                     Notifications.SendFormat("red", "ERROR", "You are not master client.");
                 else
-                    GameModes.SetPaintbrawlHealth(owner, 0);
+                    SetPaintbrawlHealth(owner, 0);
             });
         }
 
         public static void PaintbrawlKillSelf()
         {
-            GameModes.KillPaintbrawlPlayer(Networking.LocalPlayer);
+            KillPaintbrawlPlayer(Networking.LocalPlayer);
         }
 
         public static void PaintbrawlKillAll()
         {
             if (!Networking.IsMasterClient)
-                GameModes.KillPaintbrawlPlayer(GetRandomPlayer(false));
+                KillPaintbrawlPlayer(GetRandomPlayer(false));
             else
             {
                 foreach (Player player in PhotonNetwork.PlayerList)
-                    GameModes.SetPaintbrawlHealth(player.ActorNumber, 0);
+                    SetPaintbrawlHealth(player.ActorNumber, 0);
             }
         }
 
@@ -770,8 +775,8 @@ namespace Qubit.Modules.Categories
                     ToRig = (rig.transform.position - head.position).normalized,
                     Distance = Vector3.Distance(head.position, rig.transform.position)
                 })
-                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig)) 
-                .ThenBy(x => x.Distance) 
+                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig))
+                .ThenBy(x => x.Distance)
                 .Select(x => x.Rig)
                 .FirstOrDefault();
 

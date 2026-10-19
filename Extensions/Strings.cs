@@ -53,18 +53,6 @@ namespace Qubit.Extensions
         public static string ToTitleCase(this string text) =>
             CultureInfo.CurrentCulture.TextInfo.ToTitleCase(text.ToLower());
 
-        
-
-
-
-
-
-
-
-
-
-
-
         public static string FollowMenuSettings(string input, bool translateText = true, bool reloadOnTranslate = false)
         {
             Action<string> onTranslate = null;
@@ -148,11 +136,6 @@ namespace Qubit.Extensions
             return sb.ToString();
         }
 
-        
-
-
-
-
         public static string GetSHA256(string input)
         {
             using SHA256 sha256 = SHA256.Create();
@@ -165,18 +148,8 @@ namespace Qubit.Extensions
             return stringBuilder.ToString();
         }
 
-        
-
-
-
-
         public static string FormatTag(this string tag, string color) =>
             Bracket(color, tag);
-
-        
-
-
-
 
         public static string Bracket(string color, string text) =>
             $"<color=grey>[</color><color={color}>{text}</color><color=grey>]</color>";

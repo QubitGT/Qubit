@@ -18,9 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-using System;
 
-using Qubit.Utilities;
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -112,7 +111,7 @@ namespace Qubit.Frontend
                 }
                 else
                 {
-                    media.texture = Qubit.Utilities.Assets.LoadTextureFromURL(url, filename);
+                    media.texture = Libraries.Core.Assets.LoadTextureFromURL(url, filename);
                     if (media.texture != null)
                     {
                         float ratio = (float)media.texture.width / media.texture.height;

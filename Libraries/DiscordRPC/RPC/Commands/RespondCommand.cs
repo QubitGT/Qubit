@@ -5,13 +5,13 @@ namespace Qubit.Libraries.DiscordRPC.RPC.Commands
 {
     internal class RespondCommand : ICommand
     {
-        
+
 
 
         [JsonProperty("user_id")]
         public string UserID { get; set; }
 
-        
+
 
 
         [JsonIgnore]

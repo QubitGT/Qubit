@@ -19,13 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Libraries.Audio;
 using MonoMod.Utils;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Frontend;
+using Qubit.Libraries.Audio;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
@@ -48,7 +48,7 @@ namespace Qubit.Backend
     {
         #region Configuration
         public static readonly bool ServerDataEnabled = true;
-        public static bool DisableTelemetry = false; 
+        public static bool DisableTelemetry = false;
 
         public const string ServerEndpoint = "https://api.qubit.mom";
         public static readonly string ServerDataEndpoint = $"{ServerEndpoint}/serverdata";
@@ -58,13 +58,13 @@ namespace Qubit.Backend
 
         public static readonly Dictionary<string, string> LocalAdmins = new Dictionary<string, string>()
         {
-            
+
         };
 
-        public static void SetupAdminPanel(string playername) 
+        public static void SetupAdminPanel(string playername)
         {
             if (Frontend.Settings.dynamicSounds)
-                Utilities.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/admin.ogg", "Audio/Menu/admin.ogg", clip => clip.Play(Frontend.Settings.buttonClickVolume / 10f));
+                Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/admin.ogg", "Audio/Menu/admin.ogg", clip => clip.Play(Frontend.Settings.buttonClickVolume / 10f));
 
             List<Module> buttons = Manager.modules["Main"].ToList();
             buttons.Add(new Module { name = "Admin Mods", method = () => Manager.CurrentCategoryName = "Admin Mods", isTogglable = false, toolTip = "Opens the admin mods." });
@@ -102,7 +102,7 @@ namespace Qubit.Backend
 
             if (!ServerDataEnabled)
             {
-                enabled = false; 
+                enabled = false;
                 return;
             }
 
@@ -223,10 +223,7 @@ namespace Qubit.Backend
         public static int VersionToNumber(string version)
         {
             string[] parts = version.Split('.');
-            if (parts.Length != 3)
-                return -1; 
-
-            return int.Parse(parts[0]) * 100 + int.Parse(parts[1]) * 10 + int.Parse(parts[2]);
+            return parts.Length != 3 ? -1 : int.Parse(parts[0]) * 100 + int.Parse(parts[1]) * 10 + int.Parse(parts[2]);
         }
 
         public static readonly Dictionary<string, string> Administrators = new Dictionary<string, string>();
@@ -258,7 +255,7 @@ namespace Qubit.Backend
                     CustomBoards.motdTemplate = (string)data["motd"];
                 }
 
-                
+
                 string minimumVersion = (string)data["min-version"];
                 string version = (string)data["menu-version"];
                 bool shownPrompt = false;
@@ -300,7 +297,7 @@ namespace Qubit.Backend
                 string minConsoleVersion = (string)data["min-console-version"];
                 if (VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
                 {
-                    
+
                     Administrators.Clear();
 
                     JArray admins = (JArray)data["admins"];
@@ -319,7 +316,7 @@ namespace Qubit.Backend
                     foreach (var superAdmin in superAdmins)
                         SuperAdministrators.Add(superAdmin.ToString());
 
-                    
+
                     if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null && Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out var administrator))
                     {
                         GivenAdminMods = true;
@@ -333,7 +330,7 @@ namespace Qubit.Backend
                 foreach (var owner in owners)
                     Owners.Add(owner.ToString());
 
-                
+
                 if (Patreon.instance != null)
                 {
                     Patreon.instance.PatreonMembers.Clear();
@@ -363,7 +360,7 @@ namespace Qubit.Backend
                     }
                 }
 
-                
+
                 CurrentPoll = (string)data["poll"];
                 OptionA = (string)data["option-a"];
                 OptionB = (string)data["option-b"];
@@ -380,7 +377,7 @@ namespace Qubit.Backend
                     File.WriteAllText($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt", CurrentPoll);
                 }
 
-                
+
                 JArray detectedMods = (JArray)data["detected-mods"];
                 foreach (var detectedMod in detectedMods)
                 {
@@ -405,7 +402,7 @@ namespace Qubit.Backend
                     DetectedModsLabelled.Add(detectedModName);
                 }
 
-                
+
                 JObject aprilFools = (JObject)data["april_fools"];
                 foreach (var prop in aprilFools.Properties())
                 {
@@ -428,7 +425,7 @@ namespace Qubit.Backend
                                         isTogglable = false,
                                         toolTip = "Sex"
                                     });
-                                    Qubit.Utilities.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/achievement.ogg", "Audio/Menu/achievement.ogg", clip => clip.Play(Frontend.Settings.buttonClickVolume / 10f));
+                                    Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/achievement.ogg", "Audio/Menu/achievement.ogg", clip => clip.Play(Frontend.Settings.buttonClickVolume / 10f));
                                     Notifications.SendFormat("#FFC0CB", "SEX", $"Sex mods have been enabled. Check the main page.", 10000);
                                 }
                             }

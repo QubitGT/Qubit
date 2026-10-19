@@ -2,7 +2,7 @@
 
 namespace Qubit.Libraries.DiscordRPC.Exceptions
 {
-    
+
 
 
     public class InvalidConfigurationException : Exception

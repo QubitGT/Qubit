@@ -19,7 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Manager = Qubit.Modules.Manager;
 using GorillaExtensions;
 using GorillaLocomotion.Climbing;
 using Photon.Pun;
@@ -32,6 +31,7 @@ using Qubit.Patches.Netcode;
 using System;
 using System.Linq;
 using UnityEngine;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
@@ -40,7 +40,7 @@ using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Categories.Fun;
 using static Qubit.Modules.Categories.Projectiles;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameObj;
+using Manager = Qubit.Modules.Manager;
 using Object = UnityEngine.Object;
 using Security = Qubit.Core.Security;
 
@@ -154,7 +154,7 @@ namespace Qubit.Libraries.Holdables
 
                 getOwnershipDelay = Time.time + 0.5f;
 
-                NetworkingState guardState = guard.currentState; 
+                NetworkingState guardState = guard.currentState;
                 Action failureAction = null;
                 if ((int)guardState < 3)
                     failureAction = () => guard.currentState = guardState;
@@ -307,14 +307,17 @@ namespace Qubit.Libraries.Holdables
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void BugVibrateGun()

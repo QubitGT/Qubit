@@ -19,18 +19,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Patches.Voice;
-using Qubit.Utilities;
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice.Unity;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Frontend.Classes;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
+using Qubit.Patches.Voice;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -40,9 +39,9 @@ using static Qubit.Core.Security;
 using static Qubit.Frontend.Core;
 using static Qubit.Libraries.Audio.Sounds;
 using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Core.Assets;
+using static Qubit.Libraries.Core.Files;
 using static Qubit.Modules.Manager;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.Files;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Modules.Categories
@@ -575,7 +574,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void StopAllSounds() 
+        public static void StopAllSounds()
         {
             if (soundboardAudioManager != null)
             {

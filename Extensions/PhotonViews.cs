@@ -19,13 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using System;
-using static Qubit.Libraries.Networking.Serialization;
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using Qubit.Core;
+using System;
 using System.Linq;
+using static Qubit.Libraries.Networking.Serialization;
 
 namespace Qubit.Extensions
 {
@@ -74,7 +74,7 @@ namespace Qubit.Extensions
 
                 else
                 {
-                    PhotonNetwork.NetworkingClient.LoadBalancingPeer.OpRaiseEvent(Photon.Pun.PunEvent.RPC, rpcData, options, new SendOptions
+                    ManagerRegistry.NetworkingClient.LoadBalancingPeer.OpRaiseEvent(Photon.Pun.PunEvent.RPC, rpcData, options, new SendOptions
                     {
                         Reliability = true,
                         DeliveryMode = DeliveryMode.ReliableUnsequenced,

@@ -66,7 +66,7 @@ namespace Qubit.Core
                 }
                 else
                 {
-                    PhotonNetwork.NetworkingClient.LoadBalancingPeer.OpRaiseEvent(Photon.Pun.PunEvent.RPC, rpcData, options, new SendOptions
+                    ManagerRegistry.NetworkingClient.LoadBalancingPeer.OpRaiseEvent(Photon.Pun.PunEvent.RPC, rpcData, options, new SendOptions
                     {
                         Reliability = true,
                         DeliveryMode = DeliveryMode.ReliableUnsequenced,
@@ -77,7 +77,7 @@ namespace Qubit.Core
             return false;
         }
 
-        
+
 
 
         public static void RPCProtection()
@@ -119,7 +119,7 @@ namespace Qubit.Core
             return html;
         }
 
-        
+
 
 
 

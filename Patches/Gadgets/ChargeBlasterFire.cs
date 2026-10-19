@@ -19,13 +19,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using HarmonyLib;
+using Qubit.Core;
 using Qubit.Extensions;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using static Qubit.Utilities.GameModes;
+using static Qubit.Libraries.Networking.GameModes;
 
 namespace Qubit.Patches.Gadgets
 {

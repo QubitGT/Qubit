@@ -2,22 +2,22 @@
 
 namespace Qubit.Libraries.DiscordRPC.Exceptions
 {
-    
+
 
 
     public class StringOutOfRangeException : Exception
     {
-        
+
 
 
         public int MaximumLength { get; private set; }
 
-        
+
 
 
         public int MinimumLength { get; private set; }
 
-        
+
 
 
 
@@ -29,7 +29,7 @@ namespace Qubit.Libraries.DiscordRPC.Exceptions
             MaximumLength = max;
         }
 
-        
+
 
 
 
@@ -37,7 +37,7 @@ namespace Qubit.Libraries.DiscordRPC.Exceptions
         internal StringOutOfRangeException(int minumum, int max)
             : this($"Length of string is out of range. Expected a value between {minumum} and {max}", minumum, max) { }
 
-        
+
 
 
 

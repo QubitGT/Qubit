@@ -2,23 +2,23 @@
 
 namespace Qubit.Libraries.DiscordRPC.Message
 {
-    
+
 
 
     public class ErrorMessage : IMessage
     {
-        
+
 
 
         public override MessageType Type { get { return MessageType.Error; } }
 
-        
+
 
 
         [JsonProperty("code")]
         public ErrorCode Code { get; internal set; }
 
-        
+
 
 
         [JsonProperty("message")]
@@ -26,36 +26,36 @@ namespace Qubit.Libraries.DiscordRPC.Message
 
     }
 
-    
+
 
 
     public enum ErrorCode
     {
-        
-        
+
+
         Success = 0,
 
-        
+
         PipeException = 1,
 
-        
+
         ReadCorrupt = 2,
 
-        
-        
+
+
         NotImplemented = 10,
 
-        
-        
+
+
         UnknownError = 1000,
 
-        
+
         InvalidPayload = 4000,
 
-        
+
         InvalidCommand = 4002,
 
-        
+
         InvalidEvent = 4004,
 
         /*

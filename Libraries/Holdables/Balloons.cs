@@ -23,9 +23,9 @@ using Qubit.Core;
 using Qubit.Modules.Classes;
 using System;
 using UnityEngine;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
-using static Qubit.Utilities.GameObj;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Libraries.Holdables

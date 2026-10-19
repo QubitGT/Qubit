@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using Photon.Pun;
+using Qubit.Core;
 using Qubit.Frontend.Resources;
 using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
@@ -28,10 +28,9 @@ using Qubit.Modules;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using System.Linq;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR;
 using static Qubit.Frontend.Core;
@@ -42,7 +41,7 @@ using Object = UnityEngine.Object;
 
 namespace Qubit.Frontend.Classes
 {
- public static class QubitMenuBody
+    public static class QubitMenuBody
     {
         private const float HalfDepth = .0125f;
         private static readonly Dictionary<Vector3, Mesh> meshes = new Dictionary<Vector3, Mesh>();
@@ -62,7 +61,7 @@ namespace Qubit.Frontend.Classes
                 label.gameObject.SetActive(false);
             if (disconnectIcon == null)
             {
-                var texture = Qubit.Utilities.Assets.LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.qubit-exit.png");
+                var texture = Qubit.Libraries.Core.Assets.LoadTextureFromResource($"{PluginInfo.ClientResourcePath}.qubit-exit.png");
                 disconnectIcon = Sprite.Create(texture, new Rect(17.02675f, 17.02675f, 85.9465f, 85.9465f), new Vector2(.5f, .5f), 100);
             }
             var icon = new GameObject("Exit Icon", typeof(RectTransform), typeof(Image));
@@ -98,8 +97,10 @@ namespace Qubit.Frontend.Classes
             if (material == null)
             {
                 var shader = Shader.Find("GorillaTag/UberShader") ?? Shader.Find("Universal Render Pipeline/Unlit");
-                material = new Material(shader);
-                material.color = new Color32(25, 29, 48, 255);
+                material = new Material(shader)
+                {
+                    color = new Color32(25, 29, 48, 255)
+                };
                 if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", material.color);
             }
             art.Find("Front").localPosition = new Vector3(0, 0, -HalfDepth - .0003f);
@@ -186,19 +187,19 @@ namespace Qubit.Frontend.Classes
             mesh.RecalculateBounds();
             return mesh;
         }
- public static readonly Quaternion QubitFaceRotation = Quaternion.Euler(180f, 90f, 90f);
+        public static readonly Quaternion QubitFaceRotation = Quaternion.Euler(180f, 90f, 90f);
 
-   public static GameObject qubitPrefab;
-public static Transform qubitFront;
-       public static Canvas qubitFrontCanvas, qubitBackCanvas;
-  public static TMP_Text qubitClock, qubitDate, qubitStats, qubitSearch;
-                  public static float qubitStatsTime;
+        public static GameObject qubitPrefab;
+        public static Transform qubitFront;
+        public static Canvas qubitFrontCanvas, qubitBackCanvas;
+        public static TMP_Text qubitClock, qubitDate, qubitStats, qubitSearch;
+        public static float qubitStatsTime;
 
         public static readonly List<(string Action, RectTransform Row)> qubitJoystickTargets = new List<(string, RectTransform)>();
         public static RectTransform qubitJoystickMarker;
         public static bool joystickSelectHeld;
- 
-            public static bool UseQubit => !Legacy.Enabled && !clickGUI && CurrentPrompt == null;
+
+        public static bool UseQubit => !Legacy.Enabled && !clickGUI && CurrentPrompt == null;
         public const int QubitMaxRows = 8;
         public static int QubitRowCount => Mathf.Clamp(_pageSize, 4, QubitMaxRows);
         public static int QubitPageCapacity => QubitRowCount - (isSearching ? 1 : 0);
@@ -208,130 +209,130 @@ public static Transform qubitFront;
         };
         public static string QubitCategoryLabel(Module info)
         {
-            if (info.name == "Visual Mods") return "Visuals";
-            return (info.RenderName).Replace(" Mods", "");
+            return info.name == "Visual Mods" ? "Visuals" : (info.RenderName).Replace(" Mods", "");
         }
-            public static GameObject CreateMenu()
+        public static GameObject CreateMenu()
 
-   {
-qubitFront = null;
-        qubitJoystickTargets.Clear();
-        qubitJoystickMarker = null;
-       qubitClock = qubitDate = qubitStats = qubitSearch = null;
-  if (!UseQubit) return Legacy.CreateMenu();
-                  try
-    {
- if (qubitPrefab == null) qubitPrefab = QubitAssets.Load<GameObject>("QubitMenu");
-    menu = new GameObject("Qubit");
- menu.transform.localScale = new Vector3(.1f, .3f, .3825f);
-            menuBackground = new GameObject("Menu Background Anchor");
-   menuBackground.transform.SetParent(menu.transform, false);
-menuBackground.transform.localPosition = new Vector3(.5f, 0, 0);
-       var art = Object.Instantiate(qubitPrefab, menu.transform, false);
-  art.name = "Qubit Artwork";
-                  foreach (Canvas assetCanvas in art.GetComponentsInChildren<Canvas>(true))
-    {
- assetCanvas.renderMode = RenderMode.WorldSpace;
-            assetCanvas.worldCamera = null;
-   assetCanvas.targetDisplay = 0;
-assetCanvas.enabled = true;
+        {
+            qubitFront = null;
+            qubitJoystickTargets.Clear();
+            qubitJoystickMarker = null;
+            qubitClock = qubitDate = qubitStats = qubitSearch = null;
+            if (!UseQubit) return Legacy.CreateMenu();
+            try
+            {
+                if (qubitPrefab == null) qubitPrefab = QubitAssets.Load<GameObject>("QubitMenu");
+                menu = new GameObject("Qubit");
+                menu.transform.localScale = new Vector3(.1f, .3f, .3825f);
+                menuBackground = new GameObject("Menu Background Anchor");
+                menuBackground.transform.SetParent(menu.transform, false);
+                menuBackground.transform.localPosition = new Vector3(.5f, 0, 0);
+                var art = Object.Instantiate(qubitPrefab, menu.transform, false);
+                art.name = "Qubit Artwork";
+                foreach (Canvas assetCanvas in art.GetComponentsInChildren<Canvas>(true))
+                {
+                    assetCanvas.renderMode = RenderMode.WorldSpace;
+                    assetCanvas.worldCamera = null;
+                    assetCanvas.targetDisplay = 0;
+                    assetCanvas.enabled = true;
 
-       }
-  foreach (Transform child in art.GetComponentsInChildren<Transform>(true))
-                  child.gameObject.layer = 0;
-    art.transform.localPosition = new Vector3(.56f, 0, 0);
- art.transform.localRotation = QubitFaceRotation;
-            art.transform.localScale = new Vector3(.6f / .3f, .6f / .3825f, .6f / .1f);
-  QubitMenuBody.Attach(art.transform);
-   qubitFront = art.transform.Find("Front");
-if (qubitFront == null || art.transform.Find("Back") == null)
-       throw new InvalidOperationException("Both Qubit faces are required.");
-        QubitMenuBody.LayoutRows(qubitFront, QubitRowCount);
-        LayoutHeader(qubitFront);
-        LayoutPageButtons(qubitFront);
-  qubitFrontCanvas = qubitFront.GetComponent<Canvas>();
-                  qubitBackCanvas = art.transform.Find("Back").GetComponent<Canvas>();
-    foreach (Graphic graphic in art.GetComponentsInChildren<Graphic>(true))
- if (graphic is Image) graphic.material = null;
-       Fonts.Apply(art);
-            canvasObj = qubitFront.gameObject;
-   title = null; fpsCount = null; keyboardInputObject = null;
-qubitClock = qubitFront.Find("Clock").GetComponent<TMP_Text>();
-       qubitDate = qubitFront.Find("Date").GetComponent<TMP_Text>();
+                }
+                foreach (Transform child in art.GetComponentsInChildren<Transform>(true))
+                    child.gameObject.layer = 0;
+                art.transform.localPosition = new Vector3(.56f, 0, 0);
+                art.transform.localRotation = QubitFaceRotation;
+                art.transform.localScale = new Vector3(.6f / .3f, .6f / .3825f, .6f / .1f);
+                QubitMenuBody.Attach(art.transform);
+                qubitFront = art.transform.Find("Front");
+                if (qubitFront == null || art.transform.Find("Back") == null)
+                    throw new InvalidOperationException("Both Qubit faces are required.");
+                QubitMenuBody.LayoutRows(qubitFront, QubitRowCount);
+                LayoutHeader(qubitFront);
+                LayoutPageButtons(qubitFront);
+                qubitFrontCanvas = qubitFront.GetComponent<Canvas>();
+                qubitBackCanvas = art.transform.Find("Back").GetComponent<Canvas>();
+                foreach (Graphic graphic in art.GetComponentsInChildren<Graphic>(true))
+                    if (graphic is Image) graphic.material = null;
+                Fonts.Apply(art);
+                canvasObj = qubitFront.gameObject;
+                title = null; fpsCount = null; keyboardInputObject = null;
+                qubitClock = qubitFront.Find("Clock").GetComponent<TMP_Text>();
+                qubitDate = qubitFront.Find("Date").GetComponent<TMP_Text>();
 
-  qubitStats = qubitFront.Find("Stats").GetComponent<TMP_Text>();
-if (CurrentPrompt != null) RenderQubitPrompt();
-        else {
-BindControl("Home", "Global Return", !disableReturnButton);
-       BindControl("Disconnect", "Disconnect", !disableDisconnectButton);
+                qubitStats = qubitFront.Find("Stats").GetComponent<TMP_Text>();
+                if (CurrentPrompt != null) RenderQubitPrompt();
+                else
+                {
+                    BindControl("Home", "Global Return", !disableReturnButton);
+                    BindControl("Disconnect", "Disconnect", !disableDisconnectButton);
 
 
-                  BindControl("Search", "Search", !disableSearchButton);
-    BindControl("Next", "NextPage", !disablePageButtons);
- BindControl("Previous", "PreviousPage", !disablePageButtons);
-            var buttons = GetModules();
-   int capacity = QubitPageCapacity;
-pageNumber = Mathf.Clamp(pageNumber, 0, Math.Max(0, (buttons.Length - 1) / capacity));
-       pageOffset = Mathf.Clamp(pageOffset, 0, Math.Max(0, buttons.Length - capacity));
-  var visible = buttons.Skip(pageScrolling && !joystickMenu ? pageOffset : pageNumber * capacity).Take(capacity).ToArray();
- joystickSelectedButton = "";
-            for (int i = 0; i < QubitRowCount; i++)
-   {
-var row = (RectTransform)qubitFront.Find("Row" + i);
-       var label = row.Find("Label").GetComponent<TMP_Text>();
-  label.enableAutoSizing = true; label.fontSizeMin = 12; label.fontSizeMax = 23;
-                  label.textWrappingMode = TextWrappingModes.Normal;
+                    BindControl("Search", "Search", !disableSearchButton);
+                    BindControl("Next", "NextPage", !disablePageButtons);
+                    BindControl("Previous", "PreviousPage", !disablePageButtons);
+                    var buttons = GetModules();
+                    int capacity = QubitPageCapacity;
+                    pageNumber = Mathf.Clamp(pageNumber, 0, Math.Max(0, (buttons.Length - 1) / capacity));
+                    pageOffset = Mathf.Clamp(pageOffset, 0, Math.Max(0, buttons.Length - capacity));
+                    var visible = buttons.Skip(pageScrolling && !joystickMenu ? pageOffset : pageNumber * capacity).Take(capacity).ToArray();
+                    joystickSelectedButton = "";
+                    for (int i = 0; i < QubitRowCount; i++)
+                    {
+                        var row = (RectTransform)qubitFront.Find("Row" + i);
+                        var label = row.Find("Label").GetComponent<TMP_Text>();
+                        label.enableAutoSizing = true; label.fontSizeMin = 12; label.fontSizeMax = 23;
+                        label.textWrappingMode = TextWrappingModes.Normal;
 
-    if (isSearching && i == 0) { qubitSearch = label; row.Find("Indicator").gameObject.SetActive(false); continue; }
- int index = i - (isSearching ? 1 : 0);
-            if (index >= visible.Length) { row.gameObject.SetActive(false); continue; }
-   var info = visible[index];
-label.text = Manager.CurrentCategoryName == "Main" ? QubitCategoryLabel(info) : info.RenderName;
-       label.color = QubitDetails.ButtonTextColor;
-       row.GetComponent<Image>().color = info.enabled ? QubitDetails.EnabledButtonColor : Color.white;
-   if (!info.label)
-{
-       qubitJoystickTargets.Add((info.name, row));
-       if (info.incremental && incrementalButtons)
-  {
-                  AddHitbox(row, info.name, -1, 0, 70);
-    AddHitbox(row, info.name, 1, row.rect.width - 70, 70);
-    AddHitbox(row, info.name, 0, 70, row.rect.width - 140, true);
+                        if (isSearching && i == 0) { qubitSearch = label; row.Find("Indicator").gameObject.SetActive(false); continue; }
+                        int index = i - (isSearching ? 1 : 0);
+                        if (index >= visible.Length) { row.gameObject.SetActive(false); continue; }
+                        var info = visible[index];
+                        label.text = Manager.CurrentCategoryName == "Main" ? QubitCategoryLabel(info) : info.RenderName;
+                        label.color = QubitDetails.ButtonTextColor;
+                        row.GetComponent<Image>().color = info.enabled ? QubitDetails.EnabledButtonColor : Color.white;
+                        if (!info.label)
+                        {
+                            qubitJoystickTargets.Add((info.name, row));
+                            if (info.incremental && incrementalButtons)
+                            {
+                                AddHitbox(row, info.name, -1, 0, 70);
+                                AddHitbox(row, info.name, 1, row.rect.width - 70, 70);
+                                AddHitbox(row, info.name, 0, 70, row.rect.width - 140, true);
 
- label.text = "−   " + label.text + "   +";
-            }
-   else AddHitbox(row, info.name);
-}
-       }
-        int totalPages = Math.Max(1, (buttons.Length + capacity - 1) / capacity);
+                                label.text = "−   " + label.text + "   +";
+                            }
+                            else AddHitbox(row, info.name);
+                        }
+                    }
+                    int totalPages = Math.Max(1, (buttons.Length + capacity - 1) / capacity);
                     qubitFront.Find("Page").gameObject.SetActive(false);
                     var emptyLabel = qubitFront.Find("Empty").GetComponent<TMP_Text>();
-        emptyLabel.gameObject.SetActive(buttons.Length == 0);
-        emptyLabel.text = isSearching ? "No results\nTry a different search." : "No mods to show";
+                    emptyLabel.gameObject.SetActive(buttons.Length == 0);
+                    emptyLabel.text = isSearching ? "No results\nTry a different search." : "No mods to show";
                     var categoryLabel = qubitFront.Find("Category");
                     categoryLabel.GetComponent<TMP_Text>().text = "";
                     categoryLabel.gameObject.SetActive(false);
                 }
-                  QubitDetails.Attach(art.transform, qubitFront);
-                  if (CurrentPrompt == null && joystickMenuSearching && !disableSearchButton)
-                      qubitJoystickTargets.Add(("Search", (RectTransform)qubitFront.Find("Search")));
-                  UpdateJoystickSelection();
-    menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? References.Player.scale * menuScale : menuScale;
- qubitStatsTime = 0;
-   RecenterMenu();
-            UpdateDisplay();
-return menu;
-       }
-  catch (Exception error)
-                  {
-    Logs.LogError("Qubit menu could not load; using the original menu. " + error);
- if (menu != null) { menu.SetActive(false); Object.Destroy(menu); menu = null; }
+                QubitDetails.Attach(art.transform, qubitFront);
+                if (CurrentPrompt == null && joystickMenuSearching && !disableSearchButton)
+                    qubitJoystickTargets.Add(("Search", (RectTransform)qubitFront.Find("Search")));
+                UpdateJoystickSelection();
+                menu.transform.localScale *= scaleWithPlayer && XRSettings.isDeviceActive ? References.Player.scale * menuScale : menuScale;
+                qubitStatsTime = 0;
+                RecenterMenu();
+                UpdateDisplay();
+                return menu;
+            }
+            catch (Exception error)
+            {
+                Logs.LogError("Qubit menu could not load; using the original menu. " + error);
+                if (menu != null) { menu.SetActive(false); Object.Destroy(menu); menu = null; }
 
-            Legacy.Enabled = true;
-   qubitFront = null;
-return Legacy.CreateMenu();
-       }
-  }
+                Legacy.Enabled = true;
+                qubitFront = null;
+                return Legacy.CreateMenu();
+            }
+        }
         public static void RenderQubitPrompt()
         {
             for (int i = 0; i < QubitMaxRows; i++) qubitFront.Find("Row" + i).gameObject.SetActive(false);
@@ -352,31 +353,31 @@ return Legacy.CreateMenu();
             joystickButtonSelected = Mathf.Clamp(joystickButtonSelected, 0, qubitJoystickTargets.Count - 1);
         }
 
-                  public static void BindControl(string path, string action, bool visible)
-    {
- var rect = (RectTransform)qubitFront.Find(path);
+        public static void BindControl(string path, string action, bool visible)
+        {
+            var rect = (RectTransform)qubitFront.Find(path);
             rect.gameObject.SetActive(visible || path == "Home");
-   if (visible) AddHitbox(rect, action);
-}
-       public static void AddHitbox(RectTransform rect, string action, int increment = 0, float x = 0, float width = -1, bool inspectOnly = false)
-  {
-                  var hit = new GameObject("Hitbox " + action);
-    hit.transform.SetParent(rect, false);
- hit.layer = !UnityInput.GetKey(Settings.KeyboardBind) && !isKeyboardPc ? 2 : 0;
+            if (visible) AddHitbox(rect, action);
+        }
+        public static void AddHitbox(RectTransform rect, string action, int increment = 0, float x = 0, float width = -1, bool inspectOnly = false)
+        {
+            var hit = new GameObject("Hitbox " + action);
+            hit.transform.SetParent(rect, false);
+            hit.layer = !UnityInput.GetKey(Settings.KeyboardBind) && !isKeyboardPc ? 2 : 0;
             var box = hit.AddComponent<BoxCollider>();
 
-   float w = width < 0 ? rect.rect.width : width;
-box.center = new Vector3(x + w * .5f, -rect.rect.height * .5f, -5);
-       box.size = new Vector3(w, rect.rect.height, 8);
-  box.isTrigger = true;
-                  var handler = hit.AddComponent<ButtonCollider>();
-    handler.qubitRoot = menu;
- handler.qubitFront = qubitFront;
+            float w = width < 0 ? rect.rect.width : width;
+            box.center = new Vector3(x + w * .5f, -rect.rect.height * .5f, -5);
+            box.size = new Vector3(w, rect.rect.height, 8);
+            box.isTrigger = true;
+            var handler = hit.AddComponent<ButtonCollider>();
+            handler.qubitRoot = menu;
+            handler.qubitFront = qubitFront;
             handler.relatedText = action;
-   handler.incremental = increment != 0;
-handler.positive = increment > 0;
- if (inspectOnly) handler.qubitAction = () => { QubitDetails.Inspect(action); QubitDetails.Preview(action, true); };
-       }
+            handler.incremental = increment != 0;
+            handler.positive = increment > 0;
+            if (inspectOnly) handler.qubitAction = () => { QubitDetails.Inspect(action); QubitDetails.Preview(action, true); };
+        }
         public static void UpdateJoystickSelection()
         {
             joystickSelectedButton = "";
@@ -408,25 +409,25 @@ handler.positive = increment > 0;
             QubitDetails.ApplyButtonColors(qubitFront);
             QubitDetails.Inspect(joystickSelectedButton);
         }
-  public static void UpdateDisplay()
-                  {
-    if (qubitFront == null || menu == null) return;
- Vector3 viewer = isOnPC && TPC != null ? TPC.transform.position : References.HeadCollider.transform.position;
+        public static void UpdateDisplay()
+        {
+            if (qubitFront == null || menu == null) return;
+            Vector3 viewer = isOnPC && TPC != null ? TPC.transform.position : References.HeadCollider.transform.position;
             bool frontVisible = Vector3.Dot(viewer - qubitFront.position, -qubitFront.forward) >= 0;
-   qubitFrontCanvas.enabled = frontVisible;
+            qubitFrontCanvas.enabled = frontVisible;
 
-qubitBackCanvas.enabled = !frontVisible;
-       if (qubitSearch != null) qubitSearch.text = keyboardInput + (Time.frameCount / 45 % 2 == 0 ? "|" : " ");
-  if (Time.unscaledTime < qubitStatsTime) return;
-                  qubitStatsTime = Time.unscaledTime + .25f;
-    qubitClock.gameObject.SetActive(!Manager.GetIndex("Hide Qubit Clock").enabled);
- qubitDate.gameObject.SetActive(!Manager.GetIndex("Hide Qubit Date").enabled);
+            qubitBackCanvas.enabled = !frontVisible;
+            if (qubitSearch != null) qubitSearch.text = keyboardInput + (Time.frameCount / 45 % 2 == 0 ? "|" : " ");
+            if (Time.unscaledTime < qubitStatsTime) return;
+            qubitStatsTime = Time.unscaledTime + .25f;
+            qubitClock.gameObject.SetActive(!Manager.GetIndex("Hide Qubit Clock").enabled);
+            qubitDate.gameObject.SetActive(!Manager.GetIndex("Hide Qubit Date").enabled);
             DateTime now = DateTime.Now;
-   qubitClock.text = now.ToString("h:mm tt", CultureInfo.InvariantCulture);
-qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
-       bool latency = Manager.GetIndex("Qubit Latency").enabled;
-  qubitStats.gameObject.SetActive(latency);
-                  qubitStats.text = latency ? (PhotonNetwork.InRoom ? PhotonNetwork.GetPing().ToString() : "--") + " ms" : "";
-    }
+            qubitClock.text = now.ToString("h:mm tt", CultureInfo.InvariantCulture);
+            qubitDate.text = now.ToString("MM/dd/yyyy", CultureInfo.InvariantCulture);
+            bool latency = Manager.GetIndex("Qubit Latency").enabled;
+            qubitStats.gameObject.SetActive(latency);
+            qubitStats.text = latency ? (PhotonNetwork.InRoom ? PhotonNetwork.GetPing().ToString() : "--") + " ms" : "";
+        }
     }
 }

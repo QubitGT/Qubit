@@ -26,7 +26,7 @@ using UnityEngine;
 
 namespace Qubit.Frontend.Classes
 {
-    public static class ButtonHelper 
+    public static class ButtonHelper
     {
         public static int Wrap(int current, int min, int max, bool positive)
         {

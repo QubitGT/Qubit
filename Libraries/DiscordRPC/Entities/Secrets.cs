@@ -5,7 +5,7 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-    
+
 
 
 
@@ -14,7 +14,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
     [Serializable]
     public class Secrets
     {
-        
+
 
 
 
@@ -23,7 +23,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         [JsonIgnore]
         public string MatchSecret;
 
-        
+
 
 
 
@@ -42,7 +42,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _joinSecret;
 
-        
+
 
         [Obsolete("Property name is redundant and replaced with Join.")]
         [JsonIgnore]
@@ -52,7 +52,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             set => Join = value;
         }
 
-        
+
 
 
 
@@ -64,17 +64,17 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         public string SpectateSecret { get; set; }
         #region Statics
 
-        
+
 
 
         public static Encoding Encoding => Encoding.UTF8;
 
-        
+
 
 
         public const int SecretLength = 128;
 
-        
+
 
 
 
@@ -85,17 +85,17 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             if (length < 1 || length > SecretLength)
                 throw new ArgumentOutOfRangeException(nameof(length), "Secret length must be between 1 and 128 characters.");
 
-            
-            
+
+
             byte[] bytes = new byte[length];
             random.NextBytes(bytes);
 
-            
+
             return Encoding.GetString(bytes);
         }
 
 
-        
+
 
 
 
@@ -106,7 +106,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             if (length < 1 || length > SecretLength)
                 throw new ArgumentOutOfRangeException(nameof(length), "Secret length must be between 1 and 128 characters.");
 
-            
+
             string charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
 
             StringBuilder builder = new StringBuilder();

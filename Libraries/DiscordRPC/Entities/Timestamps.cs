@@ -3,23 +3,23 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-    
+
 
 
     [Serializable]
     public class Timestamps
     {
-        
+
         public static Timestamps Now { get { return new Timestamps(DateTime.UtcNow); } }
 
-        
+
 
 
 
 
         public static Timestamps FromTimeSpan(double seconds) { return FromTimeSpan(TimeSpan.FromSeconds(seconds)); }
 
-        
+
 
 
 
@@ -33,19 +33,19 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             };
         }
 
-        
+
 
 
         [JsonIgnore]
         public DateTime? Start { get; set; }
 
-        
+
 
 
         [JsonIgnore]
         public DateTime? End { get; set; }
 
-        
+
 
 
         public Timestamps()
@@ -54,7 +54,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             End = null;
         }
 
-        
+
 
 
 
@@ -64,7 +64,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             End = null;
         }
 
-        
+
 
 
 
@@ -75,7 +75,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             End = end;
         }
 
-        
+
 
 
         [JsonProperty("start", NullValueHandling = NullValueHandling.Ignore)]
@@ -93,7 +93,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
 
 
-        
+
 
 
 
@@ -111,7 +111,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             }
         }
 
-        
+
 
 
 
@@ -122,7 +122,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return epoch.AddMilliseconds(Convert.ToDouble(unixTime));
         }
 
-        
+
 
 
 

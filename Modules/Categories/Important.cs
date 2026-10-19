@@ -19,12 +19,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using GorillaExtensions;
-using GorillaNetworking;
 using HarmonyLib;
 using Photon.Pun;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Controls;
@@ -34,7 +33,6 @@ using Qubit.Libraries.DiscordRPC.Entities;
 using Qubit.Libraries.Interface;
 using Qubit.Patches.Events;
 using Qubit.Patches.Terms;
-using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -54,6 +52,7 @@ using UnityEngine.TextCore;
 using UnityEngine.XR;
 using UnityEngine.XR.Interaction.Toolkit;
 using Valve.Newtonsoft.Json;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Frontend.Core;
 using static Qubit.Frontend.Prompts;
 using static Qubit.Frontend.Resources.Fonts;
@@ -61,8 +60,6 @@ using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
 using TextMeshPro = TMPro.TextMeshPro;
 
@@ -78,7 +75,7 @@ namespace Qubit.Modules.Categories
             public byte size;
         }
 
-        
+
         internal enum VirtualKeyCodes : uint
         {
             NEXT_TRACK = 0xB0,
@@ -138,7 +135,7 @@ namespace Qubit.Modules.Categories
                         textureList.Add(tex);
                     }
 
-                    AddSprite("Pause", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Important/pause.png", $"Images/Mods/Important/pause.png"));
+                    AddSprite("Pause", Libraries.Core.Assets.LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Important/pause.png", $"Images/Mods/Important/pause.png"));
 
                     int maxSize = 512;
                     Texture2D spriteSheet = new Texture2D(maxSize, maxSize);
@@ -151,7 +148,7 @@ namespace Qubit.Modules.Categories
                     };
 
                     _mediaSpriteSheet.spriteInfoList = new List<TMP_Sprite>();
-                    Traverse.Create(_mediaSpriteSheet).Field("m_Version").SetValue("1.1.0"); 
+                    Traverse.Create(_mediaSpriteSheet).Field("m_Version").SetValue("1.1.0");
 
                     _mediaSpriteSheet.spriteGlyphTable.Clear();
                     for (int i = 0; i < spriteDataList.Count; i++)
@@ -229,52 +226,7 @@ namespace Qubit.Modules.Categories
                 playTime = 0f;
         }
 
-        public static IEnumerator QueueRoomCoroutine(string roomName)
-        {
-            NetworkSystemPUN instance = (NetworkSystemPUN)ManagerRegistry.NetworkSystem;
 
-            instance.ReturnToSinglePlayer();
-            yield return new WaitUntil(() => instance.netState == NetSystemState.Idle);
-            yield return new WaitForSeconds(0.5f);
-
-            
-
-            while (!instance.InRoom)
-            {
-                ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(roomName, JoinType.Solo);
-                yield return new WaitForSeconds(reconnectDelay);
-            }
-        }
-
-        public static IEnumerator JoinRandomDelay()
-        {
-            yield return new WaitForSeconds(1.5f);
-            Room.JoinRandom();
-        }
-
-        public static async Task ForceCreateRoom(string name, RoomConfig options)
-        {
-            if (Networking.InRoom)
-                await ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
-
-            await (ManagerRegistry.NetworkSystem as NetworkSystemPUN).TryCreateRoom(name, options);
-        }
-
-        public static void BroadcastRoom(string roomName, bool create, string key, string shuffler)
-        {
-            string text = NetworkSystem.ShuffleRoomName(roomName, shuffler.Substring(2, 8), true) + "|" + NetworkSystem.ShuffleRoomName("ABCDEFGHIJKLMNPQRSTUVWXYZ123456789".Substring(ManagerRegistry.NetworkSystem.currentRegionIndex, 1), shuffler[..2], true);
-
-            BroadcastMyRoomRequest broadcastMyRoomRequest = new BroadcastMyRoomRequest
-            {
-                KeyToFollow = key,
-                RoomToJoin = text,
-                Set = create
-            };
-
-            ManagerRegistry.GorillaServer.BroadcastMyRoom(broadcastMyRoomRequest, delegate { }, delegate { });
-        }
-
-        
         public static void RestartGame()
         {
             Preferences.Save();
@@ -501,7 +453,7 @@ exit";
                     Object.Destroy(mediaIcon.GetComponent<Collider>());
 
                     if (mediaIconMaterial == null)
-                        mediaIconMaterial = new Material(LoadAsset<Shader>("Chams"));
+                        mediaIconMaterial = new Material(Libraries.Core.Assets.LoadAsset<Shader>("Chams"));
 
                     mediaIcon.GetComponent<Renderer>().material = mediaIconMaterial;
                 }
@@ -848,7 +800,7 @@ exit";
             References.InputPoller.rightControllerIndexFloat += UnityInput.GetKey(Key.Equals) ? 1f : 0f;
         }
 
-        
+
         public static void DisableAprilFoolsFX()
         {
             try

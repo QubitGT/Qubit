@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using HarmonyLib;
+using Qubit.Core;
 using Qubit.Modules.Categories;
 
 namespace Qubit.Patches.Weapons

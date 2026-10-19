@@ -19,10 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Patches.Netcode;
@@ -56,7 +56,7 @@ namespace Qubit.Libraries.Networking
         public static void OnPlayerSerialize(VRRig rig) =>
             playerPing[rig] = rig.GetTruePing();
 
-        
+
 
 
 
@@ -97,7 +97,7 @@ namespace Qubit.Libraries.Networking
                 SendSerialize(view, null, timeOffset, delay);
         }
 
-        
+
 
 
 
@@ -153,13 +153,13 @@ namespace Qubit.Libraries.Networking
             objectUpdate[1] = currentLevelPrefix != 0 ? (object)currentLevelPrefix : null;
 
             if (delay <= 0f)
-                PhotonNetwork.NetworkingClient.OpRaiseEvent(reliable ? Photon.Pun.PunEvent.SendSerializeReliable : Photon.Pun.PunEvent.SendSerialize, objectUpdate, finalOptions,
+                ManagerRegistry.NetworkingClient.OpRaiseEvent(reliable ? Photon.Pun.PunEvent.SendSerializeReliable : Photon.Pun.PunEvent.SendSerialize, objectUpdate, finalOptions,
                     reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable);
             else
             {
                 objectUpdate = new List<object>(objectUpdate);
                 Coroutines.instance.StartCoroutine(SerializationDelay(() =>
-                    PhotonNetwork.NetworkingClient.OpRaiseEvent(reliable ? Photon.Pun.PunEvent.SendSerializeReliable : Photon.Pun.PunEvent.SendSerialize, objectUpdate, finalOptions,
+                    ManagerRegistry.NetworkingClient.OpRaiseEvent(reliable ? Photon.Pun.PunEvent.SendSerializeReliable : Photon.Pun.PunEvent.SendSerialize, objectUpdate, finalOptions,
                         reliable ? SendOptions.SendReliable : SendOptions.SendUnreliable), delay));
             }
 

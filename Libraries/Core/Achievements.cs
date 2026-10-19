@@ -23,7 +23,6 @@ using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
-using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,7 +31,7 @@ using Valve.Newtonsoft.Json.Linq;
 using static Qubit.Frontend.Prompts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Audio.Sounds;
-using static Qubit.Utilities.Assets;
+using static Qubit.Libraries.Core.Assets;
 
 namespace Qubit.Libraries.Core
 {

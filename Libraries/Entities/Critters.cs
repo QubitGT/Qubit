@@ -19,7 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Overpowered = Qubit.Modules.Categories.Overpowered;
 using Photon.Pun;
 using Qubit.Core;
 using Qubit.Libraries.Core;
@@ -27,13 +26,14 @@ using Qubit.Modules.Classes;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Categories.Projectiles;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
+using Overpowered = Qubit.Modules.Categories.Overpowered;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Libraries.Entities

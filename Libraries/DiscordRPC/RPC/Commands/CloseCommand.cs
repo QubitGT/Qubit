@@ -5,13 +5,13 @@ namespace Qubit.Libraries.DiscordRPC.RPC.Commands
 {
     internal class CloseCommand : ICommand
     {
-        
+
 
 
         [JsonProperty("pid")]
         public int PID { get; set; }
 
-        
+
 
 
         [JsonProperty("close_reason")]

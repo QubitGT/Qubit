@@ -19,9 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using GorillaNetworking.Store;
 using HarmonyLib;
+using Qubit.Core;
 using static Qubit.Frontend.Settings;
 
 namespace Qubit.Patches.Economics

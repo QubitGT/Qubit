@@ -26,11 +26,11 @@ using Qubit.Modules.Classes;
 using System;
 using System.Linq;
 using UnityEngine;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameObj;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Libraries.Holdables
@@ -181,11 +181,14 @@ namespace Qubit.Libraries.Holdables
                             glider.OnHover(null, null);
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void GliderBlindAll()

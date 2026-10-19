@@ -19,10 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using GorillaTagScripts.VirtualStumpCustomMaps;
+using Qubit.Core;
 using Qubit.Libraries.Core;
-using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.IO;

@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Utilities/Files.cs
+ * Qubit Menu  Libraries/Core/Files.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -25,7 +25,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace Qubit.Utilities
+namespace Qubit.Libraries.Core
 {
     public static class Files
     {

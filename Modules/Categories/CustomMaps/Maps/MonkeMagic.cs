@@ -19,10 +19,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
@@ -92,11 +92,14 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void LightningStrikeAll()
@@ -142,11 +145,14 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void ChangeMaterialAll()
@@ -185,7 +191,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
             }
         }
 
-        
+
         public static float crashDelay;
         public static void CrashPlayer(int ActorNumber)
         {
@@ -220,11 +226,14 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
         public static void CrashAura()
         {

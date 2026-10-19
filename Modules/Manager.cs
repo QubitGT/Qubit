@@ -19,24 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Patches.Building;
-using Qubit.Patches.Economics;
-using Qubit.Patches.Events;
-using Qubit.Patches.Gadgets;
-using Qubit.Patches.Interface;
-using Qubit.Patches.Locomotion;
-using Qubit.Patches.Netcode;
-using Qubit.Patches.Safety.AntiBan;
-using Qubit.Patches.Safety.AntiCheat;
-using Qubit.Patches.Safety.AntiCrash;
-using Qubit.Patches.Safety.Telemetry;
-using Qubit.Patches.Weapons;
-using Qubit.Patches.Rigs;
-using Qubit.Patches.Tagging;
-using Qubit.Patches.Terms;
-using Qubit.Patches.Voice;
-using Qubit.Patches.Safety.AntiGhost;
-using Qubit.Utilities;
 using GorillaLocomotion;
 using GorillaTagScripts.ObstacleCourse;
 using HarmonyLib;
@@ -52,11 +34,30 @@ using Qubit.Frontend.Resources;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
+using Qubit.Libraries.Entities;
+using Qubit.Libraries.Holdables;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Language;
 using Qubit.Libraries.Networking;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
+using Qubit.Patches.Building;
+using Qubit.Patches.Economics;
+using Qubit.Patches.Events;
+using Qubit.Patches.Gadgets;
+using Qubit.Patches.Interface;
+using Qubit.Patches.Locomotion;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Rigs;
+using Qubit.Patches.Safety.AntiBan;
+using Qubit.Patches.Safety.AntiCheat;
+using Qubit.Patches.Safety.AntiCrash;
+using Qubit.Patches.Safety.AntiGhost;
+using Qubit.Patches.Safety.Telemetry;
+using Qubit.Patches.Tagging;
+using Qubit.Patches.Terms;
+using Qubit.Patches.Voice;
+using Qubit.Patches.Weapons;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -66,6 +67,7 @@ using UnityEngine;
 using static Qubit.Backend.Preferences;
 using static Qubit.Core.Instance;
 using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Extensions.Strings;
@@ -82,11 +84,7 @@ using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Rooms;
 using static Qubit.Modules.Categories.Settings;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameObj;
-using Qubit.Libraries.Holdables;
-using Qubit.Libraries.Entities;
 using Console = Qubit.Backend.Console;
-using JoinType = GorillaNetworking.JoinType;
 using Random = UnityEngine.Random;
 using Room = Qubit.Modules.Categories.Room;
 using Security = Qubit.Core.Security;
@@ -94,8 +92,8 @@ using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules
 {
-    using Critters = Qubit.Libraries.Entities.Critters;
     using Cosmetics = Qubit.Libraries.Entities.Cosmetics;
+    using Critters = Qubit.Libraries.Entities.Critters;
     [HarmonyPatch(typeof(GTPlayer), nameof(GTPlayer.LateUpdate))]
     public static class Manager
     {
@@ -214,7 +212,7 @@ namespace Qubit.Modules
                 new Module { name = "Voice Commands", enableMethod = Modules.Categories.Settings.VoiceRecognitionOn, method = Modules.Categories.Settings.CheckFocus, disableMethod = Modules.Categories.Settings.VoiceRecognitionOff, toolTip = "Enable and disable mods using your voice. Activate it like how you would any other voice assistant, such as \"Jarvis, Platforms\".", legal = true},
                 new Module { name = "Chain Voice Commands", toolTip = "Makes voice commands chain together, so you don't have to repeatedly ask it to listen to you.", legal = true},
                 new Module { name = "AI Assistant", enableMethod =() => Coroutines.instance.StartCoroutine(Modules.Categories.Settings.DictationOn()), method = Modules.Categories.Settings.CheckFocus, disableMethod = Modules.Categories.Settings.DictationOff, toolTip = "A voice assistant with artificial intelligence capabilities.", legal = true},
-                
+
 
                 new Module { name = "Narrate Assistant", toolTip = "Narrates what the voice assistant says locally.", legal = true},
                 new Module { name = "Global Narrate Assistant", toolTip = "Narrates what the voice assistant says globally.", legal = true},
@@ -228,7 +226,7 @@ namespace Qubit.Modules
                 new Module { name = "Reset System Prompt", method = Modules.Categories.Settings.ResetSystemPrompt, isTogglable = false, toolTip = "Resets the system prompt for the AI Assistant.", legal = true},
 
                 new Module { name = "Player Select", method = Modules.Categories.Settings.PlayerSelect, toolTip = "Spawns a line in your hand when moving your hand away from the menu that you can select players with.", legal = true},
-                
+
 
                 new Module { name = "Annoying Mode", enableMethod =() => annoyingMode = true, disableMethod = Modules.Categories.Settings.AnnoyingModeOff, toolTip = "Turns on the April Fools 2024 settings.", legal = true},
                 new Module { name = "Lowercase Mode", enableMethod =() => lowercaseMode = true, disableMethod =() => lowercaseMode = false, toolTip = "Makes the entire menu's text lowercase.", legal = true},
@@ -485,19 +483,19 @@ namespace Qubit.Modules
 
                 new Module { name = "Room Creator", method = Room.RoomCreator, isTogglable = false, toolTip = "Create your own custom room!"},
 
-                new Module { name = "Disconnect", method =() => ManagerRegistry.NetworkSystem.ReturnToSinglePlayer(), isTogglable = false, toolTip = "Disconnects you from the the room.", legal = true}, 
+                new Module { name = "Disconnect", method =() => ManagerRegistry.NetworkSystem.ReturnToSinglePlayer(), isTogglable = false, toolTip = "Disconnects you from the the room.", legal = true},
                 new Module { name = "Reconnect", aliases = new[] { "Rejoin" }, method = Room.Reconnect, isTogglable = false, toolTip = "Reconnects you from and to the the room.", legal = true},
 
                 new Module { name = "Cancel Reconnect", method = Room.CancelReconnect, isTogglable = false, toolTip = "Cancels the reconnection loop.", legal = true},
 
-                new Module { name = "Join Last Room", method =() => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(lastRoom, JoinType.Solo), isTogglable = false, toolTip = "Joins the last room you left.", legal = true},
-                new Module { name = "Join Random", method = Room.JoinRandom, isTogglable = false, toolTip = "Joins a random public room.", legal = true},
+                new Module { name = "Join Last Room", method =() => JoinRoom(lastRoom), isTogglable = false, toolTip = "Joins the last room you left.", legal = true},
+                new Module { name = "Join Random", method = JoinRandom, isTogglable = false, toolTip = "Joins a random public room.", legal = true},
 
-                new Module { name = "Create Public", method =() => Room.CreateRoom(Room.RandomRoomName(), true), isTogglable = false, toolTip = "Creates a public room."},
-                new Module { name = "Create Private", method =() => Room.CreateRoom(Room.RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
+                new Module { name = "Create Public", method =() => CreateRoom(RandomRoomName(), true), isTogglable = false, toolTip = "Creates a public room."},
+                new Module { name = "Create Private", method =() => CreateRoom(RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
 
                 new Module { name = "Fast Disconnect", method =() => SinglePlayer.enabled = true, disableMethod =() =>  SinglePlayer.enabled = false, toolTip = "Uses the fastest method of disconnecting possible.", legal = true},
-                new Module { name = "Join Menu Room", method =() => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom($"<$Qubit_{PluginInfo.Version}>", JoinType.Solo), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Qubit</b> users.", legal = true},
+                new Module { name = "Join Menu Room", method =() => JoinRoom($"<$Qubit_{PluginInfo.Version}>"), isTogglable = false, toolTip = "Connects you to a room that is exclusive to <b>Qubit</b> users.", legal = true},
 
                 new Module { name = "Bypass Join Room Type", enableMethod =() => JoinedRoom.enabled = true, disableMethod =() => JoinedRoom.enabled = false, toolTip = "Bypasses the immediate disconnection when trying to join a room that is in another map."},
 
@@ -1199,7 +1197,7 @@ namespace Qubit.Modules
                 new Module { name = "Overstimulate All", method = Fun.OverstimulateAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Overstimulates everyone in the room."},
 
                 new Module { name = "Shutdown Headset Gun", method = Fun.ShutdownHeadsetGun, disableMethod = Fun.DisableTinnitus, toolTip = "Pretends to shut down the headset of whoever your hand desires."},
-                new Module { name = "Shutdown Headset All", enableMethod =() => Qubit.Utilities.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/shutdown.ogg", "Audio/Mods/Fun/shutdown.ogg", clip => Fun.PlayAudio(clip)), method = Fun.ShutdownHeadsetAll, disableMethod = Fun.DisableTinnitus, toolTip = "Pretends to shut down the headset of everyone in the room."},
+                new Module { name = "Shutdown Headset All", enableMethod =() => Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/shutdown.ogg", "Audio/Mods/Fun/shutdown.ogg", clip => Fun.PlayAudio(clip)), method = Fun.ShutdownHeadsetAll, disableMethod = Fun.DisableTinnitus, toolTip = "Pretends to shut down the headset of everyone in the room."},
 
                 new Module { name = "Schizophrenic Gun", method = Fun.SchizophrenicGun, toolTip = "Makes you disappear for whoever your hand desires."},
                 new Module { name = "Reverse Schizophrenic Gun", method = Fun.ReverseSchizophrenicGun, toolTip = "Makes you only appear for whoever your hand desires."},
@@ -1220,7 +1218,7 @@ namespace Qubit.Modules
                 new Module { name = "Camera FOV", postMethod = Fun.CameraFOV, disableMethod = Fun.FixCameraFOV, toolTip = "Changes the FOV of your PC camera.", legal = true},
                 new Module { name = "Spectate Gun", postMethod = Fun.SpectateGun, disableMethod = Fun.DisableFreecam, toolTip = "Lets you see through the eyes of whoever your hand desires."},
 
-                
+
 
                 new Module { name = "Nausea", aliases = new[] { "Sick", "Nautious", "Drunk" }, postMethod = Fun.Nausea, disableMethod = Fun.DisableFreecam, toolTip = "Gives you the Nausea effect from Minecraft."},
                 new Module { name = "LSD", aliases = new[] { "Drugs", "High" }, method =() => { Color rgb = Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f); Fun.HueShift(new Color(rgb.r, rgb.g, rgb.b, 0.1f)); }, disableMethod =() => Fun.HueShift(Color.clear), toolTip = "Hue shifts your game to a rainbow color.", legal = true},
@@ -1314,14 +1312,14 @@ namespace Qubit.Modules
                 new Module { name = "Get Builder Watch", method = Blocks.GiveBuilderWatch, isTogglable = false, toolTip = "Gives you the builder watch without needing to be in attic."},
                 new Module { name = "Remove Builder Watch", method = Blocks.RemoveBuilderWatch, isTogglable = false, toolTip = "Disables the builder watch."},
 
-                
 
-                
-                
-                
 
-                
-                
+
+
+
+
+
+
 
                 new Module { name = "Fast Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.5f, 0.5f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders fast."},
                 new Module { name = "Slow Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.05f, 0.05f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders slow."},
@@ -1961,21 +1959,21 @@ namespace Qubit.Modules
 
                 new Module { name = "Guardian Spaz", method = Master.GuardianSpaz, toolTip = "Spams the guardian position for everyone in the room."},
 
-                
-                
-                
 
-                
-                
-                
 
-                
-                
-                
 
-                
-                
-                
+
+
+
+
+
+
+
+
+
+
+
+
 
                 new Module { name = "Material Self", method =() => { if (!(Time.time > Master.materialDelay)) return; Master.MaterialTarget(References.LocalRig); Master.materialDelay = Time.time + 0.1f; }, toolTip = "Flashes the materials of yourself."},
                 new Module { name = "Material Gun", method = Master.MaterialGun, toolTip = "Flashes the materials of whoever your hand desires."},
@@ -2033,8 +2031,8 @@ namespace Qubit.Modules
                 new Module { name = "Empty Lava", method =() => Master.ChangeLavaState(InfectionLavaController.RisingLavaState.Drained), isTogglable = false, toolTip = "Makes the lava in the forest lava map drained."},
                 new Module { name = "Erupt Lava", method =() => Master.ChangeLavaState(InfectionLavaController.RisingLavaState.Erupting), isTogglable = false, toolTip = "Erupts the lava in the forest lava map."},
 
-                
-                
+
+
 
                 new Module { name = "Kill Self", method =() => Master.SetStateSelf(1), isTogglable = false, toolTip = "Turns you into a ghost."},
                 new Module { name = "Kill Gun", method =() => Master.SetStateGun(1), toolTip = "Turns whoever your hand desires into a ghost."},
@@ -2193,17 +2191,17 @@ namespace Qubit.Modules
                 new Module { name = "Guardian Freeze Gun", method = Overpowered.GuardianPhysicalFreezeGun, toolTip = "Freezes whoever your hand desires." },
                 new Module { name = $"Guardian Freeze All {Bracket("green", "T")}", method = Overpowered.GuardianPhysicalFreezeAll, toolTip = "Freezes everyone in the room when holding <color=green>trigger</color>." },
 
-                
-                
 
-                
-                
+
+
+
+
 
                 new Module { name = "Delay Ban Gun", method = Overpowered.DelayBanGun, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Delay bans whoever your hand desires."},
                 new Module { name = "Delay Ban All", enableMethod = Overpowered.DelayBanAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Delay bans everyone in the room."},
 
-                
-                
+
+
 
                 new Module { name = "Force Grab", method =()=> Grabbing.ForceGrab(References.LocalRig.transform.position), toolTip = "Attempts to grab the hand of anyone who presses their grips." },
                 new Module { name = "Force Grab Gun", postMethod = Grabbing.ForceGrabGun, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Forcibly grab whoever your hand desires." },
@@ -2236,27 +2234,27 @@ namespace Qubit.Modules
                 new Module { name = "Deafen Gun", method = VoiceControl.DeafenGun, toolTip = "Makes whoever your hand deseries not be able to hear anyone else."},
                 new Module { name = "Deafen All", method = VoiceControl.DeafenAll, toolTip = "Makes everyone not be able to hear anyone except you."},
 
-                
 
-                
 
-                
-                
 
-                
-                
 
-                
-                
 
-                
-                
 
-                
-                
 
-                
-                
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
                 new Module { name = "Lock Room", method =() => Overpowered.SetRoomStatus(false), isTogglable = false, toolTip = "Locks the room so no one else can join."},
                 new Module { name = "Unlock Room", method =() => Overpowered.SetRoomStatus(true), isTogglable = false, toolTip = "Unlocks the room so anyone can join."},
@@ -2639,7 +2637,7 @@ namespace Qubit.Modules
 
                 new Module { name = "Better FPS Boost", enableMethod = Experimental.BetterFPSBoost, disableMethod = Experimental.DisableBetterFPSBoost, toolTip = "Makes everything one color, boosting your FPS."},
 
-                
+
                 new Module { name = "Disorganize Menu", method = Experimental.DisorganizeMenu, isTogglable = false, toolTip = "Disorganizes the entire menu. This cannot be undone."},
             },
 
@@ -2696,7 +2694,7 @@ namespace Qubit.Modules
                 new Module { name = "Fast Kick", enableMethod =() => Overpowered.instantCreate = true, disableMethod =() => Overpowered.instantCreate = false, toolTip = "Instantly creates a room instead of checking if one already exists." },
                 new Module { name = "Kick Fix", enableMethod =() => EntityJoining.enabled = true, disableMethod =() => EntityJoining.enabled = false, toolTip = "Stops the super infection, virtual stump, and other kick mods from breaking." },
 
-                
+
             },
 
             ["Keybind Settings"] = new[]
@@ -2984,7 +2982,7 @@ namespace Qubit.Modules
         private static string _currentCategoryName = "Main";
         public static event Action OnCategoryChanged;
 
-        
+
 
 
         public static string CurrentCategoryName
@@ -3002,7 +3000,7 @@ namespace Qubit.Modules
 
         private static readonly Dictionary<string, (string Category, int Index)> cacheGetIndex = new Dictionary<string, (string Category, int Index)>();
 
-        
+
 
 
 
@@ -3048,21 +3046,21 @@ namespace Qubit.Modules
             return null;
         }
 
-        
+
 
 
 
         public static void AddCategory(string categoryName) =>
             modules.Add(categoryName, new Module[] { });
 
-        
+
 
 
 
         public static void RemoveCategory(string categoryName) =>
             modules.Remove(categoryName);
 
-        
+
 
 
 
@@ -3079,7 +3077,7 @@ namespace Qubit.Modules
             modules[category] = moduleList.ToArray();
         }
 
-        
+
 
 
 
@@ -3099,7 +3097,7 @@ namespace Qubit.Modules
             modules[category] = moduleList.ToArray();
         }
 
-        
+
 
 
 
@@ -3210,7 +3208,7 @@ namespace Qubit.Modules
             leftJoystickClick = _leftJoystickClick; rightJoystickClick = _rightJoystickClick;
         }
 
-        
+
 
 
 
@@ -3465,7 +3463,7 @@ namespace Qubit.Modules
                 ReloadMenu();
         }
 
-        
+
 
 
 
@@ -3476,7 +3474,7 @@ namespace Qubit.Modules
         public static void Toggle(Module buttonInfo, bool fromMenu = false, bool ignoreForce = false) =>
             Toggle(buttonInfo.name, fromMenu, ignoreForce);
 
-        
+
 
 
 
@@ -3687,7 +3685,7 @@ namespace Qubit.Modules
                 ReloadMenu();
         }
 
-        
+
 
 
         public static void Prefix()
@@ -3712,10 +3710,10 @@ namespace Qubit.Modules
             try
             {
                 #region Execute Mods
-                
+
                 Plugins.ExecuteUpdate();
 
-                
+
                 foreach (Module[] buttonList in Manager.modules.Values)
                 {
                     foreach (Module button in buttonList)

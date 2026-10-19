@@ -19,23 +19,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Modules;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using TMPro;
-using UnityEngine.TextCore.LowLevel;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.TextCore.LowLevel;
+using static Qubit.Libraries.Core.Assets;
 using static Qubit.Modules.Categories.Settings;
-using static Qubit.Utilities.Assets;
 
 namespace Qubit.Frontend.Resources
 {
- public static class Fonts
+    public static class Fonts
     {
         private const string Default = "Inter";
         private static readonly Dictionary<string, TMP_FontAsset> cache = new Dictionary<string, TMP_FontAsset>();
@@ -48,8 +46,12 @@ namespace Qubit.Frontend.Resources
             var shader = gameFont != null && gameFont.material != null ? gameFont.material.shader : null;
             if (shader == null || !shader.isSupported)
                 throw new InvalidOperationException("The game's TMP shader is unavailable for stereo text.");
-            var material = new Material(font.material) { shader = shader, name = font.name + " Stereo Material" };
-            material.enableInstancing = true;
+            var material = new Material(font.material)
+            {
+                shader = shader,
+                name = font.name + " Stereo Material",
+                enableInstancing = true
+            };
             font.material = material;
             stereoFonts.Add(font);
             foreach (var weight in font.fontWeightTable)
@@ -71,14 +73,20 @@ namespace Qubit.Frontend.Resources
             options = new[] { Default }.Concat(Font.GetOSInstalledFontNames()
                 .Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).Select(name => "Windows: " + name)).ToList();
-            setting = new Module {
-                name = "Qubit Font", displayName = "Font: " + Default, isTogglable = false,
-                incremental = true, isSetting = true, value = Default, legal = true,
-                toolTip = "Changes the menu and keyboard font. Uses Qubit's clean default or an installed Windows font."
+            setting = new Module
+            {
+                name = "Qubit Font",
+                displayName = "Font: " + Default,
+                isTogglable = false,
+                incremental = true,
+                isSetting = true,
+                value = Default,
+                legal = true,
+                toolTip = "Changes the menu and keyboard font. Uses Qubit's clean default or an installed Windows font.",
+                cycleValue = Cycle,
+                method = () => Cycle(true),
+                onValueChanged = Restore
             };
-            setting.cycleValue = Cycle;
-            setting.method = () => Cycle(true);
-            setting.onValueChanged = Restore;
             Manager.AddModule("Menu Settings", setting, 1);
             Restore();
         }
@@ -159,7 +167,7 @@ namespace Qubit.Frontend.Resources
                 font.fallbackFontAssetTable.Add(LiberationSans);
         }
 
-        
+
         public static TMP_FontAsset activeFont = LiberationSans;
         public static FontStyles activeFontStyle = FontStyles.Normal;
 

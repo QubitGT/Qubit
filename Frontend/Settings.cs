@@ -24,7 +24,6 @@ using Qubit.Extensions;
 using Qubit.Frontend.Colors;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
-using Qubit.Utilities;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -57,13 +56,13 @@ namespace Qubit.Frontend
         };
 
         public static ExtGradient[] buttonColors = {
-            new ExtGradient 
+            new ExtGradient
             {
                 colors = ExtGradient.GetSolidGradient(
                     new Color32(118, 6, 252, 255)
                 )
             },
-            new ExtGradient 
+            new ExtGradient
             {
                 colors = ExtGradient.GetSolidGradient(
                     new Color32(88, 6, 186, 255)
@@ -72,15 +71,15 @@ namespace Qubit.Frontend
         };
 
         public static ExtGradient[] textColors = {
-            new ExtGradient 
+            new ExtGradient
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             },
-            new ExtGradient 
+            new ExtGradient
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             },
-            new ExtGradient 
+            new ExtGradient
             {
                 colors = ExtGradient.GetSolidGradient(Color.white)
             }
@@ -154,7 +153,7 @@ namespace Qubit.Frontend
 
         #region State
 
-        
+
 
         public static bool isOnPC;
         public static bool IsSteam = true;
@@ -271,7 +270,7 @@ namespace Qubit.Frontend
         public static bool slowDynamicAnimations;
         public static string lastClickedName = "";
 
-        public static Key KeyboardBind => 
+        public static Key KeyboardBind =>
             Modules.Categories.Settings.pcBindings.TryGetValue(Modules.Categories.Settings.ControllerBinding.Keyboard, out Key key) ? key : Key.Q;
 
         public static bool isMenuButtonHeld;

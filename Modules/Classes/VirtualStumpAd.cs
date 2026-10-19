@@ -23,7 +23,7 @@ using GorillaExtensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Video;
-using static Qubit.Utilities.GameObj;
+using static Qubit.Extensions.GameObj;
 
 namespace Qubit.Modules.Classes
 {

@@ -57,7 +57,7 @@ namespace Qubit.Extensions
             return vec;
         }
 
-        
+
 
 
 
@@ -67,7 +67,7 @@ namespace Qubit.Extensions
         public static Vector3 World2Player(Vector3 world) =>
             world - References.BodyCollider.transform.position + References.Tagger.transform.position;
 
-        
+
 
 
 

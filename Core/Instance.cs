@@ -23,8 +23,8 @@ using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
 using Qubit.Modules.Categories;
-using Qubit.Patches.Terms;
 using Qubit.Patches;
+using Qubit.Patches.Terms;
 using System;
 using System.Collections;
 using System.IO;
@@ -39,7 +39,7 @@ using Console = Qubit.Backend.Console;
 
 namespace Qubit.Core
 {
-    
+
     public enum LaunchPriority
     {
         Settings,
@@ -61,7 +61,7 @@ namespace Qubit.Core
         PatchReport,
     }
 
-    
+
 
 
 
@@ -251,14 +251,14 @@ namespace Qubit.Core
             }
             catch (ReflectionTypeLoadException exception)
             {
-                types = exception.Types.Where(type => type != null).ToArray(); 
+                types = exception.Types.Where(type => type != null).ToArray();
             }
 
             var launchMethods = types
                 .SelectMany(type => type.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly))
                 .Select(method => (method, attribute: method.GetCustomAttribute<RunOnLaunchAttribute>()))
                 .Where(entry => entry.attribute != null)
-                .OrderBy(entry => (int?)entry.attribute.Priority ?? int.MaxValue); 
+                .OrderBy(entry => (int?)entry.attribute.Priority ?? int.MaxValue);
 
             foreach (var (method, _) in launchMethods)
             {
@@ -274,7 +274,7 @@ namespace Qubit.Core
                 }
                 catch (TargetInvocationException exception)
                 {
-                    ExceptionDispatchInfo.Capture(exception.InnerException).Throw(); 
+                    ExceptionDispatchInfo.Capture(exception.InnerException).Throw();
                 }
             }
         }

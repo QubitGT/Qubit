@@ -19,26 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
-using ExitGames.Client.Photon;
-using GorillaGameModes;
-using GorillaNetworking;
-using Photon.Pun;
-using Photon.Realtime;
-using Qubit.Extensions;
-using Qubit.Libraries.Core;
-using Qubit.Modules.Classes;
-using System.Collections.Generic;
-using System.Linq;
-using UnityEngine;
-using static Qubit.Extensions.Players;
-using static Qubit.Frontend.Keyboard;
-using static Qubit.Frontend.Prompts;
-using static Qubit.Frontend.Settings;
-using static Qubit.Libraries.Audio.Sounds;
-using static Qubit.Utilities.Assets;
-using Hashtable = ExitGames.Client.Photon.Hashtable;
-using Random = UnityEngine.Random;
+using ExitGames.Client.Photon;using GorillaGameModes;using GorillaNetworking;using Photon.Pun;using Photon.Realtime;using Qubit.Core;using Qubit.Extensions;using Qubit.Libraries.Core;using Qubit.Modules.Classes;using System.Collections.Generic;using System.Linq;using UnityEngine;using static Qubit.Extensions.Players;using static Qubit.Frontend.Keyboard;using static Qubit.Frontend.Prompts;using static Qubit.Frontend.Settings;using static Qubit.Libraries.Audio.Sounds;using static Qubit.Libraries.Core.Assets;using Hashtable = ExitGames.Client.Photon.Hashtable;using Random = UnityEngine.Random;
 
 namespace Qubit.Modules.Categories
 {
@@ -92,12 +73,12 @@ namespace Qubit.Modules.Categories
                         hashtable = new Hashtable { { 0, viewID == -1 ? view.ViewID : viewID } };
                     }
                     raiseEventOptions ??= new RaiseEventOptions { TargetActors = new[] { rig.GetPlayer().ActorNumber } };
-                    PhotonNetwork.NetworkingClient.OpRaiseEvent(PunEvent.Destroy, hashtable, raiseEventOptions, SendOptions.SendReliable);
+                    ManagerRegistry.NetworkingClient.OpRaiseEvent(PunEvent.Destroy, hashtable, raiseEventOptions, SendOptions.SendReliable);
                     break;
                 case Player player:
                     hashtable ??= new Hashtable { { 0, player.ActorNumber } };
                     raiseEventOptions ??= new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } };
-                    PhotonNetwork.NetworkingClient.OpRaiseEvent(PunEvent.DestroyPlayer, hashtable, raiseEventOptions, SendOptions.SendReliable);
+                    ManagerRegistry.NetworkingClient.OpRaiseEvent(PunEvent.DestroyPlayer, hashtable, raiseEventOptions, SendOptions.SendReliable);
                     break;
                 case GameObject _:
                     break;

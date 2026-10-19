@@ -26,26 +26,26 @@ using Photon.Realtime;
 using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
+using Qubit.Libraries.Entities;
 using Qubit.Libraries.Interface;
+using Qubit.Libraries.Networking;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Tagging;
-using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Qubit.Core.Security;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Prompts;
 using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
-using static Qubit.Utilities.GameModes;
-using static Qubit.Utilities.GameObj;
-using Qubit.Libraries.Entities;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Modules.Categories
@@ -111,11 +111,14 @@ namespace Qubit.Modules.Categories
                 if (!PhotonNetwork.IsMasterClient) return;
                 gunLocked = true;
                 lockTarget = gunTarget;
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void SpamTagAll()
@@ -153,14 +156,17 @@ namespace Qubit.Modules.Categories
                 }
                 else
                     Notifications.SendFormat("red", "ERROR", "You are not master client.");
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         TagReports.blacklistedPlayers.Remove(lockTarget.GetPlayer());
                     }
-                } });
+                }
+            });
         }
 
         public static void SetTagCooldown(float value)
@@ -282,11 +288,14 @@ namespace Qubit.Modules.Categories
                         }
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void PaintbrawlBalloonSpam()
@@ -340,7 +349,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        
+
         public static void PaintbrawlNoDelay()
         {
             if (!Networking.IsMasterClient)
@@ -621,12 +630,15 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     Fun.floatPower = 0.35f;
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void AtticFlingGun()
@@ -654,12 +666,15 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     Fun.floatPower = 0.35f;
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void AtticBringGun()
@@ -687,12 +702,15 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     Fun.floatPower = 0.35f;
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void AtticPushGun()
@@ -720,12 +738,15 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     Fun.floatPower = 0.35f;
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
         public static void AtticTowerGun()
         {
@@ -915,11 +936,14 @@ namespace Qubit.Modules.Categories
                         }
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void VIMMuteAll()
@@ -1068,11 +1092,14 @@ namespace Qubit.Modules.Categories
                         }
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void MaterialAll()

@@ -6,14 +6,14 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-    
+
 
 
     [JsonObject(MemberSerialization = MemberSerialization.OptIn)]
     [Serializable]
     public class BaseRichPresence
     {
-        
+
 
 
 
@@ -28,10 +28,10 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             }
         }
 
-        
+
         protected internal string _state;
 
-        
+
 
 
 
@@ -48,10 +48,10 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                     throw new ArgumentException("Url must be a valid URI");
             }
         }
-        
+
         protected internal string _stateUrl;
 
-        
+
 
 
 
@@ -65,10 +65,10 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                     throw new StringOutOfRangeException(128);
             }
         }
-        
+
         protected internal string _details;
 
-        
+
 
 
 
@@ -85,28 +85,28 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                     throw new ArgumentException("Url must be a valid URI");
             }
         }
-        
+
         protected internal string _detailsUrl;
 
-        
+
 
 
         [JsonProperty("timestamps", NullValueHandling = NullValueHandling.Ignore)]
         public Timestamps Timestamps { get; set; }
 
-        
+
 
 
         [JsonProperty("assets", NullValueHandling = NullValueHandling.Ignore)]
         public Assets Assets { get; set; }
 
-        
+
 
 
         [JsonProperty("party", NullValueHandling = NullValueHandling.Ignore)]
         public Party Party { get; set; }
 
-        
+
 
 
 
@@ -114,20 +114,20 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         [JsonProperty("secrets", NullValueHandling = NullValueHandling.Ignore)]
         public Secrets Secrets { get; set; }
 
-        
+
 
 
         [JsonProperty("type", NullValueHandling = NullValueHandling.Ignore)]
         public ActivityType Type { get; set; }
 
-        
+
 
 
         [JsonProperty("status_display_type", NullValueHandling = NullValueHandling.Ignore)]
         public StatusDisplayType StatusDisplay { get; set; }
 
         #region Has Checks
-        
+
 
 
 
@@ -136,7 +136,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return Timestamps != null && (Timestamps.Start != null || Timestamps.End != null);
         }
 
-        
+
 
 
 
@@ -145,7 +145,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return Assets != null;
         }
 
-        
+
 
 
 
@@ -154,7 +154,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return Party != null && Party.ID != null;
         }
 
-        
+
 
 
 
@@ -167,7 +167,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 
         #endregion
 
-        
+
 
 
 
@@ -182,33 +182,29 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             if (str == null)
                 return true;
 
-            
+
             var s = str.Trim();
 
-            
+
             if (useBytes && !s.WithinLength(length, encoding) || s.Length > length)
                 return false;
 
-            
+
             result = s.GetNullOrString();
             return true;
         }
 
-        
+
 
 
 
 
         internal static bool ValidateUrl(string url)
         {
-            if (string.IsNullOrEmpty(url))
-                return true;
-
-            
-            return Uri.TryCreate(url, UriKind.Absolute, out _);
+            return string.IsNullOrEmpty(url) ? true : Uri.TryCreate(url, UriKind.Absolute, out _);
         }
 
-        
+
 
 
 
@@ -217,7 +213,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return presence != null;
         }
 
-        
+
 
 
 
@@ -234,7 +230,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 Type != other.Type)
                 return false;
 
-            
+
             if (Timestamps != null)
             {
                 if (other.Timestamps == null ||
@@ -247,7 +243,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 return false;
             }
 
-            
+
             if (Secrets != null)
             {
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -262,7 +258,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 return false;
             }
 
-            
+
             if (Party != null)
             {
                 if (other.Party == null ||
@@ -277,7 +273,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 return false;
             }
 
-            
+
             if (Assets != null)
             {
                 if (other.Assets == null ||
@@ -297,7 +293,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return true;
         }
 
-        
+
 
 
 
@@ -341,20 +337,20 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
     }
 
-    
 
 
-    
+
+
     public sealed class RichPresence : BaseRichPresence
     {
-        
+
 
 
 
         [JsonProperty("buttons", NullValueHandling = NullValueHandling.Ignore)]
         public Button[] Buttons { get; set; }
 
-        
+
 
 
 
@@ -365,7 +361,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 
 
         #region Builder
-        
+
 
 
 
@@ -376,7 +372,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -387,7 +383,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -398,7 +394,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -409,7 +405,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -419,7 +415,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             Type = type;
             return this;
         }
-        
+
 
 
 
@@ -430,7 +426,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -441,7 +437,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -452,7 +448,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -463,7 +459,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -474,7 +470,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             return this;
         }
 
-        
+
 
 
 
@@ -493,7 +489,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 
         #region Cloning and Merging 
 
-        
+
 
 
 
@@ -512,7 +508,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 #pragma warning disable CS0618 // Type or member is obsolete
                 Secrets = !HasSecrets() ? null : new Secrets
                 {
-                    
+
                     Join = Secrets.Join != null ? Secrets.Join.Clone() as string : null,
                     SpectateSecret = Secrets.SpectateSecret != null ? Secrets.SpectateSecret.Clone() as string : null
                 },
@@ -544,7 +540,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             };
         }
 
-        
+
 
 
 
@@ -561,24 +557,24 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             Timestamps = presence.Timestamps;
             Secrets = presence.Secrets;
 
-            
+
             if (presence.HasAssets())
             {
-                
+
                 if (!HasAssets())
                 {
-                    
+
                     Assets = presence.Assets;
                 }
                 else
                 {
-                    
+
                     Assets.Merge(presence.Assets);
                 }
             }
             else
             {
-                
+
                 Assets = null;
             }
 
@@ -589,7 +585,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         {
             if (!base.Matches(other)) return false;
 
-            
+
             if (Buttons == null ^ other.Buttons == null) return false;
             if (Buttons != null)
             {
@@ -608,7 +604,7 @@ namespace Qubit.Libraries.DiscordRPC.Entities
 
         #endregion
 
-        
+
 
 
 
@@ -618,18 +614,18 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
     }
 
-    
+
 
 
     internal sealed class RichPresenceResponse : BaseRichPresence
     {
-        
+
 
 
         [JsonProperty("application_id")]
         public string ClientID { get; private set; }
 
-        
+
 
 
         [JsonProperty("name")]

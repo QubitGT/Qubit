@@ -19,7 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Manager = Qubit.Modules.Manager;
 using GorillaExtensions;
 using GorillaLocomotion.Climbing;
 using Qubit.Core;
@@ -31,6 +30,7 @@ using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Modules.Categories.Fun;
 using static Qubit.Modules.Categories.Projectiles;
 using static Qubit.Modules.Classes.GunLibrary;
+using Manager = Qubit.Modules.Manager;
 using Object = UnityEngine.Object;
 
 namespace Qubit.Libraries.Holdables

@@ -19,9 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Fun = Qubit.Modules.Categories.Fun;
-using Manager = Qubit.Modules.Manager;
-using Module = Qubit.Modules.Module;
 using GorillaTagScripts;
 using Ionic.Zlib;
 using Photon.Pun;
@@ -32,13 +29,13 @@ using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Building;
-using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Settings;
@@ -47,7 +44,9 @@ using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Categories.Fun;
 using static Qubit.Modules.Categories.Projectiles;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameObj;
+using Fun = Qubit.Modules.Categories.Fun;
+using Manager = Qubit.Modules.Manager;
+using Module = Qubit.Modules.Module;
 using Random = UnityEngine.Random;
 using Security = Qubit.Core.Security;
 
@@ -116,18 +115,18 @@ namespace Qubit.Libraries.Entities
             {
                 RaycastHit Ray = GunData.Ray;
 
-                                if (GetGunInput(true))
-                                {
-                                    BuilderPiece gunTarget = Ray.collider.GetComponentInParent<BuilderPiece>();
-                                    if (gunTarget && Time.time > gbgd)
-                                    {
-                                        gbgd = Time.time + 0.1f;
-                                        GUIUtility.systemCopyBuffer = @$"{gunTarget.displayName}
+                if (GetGunInput(true))
+                {
+                    BuilderPiece gunTarget = Ray.collider.GetComponentInParent<BuilderPiece>();
+                    if (gunTarget && Time.time > gbgd)
+                    {
+                        gbgd = Time.time + 0.1f;
+                        GUIUtility.systemCopyBuffer = @$"{gunTarget.displayName}
                 Piece Type: {gunTarget.pieceType}
                 Piece Name: {gunTarget.name}";
-                                        Notifications.SendFormat("green", "SUCCESS", "Successfully copied piece data of " + gunTarget.displayName + ".");
-                                    }
-                                }
+                        Notifications.SendFormat("green", "SUCCESS", "Successfully copied piece data of " + gunTarget.displayName + ".");
+                    }
+                }
             });
         }
 
@@ -576,7 +575,7 @@ namespace Qubit.Libraries.Entities
             PieceCreation.enabled = false;
             PieceCreation.pieceTypeSearch = 0;
 
-            onComplete?.Invoke(ManagerRegistry.BuilderTable.GetPiece(pieceId)); 
+            onComplete?.Invoke(ManagerRegistry.BuilderTable.GetPiece(pieceId));
         }
 
         public static IEnumerator CreateShotgun()
@@ -946,11 +945,14 @@ namespace Qubit.Libraries.Entities
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void BlockCrashAll()

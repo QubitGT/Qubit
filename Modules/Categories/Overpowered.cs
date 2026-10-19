@@ -19,53 +19,44 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Libraries.Entities;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
 using GorillaGameModes;
 using GorillaLocomotion.Gameplay;
 using GorillaTag;
 using GorillaTagScripts;
-using Ionic.Zlib;
 using Photon.Pun;
 using Photon.Realtime;
-using Photon.Voice;
 using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Core;
+using Qubit.Libraries.Entities;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
-using Qubit.Patches.Locomotion;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Safety.RPC;
-using Qubit.Utilities;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using Unity.XR.CoreUtils;
 using UnityEngine;
 using WebSocketSharp;
 using static Qubit.Core.Security;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
-using static Qubit.Extensions.Vectors;
 using static Qubit.Frontend.Keyboard;
 using static Qubit.Frontend.Prompts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
-using static Qubit.Modules.Categories.Projectiles;
-using static Qubit.Libraries.Entities.Critters;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
 using JoinType = GorillaNetworking.JoinType;
-using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Modules.Categories
@@ -223,7 +214,7 @@ namespace Qubit.Modules.Categories
 
         public static bool legacyKickFreeze;
 
-        
+
 
 
         private static bool _optimizeEvents;
@@ -294,9 +285,9 @@ namespace Qubit.Modules.Categories
 
         #region Methods
         public static void AlwaysGuardian() =>
-            GameModes.BecomeGuardian();
+            BecomeGuardian();
         public static void SetColorSelf(int color) =>
-            GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { Networking.LocalPlayer.ActorNumber, color } });
+            SetMonkeBallTeams(new Dictionary<int, int> { { Networking.LocalPlayer.ActorNumber, color } });
 
         public static void SetColorGun(int color)
         {
@@ -304,7 +295,7 @@ namespace Qubit.Modules.Categories
             {
                 playerColorDelay = Time.time + 0.1f;
                 if (PhotonNetwork.IsMasterClient)
-                    GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { GetPlayerFromVRRig(gunTarget).ActorNumber, color } });
+                    SetMonkeBallTeams(new Dictionary<int, int> { { GetPlayerFromVRRig(gunTarget).ActorNumber, color } });
                 else
                     Notifications.SendFormat("red", "ERROR", "You are not master client.");
             }, new GunLibrary.GunSettings { when = () => Time.time > playerColorDelay });
@@ -313,7 +304,7 @@ namespace Qubit.Modules.Categories
         public static void SetColorAll(int color)
         {
             if (PhotonNetwork.IsMasterClient)
-                GameModes.SetMonkeBallTeams(ManagerRegistry.NetworkSystem.AllNetPlayers.ToDictionary(p => p.ActorNumber, p => color));
+                SetMonkeBallTeams(ManagerRegistry.NetworkSystem.AllNetPlayers.ToDictionary(p => p.ActorNumber, p => color));
             else
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
@@ -342,7 +333,7 @@ namespace Qubit.Modules.Categories
                     {
                         playerColorDelay = Time.time + 0.1f;
                         if (Networking.IsMasterClient)
-                            GameModes.SetMonkeBallTeams(new Dictionary<int, int> { { lockTarget.GetPlayer().ActorNumber, Time.time % 0.2f > 0.1f ? 1 : 0 } });
+                            SetMonkeBallTeams(new Dictionary<int, int> { { lockTarget.GetPlayer().ActorNumber, Time.time % 0.2f > 0.1f ? 1 : 0 } });
                         else
                             Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     }
@@ -359,11 +350,14 @@ namespace Qubit.Modules.Categories
                         }
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void StrobeColorAll()
@@ -382,7 +376,7 @@ namespace Qubit.Modules.Categories
             if (Networking.InRoom)
             {
 
-                if (!GameModes.IsGuardian(PhotonNetwork.LocalPlayer)) return;
+                if (!IsGuardian(PhotonNetwork.LocalPlayer)) return;
                 foreach (TappableGuardianIdol tgi in GetAllType<TappableGuardianIdol>())
                 {
                     if (!tgi.manager || !tgi.manager.photonView) continue;
@@ -567,14 +561,18 @@ namespace Qubit.Modules.Categories
 
                     return false;
                 };
-            }, new GunLibrary.GunSettings { when = () => !gunLocked, onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                when = () => !gunLocked,
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         ViewSerialization.OverrideSerialization = null;
                     }
-                } });
+                }
+            });
         }
 
         public static void DelayBanAll()
@@ -635,7 +633,7 @@ namespace Qubit.Modules.Categories
             if (velocity.sqrMagnitude > 20f)
                 velocity = Vector3.Normalize(velocity) * 20f;
 
-            if (GameModes.IsGuardian(Networking.LocalPlayer))
+            if (IsGuardian(Networking.LocalPlayer))
             {
                 GetNetworkViewFromVRRig(GetVRRigFromPlayer(victim)).SendRPC("GrabbedByPlayer", victim, true, false, false);
                 GetNetworkViewFromVRRig(GetVRRigFromPlayer(victim)).SendRPC("DroppedByPlayer", victim, velocity);
@@ -649,7 +647,7 @@ namespace Qubit.Modules.Categories
             if (velocity.sqrMagnitude > 20f)
                 velocity = Vector3.Normalize(velocity) * 20f;
 
-            if (GameModes.IsGuardian(Networking.LocalPlayer))
+            if (IsGuardian(Networking.LocalPlayer))
             {
                 switch (victim)
                 {
@@ -687,7 +685,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(gunTarget =>
             {
-                if (GameModes.IsGuardian(Networking.LocalPlayer))
+                if (IsGuardian(Networking.LocalPlayer))
                 {
                     GetNetworkViewFromVRRig(gunTarget).SendRPC("GrabbedByPlayer", RpcTarget.Others, true, false, false);
                     RPCProtection();
@@ -703,7 +701,7 @@ namespace Qubit.Modules.Categories
             if (rightGrab && Time.time > Grabbing.grabDelay)
             {
                 Grabbing.grabDelay = Time.time + 0.1f;
-                if (GameModes.IsGuardian(Networking.LocalPlayer))
+                if (IsGuardian(Networking.LocalPlayer))
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                     {
@@ -719,7 +717,7 @@ namespace Qubit.Modules.Categories
         {
             GunLibrary.Target(gunTarget =>
             {
-                if (GameModes.IsGuardian(Networking.LocalPlayer))
+                if (IsGuardian(Networking.LocalPlayer))
                 {
                     GetNetworkViewFromVRRig(gunTarget).SendRPC("DroppedByPlayer", RpcTarget.Others, new Vector3(0f, 0f, 0f));
                     RPCProtection();
@@ -736,7 +734,7 @@ namespace Qubit.Modules.Categories
             if (rightTrigger > 0.5f && Time.time > releaseDelay)
             {
                 releaseDelay = Time.time + 0.1f;
-                if (GameModes.IsGuardian(Networking.LocalPlayer))
+                if (IsGuardian(Networking.LocalPlayer))
                 {
                     foreach (var plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
                     {
@@ -1043,7 +1041,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(Networking.LocalPlayer))
+                    if (IsGuardian(Networking.LocalPlayer))
                     {
                         GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, References.RightHand.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
@@ -1059,7 +1057,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(Networking.LocalPlayer))
+                    if (IsGuardian(Networking.LocalPlayer))
                     {
                         GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, References.LeftHand.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
@@ -1079,7 +1077,7 @@ namespace Qubit.Modules.Categories
             {
                 if (Time.time > slamDel)
                 {
-                    if (GameModes.IsGuardian(Networking.LocalPlayer))
+                    if (IsGuardian(Networking.LocalPlayer))
                     {
                         GameMode.ActiveNetworkHandler.NetView.GetView.RPC(flip ? "ShowSlamEffect" : "ShowSlapEffects", RpcTarget.All, NewPointer.transform.position, new Vector3(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)));
                         RPCProtection();
@@ -1121,7 +1119,7 @@ namespace Qubit.Modules.Categories
             if (Time.time > freezeAllDelay)
             {
                 for (int i = 0; i < eventCount; i++)
-                    PhotonNetwork.NetworkingClient.OpRaiseEvent(200, new object[] { PluginInfo.DiscordInvite }, options, SendOptions.SendUnreliable);
+                    ManagerRegistry.NetworkingClient.OpRaiseEvent(200, new object[] { PluginInfo.DiscordInvite }, options, SendOptions.SendUnreliable);
 
                 RPCProtection();
                 freezeAllDelay = Time.time + delay;
@@ -1152,8 +1150,8 @@ namespace Qubit.Modules.Categories
 
         public static void ZaWarudo_enableMethod()
         {
-            LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Overpowered/Timestop/start.ogg", "Audio/Mods/Overpowered/Timestop/start.ogg", clip => ZaWarudo_Start = clip);
-            LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Overpowered/Timestop/end.ogg", "Audio/Mods/Overpowered/Timestop/end.ogg", clip => ZaWarudo_Stop = clip);
+            Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Overpowered/Timestop/start.ogg", "Audio/Mods/Overpowered/Timestop/start.ogg", clip => ZaWarudo_Start = clip);
+            Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Mods/Overpowered/Timestop/end.ogg", "Audio/Mods/Overpowered/Timestop/end.ogg", clip => ZaWarudo_Stop = clip);
         }
         public static void ZaWarudo()
         {
@@ -1315,7 +1313,7 @@ namespace Qubit.Modules.Categories
             raiseEventOptions.CachingOption = EventCaching.DoNotCache;
 
             for (int i = 0; i < lagAmount; i++)
-                PhotonNetwork.NetworkingClient.OpRaiseEvent(eventIndex, data, raiseEventOptions, sendOptions);
+                ManagerRegistry.NetworkingClient.OpRaiseEvent(eventIndex, data, raiseEventOptions, sendOptions);
 
             RPCProtection();
         }
@@ -1382,14 +1380,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
         public static void BarrelFlingAll()
         {
@@ -1414,14 +1415,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void BarrelObliterateAll()
@@ -1462,14 +1466,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void BarrelCrashAll()
@@ -1499,14 +1506,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void BarrelKickAll()
@@ -1538,14 +1548,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void BarrelFlingTowardsAll()
@@ -1572,14 +1585,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void CityKickAll()
@@ -1640,18 +1656,20 @@ namespace Qubit.Modules.Categories
 
             JoinedRoom.enabled = joinedRoomPatchEnabled;
         }
+
         public static void CreateKickRoom()
         {
             if (rejoinOnKick)
             {
-                Important.BroadcastRoom(specificRoom ?? RandomString(), true, ManagerRegistry.PhotonNetworkController.keyToFollow, ManagerRegistry.PhotonNetworkController.shuffler);
+                Libraries.Networking.Rooms.BroadcastRoom(specificRoom ?? RandomString(), true, ManagerRegistry.PhotonNetworkController.keyToFollow, ManagerRegistry.PhotonNetworkController.shuffler);
                 Room.Reconnect();
 
                 return;
             }
 
-            Room.CreateRoom(specificRoom ?? RandomString(), kickToPublic, 0, JoinType.JoinWithNearby);
+            Libraries.Networking.Rooms.CreateRoom(specificRoom ?? RandomString(), kickToPublic, 0, JoinType.JoinWithNearby);
         }
+
         public static void StumpKickGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -1795,21 +1813,21 @@ namespace Qubit.Modules.Categories
 
         public static void CreatePeerBase()
         {
-            PhotonNetwork.NetworkingClient.LoadBalancingPeer.TransportProtocol = ConnectionProtocol.Tcp;
-            PhotonNetwork.NetworkingClient.LoadBalancingPeer.peerBase = new TPeer()
+            ManagerRegistry.NetworkingClient.LoadBalancingPeer.TransportProtocol = ConnectionProtocol.Tcp;
+            ManagerRegistry.NetworkingClient.LoadBalancingPeer.peerBase = new TPeer()
             {
                 DoFraming = true,
-                photonPeer = PhotonNetwork.NetworkingClient.LoadBalancingPeer,
+                photonPeer = ManagerRegistry.NetworkingClient.LoadBalancingPeer,
                 usedTransportProtocol = ConnectionProtocol.Tcp
             };
         }
 
         public static void UnloadPeerBase()
         {
-            PhotonNetwork.NetworkingClient.LoadBalancingPeer.TransportProtocol = ConnectionProtocol.Udp;
-            PhotonNetwork.NetworkingClient.LoadBalancingPeer.peerBase = new EnetPeer
+            ManagerRegistry.NetworkingClient.LoadBalancingPeer.TransportProtocol = ConnectionProtocol.Udp;
+            ManagerRegistry.NetworkingClient.LoadBalancingPeer.peerBase = new EnetPeer
             {
-                photonPeer = PhotonNetwork.NetworkingClient.LoadBalancingPeer,
+                photonPeer = ManagerRegistry.NetworkingClient.LoadBalancingPeer,
                 usedTransportProtocol = ConnectionProtocol.Udp
             };
             ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
@@ -1840,7 +1858,7 @@ namespace Qubit.Modules.Categories
             {
                 partyLastCode = PhotonNetwork.CurrentRoom.Name;
                 waitForPlayerJoin = false;
-                ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(Room.RandomRoomName(), JoinType.ForceJoinWithParty);
+                Libraries.Networking.Rooms.JoinRoom(Libraries.Networking.Rooms.RandomRoomName(), JoinType.ForceJoinWithParty);
                 partyTime = Time.time + 0.25f;
                 partyKickReconnecting = false;
                 amountPartying = ManagerRegistry.FriendshipGroupDetection.myPartyMemberIDs.Count - 1;
@@ -1856,7 +1874,7 @@ namespace Qubit.Modules.Categories
             {
                 partyLastCode = PhotonNetwork.CurrentRoom.Name;
                 waitForPlayerJoin = true;
-                ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)], JoinType.ForceJoinWithParty);
+                Libraries.Networking.Rooms.JoinRoom(References.Computer.anywhereTwoWeek[Random.Range(0, References.Computer.anywhereTwoWeek.Length)], JoinType.ForceJoinWithParty);
                 partyTime = Time.time + 0.25f;
                 partyKickReconnecting = false;
                 amountPartying = ManagerRegistry.FriendshipGroupDetection.myPartyMemberIDs.Count - 1;
@@ -1930,12 +1948,15 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     OptimizeEvents = false;
                     if (gunLocked)
                         gunLocked = false;
-                } });
+                }
+            });
         }
 
         public static void PartyKickAll()
@@ -2179,14 +2200,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void BreakAudioAll()

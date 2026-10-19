@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using GorillaLocomotion;
+using Qubit.Core;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -135,7 +135,7 @@ namespace Qubit.Libraries.Controls
             public float dataCacheTime;
         }
 
-        
+
 
 
 
@@ -186,7 +186,7 @@ namespace Qubit.Libraries.Controls
             }
         }
 
-        
+
 
 
 
@@ -195,7 +195,7 @@ namespace Qubit.Libraries.Controls
 
         public static ControllerType GetLeftControllerType() => GetControllerType(true);
 
-        
+
 
 
 
@@ -204,7 +204,7 @@ namespace Qubit.Libraries.Controls
 
         public static ControllerType GetRightControllerType() => GetControllerType(false);
 
-        
+
 
 
 
@@ -230,7 +230,7 @@ namespace Qubit.Libraries.Controls
             return (controllerTransform.position + controllerTransform.rotation * (handState.handOffset * References.Player.scale), rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
         }
 
-        
+
 
 
 
@@ -241,7 +241,7 @@ namespace Qubit.Libraries.Controls
         public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right)
             GetTrueLeftHand() => GetTrueHandPosition(true);
 
-        
+
 
 
 
@@ -251,6 +251,6 @@ namespace Qubit.Libraries.Controls
 
         public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right)
             GetTrueRightHand() => GetTrueHandPosition(false);
-    
+
     }
 }

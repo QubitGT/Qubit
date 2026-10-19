@@ -39,7 +39,7 @@ namespace Qubit.Libraries.Language
         public static readonly Dictionary<string, float> waitingForTranslate = new Dictionary<string, float>();
         public static readonly Dictionary<string, string> translateCache = new Dictionary<string, string>();
 
-        
+
 
 
         public static string language;

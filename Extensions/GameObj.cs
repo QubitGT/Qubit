@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Utilities/GameObj.cs
+ * Qubit Menu  Extensions/GameObj.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -27,7 +27,7 @@ using static Qubit.Extensions.Vectors;
 using static Qubit.Frontend.Settings;
 using Object = UnityEngine.Object;
 
-namespace Qubit.Utilities
+namespace Qubit.Extensions
 {
     public static class GameObj
     {
@@ -35,7 +35,7 @@ namespace Qubit.Utilities
         public static readonly Dictionary<Type, object[]> typePool = new Dictionary<Type, object[]>();
         private static readonly Dictionary<Type, float> receiveTypeDelay = new Dictionary<Type, float>();
 
-        
+
 
 
 
@@ -65,7 +65,7 @@ namespace Qubit.Utilities
         private static float randomIndex;
         private static float randomDecayTime;
 
-        
+
 
 
 
@@ -83,7 +83,7 @@ namespace Qubit.Utilities
             return allOfType[(int)(randomIndex * allOfType.Length)];
         }
 
-        
+
 
 
 
@@ -97,7 +97,7 @@ namespace Qubit.Utilities
 
         private static readonly Dictionary<string, GameObject> objectPool = new Dictionary<string, GameObject>();
 
-        
+
 
 
 

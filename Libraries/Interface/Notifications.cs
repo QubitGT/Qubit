@@ -49,10 +49,10 @@ namespace Qubit.Libraries.Interface
 
         public GameObject canvas;
         private GameObject mainCamera;
-        
+
 
         public static string PreviousNotifi;
-        
+
 
 
 
@@ -114,7 +114,7 @@ namespace Qubit.Libraries.Interface
             rotation.y = -270f;
             canvasRect.rotation = Quaternion.Euler(rotation);
 
-            
+
 
             notificationText = CreateText(canvas.transform, new Vector3(-1f, -1f, -0.5f),
                 new Vector2(450f, 210f), 30, TextAlignmentOptions.BottomLeft);
@@ -141,7 +141,7 @@ namespace Qubit.Libraries.Interface
             text.overflowMode = anchor == TextAlignmentOptions.BottomLeft ? TextOverflowModes.Overflow : TextOverflowModes.Truncate;
             text.rectTransform.localScale = new Vector3(0.00333333333f, 0.00333333333f, 0.33333333f);
             text.rectTransform.localPosition = localPos;
-            
+
             text.characterSpacing = -9f;
 
             return text;
@@ -298,7 +298,7 @@ namespace Qubit.Libraries.Interface
             catch (Exception e) { Logs.Log(e); }
         }
 
-        
+
 
 
 
@@ -383,7 +383,7 @@ namespace Qubit.Libraries.Interface
             }
         }
 
-        
+
 
 
 
@@ -397,7 +397,7 @@ namespace Qubit.Libraries.Interface
         public static void PlayNotificationSound() =>
             Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, buttonClickVolume / 10f));
 
-        
+
 
 
 
@@ -409,7 +409,7 @@ namespace Qubit.Libraries.Interface
             notificationText.SafeSetText("");
         }
 
-        
+
 
 
 
@@ -424,7 +424,7 @@ namespace Qubit.Libraries.Interface
             RebuildNotificationText();
         }
 
-        
+
 
 
 
@@ -447,7 +447,7 @@ namespace Qubit.Libraries.Interface
                 RebuildNotificationText();
         }
 
-        
+
 
 
         private static void RebuildNotificationText()

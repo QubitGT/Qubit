@@ -104,7 +104,7 @@ namespace Qubit.Extensions
             get
             {
                 if (_tmpShader == null)
-                    _tmpShader = Qubit.Utilities.Assets.LoadAsset<Shader>("TMP_SDF-Mobile Overlay");
+                    _tmpShader = Qubit.Libraries.Core.Assets.LoadAsset<Shader>("TMP_SDF-Mobile Overlay");
 
                 return _tmpShader;
             }

@@ -19,21 +19,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
-using GorillaGameModes;
 using GorillaNetworking;
-using GorillaTagScripts;
+using Qubit.Core;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using System;
+using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using UnityEngine;
 using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Keyboard;
 using static Qubit.Frontend.Prompts;
+using static Qubit.Libraries.Networking.Rooms;
 using static Qubit.Modules.Categories.Overpowered;
-using Hashtable = ExitGames.Client.Photon.Hashtable;
 
 namespace Qubit.Modules.Categories
 {
@@ -155,7 +153,7 @@ namespace Qubit.Modules.Categories
             if (Important.queueCoroutine != null)
                 Coroutines.instance.StopCoroutine(Important.queueCoroutine);
 
-            Important.queueCoroutine = Coroutines.instance.StartCoroutine(Important.QueueRoomCoroutine(roomName));
+            Important.queueCoroutine = Coroutines.instance.StartCoroutine(QueueRoomCoroutine(roomName));
         }
 
         public static void Reconnect()
@@ -177,72 +175,18 @@ namespace Qubit.Modules.Categories
             partyKickReconnecting = false;
         }
 
-        public static void JoinRandom()
+        public static IEnumerator QueueRoomCoroutine(string roomName)
         {
-            if (Networking.InRoom)
+            NetworkSystemPUN instance = (NetworkSystemPUN)ManagerRegistry.NetworkSystem;
+
+            instance.ReturnToSinglePlayer();
+            yield return new WaitUntil(() => instance.netState == NetSystemState.Idle);
+            yield return new WaitForSeconds(0.5f);
+
+            while (!instance.InRoom)
             {
-                ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
-                Coroutines.instance.StartCoroutine(Important.JoinRandomDelay());
-                return;
-            }
-
-            GorillaNetworkJoinTrigger trigger = ManagerRegistry.PhotonNetworkController.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
-            ManagerRegistry.PhotonNetworkController.AttemptToJoinPublicRoom(trigger);
-        }
-        public static void CreateRoom(string roomName, bool isPublic, byte roomSize = 0, JoinType roomJoinType = JoinType.Solo)
-        {
-            if (roomSize > 10 && !roomName.StartsWith("@"))
-                roomName = $"@{roomName}";
-            var netTrigger = ManagerRegistry.PhotonNetworkController.currentJoinTrigger ?? References.Computer.GetJoinTriggerForZone("forest");
-            RoomConfig roomConfig = new RoomConfig
-            {
-                createIfMissing = true,
-                isJoinable = true,
-                isPublic = isPublic,
-                MaxPlayers = roomSize == 0 ? RoomSystem.GetRoomSizeForCreate(netTrigger.zone, Enum.Parse<GameModeType>(References.Computer.currentGameMode.Value, true), !isPublic, SubscriptionManager.IsLocalSubscribed()) : roomSize,
-                CustomProps = new Hashtable
-                {
-                    { "platform", ManagerRegistry.PhotonNetworkController.platformTag },
-                    { "gameMode", netTrigger.GetFullDesiredGameModeString() },
-                    { "language", LocalisationManager.CurrentLanguage.ToString() },
-                    { "fan_club", SubscriptionManager.IsLocalSubscribed() ? "true" : "false" },
-                    { "queueName", References.Computer.currentQueue },
-                }
-            };
-
-            ManagerRegistry.PhotonNetworkController.currentJoinType = roomJoinType;
-
-            if (roomJoinType == JoinType.JoinWithParty || roomJoinType == JoinType.ForceJoinWithParty)
-                Task.Run(ManagerRegistry.PhotonNetworkController.SendPartyFollowCommands);
-
-            switch (roomJoinType)
-            {
-                case JoinType.JoinWithNearby:
-                case JoinType.JoinWithElevator:
-                    roomConfig.SetFriendIDs(ManagerRegistry.PhotonNetworkController.FriendIDList);
-                    break;
-                case JoinType.JoinWithParty:
-                case JoinType.ForceJoinWithParty:
-                    roomConfig.SetFriendIDs(ManagerRegistry.FriendshipGroupDetection.PartyMemberIDs.ToList());
-                    break;
-            }
-
-            if (Overpowered.instantCreate)
-            {
-                (ManagerRegistry.NetworkSystem as NetworkSystemPUN).internalState = NetworkSystemPUN.InternalState.Searching_Creating;
-                _ = Important.ForceCreateRoom(roomName, roomConfig);
-            }
-            else
-                ManagerRegistry.NetworkSystem.ConnectToRoom(roomName, roomConfig);
-        }
-
-        public static string RandomRoomName()
-        {
-            while (true)
-            {
-                string text = RandomString();
-                if (References.Computer.CheckAutoBanListForName(text))
-                    return text;
+                Libraries.Networking.Rooms.JoinRoom(roomName, JoinType.Solo);
+                yield return new WaitForSeconds(Important.reconnectDelay);
             }
         }
         #endregion

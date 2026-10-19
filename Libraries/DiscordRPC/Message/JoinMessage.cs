@@ -1,19 +1,18 @@
-﻿using Qubit.Libraries.DiscordRPC.Entities;
-using Valve.Newtonsoft.Json;
+﻿using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Message
 {
-    
+
 
 
     public class JoinMessage : IMessage
     {
-        
+
 
 
         public override MessageType Type { get { return MessageType.Join; } }
 
-        
+
 
 
         [JsonProperty("secret")]

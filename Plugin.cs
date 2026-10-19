@@ -27,8 +27,8 @@ namespace Qubit
 {
     public static class Plugin
     {
-        
-        
+
+
         public static void Inject()
         {
             var go = new GameObject("Qubit");

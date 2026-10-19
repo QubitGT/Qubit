@@ -18,8 +18,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-using Qubit.Core;
 using Photon.Pun;
+using Qubit.Core;
 using Qubit.Libraries.Core;
 using Qubit.Modules;
 using System;
@@ -27,7 +27,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using static Qubit.Core.Security;
 using static Qubit.Frontend.Settings;
-using static Qubit.Utilities.Assets;
+using static Qubit.Libraries.Core.Assets;
 
 namespace Qubit.Libraries.Audio
 {
@@ -35,7 +35,7 @@ namespace Qubit.Libraries.Audio
     {
         public static GameObject audioManager;
 
-        
+
 
 
 
@@ -53,7 +53,7 @@ namespace Qubit.Libraries.Audio
             ausrc.PlayOneShot(sound);
         }
 
-        
+
 
 
 
@@ -77,7 +77,7 @@ namespace Qubit.Libraries.Audio
 
         public static GameObject handAudioManager;
 
-        
+
 
 
 

@@ -19,8 +19,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
 using GorillaNetworking;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using System;
@@ -29,11 +29,11 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Strings;
 using static Qubit.Frontend.Core;
 using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
-using static Qubit.Utilities.GameObj;
 using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Libraries.Interface

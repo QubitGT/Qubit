@@ -19,16 +19,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Core;
-using GorillaNetworking;
 using Photon.Pun;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Networking;
 using Qubit.Modules;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -39,7 +37,7 @@ namespace Qubit.Frontend
 {
     public sealed class QubitDesktopOverlay : MonoBehaviour
     {
-        
+
         private static QubitDesktopOverlay current;
         private static Sprite roundedSprite;
         private InputField roomCode, playerName, red, green, blue;
@@ -105,17 +103,20 @@ namespace Qubit.Frontend
             join.onClick.AddListener(JoinRoom);
             var queueButton = transform.Find("RoomPanel/Queue");
             if (queueButton != null) queueButton.gameObject.SetActive(false);
-            disconnect.onClick.AddListener(() => {
+            disconnect.onClick.AddListener(() =>
+            {
                 ManagerRegistry.NetworkSystem?.ReturnToSinglePlayer();
                 feedback.text = "Disconnect requested.";
             });
             Button setName = Find<Button>("RoomPanel/SetName");
-            setName.onClick.AddListener(() => {
+            setName.onClick.AddListener(() =>
+            {
                 if (string.IsNullOrWhiteSpace(playerName.text)) { feedback.text = "Enter a player name first."; return; }
                 LocalPlayer.ChangeName(playerName.text.Trim());
                 feedback.text = "Player name updated.";
             });
-            Find<Button>("RoomPanel/SetColor").onClick.AddListener(() => {
+            Find<Button>("RoomPanel/SetColor").onClick.AddListener(() =>
+            {
                 if (!byte.TryParse(red.text, out byte r) || !byte.TryParse(green.text, out byte g) || !byte.TryParse(blue.text, out byte b))
                 { feedback.text = "Enter R, G and B values from 0 to 255."; return; }
                 LocalPlayer.ChangeColor(new Color32(r, g, b, 255));
@@ -154,13 +155,13 @@ namespace Qubit.Frontend
                 wrapMode = TextureWrapMode.Clamp
             };
             for (int y = 0; y < size; y++)
-            for (int x = 0; x < size; x++)
-            {
-                float dx = Mathf.Max(radius - x - .5f, 0, x + .5f - (size - radius));
-                float dy = Mathf.Max(radius - y - .5f, 0, y + .5f - (size - radius));
-                float alpha = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy) + .5f);
-                texture.SetPixel(x, y, new Color(1, 1, 1, alpha));
-            }
+                for (int x = 0; x < size; x++)
+                {
+                    float dx = Mathf.Max(radius - x - .5f, 0, x + .5f - (size - radius));
+                    float dy = Mathf.Max(radius - y - .5f, 0, y + .5f - (size - radius));
+                    float alpha = Mathf.Clamp01(radius - Mathf.Sqrt(dx * dx + dy * dy) + .5f);
+                    texture.SetPixel(x, y, new Color(1, 1, 1, alpha));
+                }
             texture.Apply();
             roundedSprite = Sprite.Create(texture, new Rect(0, 0, size, size), new Vector2(.5f, .5f), 100,
                 0, SpriteMeshType.FullRect, new Vector4(radius, radius, radius, radius));
@@ -410,7 +411,7 @@ namespace Qubit.Frontend
         {
             string code = GetRoomCode();
             if (code == null || ManagerRegistry.PhotonNetworkController == null) return;
-            ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(code, JoinType.Solo);
+            Rooms.JoinRoom(code);
             feedback.text = "Join requested for " + code + ".";
         }
 

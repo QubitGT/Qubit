@@ -98,6 +98,6 @@ namespace Qubit.Extensions
             IEqualityComparer<TKey> comp = prop.GetValue(dictionary) as IEqualityComparer<TKey>;
             return comp;
         }
-    
+
     }
 }

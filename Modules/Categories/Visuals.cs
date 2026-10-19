@@ -48,17 +48,17 @@ using UnityEngine.TextCore;
 using UnityEngine.UI;
 using WebSocketSharp;
 using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Strings;
 using static Qubit.Frontend.Keyboard;
 using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Core.Assets;
+using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameModes;
-using static Qubit.Utilities.GameObj;
 using Object = UnityEngine.Object;
 using TextMeshPro = TMPro.TextMeshPro;
 
@@ -67,7 +67,7 @@ namespace Qubit.Modules.Categories
     public class Visuals
     {
 
-        private static Module followThemeModule, transparentThemeModule; 
+        private static Module followThemeModule, transparentThemeModule;
 
         private static Color ThemedColor(Color color)
         {
@@ -334,7 +334,7 @@ namespace Qubit.Modules.Categories
                     };
 
                     _infoSpriteAsset.spriteInfoList = new List<TMP_Sprite>();
-                    Traverse.Create(_infoSpriteAsset).Field("m_Version").SetValue("1.1.0"); 
+                    Traverse.Create(_infoSpriteAsset).Field("m_Version").SetValue("1.1.0");
 
                     _infoSpriteAsset.spriteGlyphTable.Clear();
                     for (int i = 0; i < spriteDataList.Count; i++)
@@ -427,8 +427,8 @@ namespace Qubit.Modules.Categories
 
         private static readonly Dictionary<VRRig, GameObject> hitboxESP = new Dictionary<VRRig, GameObject>();
 
-        
-        
+
+
 
         public static readonly Dictionary<SlingshotProjectile, LineRenderer> trajectoryPool = new Dictionary<SlingshotProjectile, LineRenderer>();
         public static LineRenderer localTrajectoryLine;
@@ -755,7 +755,7 @@ namespace Qubit.Modules.Categories
         static GameObject LeftSphere;
         static GameObject RightSphere;
 
-        
+
 
         private static readonly List<TextMeshPro> nameTagPool = new List<TextMeshPro>();
 
@@ -1297,7 +1297,7 @@ namespace Qubit.Modules.Categories
             return 0.1f + frames.Count * 0.1f;
         }
 
-        
+
 
 
 
@@ -1489,7 +1489,9 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
@@ -1502,7 +1504,8 @@ namespace Qubit.Modules.Categories
                         Notifications.information.Remove("Creation Date");
                         Notifications.information.Remove("Turn");
                     }
-                } });
+                }
+            });
         }
 
         public static void EnableDebugHUD()
@@ -2607,7 +2610,7 @@ namespace Qubit.Modules.Categories
                             if (vrrig.IsTagged())
                             {
                                 int taggedById = vrrig.taggedById;
-                                NetPlayer tagger = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(taggedById);
+                                NetPlayer tagger = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(taggedById);
 
                                 if (tagger != null)
                                     tmp.SafeSetText("Tagged by " + tagger?.NickName);
@@ -2993,7 +2996,7 @@ namespace Qubit.Modules.Categories
 
                             GameObject infoTag = new GameObject("infotag");
                             infoTag.transform.parent = textContainer.transform;
-                            infoTag.transform.localPosition = new Vector3(0f, 0.5f, 0f); 
+                            infoTag.transform.localPosition = new Vector3(0f, 0.5f, 0f);
                             infoTag.transform.localScale = Vector3.one;
                             TextMeshPro infoMesh = infoTag.AddComponent<TextMeshPro>();
                             infoMesh.fontSize = 2.4f;
@@ -3016,7 +3019,7 @@ namespace Qubit.Modules.Categories
 
                             GameObject infoBg = new GameObject("infobg");
                             infoBg.transform.parent = bgContainer.transform;
-                            infoBg.transform.localPosition = new Vector3(0f, 0.5f, 0f);  
+                            infoBg.transform.localPosition = new Vector3(0f, 0.5f, 0f);
                             infoBg.transform.localScale = Vector3.one;
                             infoBg.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
                             Object.Destroy(infoBg.GetComponent<Collider>());
@@ -5116,7 +5119,7 @@ namespace Qubit.Modules.Categories
             breadcrumbs.Clear();
         }
 
-        
+
         public static bool DoPerformanceCheck()
         {
             if (PerformanceVisuals)
@@ -5200,7 +5203,7 @@ namespace Qubit.Modules.Categories
             catch { }
         }
 
-        
+
         public static void CasualTracers()
         {
             if (DoPerformanceCheck())
@@ -5375,7 +5378,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        
+
         public static void CasualBeacons()
         {
             if (DoPerformanceCheck())
@@ -5515,7 +5518,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        
+
         public static void CasualDistanceESP()
         {
             if (DoPerformanceCheck())
@@ -5532,7 +5535,7 @@ namespace Qubit.Modules.Categories
 
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
-                if (playerRig.isLocal) 
+                if (playerRig.isLocal)
                     continue;
 
                 Color tagColor = followMenuTheme ? textColors[0].GetCurrentColor() : Color.white;
@@ -5554,7 +5557,7 @@ namespace Qubit.Modules.Categories
 
                 _ = $"{Vector3.Distance(Camera.main.transform.position, playerRig.transform.position):F1}m";
 
-                foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) 
+                foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>())
                 {
                     if (transform.gameObject.name == "bg")
                     {
@@ -5584,7 +5587,7 @@ namespace Qubit.Modules.Categories
 
             foreach (VRRig playerRig in Players.ActiveRigs)
             {
-                if (playerRig.isLocal) 
+                if (playerRig.isLocal)
                     continue;
 
                 Color tagColor = followMenuTheme ? textColors[0].GetCurrentColor() : Color.white;
@@ -5622,7 +5625,7 @@ namespace Qubit.Modules.Categories
 
                 _ = $"{Vector3.Distance(Camera.main.transform.position, playerRig.transform.position):F1}m";
 
-                foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) 
+                foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>())
                 {
                     if (transform.gameObject.name == "bg")
                     {
@@ -5639,7 +5642,7 @@ namespace Qubit.Modules.Categories
             if (DoPerformanceCheck())
                 return;
 
-            
+
 
             if (ManagerRegistry.GorillaGameManager == null)
                 return;
@@ -5652,7 +5655,7 @@ namespace Qubit.Modules.Categories
             if (sillyComputer == null)
                 return;
 
-            
+
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             bool hiddenOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
@@ -5661,11 +5664,11 @@ namespace Qubit.Modules.Categories
 
             NetPlayer currentTarget = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
 
-            
+
 
             foreach (var playerRig in Players.ActiveRigs.Where(playerRig => !playerRig.isLocal))
             {
-                if (GetPlayerFromVRRig(playerRig) == currentTarget) 
+                if (GetPlayerFromVRRig(playerRig) == currentTarget)
                 {
                     Color tagColor = followMenuTheme ? textColors[0].GetCurrentColor() : Color.white;
                     Color backgroundColor = playerRig.playerColor;
@@ -5686,7 +5689,7 @@ namespace Qubit.Modules.Categories
 
                     _ = $"{Vector3.Distance(Camera.main.transform.position, playerRig.transform.position):F1}m";
 
-                    foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) 
+                    foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>())
                     {
                         if (transform.gameObject.name == "bg")
                         {
@@ -5716,7 +5719,7 @@ namespace Qubit.Modules.Categories
 
                     _ = $"{Vector3.Distance(Camera.main.transform.position, playerRig.transform.position):F1}m";
 
-                    foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>()) 
+                    foreach (Transform transform in nameTagText.gameObject.GetComponentsInChildren<Transform>())
                     {
                         if (transform.gameObject.name == "bg")
                         {
@@ -5744,7 +5747,7 @@ namespace Qubit.Modules.Categories
                 TextMeshPro.SafeSetFontStyle(activeFontStyle);
                 TextMeshPro.SafeSetFont(activeFont);
 
-                
+
 
                 finalTextMeshPro = TextMeshPro;
             }
@@ -5783,13 +5786,13 @@ namespace Qubit.Modules.Categories
                 finalTextMeshPro = newMesh;
             }
 
-            finalTextMeshPro.gameObject.layer = hideOnCamera ? 19 : 
+            finalTextMeshPro.gameObject.layer = hideOnCamera ? 19 :
                 nameTagHolder.layer;
 
             return finalTextMeshPro;
         }
 
-        public static void ClearNameTagPool(bool destroy = false) 
+        public static void ClearNameTagPool(bool destroy = false)
         {
             if (DoPerformanceCheck())
                 return;
@@ -5849,7 +5852,7 @@ namespace Qubit.Modules.Categories
             return finalRender;
         }
 
-        public static void ClearLinePool(bool destroy = false) 
+        public static void ClearLinePool(bool destroy = false)
         {
             if (DoPerformanceCheck())
                 return;

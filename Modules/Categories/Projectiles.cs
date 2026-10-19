@@ -19,44 +19,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using static Qubit.Libraries.Entities.ThrowableProjectiles;
-using GorillaLocomotion;
-using static Qubit.Modules.Categories.Overpowered;
-using GorillaTag.Cosmetics;
-using Qubit.Patches.Netcode;
-using Qubit.Patches.Rigs;
-using Security = Qubit.Core.Security;
-using static Qubit.Modules.Categories.Fun;
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using GorillaExtensions;
+using GorillaTag.Cosmetics;
 using GorillaTag.CosmeticSystem;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
+using Qubit.Patches.Netcode;
+using Qubit.Patches.Rigs;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using WebSocketSharp;
 using static Qubit.Core.Security;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Controls.Controllers;
-using static Qubit.Libraries.Networking.Serialization;
-using static Qubit.Modules.Classes.GunLibrary;
-using static Qubit.Utilities.GameObj;
 using static Qubit.Libraries.Entities.Cosmetics;
+using static Qubit.Libraries.Entities.ThrowableProjectiles;
+using static Qubit.Libraries.Networking.Serialization;
+using static Qubit.Modules.Categories.Fun;
+using static Qubit.Modules.Classes.GunLibrary;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
+using Security = Qubit.Core.Security;
 
 namespace Qubit.Modules.Categories
 {
@@ -261,7 +258,7 @@ namespace Qubit.Modules.Categories
                         ? new RaiseEventOptions
                         {
                             TargetActors = ManagerRegistry.NetworkSystem.PlayerListOthers
-                                
+
                                 .Select(p => p.ActorNumber)
                                 .Concat(new[] { Networking.LocalPlayer.ActorNumber })
                                 .ToArray()
@@ -286,7 +283,7 @@ namespace Qubit.Modules.Categories
                         GrowingSnowballThrowable GrowingSnowball = (GrowingSnowballThrowable)Throwable;
                         if (growingSnowballSize == -1)
                             growingSnowballSize = GrowingSnowball.MaxSizeLevel;
-                        
+
 
                         if ((Networking.InRoom && !clientSided) || friendSided)
                         {
@@ -305,7 +302,7 @@ namespace Qubit.Modules.Categories
                                 projectileSendData[6] = GrowingSnowball.GetValidSizeLevel(SnowballSize);
                                 projectileSendData[7] = index;
 
-                                
+
                                 LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.GetValidSizeLevel(SnowballSize), index, color.Value, References.LocalRig);
                             }
                             else if (Networking.InRoom)
@@ -372,7 +369,7 @@ namespace Qubit.Modules.Categories
                             LaunchLocalProjectile(position, velocity, (byte)ToProjectileSource(hand), index, true, color32, friendSided ? friendProjectileScale : 1, Throwable.ProjectileHash, References.LocalRig);
                         else
                         {
-                            
+
                             SendSerialize(References.LocalRig.GetPhotonView());
                             RPCProtection();
                         }
@@ -812,14 +809,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void FecesGun()
@@ -844,14 +844,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void PeriodGun()
@@ -876,14 +879,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void SemenGun()
@@ -908,14 +914,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void VomitGun()
@@ -940,14 +949,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void SpitGun()
@@ -972,14 +984,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void LazerEyesGun()
@@ -1004,14 +1019,17 @@ namespace Qubit.Modules.Categories
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void ProjectileBlindGun()
@@ -1194,7 +1212,7 @@ namespace Qubit.Modules.Categories
             GunLibrary.Aim(GunData =>
             {
                 if (GetGunInput(true))
-                SendProjectile(GetGrowingSnowballProjectileEntry(), GunData.NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, 0f, 0f));
+                    SendProjectile(GetGrowingSnowballProjectileEntry(), GunData.NewPointer.transform.position + new Vector3(0f, 0.1f, 0f), new Vector3(0f, 0f, 0f));
             });
         }
 
@@ -1585,7 +1603,7 @@ namespace Qubit.Modules.Categories
             References.LocalRig.SetThrowableProjectileColor(false, Color.white);
         }
 
-        
+
 
 
 
@@ -1595,7 +1613,7 @@ namespace Qubit.Modules.Categories
             if (CosmeticsV2Spawner_Dirty.isPrepared)
             {
                 var throwables = ((AllCosmeticsArraySO)ManagerRegistry.CosmeticsController.v2_allCosmeticsInfoAssetRef.Asset).sturdyAssetRefs.Where(x => x.obj != null && x.obj.info.isThrowable).Select(x => x.obj.info.playFabID).Distinct().ToList();
-                if (snowballDict == null || snowballDict.Count != (throwables.Count - 3)) 
+                if (snowballDict == null || snowballDict.Count != (throwables.Count - 3))
                 {
                     if (!CosmeticsV2Spawner_Dirty.isPrepared)
                         return null;

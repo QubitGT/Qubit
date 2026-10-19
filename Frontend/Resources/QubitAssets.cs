@@ -24,7 +24,7 @@ using UnityEngine;
 
 namespace Qubit.Frontend.Resources
 {
-   
+
     public static class QubitAssets
     {
         private static AssetBundle bundle;
@@ -33,7 +33,7 @@ namespace Qubit.Frontend.Resources
         {
             if (bundle == null)
             {
-                using var stream = typeof(QubitAssets).Assembly.GetManifestResourceStream( $"{PluginInfo.ClientResourcePath}.qubitui");
+                using var stream = typeof(QubitAssets).Assembly.GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.qubitui");
                 if (stream == null) throw new InvalidOperationException("The Qubit UI bundle is missing. Run QubitInterfaceBuilder.Build in Unity.");
                 using var memory = new MemoryStream();
                 stream.CopyTo(memory);
@@ -42,8 +42,7 @@ namespace Qubit.Frontend.Resources
             }
 
             var asset = bundle.LoadAsset<T>(name);
-            if (asset == null) throw new InvalidOperationException("Missing Qubit UI asset: " + name);
-            return asset;
+            return asset ?? throw new InvalidOperationException("Missing Qubit UI asset: " + name);
         }
     }
 }

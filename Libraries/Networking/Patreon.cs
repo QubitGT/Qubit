@@ -19,18 +19,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Backend;
-using Qubit.Libraries.Audio;
-using Qubit.Core;
 using ExitGames.Client.Photon;
 using Photon.Pun;
 using Photon.Realtime;
+using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Frontend.Resources;
+using Qubit.Libraries.Audio;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
-using Qubit.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -38,7 +37,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering;
 using static Qubit.Extensions.Players;
-using static Qubit.Utilities.Assets;
+using static Qubit.Libraries.Core.Assets;
 using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Libraries.Networking
@@ -54,11 +53,11 @@ namespace Qubit.Libraries.Networking
 
             if (!ServerData.ServerDataEnabled)
             {
-                enabled = false; 
+                enabled = false;
                 return;
             }
 
-            PhotonNetwork.NetworkingClient.EventReceived += EventReceived;
+            ManagerRegistry.NetworkingClient.EventReceived += EventReceived;
         }
 
         public readonly List<PatreonMembership> PatreonMembers = new List<PatreonMembership>();
@@ -139,7 +138,7 @@ namespace Qubit.Libraries.Networking
                     }
 
                     playerIndicator.GetComponent<Renderer>().material = iconMaterial;
-                    playerIndicator.GetComponent<Renderer>().material.mainTexture = LoadTextureFromURL(member.Value.IconURL, $"Images/Patreon/{member.Key.UserId}.{Files.GetFileExtension(member.Value.IconURL)}"); 
+                    playerIndicator.GetComponent<Renderer>().material.mainTexture = LoadTextureFromURL(member.Value.IconURL, $"Images/Patreon/{member.Key.UserId}.{Core.Files.GetFileExtension(member.Value.IconURL)}");
                     playerIndicator.GetComponent<Renderer>().material.color = Color.white;
 
                     GameObject go = new GameObject("Qubit_Nametag");
@@ -175,7 +174,7 @@ namespace Qubit.Libraries.Networking
         {
             try
             {
-                NetPlayer sender = PhotonNetwork.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
+                NetPlayer sender = ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer(data.Sender);
                 if (data.Code != PatreonByte || !IsPlayerPatreonMember(sender)) return;
                 VRRig senderRig = GetVRRigFromPlayer(sender);
                 object[] args = data.CustomData == null ? new object[] { } : (object[])data.CustomData;

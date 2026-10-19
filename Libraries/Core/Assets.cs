@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Utilities/Assets.cs
+ * Qubit Menu  Libraries/Core/Assets.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,7 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Libraries.Core;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -28,9 +27,9 @@ using System.Net;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Networking;
-using static Qubit.Utilities.Files;
+using static Qubit.Libraries.Core.Files;
 
-namespace Qubit.Utilities
+namespace Qubit.Libraries.Core
 {
     public class Assets
     {
@@ -161,7 +160,7 @@ namespace Qubit.Utilities
             if (stream != null)
             {
                 byte[] fileData = new byte[stream.Length];
-                
+
                 stream.Read(fileData, 0, (int)stream.Length);
                 texture.LoadImage(fileData);
             }
@@ -182,7 +181,7 @@ namespace Qubit.Utilities
             string filePath = $"{PluginInfo.BaseDirectory}/{fileName}";
             string directory = Path.GetDirectoryName(filePath);
             if (!Directory.Exists(directory))
-                
+
                 Directory.CreateDirectory(directory);
 
             if (!File.Exists(filePath))

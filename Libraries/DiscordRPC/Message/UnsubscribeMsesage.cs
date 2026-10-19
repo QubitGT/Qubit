@@ -2,17 +2,17 @@
 
 namespace Qubit.Libraries.DiscordRPC.Message
 {
-    
+
 
 
     public class UnsubscribeMessage : IMessage
     {
-        
+
 
 
         public override MessageType Type { get { return MessageType.Unsubscribe; } }
 
-        
+
 
 
         public EventType Event { get; internal set; }

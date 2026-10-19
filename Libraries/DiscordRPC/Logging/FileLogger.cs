@@ -1,30 +1,30 @@
 ﻿namespace Qubit.Libraries.DiscordRPC.Logging
 {
-    
+
 
 
     public class FileLogger : ILogger
     {
-        
+
 
 
         public LogLevel Level { get; set; }
 
-        
+
 
 
         public string File { get; set; }
 
         private readonly object filelock;
 
-        
+
 
 
 
         public FileLogger(string path)
             : this(path, LogLevel.Info) { }
 
-        
+
 
 
 
@@ -37,7 +37,7 @@
         }
 
 
-        
+
 
 
 
@@ -48,7 +48,7 @@
             lock (filelock) System.IO.File.AppendAllText(File, "\r\nTRCE: " + (args.Length > 0 ? string.Format(message, args) : message));
         }
 
-        
+
 
 
 
@@ -59,7 +59,7 @@
             lock (filelock) System.IO.File.AppendAllText(File, "\r\nINFO: " + (args.Length > 0 ? string.Format(message, args) : message));
         }
 
-        
+
 
 
 
@@ -71,7 +71,7 @@
                 System.IO.File.AppendAllText(File, "\r\nWARN: " + (args.Length > 0 ? string.Format(message, args) : message));
         }
 
-        
+
 
 
 

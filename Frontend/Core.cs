@@ -19,17 +19,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Libraries.Entities;
-using Qubit.Core;
 using GorillaExtensions;
 using HarmonyLib;
 using Photon.Pun;
 using Qubit.Backend;
+using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Frontend.Colors;
 using Qubit.Libraries.Audio;
 using Qubit.Libraries.Controls;
 using Qubit.Libraries.Core;
+using Qubit.Libraries.Entities;
 using Qubit.Libraries.Interface;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
@@ -45,6 +45,7 @@ using UnityEngine.TextCore;
 using UnityEngine.UI;
 using UnityEngine.XR;
 using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Random;
 using static Qubit.Extensions.Strings;
 using static Qubit.Frontend.Classes.QubitMenuBody;
@@ -53,14 +54,12 @@ using static Qubit.Frontend.Prompts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Audio.Sounds;
 using static Qubit.Libraries.Controls.Controllers;
+using static Qubit.Libraries.Core.Assets;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Categories.Overpowered;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
-using static Qubit.Utilities.Assets;
-using static Qubit.Utilities.GameObj;
 using Console = Qubit.Backend.Console;
-using JoinType = GorillaNetworking.JoinType;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Frontend
@@ -256,20 +255,20 @@ namespace Qubit.Frontend
                 #endregion
 
                 #region Menu Features
-                
+
                 Watches.ForEach(watch => watch.Update());
 
                 // Load projectiles
                 ThrowableProjectiles.LoadProjectileCache();
 
-                
+
                 if (disorganized && Manager.CurrentCategoryName != "Main")
                 {
                     Manager.CurrentCategoryName = "Main";
                     ReloadMenu();
                 }
 
-                
+
                 if (longMenu && pageNumber != 0)
                 {
                     pageNumber = 0;
@@ -278,7 +277,7 @@ namespace Qubit.Frontend
 
                 VR.UpdatePhysicalReference();
 
-                
+
                 if (themeType == 61)
                 {
                     if (menu != null)
@@ -305,7 +304,7 @@ namespace Qubit.Frontend
                     }
                 }
 
-                
+
                 try
                 {
                     if (GunSounds)
@@ -362,7 +361,7 @@ namespace Qubit.Frontend
                 }
                 catch { }
 
-                
+
                 try
                 {
                     if (GunVibrations)
@@ -402,7 +401,6 @@ namespace Qubit.Frontend
                     }
                 }
 
-                
                 if (Networking.InRoom)
                 {
                     if (partyKickReconnecting)
@@ -438,13 +436,12 @@ namespace Qubit.Frontend
                         if (partyLastCode != null && Time.time > partyTime && (!waitForPlayerJoin || PhotonNetwork.PlayerListOthers.Length > 0))
                         {
                             Logs.Log("Attempting rejoin");
-                            ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(partyLastCode, JoinType.Solo);
+                            Libraries.Networking.Rooms.JoinRoom(partyLastCode);
                             partyTime = Time.time + Important.reconnectDelay;
                         }
                     }
                 }
 
-                
                 try
                 {
                     if (!VoiceRecorder.enabled)
@@ -671,7 +668,7 @@ namespace Qubit.Frontend
                 #region Mod Bindings
                 try
                 {
-                    
+
                     Inputs["A"] = rightPrimary;
                     Inputs["B"] = rightSecondary;
                     Inputs["X"] = leftPrimary;
@@ -817,7 +814,7 @@ namespace Qubit.Frontend
                 };
 
                 buttonSpriteSheet.spriteInfoList = new List<TMP_Sprite>();
-                Traverse.Create(buttonSpriteSheet).Field("m_Version").SetValue("1.1.0"); 
+                Traverse.Create(buttonSpriteSheet).Field("m_Version").SetValue("1.1.0");
 
                 buttonSpriteSheet.spriteGlyphTable.Clear();
                 for (int i = 0; i < spriteDataList.Count; i++)
@@ -881,44 +878,44 @@ namespace Qubit.Frontend
                 colorChanger.colors = backgroundColor;
             }
         }
-  public static Module[] GetModules()
-                  {
-    IEnumerable<Module> result;
+        public static Module[] GetModules()
+        {
+            IEnumerable<Module> result;
 
- if (isSearching)
+            if (isSearching)
             {
-   result = nonGlobalSearch && Manager.CurrentCategoryName != "Main"
-? Manager.modules[Manager.CurrentCategoryName]
-       : Manager.modules.SelectMany(category =>
-  !isAdmin && (category.Key.Contains("Admin") || category.Key == "Mod Givers")
-                  ? Array.Empty<Module>() : category.Value);
-    string query = (keyboardInput ?? "").Replace(" ", "").ToLowerInvariant();
- result = result.Where(b => (!b.detected || allowDetected) &&
-            (b.aliases ?? Array.Empty<string>()).Concat(new[] { b.RenderName })
-   .Any(t => t.ClearTags().Replace(" ", "").ToLowerInvariant().Contains(query)));
-}
-       else switch (Manager.CurrentCategoryName)
-  {
-                  case "Main": result = Manager.modules[Manager.CurrentCategoryName].Where(b => !skipButtons.Contains(b.name)); break;
-    case "Favorite Mods": result = favorites.Select(Manager.GetIndex).Where(b => b != null); break;
- case "Enabled Mods":
+                result = nonGlobalSearch && Manager.CurrentCategoryName != "Main"
+             ? Manager.modules[Manager.CurrentCategoryName]
+                    : Manager.modules.SelectMany(category =>
+               !isAdmin && (category.Key.Contains("Admin") || category.Key == "Mod Givers")
+                               ? Array.Empty<Module>() : category.Value);
+                string query = (keyboardInput ?? "").Replace(" ", "").ToLowerInvariant();
+                result = result.Where(b => (!b.detected || allowDetected) &&
+                           (b.aliases ?? Array.Empty<string>()).Concat(new[] { b.RenderName })
+                  .Any(t => t.ClearTags().Replace(" ", "").ToLowerInvariant().Contains(query)));
+            }
+            else switch (Manager.CurrentCategoryName)
+                {
+                    case "Main": result = Manager.modules[Manager.CurrentCategoryName].Where(b => !skipButtons.Contains(b.name)); break;
+                    case "Favorite Mods": result = favorites.Select(Manager.GetIndex).Where(b => b != null); break;
+                    case "Enabled Mods":
 
-            result = new[] { Manager.GetIndex("Exit Enabled Mods") }.Concat(
-   Manager.modules.SelectMany(category =>
-(hideSettings && category.Key.Contains("Settings")) ||
-       (hideMacros && category.Key.Contains("Macro"))
-  ? Array.Empty<Module>() : category.Value.Where(b => b.enabled)));
-                  break;
-    default: result = Manager.modules[Manager.CurrentCategoryName]; break;
- }
+                        result = new[] { Manager.GetIndex("Exit Enabled Mods") }.Concat(
+               Manager.modules.SelectMany(category =>
+            (hideSettings && category.Key.Contains("Settings")) ||
+                   (hideMacros && category.Key.Contains("Macro"))
+              ? Array.Empty<Module>() : category.Value.Where(b => b.enabled)));
+                        break;
+                    default: result = Manager.modules[Manager.CurrentCategoryName]; break;
+                }
             result = result.Where(b => b != null);
 #if LEGAL || LEGAL_DEBUG
 result = result.Where(b => b.legal || b.label);
 #endif
-  if (isSearching || Manager.GetIndex("Alphabetize Menu")?.enabled == true)
-                  result = result.OrderBy(b => (b.RenderName).ClearTags());
-    return result.ToArray();
- }
+            if (isSearching || Manager.GetIndex("Alphabetize Menu")?.enabled == true)
+                result = result.OrderBy(b => (b.RenderName).ClearTags());
+            return result.ToArray();
+        }
 
         private static Vector3? recenterPosition;
         private static Quaternion? recenterRotation;
@@ -1158,7 +1155,7 @@ result = result.Where(b => b.legal || b.label);
             }
         }
 
-        
+
 
 
 
@@ -1193,7 +1190,7 @@ result = result.Where(b => b.legal || b.label);
                 RoundMenuObject(gameObject, 0.024f);
         }
 
-        
+
 
 
 
@@ -1218,7 +1215,7 @@ result = result.Where(b => b.legal || b.label);
             colorChanger.colors = buttonColors[shouldBeEnabled ? 1 : 0];
         }
 
-        
+
 
 
 
@@ -1228,14 +1225,14 @@ result = result.Where(b => b.legal || b.label);
 
         public static void OutlineCanvasObject(MaskableGraphic canvasObject)
         {
-            
+
             Outline outline = canvasObject.gameObject.AddComponent<Outline>();
             outline.effectColor = Color.black;
             outline.effectDistance = new Vector2(0.001f, 0.001f);
             outline.useGraphicAlpha = true;
         }
 
-        
+
 
 
 
@@ -1336,7 +1333,7 @@ result = result.Where(b => b.legal || b.label);
                 colorChanger.overrideTransparency = false;
         }
 
-        
+
 
 
 
@@ -1485,7 +1482,7 @@ result = result.Where(b => b.legal || b.label);
             colorChanger.colors = gradient;
         }
 
-        
+
 
 
 
@@ -1501,7 +1498,7 @@ result = result.Where(b => b.legal || b.label);
                 RoundMenuObject(gameObject);
         }
 
-        
+
 
 
 
@@ -1551,7 +1548,7 @@ result = result.Where(b => b.legal || b.label);
                 tmp.fontStyle = targetStyle;
         }
 
-        
+
 
 
 
@@ -1714,7 +1711,7 @@ result = result.Where(b => b.legal || b.label);
         public static GameObject legacyGhostViewRight;
         public static Material GhostMaterial;
 
-        public static bool toggleDebugEchoMode; 
+        public static bool toggleDebugEchoMode;
         public static readonly string[] facts = {
             "The honeybee is the only insect that produces food eaten by humans.",
             "Bananas are berries, but strawberries aren't.",

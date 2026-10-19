@@ -4,12 +4,12 @@ using System.Text;
 
 namespace Qubit.Libraries.DiscordRPC.Helper
 {
-    
+
 
 
     public static class StringTools
     {
-        
+
 
 
 
@@ -19,7 +19,7 @@ namespace Qubit.Libraries.DiscordRPC.Helper
             return str.Length == 0 || string.IsNullOrEmpty(str.Trim()) ? null : str;
         }
 
-        
+
 
 
 
@@ -30,7 +30,7 @@ namespace Qubit.Libraries.DiscordRPC.Helper
             return str.WithinLength(bytes, Encoding.UTF8);
         }
 
-        
+
 
 
 
@@ -43,7 +43,7 @@ namespace Qubit.Libraries.DiscordRPC.Helper
         }
 
 
-        
+
 
 
 
@@ -58,7 +58,7 @@ namespace Qubit.Libraries.DiscordRPC.Helper
                 .Aggregate(string.Empty, (s1, s2) => s1 + s2);
         }
 
-        
+
 
 
 

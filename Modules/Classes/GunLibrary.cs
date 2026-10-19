@@ -27,34 +27,34 @@ using Qubit.Libraries.Controls;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using static Qubit.Extensions.GameObj;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Controls.Controllers;
-using static Qubit.Utilities.GameObj;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Modules.Classes
 {
     public static class GunLibrary
     {
-        
+
 
 
         public sealed class GunSettings
         {
-            
+
             public bool locks;
 
-            
+
             public Func<bool> when;
 
-            
+
             public Action onIdle;
 
-            
+
             public int? layerMask;
         }
 
-        
+
 
 
         public static void Aim(Action<(RaycastHit Ray, GameObject NewPointer)> action, GunSettings settings = null)
@@ -65,7 +65,7 @@ namespace Qubit.Modules.Classes
                 settings?.onIdle?.Invoke();
         }
 
-        
+
 
 
 
@@ -76,24 +76,26 @@ namespace Qubit.Modules.Classes
             GunLibrary.Aim(gunData =>
             {
                 if (locks && gunLocked && lockTarget != null)
-                                    action(lockTarget);
+                    action(lockTarget);
 
-                                if (GetGunInput(true) && (locks || settings?.when == null || settings.when()))
-                                {
-                                    VRRig gunTarget = gunData.Ray.collider.GetComponentInParent<VRRig>();
-                                    if (gunTarget && !gunTarget.IsLocal())
-                                    {
-                                        if (locks)
-                                        {
-                                            gunLocked = true;
-                                            lockTarget = gunTarget;
-                                        }
-                                        else
-                                            action(gunTarget);
-                                    }
-                                }
+                if (GetGunInput(true) && (locks || settings?.when == null || settings.when()))
+                {
+                    VRRig gunTarget = gunData.Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        if (locks)
+                        {
+                            gunLocked = true;
+                            lockTarget = gunTarget;
+                        }
+                        else
+                            action(gunTarget);
+                    }
+                }
 
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (locks)
                     {
@@ -103,10 +105,12 @@ namespace Qubit.Modules.Classes
                     else
                         settings?.onIdle?.Invoke();
 
-                }, layerMask = settings?.layerMask });
+                },
+                layerMask = settings?.layerMask
+            });
         }
 
-        
+
 
 
         public static void Point(Action<GameObject> action, GunSettings settings = null)
@@ -114,7 +118,7 @@ namespace Qubit.Modules.Classes
             GunLibrary.Aim(gunData =>
             {
                 if (GetGunInput(true) && (settings?.when == null || settings.when()))
-                                    action(gunData.NewPointer);
+                    action(gunData.NewPointer);
 
             }, new GunLibrary.GunSettings { onIdle = () => { settings?.onIdle?.Invoke(); }, layerMask = settings?.layerMask });
         }
@@ -125,7 +129,7 @@ namespace Qubit.Modules.Classes
         public static GameObject GunPointer;
         public static LineRenderer GunLine;
 
-        
+
 
 
 
@@ -253,7 +257,7 @@ namespace Qubit.Modules.Classes
             int Step = GunLineQuality;
             switch (gunVariation)
             {
-                case 1: 
+                case 1:
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -268,7 +272,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 2: 
+                case 2:
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -285,7 +289,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 3: 
+                case 3:
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -300,7 +304,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 4: 
+                case 4:
                     Step = GunLineQuality / 2;
 
                     if (GetGunInput(true) || gunLocked)
@@ -317,7 +321,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 5: 
+                case 5:
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -334,7 +338,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 6: 
+                case 6:
                     if (GetGunInput(true) || gunLocked)
                     {
                         GunLine.positionCount = Step;
@@ -349,7 +353,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 7: 
+                case 7:
                     if (GetGunInput(true) || gunLocked)
                     {
                         float audioSize = 0f;
@@ -380,7 +384,7 @@ namespace Qubit.Modules.Classes
                         GunLine.SetPosition(Step - 1, EndPosition);
                     }
                     break;
-                case 8: 
+                case 8:
                     Vector3 BaseMid = Vector3.Lerp(StartPosition, EndPosition, 0.5f);
 
                     float angle = Time.time * 3f;
@@ -409,7 +413,7 @@ namespace Qubit.Modules.Classes
                     GunLine.positionCount = Step;
                     GunLine.SetPositions(points);
                     break;
-                case 9: 
+                case 9:
                     GunLine.positionCount = Step;
 
                     RopePhysics physics = GunLine.gameObject.GetComponent<RopePhysics>();
@@ -446,7 +450,7 @@ namespace Qubit.Modules.Classes
             set => _giveGunTarget = value;
         }
 
-        
+
 
 
 
@@ -462,7 +466,7 @@ namespace Qubit.Modules.Classes
                 : GriplessGuns || (SwapGunHand ? leftGrab : rightGrab) || (HardGunLocks && gunLocked && !rightSecondary) || UI.IsMouseGripping();
         }
 
-        
+
 
 
 

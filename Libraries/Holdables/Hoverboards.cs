@@ -19,8 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Patches.Netcode;
-using WebSocketSharp;
 using GorillaExtensions;
 using Photon.Pun;
 using Photon.Realtime;
@@ -28,9 +26,11 @@ using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Modules.Classes;
+using Qubit.Patches.Netcode;
 using System;
 using System.Collections;
 using UnityEngine;
+using WebSocketSharp;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
@@ -149,14 +149,17 @@ namespace Qubit.Libraries.Holdables
                         lockTarget = gunTarget;
                     }
                 }
-            }, new GunLibrary.GunSettings { onIdle = () =>
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
                 {
                     if (gunLocked)
                     {
                         gunLocked = false;
                         References.LocalRig.enabled = true;
                     }
-                } });
+                }
+            });
         }
 
         public static void HoverboardScreenAll(Color color)
