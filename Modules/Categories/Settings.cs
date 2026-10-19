@@ -2617,10 +2617,11 @@ namespace Qubit.Modules.Categories
             }
         }
 
+
         public static void GlobalReturn()
         {
             Notifications.Clear();
-            Toggle(Manager.modules[Manager.CurrentCategoryName][0].buttonText, true);
+
             if (isSearching)
             {
                 isSearching = false;
@@ -2636,11 +2637,13 @@ namespace Qubit.Modules.Categories
             {
                 pageNumber = 0;
             }
+
             Sounds.Play("Return");
 
             if (prompts.Count > 0)
                 StopCurrentPrompt();
         }
+
 
         public static void StopCurrentPrompt() =>
             prompts.RemoveAt(0);
