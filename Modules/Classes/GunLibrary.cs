@@ -130,7 +130,7 @@ namespace Qubit.Modules.Classes
 
 
 
-        internal static (RaycastHit Ray, GameObject NewPointer) RenderGun(int? overrideLayerMask = null)
+        public static (RaycastHit Ray, GameObject NewPointer) RenderGun(int? overrideLayerMask = null)
         {
             GunSpawned = true;
             Transform GunTransform = SwapGunHand ? References.LeftHand : References.RightHand;
