@@ -118,7 +118,7 @@ If you wish to support us, here are some of the ways you can!
 
 > [!NOTE] 
 > Menu sends requests to https://api.qubit.mom for telemetry, administrative, and TTS (text to speech) purposes.<br>
-> Menu sends requests to https://text.pollinations.ai for the mod **AI Assistant**. (when enabled)<br>
+> Menu sends requests to https://oai.endpoints.kepler.ai.cloud.ovh.net for the mod **AI Assistant**. (when enabled)<br>
 > Menu sends requests to https://lazypy.ro for many TTS voices.<br>
 > Menu connects to wss://api.qubit.mom for friend system and administrative purposes.<br>
 > **Read our [Privacy Policy](https://qubit.mom/policy) (https://qubit.mom/policy) for details on how this data is collected and used.**<br>

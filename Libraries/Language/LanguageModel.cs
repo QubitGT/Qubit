@@ -99,14 +99,17 @@ namespace Qubit.Libraries.Language
             if (Transcription.narratorName == "Mommy ASMR")
                 SystemPrompt += @"You are also a calm, confident, gently dominant mommy-style caretaker with a warm, slow, reassuring, and authoritative tone, offering structure, comfort, praise, soft correction, and clear caring boundaries; when the user asks for approval, reassurance, validation, or comfort, respond with immediate, direct affirmation and nurturing praise using simple, confident language. Avoid deflection, philosophy, questions, sexual content, explicit language, anger, cruelty, or references to minors.";
 
-            text = URLEncode(text);
-            string prompt = URLEncode(string.Format(SystemPrompt, Frontend.Settings.fullModAmount, PluginInfo.DiscordInvite, PluginInfo.Version));
-            string api = "https://api.qubit.mom/ai";
+            string prompt = string.Format(SystemPrompt, Frontend.Settings.fullModAmount, PluginInfo.DiscordInvite, PluginInfo.Version);
+            string api = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1/chat/completions";
 
-            var payload = new
+            var payload = new ChatRequest
             {
-                text = text,
-                systemPrompt = prompt
+                model = "Meta-Llama-3_3-70B-Instruct",
+                messages = new[]
+                {
+                    new ChatMessage { role = "system", content = prompt },
+                    new ChatMessage { role = "user", content = text }
+                }
             };
             string jsonBody = JsonUtility.ToJson(payload);
 
@@ -115,6 +118,7 @@ namespace Qubit.Libraries.Language
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
+            request.SetRequestHeader("Authorization", "Bearer none");
 
             yield return request.SendWebRequest();
 
@@ -133,8 +137,8 @@ namespace Qubit.Libraries.Language
                 yield break;
             }
 
-            var parsed = JsonUtility.FromJson<Response>(request.downloadHandler.text);
-            string response = parsed.response;
+            var parsed = JsonUtility.FromJson<ChatResponse>(request.downloadHandler.text);
+            string response = parsed.choices[0].message.content;
             if (Modules.Categories.Settings.debugDictation)
                 Logs.Log($"AI Response: {response}");
 
@@ -255,11 +259,29 @@ namespace Qubit.Libraries.Language
         }
 
         [Serializable]
-        private class Response
+        private class ChatRequest
         {
-            public int status;
-            public string response;
-            public string error;
+            public string model;
+            public ChatMessage[] messages;
+        }
+
+        [Serializable]
+        private class ChatMessage
+        {
+            public string role;
+            public string content;
+        }
+
+        [Serializable]
+        private class ChatResponse
+        {
+            public ChatChoice[] choices;
+        }
+
+        [Serializable]
+        private class ChatChoice
+        {
+            public ChatMessage message;
         }
     }
 }
