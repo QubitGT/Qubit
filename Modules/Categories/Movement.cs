@@ -5206,7 +5206,7 @@ namespace Qubit.Modules.Categories
             {
                 Notifications.SendFormat("red", "SEX", $"A browser tab has been opened on your computer.");
                 PromptSingle("A browser tab has been opened on your computer. Please go and verify your age.", null, "Ok frick off buddy");
-                Files.OpenURL("https://Qubit.software/age_verification");
+                Files.OpenURL("https://qubit.mom/age_verification");
 
                 Coroutines.instance.StartCoroutine(Sex());
             });
