@@ -44,7 +44,7 @@ namespace Qubit.Frontend.Classes
 
             var button = new Module
             {
-                buttonText = buttonText,
+                name = buttonText,
                 isTogglable = false,
                 isSetting = true,
                 incremental = true,
@@ -54,7 +54,7 @@ namespace Qubit.Frontend.Classes
             };
 
             if (!string.IsNullOrEmpty(overlapText))
-                button.overlapText = overlapText;
+                button.displayName = overlapText;
 
             int CurrentIndex(string[] names)
             {
@@ -73,14 +73,14 @@ namespace Qubit.Frontend.Classes
                 var names = getNames();
                 if (names == null || names.Length == 0)
                 {
-                    button.overlapText = $"{label} <color=grey>[</color><color=green>Loading..</color><color=grey>]</color>";
+                    button.displayName = $"{label} <color=grey>[</color><color=green>Loading..</color><color=grey>]</color>";
                     return;
                 }
 
                 int v = CurrentIndex(names);
                 button.value = names[v];
 
-                button.overlapText = $"{label} <color=grey>[</color><color=green>{names[v]}</color><color=grey>]</color>";
+                button.displayName = $"{label} <color=grey>[</color><color=green>{names[v]}</color><color=grey>]</color>";
             }
 
             button.onValueChanged = () =>
@@ -138,7 +138,7 @@ namespace Qubit.Frontend.Classes
 
             var button = new Module
             {
-                buttonText = buttonText,
+                name = buttonText,
                 isTogglable = false,
                 isSetting = persist,
                 incremental = true,
@@ -154,7 +154,7 @@ namespace Qubit.Frontend.Classes
                 button.value = v;
 
                 if (display != null)
-                    button.overlapText = $"{label} <color=grey>[</color><color=green>{display(v)}</color><color=grey>]</color>";
+                    button.displayName = $"{label} <color=grey>[</color><color=green>{display(v)}</color><color=grey>]</color>";
             }
 
             button.onValueChanged = () =>

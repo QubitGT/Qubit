@@ -321,7 +321,7 @@ exit";
         {
             if (discord == null)
             {
-                discord = new DiscordRpcClient("1396080212441042944")
+                discord = new DiscordRpcClient("1555010806343667764")
                 {
                     Logger = new Libraries.DiscordRPC.Logging.DiscordLogManager()
                 };
@@ -356,7 +356,7 @@ exit";
                     State = inRoom ? $"Room: {roomName} ({PhotonNetwork.PlayerList.Length}/{PhotonNetwork.CurrentRoom.MaxPlayers})" : "Not in a room",
                     Assets = new Libraries.DiscordRPC.Entities.Assets
                     {
-                        LargeImageKey = "cone",
+                        LargeImageKey = "qubit",
                         LargeImageText = "Qubit",
                         SmallImageKey = inRoom ? "online" : "offline",
                         SmallImageText = inRoom ? "Online" : "Offline"

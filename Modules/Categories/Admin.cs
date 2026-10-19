@@ -945,7 +945,7 @@ namespace Qubit.Modules.Categories
             PromptText("What notification would you like to send?", () =>
             {
                 targetNotification = keyboardInput;
-                Manager.GetIndex("NotifLabel").overlapText = "Notif: " + keyboardInput;
+                Manager.GetIndex("NotifLabel").displayName = "Notif: " + keyboardInput;
             }, null, "Done", "Cancel");
         }
 

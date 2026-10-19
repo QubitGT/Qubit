@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Module.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -27,8 +27,10 @@ namespace Qubit.Modules
 {
     public class Module
     {
-        public string buttonText = "-"; 
-        public string overlapText;      
+        public string name = "-";
+        public string displayName;
+
+        public string RenderName => displayName ?? name;
 
         public string[] aliases;        
 

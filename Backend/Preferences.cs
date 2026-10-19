@@ -139,7 +139,7 @@ namespace Qubit.Backend
 
                     var state = ToSavedState(b);
                     if (state != null)
-                        data.buttons[b.buttonText] = state;
+                        data.buttons[b.name] = state;
                 }
             }
 
@@ -242,13 +242,13 @@ namespace Qubit.Backend
 
                 var state = ToSavedState(b);
                 if (state != null)
-                    _cache.buttons[b.buttonText] = state;
+                    _cache.buttons[b.name] = state;
                 else
-                    _cache.buttons.Remove(b.buttonText);
+                    _cache.buttons.Remove(b.name);
 
                 RequestWrite();
             }
-            catch (Exception e) { Logs.Log($"Error saving button '{b.buttonText}': " + e.Message); }
+            catch (Exception e) { Logs.Log($"Error saving button '{b.name}': " + e.Message); }
         }
 
         public static void SaveCustomTheme(CustomThemeData theme)
@@ -380,7 +380,7 @@ namespace Qubit.Backend
 
                     if (saved.Value.enabled == true && !module.enabled)
                     {
-                        Toggle(module.buttonText);
+                        Toggle(module.name);
                         enabledMods++;
                     }
                 }
@@ -446,7 +446,7 @@ namespace Qubit.Backend
                             b.rebindKey = kv.Value.rebindKey;
 
                         if (kv.Value.enabled == true && b.isTogglable && !b.enabled && !b.label)
-                            Toggle(b.buttonText);
+                            Toggle(b.name);
 
                         if (b.isSetting && kv.Value.value != null)
                         {
@@ -579,7 +579,7 @@ namespace Qubit.Backend
 
             Module button = Manager.GetIndex(buttonName);
             if (button != null)
-                button.overlapText = $"{buttonName} <color=grey>[</color><color=green>{saved}</color><color=grey>]</color>";
+                button.displayName = $"{buttonName} <color=grey>[</color><color=green>{saved}</color><color=grey>]</color>";
         }
 
         private static void MigrateLegacy()

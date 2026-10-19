@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/Room.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -109,13 +109,13 @@ namespace Qubit.Modules.Categories
                     string category = Manager.CurrentCategoryName;
                     string[] emojis = { "😀", "😂", "😍", "😎" };
                     List<Module> modList = new List<Module> {
-                        new Module { label = true, buttonText = "Click on an emoji you'd like to use!" }
+                        new Module { label = true, name = "Click on an emoji you'd like to use!" }
                     };
                     foreach (string emoji in emojis)
                     {
                         modList.Add(new Module
                         {
-                            buttonText = emoji,
+                            name = emoji,
                             method = () =>
                             {
                                 room.name = emoji;

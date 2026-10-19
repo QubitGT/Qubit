@@ -171,7 +171,7 @@ namespace Qubit.Libraries.Entities
             rememberdirectory = pageNumber;
 
             Dictionary<int, string> allBlockData = GetAllBlockData();
-            List<Module> blockButtons = new List<Module> { new Module { buttonText = "Exit Building Block Browser", method = RemoveCosmeticBrowser, isTogglable = false, toolTip = "Returns you back to the fun mods." } };
+            List<Module> blockButtons = new List<Module> { new Module { name = "Exit Building Block Browser", method = RemoveCosmeticBrowser, isTogglable = false, toolTip = "Returns you back to the fun mods." } };
 
             int i = 0;
             foreach (KeyValuePair<int, string> block in allBlockData)
@@ -180,8 +180,8 @@ namespace Qubit.Libraries.Entities
                 (
                     new Module
                     {
-                        buttonText = $"SelectBlock{i}",
-                        overlapText = block.Value,
+                        name = $"SelectBlock{i}",
+                        displayName = block.Value,
                         method = () => SelectBlock(block.Key, block.Value),
                         isTogglable = false,
                         toolTip = $"Selects the block \"{block.Value}\" to be used for the building mods."

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/Master.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -1699,7 +1699,7 @@ namespace Qubit.Modules.Categories
         }
 
         public static void UpdateMasterLabel() =>
-            Manager.GetIndex("MasterLabel").overlapText = Networking.IsMasterClient ? "You are master client." : "You are not master client.";
+            Manager.GetIndex("MasterLabel").displayName = Networking.IsMasterClient ? "You are master client." : "You are not master client.";
         #endregion
     }
 }

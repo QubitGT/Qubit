@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Frontend/QubitDesktopOverlay.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -440,7 +440,7 @@ namespace Qubit.Frontend
                 foreach (var button in category.Value)
                 {
                     if (button == null || !button.enabled || button.hideFromArraylist || button.label) continue;
-                    enabled.Add(Strings.NoRichtextTags(button.overlapText ?? button.buttonText));
+                    enabled.Add(Strings.NoRichtextTags(button.RenderName));
                 }
             }
             enabled.Sort(StringComparer.OrdinalIgnoreCase);

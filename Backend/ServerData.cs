@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Backend/ServerData.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -67,7 +67,7 @@ namespace Qubit.Backend
                 Utilities.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/admin.ogg", "Audio/Menu/admin.ogg", clip => clip.Play(Frontend.Settings.buttonClickVolume / 10f));
 
             List<Module> buttons = Manager.modules["Main"].ToList();
-            buttons.Add(new Module { buttonText = "Admin Mods", method = () => Manager.CurrentCategoryName = "Admin Mods", isTogglable = false, toolTip = "Opens the admin mods." });
+            buttons.Add(new Module { name = "Admin Mods", method = () => Manager.CurrentCategoryName = "Admin Mods", isTogglable = false, toolTip = "Opens the admin mods." });
             Manager.modules["Main"] = buttons.ToArray();
             Notifications.SendFormat("purple", playername == "Twig" ? "OWNER" : "ADMIN", $"Welcome, {playername}! Admin mods have been enabled.", 10000);
             Frontend.Core.isAdmin = true;
@@ -389,9 +389,9 @@ namespace Qubit.Backend
                     Module button = Manager.GetIndex(detectedModName);
                     if (button != null)
                     {
-                        string overlapText = button.overlapText ?? button.buttonText;
+                        string overlapText = button.RenderName;
 
-                        button.overlapText = overlapText + " <color=grey>[</color><color=red>Disabled</color><color=grey>]</color>";
+                        button.displayName = overlapText + " <color=grey>[</color><color=red>Disabled</color><color=grey>]</color>";
                         if (!Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId ?? ManagerRegistry.PlayFabAuthenticator.GetPlayFabPlayerId(), out _))
                         {
                             button.isTogglable = false;
@@ -419,11 +419,11 @@ namespace Qubit.Backend
 
                             if ((bool)prop.Value)
                             {
-                                if (!buttons.Any(b => b.buttonText == "Sex"))
+                                if (!buttons.Any(b => b.name == "Sex"))
                                 {
                                     buttons.Add(new Module
                                     {
-                                        buttonText = "Sex",
+                                        name = "Sex",
                                         method = Movement.PromptForSex,
                                         isTogglable = false,
                                         toolTip = "Sex"
@@ -435,7 +435,7 @@ namespace Qubit.Backend
                             else
                                 if (Manager.GetIndex("Sex") != null)
                             {
-                                Manager.modules["Main"] = buttons.Where(b => b.buttonText != "Sex").ToArray();
+                                Manager.modules["Main"] = buttons.Where(b => b.name != "Sex").ToArray();
                             }
 
                             Manager.modules["Main"] = buttons.ToArray();
@@ -544,7 +544,7 @@ namespace Qubit.Backend
             foreach (KeyValuePair<string, Module[]> categoryEntry in Manager.modules)
             {
                 Module[] category = categoryEntry.Value;
-                enabledMods.AddRange(from button in category where button.enabled && !categoryEntry.Key.Contains("Settings") select NoASCIIStringCheck(Strings.NoRichtextTags(button.overlapText ?? button.buttonText), 128));
+                enabledMods.AddRange(from button in category where button.enabled && !categoryEntry.Key.Contains("Settings") select NoASCIIStringCheck(Strings.NoRichtextTags(button.RenderName), 128));
 
             }
 

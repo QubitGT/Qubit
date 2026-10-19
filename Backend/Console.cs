@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Backend/Console.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -98,7 +98,7 @@ namespace Qubit.Backend
             else
             {
                 Button.SetEnabled(!enable);
-                ToggleMod(Button.buttonText);
+                ToggleMod(Button.name);
             }
         }
 

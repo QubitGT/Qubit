@@ -259,11 +259,11 @@ namespace Qubit.Libraries.Entities
         {
             rememberdirectory = pageNumber;
 
-            List<Module> cosmeticbuttons = new List<Module> { new Module { buttonText = "Exit Cosmetic Browser", method = RemoveCosmeticBrowser, isTogglable = false, toolTip = "Returns you back to the fun mods." } };
+            List<Module> cosmeticbuttons = new List<Module> { new Module { name = "Exit Cosmetic Browser", method = RemoveCosmeticBrowser, isTogglable = false, toolTip = "Returns you back to the fun mods." } };
             foreach (CosmeticsController.CosmeticItem hat in ManagerRegistry.CosmeticsController.allCosmetics)
             {
                 if (hat.canTryOn)
-                    cosmeticbuttons.Add(new Module { buttonText = Strings.ToTitleCase(hat.overrideDisplayName), method = () => AddCosmeticToCart(hat.itemName), isTogglable = false, toolTip = "Adds the " + hat.overrideDisplayName.ToLower() + "to your cart." });
+                    cosmeticbuttons.Add(new Module { name = Strings.ToTitleCase(hat.overrideDisplayName), method = () => AddCosmeticToCart(hat.itemName), isTogglable = false, toolTip = "Adds the " + hat.overrideDisplayName.ToLower() + "to your cart." });
             }
             Manager.modules["Temporary Category"] = cosmeticbuttons.ToArray();
 

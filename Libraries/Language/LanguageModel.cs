@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Libraries/Language/LanguageModel.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -79,9 +79,9 @@ namespace Qubit.Libraries.Language
         {
             string spaced = Regex.Replace(argument, "([a-z])([A-Z])", "$1 $2");
             return Manager.GetIndex(argument)
-                ?? Manager.modules.Values.SelectMany(b => b).FirstOrDefault(b => (b.overlapText ?? b.buttonText).Contains(argument, StringComparison.OrdinalIgnoreCase))
-                ?? Manager.modules.Values.SelectMany(b => b).FirstOrDefault(b => (b.overlapText ?? b.buttonText).Contains(spaced, StringComparison.OrdinalIgnoreCase))
-                ?? Manager.modules.Values.SelectMany(b => b).FirstOrDefault(b => spaced.ToLower().Split(' ').All(word => (b.overlapText ?? b.buttonText).ToLower().Contains(word)));
+                ?? Manager.modules.Values.SelectMany(b => b).FirstOrDefault(b => (b.RenderName).Contains(argument, StringComparison.OrdinalIgnoreCase))
+                ?? Manager.modules.Values.SelectMany(b => b).FirstOrDefault(b => (b.RenderName).Contains(spaced, StringComparison.OrdinalIgnoreCase))
+                ?? Manager.modules.Values.SelectMany(b => b).FirstOrDefault(b => spaced.ToLower().Split(' ').All(word => (b.RenderName).ToLower().Contains(word)));
         }
          
         public static IEnumerator AskAI(string text)
@@ -190,7 +190,7 @@ namespace Qubit.Libraries.Language
                                     yield break;
 #endif
                                 if (!button.enabled)
-                                    Manager.Toggle(button.buttonText, true);
+                                    Manager.Toggle(button.name, true);
                                 else
                                     Notifications.SendFormat("red", "ERROR", $"Mod is already enabled.");
                             }
@@ -210,7 +210,7 @@ namespace Qubit.Libraries.Language
                                     yield break;
 #endif
                                 if (button.enabled)
-                                    Manager.Toggle(button.buttonText, true);
+                                    Manager.Toggle(button.name, true);
                                 else
                                     Notifications.SendFormat("red", "ERROR", $"Mod is already enabled.");
                             }
@@ -224,7 +224,7 @@ namespace Qubit.Libraries.Language
                             Module button = FindSimilar(argument);
 
                             if (button != null)
-                                Manager.Toggle(button.buttonText, true);
+                                Manager.Toggle(button.name, true);
                             else
                                 Notifications.SendFormat("red", "ERROR", $"Mod \"{argument}\" does not exist.");
                             break;

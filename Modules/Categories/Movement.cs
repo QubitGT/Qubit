@@ -2074,7 +2074,7 @@ namespace Qubit.Modules.Categories
 
             List<Module> buttons = new List<Module>
             {
-                new Module { buttonText = "Exit Macros", method =() => Manager.CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Returns you back to the movement mods."},
+                new Module { name = "Exit Macros", method =() => Manager.CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Returns you back to the movement mods."},
             };
 
             int index = 0;
@@ -2083,18 +2083,18 @@ namespace Qubit.Modules.Categories
                 Macro macro = macroData.Value;
                 string macroName = macroData.Key;
 
-                buttons.Add(new Module { buttonText = $"Macro{macroName}", overlapText = macro.name, enabled = macro.enabled, enableMethod = () => ToggleMacro(macroName, true), method = () => ExecuteMacroButton(macro), disableMethod = () => ToggleMacro(macroName, false), toolTip = $"Toggles on and off the {macro.name} macro." });
+                buttons.Add(new Module { name = $"Macro{macroName}", displayName = macro.name, enabled = macro.enabled, enableMethod = () => ToggleMacro(macroName, true), method = () => ExecuteMacroButton(macro), disableMethod = () => ToggleMacro(macroName, false), toolTip = $"Toggles on and off the {macro.name} macro." });
                 index++;
             }
 
             buttons.AddRange(new[]
             {
-                new Module { buttonText = "Record <color=grey>[</color><color=green>LT</color><color=grey>]</color>", method = RecordMacro, toolTip = "Record your macros with your <color=green>left trigger</color>." },
-                new Module { buttonText = "Open Macros Folder", method = OpenMacrosFolder, isTogglable = false, toolTip = "Opens the folder in which your plugins are located." },
-                new Module { buttonText = "Reload Macros", method = LoadMacros, isTogglable = false, toolTip = "Reloads your macros." },
+                new Module { name = "Record <color=grey>[</color><color=green>LT</color><color=grey>]</color>", method = RecordMacro, toolTip = "Record your macros with your <color=green>left trigger</color>." },
+                new Module { name = "Open Macros Folder", method = OpenMacrosFolder, isTogglable = false, toolTip = "Opens the folder in which your plugins are located." },
+                new Module { name = "Reload Macros", method = LoadMacros, isTogglable = false, toolTip = "Reloads your macros." },
                 new Module
                 {
-                    buttonText = "Enable All Macros",
+                    name = "Enable All Macros",
                     method = () =>
                     {
                         foreach (var kvp in macros)
@@ -2111,7 +2111,7 @@ namespace Qubit.Modules.Categories
                 },
                 new Module
                 {
-                    buttonText = "Disable All Macro",
+                    name = "Disable All Macro",
                     method = () =>
                     {
                         foreach (var kvp in macros)
@@ -2427,7 +2427,7 @@ namespace Qubit.Modules.Categories
             {
                 new Module
                 {
-                    buttonText = "Exit Teleport to Map",
+                    name = "Exit Teleport to Map",
                     method = ExitTeleportToMap,
                     isTogglable = false,
                     toolTip = "Returns you back to the movement mods."
@@ -2438,8 +2438,8 @@ namespace Qubit.Modules.Categories
             {
                 tpbuttons.Add(new Module
                 {
-                    buttonText = "TeleportMap" + tpbuttons.Count,
-                    overlapText = entry.Key,
+                    name = "TeleportMap" + tpbuttons.Count,
+                    displayName = entry.Key,
                     method = () => TeleportToMap(entry.Value),
                     isTogglable = false,
                     toolTip = "Teleports you to the " + entry.Key + " map."

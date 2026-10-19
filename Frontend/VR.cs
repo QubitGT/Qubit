@@ -304,17 +304,17 @@ namespace Qubit.Frontend
                             Module[] buttonList = categoryEntry.Value;
                             enabledMods.AddRange(buttonList.Where(v => v.enabled && (!hideSettings || !categoryEntry.Key.Contains("Settings")) && (!hideMacros || !categoryEntry.Key.Contains("Macro"))));
                         }
-                        enabledMods = enabledMods.OrderBy(v => v.overlapText ?? v.buttonText).ToList();
+                        enabledMods = enabledMods.OrderBy(v => v.RenderName).ToList();
                         enabledMods.Insert(0, Manager.GetIndex("Exit Enabled Mods"));
                         toSortOf = enabledMods.ToArray();
                     }
 
                     TextMeshProUGUI watchText = Watches[0].text;
 
-                    string text = toSortOf[watchMenuIndex].buttonText;
+                    string text = toSortOf[watchMenuIndex].name;
 
-                    if (toSortOf[watchMenuIndex].overlapText != null)
-                        text = toSortOf[watchMenuIndex].overlapText;
+                    if (toSortOf[watchMenuIndex].displayName != null)
+                        text = toSortOf[watchMenuIndex].displayName;
 
                     text += $"\n<color=grey>[{watchMenuIndex + 1}/{toSortOf.Length}]\n{DateTime.Now:hh:mm tt}</color>";
 
@@ -350,7 +350,7 @@ namespace Qubit.Frontend
                         if (rightHand ? rightJoystickClick : leftJoystickClick)
                         {
                             string archive = Manager.CurrentCategoryName;
-                            Toggle(toSortOf[watchMenuIndex].buttonText, true);
+                            Toggle(toSortOf[watchMenuIndex].name, true);
                             if (Manager.CurrentCategoryName != archive)
                                 watchMenuIndex = 0;
 

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/Fun.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -1230,12 +1230,12 @@ namespace Qubit.Modules.Categories
         {
             Prompt("Would you like to choose from a mod list or type the mod property?", () =>
             {
-                List<Module> modList = new List<Module> { new Module { buttonText = "Exit Mod List", method = () => Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
+                List<Module> modList = new List<Module> { new Module { name = "Exit Mod List", method = () => Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
                 modList.AddRange(Visuals.modDictionary.Select((t, i) => Visuals.modDictionary.ElementAt(i))
                 .Select((mod, i) => new Module
                 {
-                    buttonText = $"Mod{i}",
-                    overlapText = mod.Value,
+                    name = $"Mod{i}",
+                    displayName = mod.Value,
                     enableMethod = () => ReloadModsToSpoof(mod.Key, mod.Value),
                     disableMethod = () => ReloadModsToSpoof(mod.Key, mod.Value, false),
                     toolTip = $"Show that you are using the mod {mod.Value} to other players."
@@ -4712,8 +4712,8 @@ namespace Qubit.Modules.Categories
             ButtonInfo[] categoryButtonsPre = Buttons.buttons[currentCategoryIndex];
             ButtonInfo[] categoryButtons = new ButtonInfo[categoryButtonsPre.Length + 2];
             int pageCount = (int)Math.Ceiling((double)categoryButtons.Length / pageSize) - 1;
-            categoryButtons[0] = new ButtonInfo { buttonText = "Previous Page", method =() => { pageNumber--; if (pageNumber < 0) { pageNumber = pageCount; } }, isTogglable = false, toolTip = "Takes you to the previous page."};
-            categoryButtons[1] = new ButtonInfo { buttonText = "Next Page", method =() => { pageNumber++; pageNumber %= pageCount + 1; }, isTogglable = false, toolTip = "Takes you to the previous page."};
+            categoryButtons[0] = new ButtonInfo { name = "Previous Page", method =() => { pageNumber--; if (pageNumber < 0) { pageNumber = pageCount; } }, isTogglable = false, toolTip = "Takes you to the previous page."};
+            categoryButtons[1] = new ButtonInfo { name = "Next Page", method =() => { pageNumber++; pageNumber %= pageCount + 1; }, isTogglable = false, toolTip = "Takes you to the previous page."};
             Array.Copy(categoryButtonsPre, 0, categoryButtons, 2, categoryButtonsPre.Length);
             for (int index = 0; index < categoryButtons.Length; index++)
             {
@@ -4726,7 +4726,7 @@ namespace Qubit.Modules.Categories
                     if (index < start || index >= end)
                         continue;
                 }
-                string modName = NoRichtextTags(mod.overlapText ?? mod.buttonText);
+                string modName = NoRichtextTags(mod.RenderName);
                 if (index == currentModIndex + (pageNumber * pageSize) || (index < 2 && index == currentModIndex))
                     modList += Environment.NewLine + "> " + (mod.enabled ? "[E] " : "" ) + modName;
                 else
@@ -4758,7 +4758,7 @@ namespace Qubit.Modules.Categories
                                     ButtonInfo[] buttonList = Buttons.buttons[i];
                                     foreach (ButtonInfo buttonInfo in buttonList)
                                     {
-                                        string text = (buttonInfo.overlapText ?? buttonInfo.buttonText).ToLower();
+                                        string text = (buttonInfo.RenderName).ToLower();
                                         if (text.Contains(consoleTyped.ToLower()) &&
                                             (selButton == null || i == currentCategoryIndex))
                                             selButton = buttonInfo;
@@ -4767,7 +4767,7 @@ namespace Qubit.Modules.Categories
                             }
 
                             if (selButton != null)
-                                Toggle(selButton.buttonText, true);
+                                Toggle(selButton.name, true);
                             else
                                 Notifications.SendFormat("red", "ERROR", $"Mod \"{consoleTyped}\" does not exist.");
                             consoleTyped = "";
@@ -4792,7 +4792,7 @@ namespace Qubit.Modules.Categories
                             break;
                         }
                         int prevCategory = currentCategoryIndex;
-                        Toggle(button.buttonText, true);
+                        Toggle(button.name, true);
                         if (prevCategory != currentCategoryIndex)
                         {
                             pageNumber = 0;

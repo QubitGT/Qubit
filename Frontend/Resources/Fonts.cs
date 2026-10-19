@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Frontend/Resources/Fonts.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -72,7 +72,7 @@ namespace Qubit.Frontend.Resources
                 .Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)
                 .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).Select(name => "Windows: " + name)).ToList();
             setting = new Module {
-                buttonText = "Qubit Font", overlapText = "Font: " + Default, isTogglable = false,
+                name = "Qubit Font", displayName = "Font: " + Default, isTogglable = false,
                 incremental = true, isSetting = true, value = Default, legal = true,
                 toolTip = "Changes the menu and keyboard font. Uses Qubit's clean default or an installed Windows font."
             };
@@ -94,7 +94,7 @@ namespace Qubit.Frontend.Resources
             string name = setting.GetValue<string>();
             selected = options.Contains(name) ? name : Default;
             setting.value = selected;
-            setting.overlapText = "Font: " + selected;
+            setting.displayName = "Font: " + selected;
             if (Frontend.Settings.menu != null) Apply(Frontend.Settings.menu);
             if (Keyboard.VRKeyboard != null) Apply(Keyboard.VRKeyboard);
         }

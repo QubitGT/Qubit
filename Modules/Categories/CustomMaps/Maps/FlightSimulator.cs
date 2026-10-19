@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/CustomMaps/Maps/FlightSimulator.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -29,7 +29,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public override long MapID => 5024157;
         public override Module[] Buttons => new[]
         {
-            new Module { buttonText = "Steal Pilot", enableMethod = StealPilot, disableMethod = DisableStealPilot, toolTip = "Allows you to steal the pilot position from other people's planes."},
+            new Module { name = "Steal Pilot", enableMethod = StealPilot, disableMethod = DisableStealPilot, toolTip = "Allows you to steal the pilot position from other people's planes."},
         };
 
         public static void StealPilot()

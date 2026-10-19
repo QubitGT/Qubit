@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/Sound.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -112,8 +112,8 @@ namespace Qubit.Modules.Categories
             {
                 soundButtons.Add(new Module
                 {
-                    buttonText = "Exit Subdirectory",
-                    overlapText = "Exit " + Subdirectory.Split("/")[^1],
+                    name = "Exit Subdirectory",
+                    displayName = "Exit " + Subdirectory.Split("/")[^1],
                     method = () =>
                     {
                         Subdirectory = RemoveLastDirectory(Subdirectory);
@@ -127,7 +127,7 @@ namespace Qubit.Modules.Categories
             {
                 soundButtons.Add(new Module
                 {
-                    buttonText = "Exit Soundboard",
+                    name = "Exit Soundboard",
                     method = () => Manager.CurrentCategoryName = "Sound Mods",
                     isTogglable = false,
                     toolTip = "Returns you back to the sound mods."
@@ -142,8 +142,8 @@ namespace Qubit.Modules.Categories
                 let relativePath = Path.GetRelativePath(path, folder)
                 select new Module
                 {
-                    buttonText = "SoundboardFolder" + relativePath.Hash(),
-                    overlapText = $"<sprite name=\"Folder\">  {relativePath}  ",
+                    name = "SoundboardFolder" + relativePath.Hash(),
+                    displayName = $"<sprite name=\"Folder\">  {relativePath}  ",
                     method = () => OpenFolder(relativePath),
                     isTogglable = false,
                     toolTip = "Opens the " + relativePath + " folder."
@@ -166,8 +166,8 @@ namespace Qubit.Modules.Categories
                     {
                         soundButtons.Add(new Module
                         {
-                            buttonText = soundKey,
-                            overlapText = soundName,
+                            name = soundKey,
+                            displayName = soundName,
                             method = () => PrepareBindAudio(soundPath),
                             disableMethod = StopAllSounds,
                             toolTip = $"Plays {soundName} through your microphone."
@@ -179,8 +179,8 @@ namespace Qubit.Modules.Categories
                         {
                             soundButtons.Add(new Module
                             {
-                                buttonText = soundKey,
-                                overlapText = soundName,
+                                name = soundKey,
+                                displayName = soundName,
                                 enableMethod = () => Fun.PlayAudio(soundPath),
                                 disableMethod = StopAllSounds,
                                 toolTip = $"Plays {soundName} through your microphone."
@@ -190,8 +190,8 @@ namespace Qubit.Modules.Categories
                         {
                             soundButtons.Add(new Module
                             {
-                                buttonText = soundKey,
-                                overlapText = soundName,
+                                name = soundKey,
+                                displayName = soundName,
                                 method = () => Fun.PlayAudio(soundPath),
                                 isTogglable = false,
                                 toolTip = $"Plays {soundName} through your microphone."
@@ -204,8 +204,8 @@ namespace Qubit.Modules.Categories
                     Module buttonInfo = null;
                     buttonInfo = new Module
                     {
-                        buttonText = soundKey,
-                        overlapText = soundName,
+                        name = soundKey,
+                        displayName = soundName,
                         toolTip = $"Allows you to view {soundName}'s properties.",
                         method = () => LoadSoundProperties(soundName, soundPath, soundName.Hash()),
                         isTogglable = false
@@ -217,7 +217,7 @@ namespace Qubit.Modules.Categories
 
             soundButtons.Add(new Module
             {
-                buttonText = "Stop All Sounds",
+                name = "Stop All Sounds",
                 method = StopAllSounds,
                 isTogglable = false,
                 toolTip = "Stops all currently playing sounds."
@@ -225,7 +225,7 @@ namespace Qubit.Modules.Categories
 
             soundButtons.Add(new Module
             {
-                buttonText = "Open Sound Folder",
+                name = "Open Sound Folder",
                 aliases = new[] { "Open Soundboard Folder" },
                 method = OpenSoundFolder,
                 isTogglable = false,
@@ -234,7 +234,7 @@ namespace Qubit.Modules.Categories
 
             soundButtons.Add(new Module
             {
-                buttonText = "Reload Sounds",
+                name = "Reload Sounds",
                 method = () =>
                 {
                     Soundboard.CachedButtons.Clear();
@@ -246,7 +246,7 @@ namespace Qubit.Modules.Categories
 
             soundButtons.Add(new Module
             {
-                buttonText = "Get More Sounds",
+                name = "Get More Sounds",
                 method = LoadSoundLibrary,
                 isTogglable = false,
                 toolTip = "Opens a public audio library, where you can download your own sounds."
@@ -270,7 +270,7 @@ namespace Qubit.Modules.Categories
         {
             string library = GetHttp($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/SoundLibrary.txt");
             string[] audios = AlphabetizeNoSkip(library.Split("\n"));
-            List<Module> soundbuttons = new List<Module> { new Module { buttonText = "Exit Sound Library", method = () => LoadSoundboard(), isTogglable = false, toolTip = "Returns you back to the soundboard." } };
+            List<Module> soundbuttons = new List<Module> { new Module { name = "Exit Sound Library", method = () => LoadSoundboard(), isTogglable = false, toolTip = "Returns you back to the soundboard." } };
             int index = 0;
             foreach (string audio in audios)
             {
@@ -278,7 +278,7 @@ namespace Qubit.Modules.Categories
                 {
                     index++;
                     string[] Data = audio.Split(";");
-                    soundbuttons.Add(new Module { buttonText = "SoundboardDownload" + index, overlapText = Data[0], method = () => DownloadSound(Data[0], $"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/Sounds/{Data[1]}"), isTogglable = false, toolTip = "Downloads " + Data[0] + " to your sound library." });
+                    soundbuttons.Add(new Module { name = "SoundboardDownload" + index, displayName = Data[0], method = () => DownloadSound(Data[0], $"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/Sounds/{Data[1]}"), isTogglable = false, toolTip = "Downloads " + Data[0] + " to your sound library." });
                 }
             }
             Manager.modules["Sound Library"] = soundbuttons.ToArray();
@@ -311,7 +311,7 @@ namespace Qubit.Modules.Categories
 
                 if (!activeSounds.ContainsKey(hash))
                 {
-                    playButton.overlapText = "Stop";
+                    playButton.displayName = "Stop";
                     PlaySoundboardSound(soundPath, hash, Soundboard.LoopAudio, BindMode > 0);
 
                     System.Collections.IEnumerator Reload()
@@ -331,7 +331,7 @@ namespace Qubit.Modules.Categories
             {
                 if (activeSounds.ContainsKey(hash))
                 {
-                    playButton.overlapText = "Play";
+                    playButton.displayName = "Play";
                     StopSoundboardSound(hash);
                     LoadSoundProperties(soundName, soundPath, hash);
                     ReloadMenu();
@@ -359,9 +359,9 @@ namespace Qubit.Modules.Categories
 
             playButton = new Module
             {
-                buttonText = $"Play or Pause SoundboardSound {hashedName}",
+                name = $"Play or Pause SoundboardSound {hashedName}",
                 toolTip = $"Plays or pauses the sound {soundName}.",
-                overlapText = isActive ? "Stop" : "Play",
+                displayName = isActive ? "Stop" : "Play",
                 enableMethod = Play,
                 disableMethod = Stop,
                 enabled = isActive
@@ -370,13 +370,13 @@ namespace Qubit.Modules.Categories
             durationButton = new Module
             {
                 label = true,
-                buttonText = $"SoundboardSound {hashedName}'s Duration",
-                overlapText = $"Duration: Loading..",
+                name = $"SoundboardSound {hashedName}'s Duration",
+                displayName = $"Duration: Loading..",
                 method = () =>
                 {
                     try
                     {
-                        durationButton.overlapText = activeSounds.TryGetValue(hash, out var s) && s.Clip != null
+                        durationButton.displayName = activeSounds.TryGetValue(hash, out var s) && s.Clip != null
                             ? $"Duration: {FormatDuration(s.Clip.CurrentTime)}"
                             : "Duration: N/A";
                     }
@@ -388,7 +388,7 @@ namespace Qubit.Modules.Categories
             {
                 new Module
                 {
-                    buttonText = $"Exit {soundName}'s Properties",
+                    name = $"Exit {soundName}'s Properties",
                     method = () => LoadSoundboard(),
                     isTogglable = false,
                     toolTip = "Returns you back to the soundboard."
@@ -400,25 +400,25 @@ namespace Qubit.Modules.Categories
             {
                 pauseButton = new Module
                 {
-                    buttonText = $"Pause SoundboardSound {hashedName}",
-                    overlapText = "Pause",
+                    name = $"Pause SoundboardSound {hashedName}",
+                    displayName = "Pause",
                     enableMethod = () =>
                     {
                         sound.Clip.Pause();
-                        pauseButton.overlapText = "Resume";
+                        pauseButton.displayName = "Resume";
                     },
                     disableMethod = () =>
                     {
                         sound.Clip.Resume();
-                        pauseButton.overlapText = "Pause";
+                        pauseButton.displayName = "Pause";
                     },
                     toolTip = $"Pauses or resumes the sound."
                 };
                 list.Add(pauseButton);
                 list.Add(new Module
                 {
-                    buttonText = $"Loop SoundboardSound {hashedName}",
-                    overlapText = "Loop",
+                    name = $"Loop SoundboardSound {hashedName}",
+                    displayName = "Loop",
                     enableMethod = () => sound.Clip.Looping = true,
                     disableMethod = () => sound.Clip.Looping = false,
                     toolTip = "Makes the song loop when it ends."
@@ -426,8 +426,8 @@ namespace Qubit.Modules.Categories
 
                 skipButton = new Module
                 {
-                    buttonText = $"Skip SoundboardSound {hashedName}",
-                    overlapText = $"Skip <color=grey>[</color><color=green>{skipAmount:0.0}s</color><color=grey>]</color>",
+                    name = $"Skip SoundboardSound {hashedName}",
+                    displayName = $"Skip <color=grey>[</color><color=green>{skipAmount:0.0}s</color><color=grey>]</color>",
                     enableMethod = () => sound.Clip.CurrentTime = Mathf.Clamp(sound.Clip.CurrentTime + skipAmount, 0, sound.Clip.Length),
                     disableMethod = () => sound.Clip.CurrentTime = Mathf.Clamp(sound.Clip.CurrentTime - skipAmount, 0, sound.Clip.Length),
                     incremental = true,
@@ -440,8 +440,8 @@ namespace Qubit.Modules.Categories
                 list.Add(new Module
                 {
                     label = true,
-                    buttonText = $"SoundboardSound {hashedName}'s Length",
-                    overlapText = $"Length: {FormatDuration(sound.Clip.Length)}"
+                    name = $"SoundboardSound {hashedName}'s Length",
+                    displayName = $"Length: {FormatDuration(sound.Clip.Length)}"
                 });
 
                 volumeButton = ButtonHelper.CreateNumeric(
@@ -472,7 +472,7 @@ namespace Qubit.Modules.Categories
                     apply: v =>
                     {
                         skipAmount = v * 0.5f;
-                        skipButton.overlapText = $"Skip Amount <color=grey>[</color><color=green>{skipAmount:0.0}s</color><color=grey>]</color>";
+                        skipButton.displayName = $"Skip Amount <color=grey>[</color><color=green>{skipAmount:0.0}s</color><color=grey>]</color>";
                     },
                     display: v => $"{v * 0.5f:0.0}s",
                     persist: false,
@@ -605,7 +605,7 @@ namespace Qubit.Modules.Categories
                         {
                             foreach (var button in row)
                             {
-                                if (keys.Contains(button.buttonText))
+                                if (keys.Contains(button.name))
                                     button.SetEnabled(false);
                             }
                         }
@@ -643,7 +643,7 @@ namespace Qubit.Modules.Categories
                     {
                         foreach (var button in row)
                         {
-                            if (keys.Contains(button.buttonText))
+                            if (keys.Contains(button.name))
                                 button.SetEnabled(false);
                         }
                     }

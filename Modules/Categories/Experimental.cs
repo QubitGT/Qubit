@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/Experimental.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -91,14 +91,14 @@ namespace Qubit.Modules.Categories
             {
                 foreach (Module button in buttonn)
                 {
-                    if (previousNames.Contains(button.buttonText))
+                    if (previousNames.Contains(button.name))
                     {
-                        string buttonText = button.overlapText ?? button.buttonText;
-                        button.overlapText = buttonText;
-                        button.buttonText += "X";
+                        string buttonText = button.RenderName;
+                        button.displayName = buttonText;
+                        button.name += "X";
                         duplicateButtons++;
                     }
-                    previousNames.Add(button.buttonText);
+                    previousNames.Add(button.name);
                 }
             }
             Notifications.SendFormat("green", "SUCCESS", "Successfully fixed " + duplicateButtons + " broken buttons.");

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Frontend/QubitDetails.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -89,16 +89,16 @@ namespace Qubit.Frontend
         }
         private static Module Setting(string name, string tip, bool enabled)
         {
-            var b = new Module { buttonText = name, toolTip = tip, isSetting = true, legal = true, enabled = enabled };
+            var b = new Module { name = name, toolTip = tip, isSetting = true, legal = true, enabled = enabled };
             Manager.AddModule("Menu Settings", b);
             return b;
         }
         private static Module Number(string name, float[] values, float initial, string unit)
         {
-            var b = new Module { buttonText = name, toolTip = "Adjusts " + name.ToLowerInvariant() + ".", isSetting = true, legal = true, isTogglable = false, incremental = true, value = initial };
+            var b = new Module { name = name, toolTip = "Adjusts " + name.ToLowerInvariant() + ".", isSetting = true, legal = true, isTogglable = false, incremental = true, value = initial };
             b.onValueChanged = () => {
                 if (!values.Contains(b.GetValue<float>())) b.value = initial;
-                b.overlapText = name + ": " + b.GetValue<float>().ToString("0.##") + " " + unit;
+                b.displayName = name + ": " + b.GetValue<float>().ToString("0.##") + " " + unit;
             };
             b.cycleValue = forward => {
                 int index = Array.IndexOf(values, b.GetValue<float>());
@@ -209,7 +209,7 @@ namespace Qubit.Frontend
         {
             if (canvas == null) return;
             var info = selectedMod == null ? null : Manager.GetIndex(selectedMod);
-            Label("Title").text = mode == 1 ? "Font preview" : mode == 2 ? "Theme preview" : info?.overlapText ?? info?.buttonText ?? "Select a mod";
+            Label("Title").text = mode == 1 ? "Font preview" : mode == 2 ? "Theme preview" : info?.RenderName ?? "Select a mod";
             Label("Title").enableAutoSizing = true; Label("Title").fontSizeMin = 13; Label("Title").fontSizeMax = 25;
             Label("Status").text = mode != 0 ? "Preview only / Apply to save" : info == null ? "Point at a row to inspect it" : info.isTogglable ? (info.enabled ? "ENABLED" : "DISABLED") : "ACTION / SETTING";
             string description = info?.toolTip ?? "Point at a mod to read its pop-up description. Use Fonts or Themes to try a style before applying it. Pointer controls are in Menu Settings.";

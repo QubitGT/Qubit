@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Libraries/Networking/Patreon.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -228,7 +228,7 @@ namespace Qubit.Libraries.Networking
             Notifications.SendFormat("purple", "PATREON", $"Welcome, {patreonName}! Patreon mods have been enabled.", 10000);
 
             List<Module> buttons = Manager.modules["Main"].ToList();
-            buttons.Add(new Module { buttonText = "Patreon Mods", method = () => Manager.CurrentCategoryName = "Patreon Mods", isTogglable = false, toolTip = "Opens the patreon mods." });
+            buttons.Add(new Module { name = "Patreon Mods", method = () => Manager.CurrentCategoryName = "Patreon Mods", isTogglable = false, toolTip = "Opens the patreon mods." });
             Manager.modules["Main"] = buttons.ToArray();
 
             if (Frontend.Settings.dynamicSounds)

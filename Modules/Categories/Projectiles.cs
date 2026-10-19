@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/Projectiles.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -445,7 +445,7 @@ namespace Qubit.Modules.Categories
             if (ProjectileMode < 0)
                 ProjectileMode = projectileNames.Length - 1;
 
-            Manager.GetIndex("Change Projectile").overlapText = "Change Projectile <color=grey>[</color><color=green>" + projectileNames[ProjectileMode] + "</color><color=grey>]</color>";
+            Manager.GetIndex("Change Projectile").displayName = "Change Projectile <color=grey>[</color><color=green>" + projectileNames[ProjectileMode] + "</color><color=grey>]</color>";
         }
         public static void ApplyProjectileIndex(int index) => targetProjectileIndex = index;
         public static void ApplyShootSpeed(int index) => ShootStrength = ShootStrengthTypes[index];

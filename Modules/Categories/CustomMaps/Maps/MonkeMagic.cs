@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/CustomMaps/Maps/MonkeMagic.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -41,24 +41,24 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public override long MapID => 5107228;
         public override Module[] Buttons => new[]
         {
-            new Module { buttonText = "Lightning Strike Self", method = LightningStrikeSelf, toolTip = "Strikes yourself with lightning."},
-            new Module { buttonText = "Lightning Strike Gun", method = LightningStrikeGun, toolTip = "Strikes whoever your hand desires with lightning."},
-            new Module { buttonText = "Lightning Strike All", method = LightningStrikeAll, toolTip = "Strikes everyone in the room with lightning."},
+            new Module { name = "Lightning Strike Self", method = LightningStrikeSelf, toolTip = "Strikes yourself with lightning."},
+            new Module { name = "Lightning Strike Gun", method = LightningStrikeGun, toolTip = "Strikes whoever your hand desires with lightning."},
+            new Module { name = "Lightning Strike All", method = LightningStrikeAll, toolTip = "Strikes everyone in the room with lightning."},
 
-            new Module { buttonText = "Change Material Self", method = ChangeMaterialSelf, toolTip = "Changes your material."},
-            new Module { buttonText = "Change Material Gun", method = ChangeMaterialGun, toolTip = "Changes the material of whoever your hand desires."},
-            new Module { buttonText = "Change Material All", method = ChangeMaterialAll, toolTip = "Changes the material of everyone in the room."},
+            new Module { name = "Change Material Self", method = ChangeMaterialSelf, toolTip = "Changes your material."},
+            new Module { name = "Change Material Gun", method = ChangeMaterialGun, toolTip = "Changes the material of whoever your hand desires."},
+            new Module { name = "Change Material All", method = ChangeMaterialAll, toolTip = "Changes the material of everyone in the room."},
 
-            new Module { buttonText = "Spawn Lucy Self", isTogglable = false, method = SpawnLucySelf, toolTip = "Spawns lucy on yourself."},
-            new Module { buttonText = "Spawn Lucy Gun", method = SpawnLucyGun, toolTip = "Spawns lucy on whoever your hand desires."},
-            new Module { buttonText = "Spawn Lucy All", isTogglable = false, method = SpawnLucyAll, toolTip = "Spawns lucy on everyone in the room."},
+            new Module { name = "Spawn Lucy Self", isTogglable = false, method = SpawnLucySelf, toolTip = "Spawns lucy on yourself."},
+            new Module { name = "Spawn Lucy Gun", method = SpawnLucyGun, toolTip = "Spawns lucy on whoever your hand desires."},
+            new Module { name = "Spawn Lucy All", isTogglable = false, method = SpawnLucyAll, toolTip = "Spawns lucy on everyone in the room."},
 
-            new Module { buttonText = "Monke Magic Crash Gun", overlapText = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
-            new Module { buttonText = "Monke Magic Crash All", overlapText = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
-            new Module { buttonText = "Monke Magic Anti Report", overlapText = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
-            new Module { buttonText = "Monke Magic Crash Aura", overlapText = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
-            new Module { buttonText = "Monke Magic Crash On Touch", overlapText = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
-            new Module { buttonText = "Monke Magic Crash When Touched", overlapText = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }
+            new Module { name = "Monke Magic Crash Gun", displayName = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
+            new Module { name = "Monke Magic Crash All", displayName = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
+            new Module { name = "Monke Magic Anti Report", displayName = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
+            new Module { name = "Monke Magic Crash Aura", displayName = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
+            new Module { name = "Monke Magic Crash On Touch", displayName = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
+            new Module { name = "Monke Magic Crash When Touched", displayName = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }
         };
 
         private static float lightningDelay;

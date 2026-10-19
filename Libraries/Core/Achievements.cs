@@ -62,13 +62,13 @@ namespace Qubit.Libraries.Core
         {
             int achievementCount = List.Count;
 
-            List<Module> achievementButtons = new List<Module> { new Module { buttonText = "Exit Achievements", method = () => Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
+            List<Module> achievementButtons = new List<Module> { new Module { name = "Exit Achievements", method = () => Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
 
             if (achievementCount <= 0)
                 achievementButtons.Add(
                     new Module
                     {
-                        buttonText = "You have no achievements.",
+                        name = "You have no achievements.",
                         label = true,
                         legal = true
                     });
@@ -79,8 +79,8 @@ namespace Qubit.Libraries.Core
                     achievementButtons.Add(
                         new Module
                         {
-                            buttonText = $"Achievement{i}",
-                            overlapText = achievement.name,
+                            name = $"Achievement{i}",
+                            displayName = achievement.name,
                             method = () => PromptSingle($"{achievement.description}<{PluginInfo.ServerResourcePath}/{achievement.icon}>", null, "Done"),
                             isTogglable = false,
                             toolTip = achievement.description,

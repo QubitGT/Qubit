@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Frontend/Legacy.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -568,7 +568,7 @@ namespace Qubit.Frontend
                                 try
                                 {
                                     List<string> texts = v.aliases == null ? new List<string>() : v.aliases.ToList();
-                                    texts.Add(v.overlapText ?? v.buttonText);
+                                    texts.Add(v.RenderName);
 
                                     if (texts.Any(buttonText => buttonText.ClearTags().Replace(" ", "").ToLower().Contains(keyboardInput.Replace(" ", "").ToLower())))
                                         searchedMods.Add(v);
@@ -592,7 +592,7 @@ namespace Qubit.Frontend
                                             continue;
 
                                         List<string> texts = v.aliases == null ? new List<string>() : v.aliases.ToList();
-                                        texts.Add(v.overlapText ?? v.buttonText);
+                                        texts.Add(v.RenderName);
 
                                         if (texts.Any(buttonText => buttonText.ClearTags().Replace(" ", "").ToLower().Contains(keyboardInput.Replace(" ", "").ToLower())))
                                             searchedMods.Add(v);
@@ -617,7 +617,7 @@ namespace Qubit.Frontend
                                     List<Module> buttons = new List<Module>();
                                     foreach (var button in Manager.modules[Manager.CurrentCategoryName])
                                     {
-                                        if (!skipButtons.Contains(button.buttonText))
+                                        if (!skipButtons.Contains(button.name))
                                             buttons.Add(button);
                                     }
                                     renderButtons = buttons.ToArray();
@@ -639,7 +639,7 @@ namespace Qubit.Frontend
                                         Module[] buttonList = categoryEntry.Value;
                                         enabledMods.AddRange(buttonList.Where(v => v.enabled && (!hideSettings || !categoryEntry.Key.Contains("Settings")) && (!hideMacros || !categoryEntry.Key.Contains("Macro"))));
                                     }
-                                    enabledMods = enabledMods.OrderBy(v => v.buttonText).ToList();
+                                    enabledMods = enabledMods.OrderBy(v => v.name).ToList();
                                     enabledMods.Insert(0, Manager.GetIndex("Exit Enabled Mods"));
 
                                     renderButtons = enabledMods.ToArray();
@@ -659,7 +659,7 @@ namespace Qubit.Frontend
                         renderButtons = renderButtons.AddToArray(
                             new Module
                             {
-                                buttonText = "This category seems to be empty.",
+                                name = "This category seems to be empty.",
                                 legal = true,
                                 label = true
                             }
@@ -774,7 +774,7 @@ namespace Qubit.Frontend
                 }
 
                 ButtonCollider Button = buttonObject.AddComponent<ButtonCollider>();
-                Button.relatedText = method.buttonText;
+                Button.relatedText = method.name;
 
                 if (incrementalButtons)
                 {
@@ -801,14 +801,14 @@ namespace Qubit.Frontend
 
                 bool shouldSwap = swapButtonColors && buttonIndex < 0;
 
-                if (lastClickedName != method.buttonText)
+                if (lastClickedName != method.name)
                 {
                     ObjectColors colorChanger = buttonObject.AddComponent<ObjectColors>();
                     colorChanger.colors = buttonColors[shouldSwap ^ method.enabled ? 1 : 0];
 
                     if (joystickMenu && buttonIndex == joystickButtonSelected)
                     {
-                        joystickSelectedButton = method.buttonText;
+                        joystickSelectedButton = method.name;
 
                         if (!colorChanger.colors.transparent)
                         {
@@ -1056,14 +1056,14 @@ namespace Qubit.Frontend
                 buttonObject.transform.localPosition = thinMenu ? new Vector3(0.56f, 0.399f, 0.28f - offset) : new Vector3(0.56f, 0.599f, 0.28f - offset);
 
                 ButtonCollider button = buttonObject.AddComponent<ButtonCollider>();
-                button.relatedText = method.buttonText;
+                button.relatedText = method.name;
                 button.incremental = true;
                 button.positive = increment;
 
                 if (increment)
                     buttonObject.transform.localPosition = new Vector3(buttonObject.transform.localPosition.x, -buttonObject.transform.localPosition.y, buttonObject.transform.localPosition.z);
 
-                if (lastClickedName != method.buttonText + (increment ? "+" : "-"))
+                if (lastClickedName != method.name + (increment ? "+" : "-"))
                 {
                     ObjectColors colorChanger = buttonObject.AddComponent<ObjectColors>();
                     colorChanger.colors = buttonColors[0];

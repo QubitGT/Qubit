@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/CustomMaps/Maps/ChimpCombat.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -41,22 +41,22 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public override long MapID => 5135423;
         public override Module[] Buttons => new[]
         {
-            new Module { buttonText = "Kill Self Player", overlapText = "Kill Self", method = KillSelf, isTogglable = false, toolTip = "Kills yourself."},
-            new Module { buttonText = "Kill Player Gun", overlapText = "Kill Gun", method = KillGun, toolTip = "Kills whoever your hand desires."},
-            new Module { buttonText = "Kill All Players", overlapText = "Kill All", method = KillAll, isTogglable = false, toolTip = "Kills everyone in the room."},
-            new Module { buttonText = "God Mode_", overlapText = "God Mode", enableMethod = GodMode, disableMethod = DisableGodMode, toolTip = "Prevents you from getting killed."},
-            new Module { buttonText = "No Grenade Cooldown", enableMethod = NoGrenadeCooldown, disableMethod = DisableNoGrenadeCooldown, toolTip = "Disables the cooldown on spawning grenades."},
-            new Module { buttonText = "No Shoot Cooldown", enableMethod = NoShootCooldown, disableMethod = DisableNoShootCooldown, toolTip = "Disables the cooldown on shooting."},
-            new Module { buttonText = "Rapid Fire", enableMethod = RapidFire, disableMethod = DisableRapidFire, toolTip = "Automatically shoots when holding down right trigger."},
-            new Module { buttonText = "Instant Kill", enableMethod = InstantKill, disableMethod = DisableInstantKill, toolTip = "Makes your gun instant kill players."},
-            new Module { buttonText = "Infinite Points", enableMethod = InfinitePoints, disableMethod = DisableInfinitePoints, toolTip = "Gives you an infinite amount of points."},
-            new Module { buttonText = "Infinite Ammo", enableMethod = InfiniteAmmo, disableMethod = DisableInfiniteAmmo, toolTip = "Gives you an infinite amount of ammo."},
-            new Module { buttonText = "Chimp Combat Crash Gun", overlapText = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
-            new Module { buttonText = "Chimp Combat Crash All", overlapText = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
-            new Module { buttonText = "Chimp Combat Anti Report", overlapText = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
-            new Module { buttonText = "Chimp Combat Crash Aura", overlapText = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
-            new Module { buttonText = "Chimp Combat Crash On Touch", overlapText = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
-            new Module { buttonText = "Chimp Combat Crash When Touched", overlapText = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }
+            new Module { name = "Kill Self Player", displayName = "Kill Self", method = KillSelf, isTogglable = false, toolTip = "Kills yourself."},
+            new Module { name = "Kill Player Gun", displayName = "Kill Gun", method = KillGun, toolTip = "Kills whoever your hand desires."},
+            new Module { name = "Kill All Players", displayName = "Kill All", method = KillAll, isTogglable = false, toolTip = "Kills everyone in the room."},
+            new Module { name = "God Mode_", displayName = "God Mode", enableMethod = GodMode, disableMethod = DisableGodMode, toolTip = "Prevents you from getting killed."},
+            new Module { name = "No Grenade Cooldown", enableMethod = NoGrenadeCooldown, disableMethod = DisableNoGrenadeCooldown, toolTip = "Disables the cooldown on spawning grenades."},
+            new Module { name = "No Shoot Cooldown", enableMethod = NoShootCooldown, disableMethod = DisableNoShootCooldown, toolTip = "Disables the cooldown on shooting."},
+            new Module { name = "Rapid Fire", enableMethod = RapidFire, disableMethod = DisableRapidFire, toolTip = "Automatically shoots when holding down right trigger."},
+            new Module { name = "Instant Kill", enableMethod = InstantKill, disableMethod = DisableInstantKill, toolTip = "Makes your gun instant kill players."},
+            new Module { name = "Infinite Points", enableMethod = InfinitePoints, disableMethod = DisableInfinitePoints, toolTip = "Gives you an infinite amount of points."},
+            new Module { name = "Infinite Ammo", enableMethod = InfiniteAmmo, disableMethod = DisableInfiniteAmmo, toolTip = "Gives you an infinite amount of ammo."},
+            new Module { name = "Chimp Combat Crash Gun", displayName = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
+            new Module { name = "Chimp Combat Crash All", displayName = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
+            new Module { name = "Chimp Combat Anti Report", displayName = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
+            new Module { name = "Chimp Combat Crash Aura", displayName = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
+            new Module { name = "Chimp Combat Crash On Touch", displayName = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
+            new Module { name = "Chimp Combat Crash When Touched", displayName = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }
         };
 
         public static float killDelay;

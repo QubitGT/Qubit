@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Frontend/Keyboard.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -205,7 +205,7 @@ namespace Qubit.Frontend
                         try
                         {
                             List<string> texts = v.aliases == null ? new List<string>() : v.aliases.ToList();
-                            texts.Add(v.overlapText ?? v.buttonText);
+                            texts.Add(v.RenderName);
 
                             if (texts.Any(buttonText => buttonText.ClearTags().Replace(" ", "").ToLower().Contains(keyboardInput.Replace(" ", "").ToLower())))
                                 searchedMods.Add(v);
@@ -227,7 +227,7 @@ namespace Qubit.Frontend
                                     continue;
 
                                 List<string> texts = v.aliases == null ? new List<string>() : v.aliases.ToList();
-                                texts.Add(v.overlapText ?? v.buttonText);
+                                texts.Add(v.RenderName);
 
                                 if (texts.Any(buttonText => buttonText.ClearTags().Replace(" ", "").ToLower().Contains(keyboardInput.Replace(" ", "").ToLower())))
                                     searchedMods.Add(v);
@@ -243,9 +243,9 @@ namespace Qubit.Frontend
                     Module button = buttons[0];
 
                     if (button.incremental)
-                        ToggleIncremental(button.buttonText, UnityInput.GetKey(Key.LeftShift));
+                        ToggleIncremental(button.name, UnityInput.GetKey(Key.LeftShift));
                     else
-                        Toggle(buttons[0].buttonText, true);
+                        Toggle(buttons[0].name, true);
                 }
             }
             else if (CurrentPrompt != null && CurrentPrompt.IsText)

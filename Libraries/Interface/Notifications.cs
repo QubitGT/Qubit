@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Libraries/Interface/Notifications.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -232,7 +232,7 @@ namespace Qubit.Libraries.Interface
                                     if (!button.enabled || (hideSettings && (!hideSettings ||
                                                                              categoryEntry.Key
                                                                                  .Contains("Settings")))) continue;
-                                    string buttonText = button.overlapText ?? button.buttonText;
+                                    string buttonText = button.RenderName;
 
                                     if (inputTextColor != "green")
                                         buttonText = buttonText.Replace(" <color=grey>[</color><color=green>", " <color=grey>[</color><color=" + inputTextColor + ">");

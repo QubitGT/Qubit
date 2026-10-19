@@ -1031,11 +1031,11 @@ namespace Qubit.Libraries.Networking
             previousOnlineCount = onlineFriends.Length;
             previousIncomingCount = instance.List.incoming.Values.Count;
 
-            Manager.GetIndex("Friends").overlapText = onlineFriends.Length > 0 ? $"Friends <color=grey>[</color><color=green>{onlineFriends.Length} Online</color><color=grey>]</color>" : null;
+            Manager.GetIndex("Friends").displayName = onlineFriends.Length > 0 ? $"Friends <color=grey>[</color><color=green>{onlineFriends.Length} Online</color><color=grey>]</color>" : null;
 
             List<Module> buttons = new List<Module> {
                 new Module {
-                    buttonText = "Exit Friends",
+                    name = "Exit Friends",
                     method =() => Manager.CurrentCategoryName = "Main",
                     isTogglable = false,
                     toolTip = "Returns you back to the main page.",
@@ -1045,8 +1045,8 @@ namespace Qubit.Libraries.Networking
 
             buttons.AddRange(organizedFriends.Select((friend, i) => new Module
             {
-                buttonText = $"FriendButton{i}",
-                overlapText = friend.currentName + (friend.online ? " <color=grey>[</color><color=green>Online</color><color=grey>]</color>" : " <color=grey>[</color><color=red>Offline</color><color=grey>]</color>"),
+                name = $"FriendButton{i}",
+                displayName = friend.currentName + (friend.online ? " <color=grey>[</color><color=green>Online</color><color=grey>]</color>" : " <color=grey>[</color><color=red>Offline</color><color=grey>]</color>"),
                 method = () => InspectFriend(instance.List.friends.FirstOrDefault(x => x.Value == friend).Key),
                 isTogglable = false,
                 toolTip = $"See information on your friend {friend.currentName}.",
@@ -1055,7 +1055,7 @@ namespace Qubit.Libraries.Networking
 
             buttons.Add(new Module
             {
-                buttonText = "Add Friends",
+                name = "Add Friends",
                 method = AddFriendsUI,
                 isTogglable = false,
                 toolTip = "Use this tab to add people as friends.",
@@ -1069,7 +1069,7 @@ namespace Qubit.Libraries.Networking
         {
             List<Module> buttons = new List<Module> {
                 new Module {
-                    buttonText = "Return to Friends",
+                    name = "Return to Friends",
                     method =() => Manager.CurrentCategoryName = "Friends",
                     isTogglable = false,
                     toolTip = "Returns you back to the friends page.",
@@ -1077,8 +1077,8 @@ namespace Qubit.Libraries.Networking
                 },
 
                 new Module {
-                    buttonText = "Incoming Friend Requests",
-                    overlapText = $"Incoming Friend Requests{(instance.List.incoming.Count > 0 ? $" <color=grey>[</color><color=green>{instance.List.incoming.Count}</color><color=grey>]</color>" : " ")}",
+                    name = "Incoming Friend Requests",
+                    displayName = $"Incoming Friend Requests{(instance.List.incoming.Count > 0 ? $" <color=grey>[</color><color=green>{instance.List.incoming.Count}</color><color=grey>]</color>" : " ")}",
                     method = IncomingFriendRequests,
                     isTogglable = false,
                     toolTip = "Shows your current incoming friend requests.",
@@ -1086,8 +1086,8 @@ namespace Qubit.Libraries.Networking
                 },
 
                 new Module {
-                    buttonText = "Outgoing Friend Requests",
-                    overlapText = $"Outgoing Friend Requests{(instance.List.outgoing.Count > 0 ? $" <color=grey>[</color><color=green>{instance.List.outgoing.Count}</color><color=grey>]</color>" : " ")}",
+                    name = "Outgoing Friend Requests",
+                    displayName = $"Outgoing Friend Requests{(instance.List.outgoing.Count > 0 ? $" <color=grey>[</color><color=green>{instance.List.outgoing.Count}</color><color=grey>]</color>" : " ")}",
                     method = OutgoingFriendRequests,
                     isTogglable = false,
                     toolTip = "Shows your current outgoing friend requests.",
@@ -1096,11 +1096,11 @@ namespace Qubit.Libraries.Networking
             };
 
             if (ManagerRegistry.NetworkSystem.InRoom)
-                buttons.AddRange(from Player in ManagerRegistry.NetworkSystem.PlayerListOthers where !IsPlayerFriend(Player) select new Module { buttonText = $"Friend <color=#{ColorToHex(GetVRRigFromPlayer(Player).playerColor)}>{Player.NickName}</color>", method = () => SendFriendRequest(Player.UserId), isTogglable = false, toolTip = $"Sends a friend request to {Player.NickName}." });
+                buttons.AddRange(from Player in ManagerRegistry.NetworkSystem.PlayerListOthers where !IsPlayerFriend(Player) select new Module { name = $"Friend <color=#{ColorToHex(GetVRRigFromPlayer(Player).playerColor)}>{Player.NickName}</color>", method = () => SendFriendRequest(Player.UserId), isTogglable = false, toolTip = $"Sends a friend request to {Player.NickName}." });
             else
                 buttons.Add(new Module
                 {
-                    buttonText = "Not in a Room",
+                    name = "Not in a Room",
                     label = true,
                     legal = true
                 });
@@ -1114,7 +1114,7 @@ namespace Qubit.Libraries.Networking
         {
             List<Module> buttons = new List<Module> {
                 new Module {
-                    buttonText = "Return to Add Friends",
+                    name = "Return to Add Friends",
                     method = AddFriendsUI,
                     isTogglable = false,
                     toolTip = "Returns you back to the add friends page.",
@@ -1128,8 +1128,8 @@ namespace Qubit.Libraries.Networking
 
             buttons.AddRange(organizedFriends.Select((friend, i) => new Module
             {
-                buttonText = $"PendingFriend{i}",
-                overlapText = friend.currentName,
+                name = $"PendingFriend{i}",
+                displayName = friend.currentName,
                 method = () => InspectPendingFriend(instance.List.incoming.FirstOrDefault(x => x.Value == friend).Key),
                 isTogglable = false,
                 toolTip = $"Inspect {friend.currentName}'s friend request.",
@@ -1145,7 +1145,7 @@ namespace Qubit.Libraries.Networking
         {
             List<Module> buttons = new List<Module> {
                 new Module {
-                    buttonText = "Return to Add Friends",
+                    name = "Return to Add Friends",
                     method = AddFriendsUI,
                     isTogglable = false,
                     toolTip = "Returns you back to the add friends page.",
@@ -1159,8 +1159,8 @@ namespace Qubit.Libraries.Networking
 
             buttons.AddRange(organizedFriends.Select((friend, i) => new Module
             {
-                buttonText = $"CancelFriend{i}",
-                overlapText = friend.currentName,
+                name = $"CancelFriend{i}",
+                displayName = friend.currentName,
                 method = () => CancelFriendRequest(instance.List.outgoing.FirstOrDefault(x => x.Value == friend).Key),
                 isTogglable = false,
                 toolTip = $"Cancels {friend.currentName}'s friend request.",
@@ -1177,7 +1177,7 @@ namespace Qubit.Libraries.Networking
             FriendData.Friend friend = instance.List.friends[friendTarget];
             List<Module> buttons = new List<Module> {
                 new Module {
-                    buttonText = "Return to Friends",
+                    name = "Return to Friends",
                     method =() => Manager.CurrentCategoryName = "Friends",
                     isTogglable = false,
                     toolTip = "Returns you back to the friends page.",
@@ -1191,8 +1191,8 @@ namespace Qubit.Libraries.Networking
                 {
                     new Module
                     {
-                        buttonText = $"JoinFriend{friendTarget}",
-                        overlapText = "Join Friend",
+                        name = $"JoinFriend{friendTarget}",
+                        displayName = "Join Friend",
                         method = () => ManagerRegistry.PhotonNetworkController.AttemptToJoinSpecificRoom(instance.List.friends[friendTarget].currentRoom, JoinType.Solo),
                         isTogglable = false,
                         toolTip = $"Joins the user {friend.currentName}'s current room.",
@@ -1200,8 +1200,8 @@ namespace Qubit.Libraries.Networking
                     },
                     new Module
                     {
-                        buttonText = $"InviteFriend{friendTarget}",
-                        overlapText = "Invite Friend",
+                        name = $"InviteFriend{friendTarget}",
+                        displayName = "Invite Friend",
                         method = () => InviteFriend(friendTarget),
                         isTogglable = false,
                         toolTip = $"Invites the user {friend.currentName} to your current room.",
@@ -1209,8 +1209,8 @@ namespace Qubit.Libraries.Networking
                     },
                     new Module
                     {
-                        buttonText = $"RequestInviteFriend{friendTarget}",
-                        overlapText = "Request Invite",
+                        name = $"RequestInviteFriend{friendTarget}",
+                        displayName = "Request Invite",
                         method = () => RequestInviteFriend(friendTarget),
                         isTogglable = false,
                         toolTip = $"Requests an invite from the user {friend.currentName}.",
@@ -1218,8 +1218,8 @@ namespace Qubit.Libraries.Networking
                     },
                     new Module
                     {
-                        buttonText = $"SharePreferences{friendTarget}",
-                        overlapText = "Share Preferences",
+                        name = $"SharePreferences{friendTarget}",
+                        displayName = "Share Preferences",
                         method = () => SharePreferences(friendTarget),
                         isTogglable = false,
                         toolTip = $"Sends your preferences to {friend.currentName}.",
@@ -1227,8 +1227,8 @@ namespace Qubit.Libraries.Networking
                     },
                     new Module
                     {
-                        buttonText = $"ShareTheme{friendTarget}",
-                        overlapText = "Share Theme",
+                        name = $"ShareTheme{friendTarget}",
+                        displayName = "Share Theme",
                         method = () => ShareTheme(friendTarget),
                         isTogglable = false,
                         toolTip = $"Sends your theme to {friend.currentName}.",
@@ -1236,8 +1236,8 @@ namespace Qubit.Libraries.Networking
                     },
                     new Module
                     {
-                        buttonText = $"ShareMacro{friendTarget}",
-                        overlapText = "Share Macro",
+                        name = $"ShareMacro{friendTarget}",
+                        displayName = "Share Macro",
                         method = () => PromptText("What is the name of the macro you would like to send?", () => { ShareMacro(friendTarget, keyboardInput); }, null, "Done", "Cancel"),
                         isTogglable = false,
                         toolTip = $"Sends a macro to {friend.currentName}.",
@@ -1245,8 +1245,8 @@ namespace Qubit.Libraries.Networking
                     },
                     new Module
                     {
-                        buttonText = $"MessageLogs{friendTarget}",
-                        overlapText = "Message",
+                        name = $"MessageLogs{friendTarget}",
+                        displayName = "Message",
                         method = () => ShowChatMessages(friendTarget),
                         isTogglable = false,
                         toolTip = $"Opens the chat menu for {friend.currentName}.",
@@ -1257,8 +1257,8 @@ namespace Qubit.Libraries.Networking
 
             buttons.Add(new Module
             {
-                buttonText = $"RemoveFriend{friendTarget}",
-                overlapText = "Remove Friend",
+                name = $"RemoveFriend{friendTarget}",
+                displayName = "Remove Friend",
                 method = () => RemoveFriend(friendTarget),
                 isTogglable = false,
                 toolTip = $"Removes the user {friend.currentName} from your friends list.",
@@ -1269,8 +1269,8 @@ namespace Qubit.Libraries.Networking
             {
                 buttons.Add(new Module
                 {
-                    buttonText = $"FriendRoom{friendTarget}",
-                    overlapText = $"Current Room: {friend.currentRoom}",
+                    name = $"FriendRoom{friendTarget}",
+                    displayName = $"Current Room: {friend.currentRoom}",
                     label = true,
                     legal = true
                 });
@@ -1278,8 +1278,8 @@ namespace Qubit.Libraries.Networking
 
             buttons.Add(new Module
             {
-                buttonText = $"FriendName{friendTarget}",
-                overlapText = $"Current Name: {friend.currentName}",
+                name = $"FriendName{friendTarget}",
+                displayName = $"Current Name: {friend.currentName}",
                 label = true,
                 legal = true
             });
@@ -1294,21 +1294,21 @@ namespace Qubit.Libraries.Networking
             FriendData.PendingFriend friend = instance.List.incoming[friendTarget];
             List<Module> buttons = new List<Module> {
                 new Module {
-                    buttonText = "Return to Incoming Friend Requests",
+                    name = "Return to Incoming Friend Requests",
                     method = IncomingFriendRequests,
                     isTogglable = false,
                     toolTip = "Returns you back to the incoming friend requests page.",
                     legal = true
                 },
                 new Module {
-                    buttonText = "Accept Friend Request",
+                    name = "Accept Friend Request",
                     method =() => AcceptFriendRequest(friend.currentUserID),
                     isTogglable = false,
                     toolTip = $"Accept {friend.currentName}'s friend request.",
                     legal = true
                 },
                 new Module {
-                    buttonText = "Deny Friend Request",
+                    name = "Deny Friend Request",
                     method =() => DenyFriendRequest(friendTarget),
                     isTogglable = false,
                     toolTip = $"Deny {friend.currentName}'s friend request.",
@@ -1316,8 +1316,8 @@ namespace Qubit.Libraries.Networking
                 },
                 new Module
                 {
-                    buttonText = $"FriendName{friendTarget}",
-                    overlapText = $"Current Name: {friend.currentName}",
+                    name = $"FriendName{friendTarget}",
+                    displayName = $"Current Name: {friend.currentName}",
                     label = true,
                     legal = true
                 }
@@ -1334,7 +1334,7 @@ namespace Qubit.Libraries.Networking
 
             List<Module> buttons = new List<Module> {
                 new Module {
-                    buttonText = "Return to Friend Page",
+                    name = "Return to Friend Page",
                     method =() => InspectFriend(friendTarget),
                     isTogglable = false,
                     toolTip = "Returns you back to the page of your friend.",
@@ -1369,20 +1369,20 @@ namespace Qubit.Libraries.Networking
                 buttons.Add(link != null
                     ? new Module
                     {
-                        buttonText = $"FriendMessage{i}",
-                        overlapText = text,
+                        name = $"FriendMessage{i}",
+                        displayName = text,
                         isTogglable = false,
                         method = () =>
                             Prompt($"<{link}>", null, () => GUIUtility.systemCopyBuffer = link, "Done", "Copy"),
                         legal = true
                     }
-                    : new Module { buttonText = $"FriendMessage{i}", overlapText = text, label = true, legal = true });
+                    : new Module { name = $"FriendMessage{i}", displayName = text, label = true, legal = true });
             }
 
             buttons.Add(new Module
             {
-                buttonText = $"Message{friendTarget}",
-                overlapText = "Message",
+                name = $"Message{friendTarget}",
+                displayName = "Message",
                 method = () => PromptText("What would you like to send?", () => { SendFriendMessage(friendTarget, keyboardInput); UpdateFriendMessage(friendTarget, $"        <color=grey>[</color><color=#{ColorToHex(VRRig.LocalRig.playerColor)}>{PhotonNetwork.NickName.ToUpper()}</color><color=grey>]</color> {keyboardInput}"); ShowChatMessages(friendTarget); ReloadMenu(); }, null, "Done", "Cancel"),
                 isTogglable = false,
                 toolTip = $"Sends a message to {friend.currentName}.",

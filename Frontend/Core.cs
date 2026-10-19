@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Frontend/Core.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -894,12 +894,12 @@ namespace Qubit.Frontend
                   ? Array.Empty<Module>() : category.Value);
     string query = (keyboardInput ?? "").Replace(" ", "").ToLowerInvariant();
  result = result.Where(b => (!b.detected || allowDetected) &&
-            (b.aliases ?? Array.Empty<string>()).Concat(new[] { b.overlapText ?? b.buttonText })
+            (b.aliases ?? Array.Empty<string>()).Concat(new[] { b.RenderName })
    .Any(t => t.ClearTags().Replace(" ", "").ToLowerInvariant().Contains(query)));
 }
        else switch (Manager.CurrentCategoryName)
   {
-                  case "Main": result = Manager.modules[Manager.CurrentCategoryName].Where(b => !skipButtons.Contains(b.buttonText)); break;
+                  case "Main": result = Manager.modules[Manager.CurrentCategoryName].Where(b => !skipButtons.Contains(b.name)); break;
     case "Favorite Mods": result = favorites.Select(Manager.GetIndex).Where(b => b != null); break;
  case "Enabled Mods":
 
@@ -916,7 +916,7 @@ namespace Qubit.Frontend
 result = result.Where(b => b.legal || b.label);
 #endif
   if (isSearching || Manager.GetIndex("Alphabetize Menu")?.enabled == true)
-                  result = result.OrderBy(b => (b.overlapText ?? b.buttonText).ClearTags());
+                  result = result.OrderBy(b => (b.RenderName).ClearTags());
     return result.ToArray();
  }
 
@@ -1610,7 +1610,7 @@ result = result.Where(b => b.legal || b.label);
                         if (skipSettings || skipMacros)
                             continue;
 
-                        enabledMods.AddRange(from v in buttonList where v.enabled select v.buttonText);
+                        enabledMods.AddRange(from v in buttonList where v.enabled select v.name);
                     }
 
                     count = enabledMods.Count - 1;
@@ -1620,7 +1620,7 @@ result = result.Where(b => b.legal || b.label);
                 {
                     foreach (var button in Manager.modules[Manager.CurrentCategoryName])
                     {
-                        if (skipButtons.Contains(button.buttonText))
+                        if (skipButtons.Contains(button.name))
                             count--;
                     }
                 }
@@ -1641,7 +1641,7 @@ result = result.Where(b => b.legal || b.label);
                             try
                             {
                                 List<string> texts = v.aliases == null ? new List<string>() : v.aliases.ToList();
-                                texts.Add(v.overlapText ?? v.buttonText);
+                                texts.Add(v.RenderName);
 
                                 if (texts.Any(buttonText => buttonText.ClearTags().Replace(" ", "").ToLower().Contains(keyboardInput.Replace(" ", "").ToLower())))
                                     searchedMods.Add(v);
@@ -1662,10 +1662,10 @@ result = result.Where(b => b.legal || b.label);
                                           categoryEntry.Key == "Mod Givers") &&
                                          !isAdmin)
                                         || (v.detected && !allowDetected)
-                                        || (Manager.CurrentCategoryName == "Main" && skipButtons.Contains(v.buttonText)))
+                                        || (Manager.CurrentCategoryName == "Main" && skipButtons.Contains(v.name)))
                                         continue;
 
-                                    string displayedText = v.overlapText ?? v.buttonText;
+                                    string displayedText = v.RenderName;
 
                                     if (displayedText.Replace(" ", "").ToLower().Contains(keyboardInput.Replace(" ", "").ToLower()))
                                         searchedMods.Add(v);

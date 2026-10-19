@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/CustomMaps/Manager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -43,7 +43,7 @@ namespace Qubit.Modules.Categories.CustomMaps
             currentMapId = overwriteId;
 
             string category = "Custom Map Mods";
-            List<Module> buttons = new List<Module> { new Module { buttonText = "Exit Custom Map Mods", method = () => Qubit.Modules.Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
+            List<Module> buttons = new List<Module> { new Module { name = "Exit Custom Map Mods", method = () => Qubit.Modules.Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
 
             if (overwriteId != null)
             {
@@ -53,20 +53,20 @@ namespace Qubit.Modules.Categories.CustomMaps
 
                 CustomMap map = GetMapByID(mapID);
                 if (map == null)
-                    buttons.Add(new Module { buttonText = "This map is not supported yet.", label = true });
+                    buttons.Add(new Module { name = "This map is not supported yet.", label = true });
                 else
                     buttons.AddRange(map.Buttons);
 
                 buttons.AddRange(new[]
                 {
-                    new Module { buttonText = " ", label = true },
-                    new Module { buttonText = "Edit Custom Script", method = EditUserScript, isTogglable = false, toolTip = "Opens your custom script for this map." },
-                    new Module { buttonText = "Delete Custom Script", method = DeleteUserScript, isTogglable = false, toolTip = "Deletes your custom script for this map." },
-                    new Module { buttonText = "Run Custom Script", enableMethod = StartUserScript, disableMethod = StopUserScript, toolTip = "Runs your custom script for this map." }
+                    new Module { name = " ", label = true },
+                    new Module { name = "Edit Custom Script", method = EditUserScript, isTogglable = false, toolTip = "Opens your custom script for this map." },
+                    new Module { name = "Delete Custom Script", method = DeleteUserScript, isTogglable = false, toolTip = "Deletes your custom script for this map." },
+                    new Module { name = "Run Custom Script", enableMethod = StartUserScript, disableMethod = StopUserScript, toolTip = "Runs your custom script for this map." }
                 });
             }
             else
-                buttons.Add(new Module { buttonText = "You have not loaded a map.", label = true });
+                buttons.Add(new Module { name = "You have not loaded a map.", label = true });
 
             Qubit.Modules.Manager.modules[category] = buttons.ToArray();
         }

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Libraries/Core/Plugins.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -63,7 +63,7 @@ namespace Qubit.Libraries.Core
         public static readonly List<Plugin> PluginList = new List<Plugin>();
         public static void LoadPlugins()
         {
-            Manager.modules["Plugin Settings"] = new[] { new Module { buttonText = "Exit Plugin Settings", method = () => Manager.CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings menu." } };
+            Manager.modules["Plugin Settings"] = new[] { new Module { name = "Exit Plugin Settings", method = () => Manager.CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings menu." } };
 
             if (PluginList.Count > 0)
             {
@@ -124,14 +124,14 @@ namespace Qubit.Libraries.Core
             {
                 try
                 {
-                    Manager.AddModule("Plugin Settings", new Module { buttonText = plugin.FileName, overlapText = (plugin.Enabled ? "<color=grey>[</color><color=green>ON</color><color=grey>]</color>" : "<color=grey>[</color><color=red>OFF</color><color=grey>]</color>") + " " + plugin.Name, method = () => TogglePlugin(plugin), isTogglable = false, toolTip = plugin.Description });
+                    Manager.AddModule("Plugin Settings", new Module { name = plugin.FileName, displayName = (plugin.Enabled ? "<color=grey>[</color><color=green>ON</color><color=grey>]</color>" : "<color=grey>[</color><color=red>OFF</color><color=grey>]</color>") + " " + plugin.Name, method = () => TogglePlugin(plugin), isTogglable = false, toolTip = plugin.Description });
                 }
                 catch (Exception e) { Logs.Log("Error with enabling plugin " + plugin.Name + ": " + e); }
             }
 
-            Manager.AddModule("Plugin Settings", new Module { buttonText = "Open Plugins Folder", method = OpenPluginsFolder, isTogglable = false, toolTip = "Opens a folder containing all of your plugins." });
-            Manager.AddModule("Plugin Settings", new Module { buttonText = "Reload Plugins", method = ReloadPlugins, isTogglable = false, toolTip = "Reloads all of your plugins." });
-            Manager.AddModule("Plugin Settings", new Module { buttonText = "Get More Plugins", method = LoadPluginLibrary, isTogglable = false, toolTip = "Opens a public plugin library, where you can download your own plugins." });
+            Manager.AddModule("Plugin Settings", new Module { name = "Open Plugins Folder", method = OpenPluginsFolder, isTogglable = false, toolTip = "Opens a folder containing all of your plugins." });
+            Manager.AddModule("Plugin Settings", new Module { name = "Reload Plugins", method = ReloadPlugins, isTogglable = false, toolTip = "Reloads all of your plugins." });
+            Manager.AddModule("Plugin Settings", new Module { name = "Get More Plugins", method = LoadPluginLibrary, isTogglable = false, toolTip = "Opens a public plugin library, where you can download your own plugins." });
         }
 
         private static string SanitizeFileName(string name)
@@ -195,7 +195,7 @@ namespace Qubit.Libraries.Core
 
             File.WriteAllText($"{PluginInfo.BaseDirectory}/Plugins/DisabledPlugins.txt", disabledPluginsString);
 
-            Manager.GetIndex(plugin.FileName).overlapText = (plugin.Enabled ? "<color=grey>[</color><color=green>ON</color><color=grey>]</color>" : "<color=grey>[</color><color=red>OFF</color><color=grey>]</color>") + " " + plugin.Name;
+            Manager.GetIndex(plugin.FileName).displayName = (plugin.Enabled ? "<color=grey>[</color><color=green>ON</color><color=grey>]</color>" : "<color=grey>[</color><color=red>OFF</color><color=grey>]</color>") + " " + plugin.Name;
         }
 
         public static void ExecuteUpdate()
@@ -321,7 +321,7 @@ namespace Qubit.Libraries.Core
             string library = GetHttp($"{PluginInfo.ServerResourcePath}/Plugins/PluginLibrary.txt");
             string[] plugins = AlphabetizeNoSkip(library.Split("\n"));
 
-            List<Module> buttonInfos = new List<Module> { new Module { buttonText = "Exit Plugin Library", method = () => Manager.CurrentCategoryName = "Plugin Settings", isTogglable = false, toolTip = "Returns you back to the plugin settings." } };
+            List<Module> buttonInfos = new List<Module> { new Module { name = "Exit Plugin Library", method = () => Manager.CurrentCategoryName = "Plugin Settings", isTogglable = false, toolTip = "Returns you back to the plugin settings." } };
             int index = 0;
 
             foreach (string plugin in plugins)
@@ -329,7 +329,7 @@ namespace Qubit.Libraries.Core
                 if (plugin.Length <= 2) continue;
                 index++;
                 string[] data = plugin.Split(";");
-                buttonInfos.Add(new Module { buttonText = "PluginDownload" + index, overlapText = data[0], method = () => DownloadPlugin(data[0], data[2]), isTogglable = false, toolTip = data[1] });
+                buttonInfos.Add(new Module { name = "PluginDownload" + index, displayName = data[0], method = () => DownloadPlugin(data[0], data[2]), isTogglable = false, toolTip = data[1] });
             }
 
             Manager.modules["Temporary Category"] = buttonInfos.ToArray();

@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Modules/Categories/CustomMaps/Maps/MiningSimulator.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -29,9 +29,9 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public override long MapID => 4977315;
         public override Module[] Buttons => new[]
         {
-            new Module { buttonText = "Instant Mine", enableMethod = InstantMine, disableMethod = DisableInstantMine, toolTip = "Instantly mines any blocks with your pickaxe."},
-            new Module { buttonText = "Mine Anything", enableMethod = MineAnything, disableMethod = DisableMineAnything, toolTip = "Lets you mine any block."},
-            new Module { buttonText = "Infinite Backpack", enableMethod = InfiniteBackpack, disableMethod = DisableInfiniteBackpack, toolTip = "Lets you mine more blocks even if your inventory is full."},
+            new Module { name = "Instant Mine", enableMethod = InstantMine, disableMethod = DisableInstantMine, toolTip = "Instantly mines any blocks with your pickaxe."},
+            new Module { name = "Mine Anything", enableMethod = MineAnything, disableMethod = DisableMineAnything, toolTip = "Lets you mine any block."},
+            new Module { name = "Infinite Backpack", enableMethod = InfiniteBackpack, disableMethod = DisableInfiniteBackpack, toolTip = "Lets you mine more blocks even if your inventory is full."},
         };
 
         public static void InstantMine()

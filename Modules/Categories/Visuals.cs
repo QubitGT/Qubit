@@ -5911,7 +5911,7 @@ namespace Qubit.Modules.Categories
             {
                 new Module
                 {
-                    buttonText = "Exit Mod Checker",
+                    name = "Exit Mod Checker",
                     method =() => Settings.NavigatePlayer(player),
                     isTogglable = false
                 }
@@ -5920,8 +5920,8 @@ namespace Qubit.Modules.Categories
                .Where(mod => customProps.ContainsKey(mod.Key.ToLower()))
                .Select((mod, index) => new Module
                {
-                   buttonText = $"Mod{index}",
-                   overlapText = mod.Value,
+                   name = $"Mod{index}",
+                   displayName = mod.Value,
                    label = true
                });
             if (mods.Any())
@@ -5929,7 +5929,7 @@ namespace Qubit.Modules.Categories
             else
                 buttons.Add(new Module
                 {
-                    buttonText = "No mods detected",
+                    name = "No mods detected",
                     label = true
                 });
 

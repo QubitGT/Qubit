@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Qubit Menu  Frontend/Classes/QubitMenuBody.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -208,8 +208,8 @@ public static Transform qubitFront;
         };
         public static string QubitCategoryLabel(Module info)
         {
-            if (info.buttonText == "Visual Mods") return "Visuals";
-            return (info.overlapText ?? info.buttonText).Replace(" Mods", "");
+            if (info.name == "Visual Mods") return "Visuals";
+            return (info.RenderName).Replace(" Mods", "");
         }
             public static GameObject CreateMenu()
 
@@ -286,21 +286,21 @@ var row = (RectTransform)qubitFront.Find("Row" + i);
  int index = i - (isSearching ? 1 : 0);
             if (index >= visible.Length) { row.gameObject.SetActive(false); continue; }
    var info = visible[index];
-label.text = Manager.CurrentCategoryName == "Main" ? QubitCategoryLabel(info) : info.overlapText ?? info.buttonText;
+label.text = Manager.CurrentCategoryName == "Main" ? QubitCategoryLabel(info) : info.RenderName;
        label.color = QubitDetails.ButtonTextColor;
        row.GetComponent<Image>().color = info.enabled ? QubitDetails.EnabledButtonColor : Color.white;
    if (!info.label)
 {
-       qubitJoystickTargets.Add((info.buttonText, row));
+       qubitJoystickTargets.Add((info.name, row));
        if (info.incremental && incrementalButtons)
   {
-                  AddHitbox(row, info.buttonText, -1, 0, 70);
-    AddHitbox(row, info.buttonText, 1, row.rect.width - 70, 70);
-    AddHitbox(row, info.buttonText, 0, 70, row.rect.width - 140, true);
+                  AddHitbox(row, info.name, -1, 0, 70);
+    AddHitbox(row, info.name, 1, row.rect.width - 70, 70);
+    AddHitbox(row, info.name, 0, 70, row.rect.width - 140, true);
 
  label.text = "−   " + label.text + "   +";
             }
-   else AddHitbox(row, info.buttonText);
+   else AddHitbox(row, info.name);
 }
        }
         int totalPages = Math.Max(1, (buttons.Length + capacity - 1) / capacity);
