@@ -605,7 +605,7 @@ namespace Qubit.Modules.Categories
                     platformRenderer.enabled = false;
                     break;
                 case 4:
-                    UpdateClipColliders(false, "Platform");
+                    UpdateClipColliders(false);
                     break;
                 case 5:
                     platform.AddComponent<GorillaSurfaceOverride>().overrideIndex = 29;
@@ -695,7 +695,7 @@ namespace Qubit.Modules.Categories
                         else
                             rightplat = null;
                         if (platformMode == 4 && rightplat == null)
-                            UpdateClipColliders(true, "Platform");
+                            UpdateClipColliders(true);
 
                         Friends.PlatformDespawned(true);
                         break;
@@ -1953,10 +1953,10 @@ namespace Qubit.Modules.Categories
             switch (isOnBranch)
             {
                 case true when !lastOnBranch:
-                    UpdateClipColliders(false, "Branch");
+                    UpdateClipColliders(false);
                     break;
                 case false when lastOnBranch:
-                    UpdateClipColliders(true, "Branch");
+                    UpdateClipColliders(true);
                     break;
             }
 
@@ -2790,51 +2790,16 @@ namespace Qubit.Modules.Categories
         }
 
         private static int PlatformLayer => LayerMask.NameToLayer("BuilderProp");
-        private static readonly HashSet<string> clipOwners = new HashSet<string>();
-        private static GTPlayer clipPlayer;
-        private static LayerMask clipLayers;
-        private static Collider clipBodyCollider;
-        private static Collider clipHeadCollider;
-        private static bool clipBodyWasTrigger;
-        private static bool clipHeadWasTrigger;
 
-        public static void UpdateClipColliders(bool enabled, string owner = "Noclip")
+        public static void UpdateClipColliders(bool enabled)
         {
-            if (enabled)
+            foreach (MeshCollider v in Resources.FindObjectsOfTypeAll<MeshCollider>())
             {
-                clipOwners.Remove(owner);
-                if (clipOwners.Count > 0 || clipPlayer == null) return;
+                if (v.gameObject.layer == PlatformLayer)
+                    continue;
 
-                clipPlayer.locomotionEnabledLayers = clipLayers;
-                if (clipBodyCollider != null) clipBodyCollider.isTrigger = clipBodyWasTrigger;
-                if (clipHeadCollider != null) clipHeadCollider.isTrigger = clipHeadWasTrigger;
-
-                clipPlayer = null;
-                clipBodyCollider = null;
-                clipHeadCollider = null;
-                return;
+                v.enabled = enabled;
             }
-
-            clipOwners.Add(owner);
-            if (clipPlayer != null || References.Player == null) return;
-
-            clipPlayer = References.Player;
-            clipLayers = clipPlayer.locomotionEnabledLayers;
-            clipBodyCollider = References.BodyCollider;
-            clipHeadCollider = References.HeadCollider;
-
-            if (clipBodyCollider != null)
-            {
-                clipBodyWasTrigger = clipBodyCollider.isTrigger;
-                clipBodyCollider.isTrigger = true;
-            }
-            if (clipHeadCollider != null)
-            {
-                clipHeadWasTrigger = clipHeadCollider.isTrigger;
-                clipHeadCollider.isTrigger = true;
-            }
-
-            clipPlayer.locomotionEnabledLayers = 1 << PlatformLayer;
         }
 
         public static void Noclip()
