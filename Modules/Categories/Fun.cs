@@ -1610,8 +1610,8 @@ namespace Qubit.Modules.Categories
             References.LocalRig.transform.position = References.BodyCollider.transform.position + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 2f;
         }
 
-        public static Coroutine floodDevMessagesRoutine;
-        public static IEnumerator FloodDevMessagesCoroutine()
+        public static Coroutine floodDeveloperMessagesRoutine;
+        public static IEnumerator FloodDeveloperMessagesCoroutine()
         {
             while (true)
             {
@@ -1619,11 +1619,11 @@ namespace Qubit.Modules.Categories
                 yield return new WaitForSeconds(0.5f);
             }
         }
-        public static void EnableFloodDevMessages() => floodDevMessagesRoutine = Coroutines.instance.StartCoroutine(FloodDevMessagesCoroutine());
-        public static void DisableFloodDevMessages()
+        public static void EnableFloodDeveloperMessages() => floodDeveloperMessagesRoutine = Coroutines.instance.StartCoroutine(FloodDeveloperMessagesCoroutine());
+        public static void DisableFloodDeveloperMessages()
         {
-            if (floodDevMessagesRoutine != null)
-                Coroutines.instance.StopCoroutine(floodDevMessagesRoutine);
+            if (floodDeveloperMessagesRoutine != null)
+                Coroutines.instance.StopCoroutine(floodDeveloperMessagesRoutine);
         }
 
         private static float floodLogsDelay;

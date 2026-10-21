@@ -717,17 +717,36 @@ namespace Qubit.Modules.Categories
         public static void PromptNameChange() =>
             Prompt("Would you like to set a name?", () => PromptSingleText("Please enter the name you'd like to use:", () => name = keyboardInput, "Done"));
 
+        public static void ExilePlayer(int actorNumber)
+        {
+            RaiseEventOptions options = new RaiseEventOptions { TargetActors = new[] { actorNumber }, CachingOption = EventCaching.AddToRoomCacheGlobal };
+
+            ManagerRegistry.NetworkingClient.OpRaiseEvent(202, null, options, SendOptions.SendReliable);
+            ManagerRegistry.NetworkingClient.OpRaiseEvent(207, null, options, SendOptions.SendReliable);
+            PhotonNetwork.OpRemoveCompleteCacheOfPlayer(actorNumber);
+        }
+
         public static void ExileGun()
         {
             Qubit.Modules.Classes.GunLibrary.Target(lockTarget =>
             {
-                int actorNumber = GetPlayerFromVRRig(lockTarget).ActorNumber;
-                RaiseEventOptions options = new RaiseEventOptions { TargetActors = new[] { actorNumber }, CachingOption = EventCaching.AddToRoomCacheGlobal };
-
-                ManagerRegistry.NetworkingClient.OpRaiseEvent(202, null, options, SendOptions.SendReliable);
-                ManagerRegistry.NetworkingClient.OpRaiseEvent(207, null, options, SendOptions.SendReliable);
-                PhotonNetwork.OpRemoveCompleteCacheOfPlayer(actorNumber);
+                ExilePlayer(GetPlayerFromVRRig(lockTarget).ActorNumber);
             }, new Qubit.Modules.Classes.GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void ExileAll()
+        {
+            foreach (Player player in PhotonNetwork.PlayerListOthers)
+                ExilePlayer(player.ActorNumber);
+        }
+
+        public static void ExileAura()
+        {
+            if (!Networking.InRoom) return;
+
+            foreach (VRRig vrrig in Players.ActiveRigs)
+                if (!vrrig.IsLocal() && vrrig.Distance(References.LocalRig) < 4)
+                    ExilePlayer(GetPlayerFromVRRig(vrrig).ActorNumber);
         }
 
         public static void ChangeNameGun()

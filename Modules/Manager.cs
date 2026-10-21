@@ -512,11 +512,6 @@ namespace Qubit.Modules
                 new Module { name = "Join US Region", method =() => Room.ConnectToRegion("us"), isTogglable = false, toolTip = "Connects you to the US region."},
                 new Module { name = "Join USW Region", method =() => Room.ConnectToRegion("usw"), isTogglable = false, toolTip = "Connects you to the USW region."},
 
-                new Module { name = "Kick Net Triggers", method = Room.KickNetTriggers, isTogglable = false, toolTip = "Makes the room visible and disables its join triggers, kicking people out of the ability to rejoin through the map."},
-                new Module { name = "Fix Net Triggers", method = Room.FixNetTriggers, isTogglable = false, toolTip = "Restores the room's visibility and join triggers to normal."},
-                new Module { name = "Open All Elevators", method = Fun.OpenAllElevators, isTogglable = false, toolTip = "Opens every elevator door on the map."},
-                new Module { name = "Close All Elevators", method = Fun.CloseAllElevators, isTogglable = false, toolTip = "Closes every elevator door on the map."},
-
                 new Module { name = "Create Public", method =() => CreateRoom(RandomRoomName(), true), isTogglable = false, toolTip = "Creates a public room."},
                 new Module { name = "Create Private", method =() => CreateRoom(RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
 
@@ -684,8 +679,8 @@ namespace Qubit.Modules
 
                 new Module { name = $"Anti Report {Bracket("green", "Oculus")}", enableMethod = Safety.EnableAntiOculusReport, disableMethod = Safety.DisableAntiOculusReport, toolTip = "Disconnects you from the room when you get reported with the Oculus report menu."},
                 new Module { name = $"Anti Report {Bracket("green", "Anti Cheat")}", enableMethod =() => SendReport.AntiACReport = true, disableMethod =() => SendReport.AntiACReport = false, toolTip = "Disconnects you from the room when you get reported by the anti cheat."},
-                new Module { name = "Anti Report Quit", enableMethod =() => SendReport.AntiReportQuit = true, disableMethod =() => SendReport.AntiReportQuit = false, toolTip = "Quits Gorilla Tag the instant you get reported."},
-                new Module { name = "Disable Message Limit", method = Safety.DisableMessageLimit, isTogglable = false, toolTip = "Removes the retry limit on submitting dev messages."},
+                new Module { name = $"Anti Report {Bracket("green", "Quit")}", enableMethod =() => SendReport.AntiReportQuit = true, disableMethod =() => SendReport.AntiReportQuit = false, toolTip = "Quits Gorilla Tag the instant you get reported."},
+                new Module { name = "Disable Message Limit", method = Safety.DisableMessageLimit, isTogglable = false, toolTip = "Removes the retry limit on submitting developer messages."},
                 new Module { name = $"Anti Report {Bracket("green", "Notify")}", method = Safety.AntiReportNotify, toolTip = "Tells you when people come near your report button, but doesn't do anything."},
                 new Module { name = $"Anti Report {Bracket("green", "Overlay")}", method = Safety.AntiReportOverlay, toolTip = "Shows you an overlay when people come near your report button, but doesn't do anything."},
 
@@ -1322,7 +1317,7 @@ namespace Qubit.Modules
                 new Module { name = $"Draw Line {Bracket("green", "G")}", method = Fun.DrawLine, disableMethod = Movement.EnableRig, toolTip = "Draws a line with your rig's trail while holding <color=green>grip</color>."},
                 new Module { name = $"Draw Circle {Bracket("green", "G")}", method = Fun.DrawCircle, disableMethod = Movement.EnableRig, toolTip = "Draws a circle with your rig's trail while holding <color=green>grip</color>."},
 
-                new Module { name = "Flood Dev Messages", method = Fun.EnableFloodDevMessages, disableMethod = Fun.DisableFloodDevMessages, toolTip = "Repeatedly submits dev messages to flood the report queue."},
+                new Module { name = "Flood Developer Messages", method = Fun.EnableFloodDeveloperMessages, disableMethod = Fun.DisableFloodDeveloperMessages, toolTip = "Repeatedly submits developer messages to flood the report queue."},
                 new Module { name = "Flood Logs All", method = Fun.FloodLogsAll, toolTip = "Floods everyone in the room's client logs."},
                 new Module { name = "Flood Logs Gun", method = Fun.FloodLogsGun, toolTip = "Floods whoever your hand desires's client logs."},
 
@@ -2188,6 +2183,9 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Overpowered Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
+                new Module { name = "Open All Elevators", method = Fun.OpenAllElevators, isTogglable = false, toolTip = "Opens every elevator door on the map."},
+                new Module { name = "Close All Elevators", method = Fun.CloseAllElevators, isTogglable = false, toolTip = "Closes every elevator door on the map."},
+
                 new Module { name = "Always Guardian", method = Overpowered.AlwaysGuardian, disableMethod = Movement.EnableRig, toolTip = "Makes you always the guardian."},
                 new Module { name = "Guardian Protector", method = Overpowered.GuardianProtector, toolTip = "Pushes people away from the guardian moon if they try to approach it."},
 
@@ -2941,6 +2939,10 @@ namespace Qubit.Modules
                 new Module { name = "Detected Isolate On Touch", displayName = "Isolate On Touch", method = Detected.IsolateOnTouch, detected = true, toolTip = "Players that you touch will only be able to see you."},
 
                 new Module { name = "Exile Gun", method = Detected.ExileGun, detected = true, toolTip = "Purges whoever your hand desires from the room's event cache, desyncing them."},
+                new Module { name = "Exile All", method = Detected.ExileAll, detected = true, isTogglable = false, toolTip = "Purges everyone in the room from the room's event cache, desyncing them."},
+                new Module { name = "Exile Aura", method = Detected.ExileAura, detected = true, toolTip = "Purges nearby players from the room's event cache, desyncing them."},
+                new Module { name = "Kick Net Triggers", method = Room.KickNetTriggers, detected = true, isTogglable = false, toolTip = "Makes the room visible and disables its join triggers, kicking people out of the ability to rejoin through the map."},
+                new Module { name = "Fix Net Triggers", method = Room.FixNetTriggers, detected = true, isTogglable = false, toolTip = "Restores the room's visibility and join triggers to normal."},
                 new Module { name = "Detected Change Name Gun", displayName = "Change Name Gun", enableMethod = Detected.PromptNameChange, method = Detected.ChangeNameGun, detected = true, toolTip = "Changes the name of whoever your hand desires."},
                 new Module { name = "Detected Change Name All", displayName = "Change Name All", enableMethod = Detected.PromptNameChange, method = Detected.ChangeNameAll, detected = true, toolTip = "Changes the name of everyone in the room."},
                 new Module { name = "Detected Change Name Aura", displayName = "Change Name Aura", enableMethod = Detected.PromptNameChange, method = Detected.ChangeNameAura, detected = true, toolTip = "Changes the name of whoever is near you."},
