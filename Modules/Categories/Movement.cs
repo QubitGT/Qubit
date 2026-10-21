@@ -644,6 +644,10 @@ namespace Qubit.Modules.Categories
                 ObjectColors outlineColorChanger = gameObject.AddComponent<ObjectColors>();
                 outlineColorChanger.colors = buttonColors[0];
             }
+
+            foreach (Collider collider in platform.GetComponentsInChildren<Collider>(true))
+                collider.gameObject.layer = PlatformLayer;
+
             return platform;
         }
 
@@ -728,6 +732,7 @@ namespace Qubit.Modules.Categories
                 else
                 {
                     platform = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    platform.layer = PlatformLayer;
                     platform.GetComponent<Renderer>().material.color = backgroundColor.GetCurrentColor();
                     platform.transform.localScale = new Vector3(0.025f, 0.3f, 0.4f) * (scaleWithPlayer ? References.Player.scale : 1f);
                     platform.AddComponent<GorillaSurfaceOverride>().overrideIndex = 61;
@@ -2784,10 +2789,17 @@ namespace Qubit.Modules.Categories
             playspace.enabled = false;
         }
 
+        private static int PlatformLayer => LayerMask.NameToLayer("BuilderProp");
+
         public static void UpdateClipColliders(bool enabled)
         {
             foreach (MeshCollider v in Resources.FindObjectsOfTypeAll<MeshCollider>())
+            {
+                if (v.gameObject.layer == PlatformLayer)
+                    continue;
+
                 v.enabled = enabled;
+            }
         }
 
         public static void Noclip()
