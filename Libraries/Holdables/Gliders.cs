@@ -141,6 +141,38 @@ namespace Qubit.Libraries.Holdables
             }
         }
 
+        public static float[] smoothedGliderHeights;
+
+        public static void GliderVisualizer()
+        {
+            GliderHoldable[] them = GetAllType<GliderHoldable>();
+            if (smoothedGliderHeights == null || smoothedGliderHeights.Length != them.Length)
+                smoothedGliderHeights = new float[them.Length];
+
+            float loudness = 0f;
+            GorillaSpeakerLoudness recorder = References.LocalRig.GetComponent<GorillaSpeakerLoudness>();
+            if (recorder != null)
+                loudness = recorder.Loudness;
+
+            for (int index = 0; index < them.Length; index++)
+            {
+                GliderHoldable glider = them[index];
+                if (glider.GetView.Owner != PhotonNetwork.LocalPlayer)
+                {
+                    glider.OnHover(null, null);
+                    continue;
+                }
+
+                smoothedGliderHeights[index] = Mathf.Lerp(smoothedGliderHeights[index], loudness * 10f, Time.deltaTime * 8f);
+
+                float angle = (360f / them.Length * index + Time.time * 20f) * Mathf.Deg2Rad;
+                Vector3 outward = new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle));
+
+                glider.gameObject.transform.position = References.HeadCollider.transform.position + outward * 6f + Vector3.up * (smoothedGliderHeights[index] - 0.1f);
+                glider.gameObject.transform.rotation = Quaternion.LookRotation(outward, Vector3.up);
+            }
+        }
+
         public static void DestroyGliders()
         {
             foreach (GliderHoldable glider in GetAllType<GliderHoldable>())

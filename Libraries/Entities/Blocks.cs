@@ -529,6 +529,29 @@ namespace Qubit.Libraries.Entities
             Security.RPCProtection();
         }
 
+        public static Vector3 trailLastPosition;
+
+        public static void BuildingBlockTrail()
+        {
+            Vector3 current = References.LocalRig.transform.position;
+            if (Vector3.Distance(current, trailLastPosition) < 0.3f) return;
+
+            trailLastPosition = current;
+            CreatePiece(pieceIdSet, current, Quaternion.identity, 0);
+            Security.RPCProtection();
+        }
+
+        public static void BuildingBlockFirework()
+        {
+            for (int i = 0; i < 14; i++)
+            {
+                float angle = i / 14f * Mathf.PI * 2f;
+                Vector3 velocity = Vector3.up * Random.Range(8f, 12f) + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 3.5f;
+                CreatePiece(pieceIdSet, References.RightHand.position, Quaternion.identity, 0, velocity: velocity);
+            }
+            Security.RPCProtection();
+        }
+
         public static void OrbitBlocks()
         {
             CreatePiece(pieceIdSet, References.HeadCollider.transform.position + new Vector3(MathF.Cos((float)Time.frameCount / 30), 0f, MathF.Sin((float)Time.frameCount / 30)), Quaternion.identity, 0);

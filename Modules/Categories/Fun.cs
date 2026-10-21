@@ -23,6 +23,7 @@ using ExitGames.Client.Photon;
 using GorillaExtensions;
 using GorillaGameModes;
 using GorillaLocomotion.Climbing;
+using GorillaLocomotion.Gameplay;
 using GorillaLocomotion.Swimming;
 using GorillaTagScripts;
 using Photon.Pun;
@@ -40,6 +41,7 @@ using Qubit.Libraries.Entities;
 using Qubit.Libraries.Holdables;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
+using UnityEngine.Networking;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Rigs;
@@ -1079,6 +1081,37 @@ namespace Qubit.Modules.Categories
             foreach (NetPlayer player in ManagerRegistry.NetworkSystem.PlayerListOthers)
                 GorillaPlayerScoreboardLine.ReportPlayer(player.UserId, GorillaPlayerLineButton.ButtonType.Cheating, player.NickName);
         }
+
+        public static string[] arsReportList = Array.Empty<string>();
+        public static readonly HashSet<string> arsReported = new HashSet<string>();
+
+        public static void EnableAutomaticReportingSystem() => Coroutines.instance.StartCoroutine(FetchAutomaticReportingList());
+
+        public static void DisableAutomaticReportingSystem() => arsReported.Clear();
+
+        public static IEnumerator FetchAutomaticReportingList()
+        {
+            using UnityWebRequest request = UnityWebRequest.Get("https://raw.githubusercontent.com/AutoReportSystem/ARSPlayerIDs/refs/heads/main/Player%20Ids.txt");
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+                arsReportList = request.downloadHandler.text.Split(',').Select(id => id.Trim()).Where(id => !string.IsNullOrEmpty(id)).ToArray();
+        }
+
+        public static void AutomaticReportingSystem()
+        {
+            if (arsReportList.Length == 0) return;
+
+            foreach (VRRig rig in Players.ActiveRigs)
+            {
+                NetPlayer player = GetPlayerFromVRRig(rig);
+                if (player == null || arsReported.Contains(player.UserId) || !arsReportList.Contains(player.UserId)) continue;
+
+                arsReported.Add(player.UserId);
+                Notifications.SendFormat("blue", "ARS", $"Player {player.NickName} is on the auto-report list, reporting...");
+                GorillaPlayerScoreboardLine.ReportPlayer(player.UserId, GorillaPlayerLineButton.ButtonType.Cheating, player.NickName);
+            }
+        }
         public static void TriggerAntiReportGun()
         {
             GunLibrary.Aim(GunData =>
@@ -1538,6 +1571,19 @@ namespace Qubit.Modules.Categories
                 Security.RPCProtection();
             }
         }
+        public static bool elevatorSensorOpen;
+
+        public static void ElevatorProximitySensor()
+        {
+            if (ManagerRegistry.GRElevatorManager == null) return;
+
+            bool inRange = Vector3.Distance(References.LocalRig.transform.position, ManagerRegistry.GRElevatorManager.transform.position) <= 3f;
+            if (inRange == elevatorSensorOpen) return;
+
+            elevatorSensorOpen = inRange;
+            SetElevatorDoorState(inRange);
+        }
+
         public static void BasementDoorSpam()
         {
             if (!Networking.InRoom) return;
@@ -3085,6 +3131,18 @@ namespace Qubit.Modules.Categories
                 Notifications.SendFormat("green", "SUCCESS", "" + id, 5000);
                 GUIUtility.systemCopyBuffer = id;
             }
+        }
+
+        public static void CopyMothershipIDGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                idgundelay = Time.time + 0.5f;
+                NetPlayer player = GetPlayerFromVRRig(gunTarget);
+                string id = player.GetPlayerRef().CustomProperties["mothershipId"].ToString();
+                Notifications.SendFormat("green", "SUCCESS", $"Copied {player.NickName}'s MotherShip ID: {id}", 5000);
+                GUIUtility.systemCopyBuffer = id;
+            }, new GunLibrary.GunSettings { when = () => Time.time > idgundelay });
         }
 
         public static void CopySelfID()
@@ -4635,8 +4693,80 @@ namespace Qubit.Modules.Categories
             else Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
 
+        public static void FreezeLucy()
+        {
+            HalloweenGhostChaser hgc = Overpowered.Lucy;
+            if (hgc.IsMine)
+                hgc.currentSpeed = 0f;
+            else Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        public static GameObject HalloweenTerraformer => GetObject("Environment Objects/LocalObjects_Prefab/Forest/2026_Halloween_Forest/Terraformer");
+
+        public static void DisableHalloweenTerraformer() => HalloweenTerraformer?.SetActive(false);
+        public static void EnableHalloweenTerraformer() => HalloweenTerraformer?.SetActive(true);
+
+        public static NoncontrollableBroomstick[] HalloweenBroomsticks
+        {
+            get
+            {
+                const string path = "Environment Objects/LocalObjects_Prefab/Forest/2026_Halloween_Forest/Broomsticks";
+                return new[]
+                {
+                    GetObject(path + "/Broomstick2/NoncontrollableBroomstick")?.GetComponent<NoncontrollableBroomstick>(),
+                    GetObject(path + "/Broomstick3/NoncontrollableBroomstick")?.GetComponent<NoncontrollableBroomstick>(),
+                };
+            }
+        }
+
+        public static void FastBroomsticks()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            foreach (NoncontrollableBroomstick broomstick in HalloweenBroomsticks)
+                if (broomstick != null) broomstick.duration = 10f;
+        }
+
+        public static void SlowBroomsticks()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            foreach (NoncontrollableBroomstick broomstick in HalloweenBroomsticks)
+                if (broomstick != null) broomstick.duration = 60f;
+        }
+
+        public static void ResetBroomsticks()
+        {
+            if (!Networking.IsMasterClient) return;
+
+            foreach (NoncontrollableBroomstick broomstick in HalloweenBroomsticks)
+                if (broomstick != null) broomstick.duration = 30f;
+        }
+
         public static void BarrelGun()
         {
+            if (Manager.GetIndex("Weak Barrel Fling").enabled)
+            {
+                GunLibrary.Target(lockTarget =>
+                {
+                    if (!GetGunInput(true)) return;
+
+                    Vector3 targetPosition = lockTarget.transform.position;
+                    Vector3 spawnPosition = targetPosition + Vector3.down * 3.47f;
+                    Vector3 velocity = (targetPosition - spawnPosition).normalized * 1200f;
+                    ThrowableProjectiles.SendBarrelProjectile(spawnPosition, velocity, Quaternion.identity);
+                }, new GunLibrary.GunSettings { locks = true });
+                return;
+            }
+
             GunLibrary.Aim(GunData =>
             {
                 if (GetGunInput(true))

@@ -202,6 +202,7 @@ namespace Qubit.Modules
                 new Module { name = "Menu Collisions", enableMethod =() => menuCollisions = true, disableMethod =() => menuCollisions = false, toolTip = "Gives the menu collisions when dropping it.", legal = true},
                 new Module { name = "Player Scale Menu", enableMethod =() => scaleWithPlayer = true, disableMethod =() => scaleWithPlayer = false, toolTip = "Scales the menu with your player scale.", legal = true},
                 new Module { name = "Alphabetize Menu", toolTip = "Alphabetizes the entire menu.", legal = true},
+                new Module { name = "Remember Last Category", toolTip = "Remembers what category the menu was last on, and reopens it there.", legal = true},
                 new Module { name = "Custom Menu Name", enableMethod = Modules.Categories.Settings.CustomMenuName, disableMethod =() => doCustomName = false, toolTip = $"Changes the name of the menu to whatever. You can change the text inside of your Gorilla Tag files ({PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt).", legal = true},
                 new Module { name = "Menu Trail", enableMethod =() => menuTrail = true, disableMethod =() => menuTrail = false, toolTip = "Gives the menu a trail when you drop.", legal = true},
 
@@ -505,6 +506,12 @@ namespace Qubit.Modules
                 new Module { name = "Join Last Room", method =() => JoinRoom(lastRoom), isTogglable = false, toolTip = "Joins the last room you left.", legal = true},
                 new Module { name = "Join Random", method = JoinRandom, isTogglable = false, toolTip = "Joins a random public room.", legal = true},
 
+                new Module { name = "Lobby Hopper", enableMethod =() => Room.lobbyHopperRoutine = Coroutines.instance.StartCoroutine(Room.LobbyHopperCoroutine()), disableMethod =() => Coroutines.instance.StopCoroutine(Room.lobbyHopperRoutine), toolTip = "Automatically leaves and rejoins a random room every so often."},
+
+                new Module { name = "Join EU Region", method =() => Room.ConnectToRegion("eu"), isTogglable = false, toolTip = "Connects you to the EU region."},
+                new Module { name = "Join US Region", method =() => Room.ConnectToRegion("us"), isTogglable = false, toolTip = "Connects you to the US region."},
+                new Module { name = "Join USW Region", method =() => Room.ConnectToRegion("usw"), isTogglable = false, toolTip = "Connects you to the USW region."},
+
                 new Module { name = "Create Public", method =() => CreateRoom(RandomRoomName(), true), isTogglable = false, toolTip = "Creates a public room."},
                 new Module { name = "Create Private", method =() => CreateRoom(RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
 
@@ -596,6 +603,7 @@ namespace Qubit.Modules
                 new Module { name = "Unlock FPS", method = Important.UncapFPS, disableMethod =() => Application.targetFrameRate = 144, toolTip = "Unlocks your FPS."},
 
                 new Module { name = "PC Button Click", aliases = new[] { "PC Click" }, method = Important.PCButtonClick, disableMethod = Important.DisablePCButtonClick, toolTip = "Lets you click in-game buttons with your mouse."},
+                new Module { name = "Move Hands", toolTip = "Moves your hand to match your mouse cursor when using PC Button Click.", legal = true},
                 new Module { name = "PC Controller Emulation", method = Important.PCControllerEmulation, toolTip = "Emulates controller buttons using the configured PC controller keys."},
                 new Module { name = "Unlock Competitive Queue", method =() => References.Computer.CompQueueUnlockButtonPress(), isTogglable = false, toolTip = "Permanently unlocks the competitive queue."},
                 new Module { name = "Change Queue to Default", displayName = $"Change Queue {Bracket("green", "Default")}", method =() => References.Computer.currentQueue = "DEFAULT", isTogglable = false, toolTip = "Changes your queue to default."},
@@ -638,6 +646,11 @@ namespace Qubit.Modules
 
                 new Module { name = "Disable Gamemode Buttons", enableMethod =() => Safety.SetGamemodeButtonActive(false), disableMethod =() => Safety.SetGamemodeButtonActive(), toolTip = "Disables the gamemode buttons."},
                 new Module { name = "Support Page Spoof", method = Safety.SpoofSupportPage, toolTip = "Makes the support page appear as if you are on Oculus."},
+
+                new Module { name = "FPS Spoofer", enableMethod =() => { CompetitiveFPSSpoof.enabled = true; CompetitiveFPSSpoof.weighted = false; }, disableMethod =() => CompetitiveFPSSpoof.enabled = false, toolTip = "Spoofs the FPS other players see on your competitive stats to a random value."},
+                new Module { name = "Weighted FPS Spoofer", enableMethod =() => { CompetitiveFPSSpoof.enabled = true; CompetitiveFPSSpoof.weighted = true; }, disableMethod =() => CompetitiveFPSSpoof.enabled = false, toolTip = "Spoofs the FPS other players see on your competitive stats to a realistic looking value, to avoid detection."},
+                new Module { name = "Block Group Shuttling", enableMethod =() => BlockShuttleSearch.enabled = true, disableMethod =() => BlockShuttleSearch.enabled = false, toolTip = "Stops other players from forcing you to join their group's room."},
+                new Module { name = "Rapid Master Switch Protection", enableMethod =() => Rooms.rapidMasterSwitchProtection = true, disableMethod =() => Rooms.rapidMasterSwitchProtection = false, toolTip = "Disconnects you if the master client changes five times within three seconds, a sign of a room being crashed."},
 
                 new Module { name = "Flush RPCs", method = Security.RPCProtection, isTogglable = false, toolTip = "Flushes all RPC calls, good after you stop spamming." },
                 new Module { name = "Anti Crash", displayName = "Exploit Guard", aliases = new[] { "Anti Crash" }, enableMethod =() => AntiCrashPatches.enabled = true, disableMethod =() => AntiCrashPatches.enabled = false, toolTip = "Prevents crashers from completely annihilating your computer.", legal = true},
@@ -831,6 +844,10 @@ namespace Qubit.Modules
                 new Module { name = $"Ghost {Bracket("green", "A")}", method = Movement.Ghost, disableMethod = Movement.EnableRig, toolTip = "Keeps your rig still when holding <color=green>A</color>."},
                 new Module { name = $"Invisible {Bracket("green", "B")}", method = Movement.Invisible, disableMethod = Movement.EnableRig, toolTip = "Makes you go invisible when holding <color=green>B</color>."},
                 new Module { name = "Rig Gun", method = Movement.RigGun, toolTip = "Moves your rig to wherever your hand desires."},
+                new Module { name = "Look At Gun", method = Movement.LookAtGun, toolTip = "Makes you stare at whoever your hand desires."},
+                new Module { name = "Shadow Clone Gun", method = Movement.ShadowCloneGun, disableMethod = Movement.EnableRig, toolTip = "Copies the movement of whoever your hand desires, right beside them."},
+                new Module { name = "PC Rig", method = Movement.PCRigPose, toolTip = "Gives your rig a custom pose on PC, instead of using the default vanilla one."},
+                new Module { name = "Masturbate", method = Movement.JerkOffAnimation, toolTip = "Makes you masturbate."},
                 new Module { name = $"Grab Rig {Bracket("green", "G")}", method = Movement.GrabRig, toolTip = "Lets you grab your rig when holding <color=green>grip</color>."},
                 new Module { name = "Spin Head X", method =() => Movement.SpinHead("x"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the X axis."},
                 new Module { name = "Spin Head Y", method =() => Movement.SpinHead("y"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the Y axis."},
@@ -935,6 +952,7 @@ namespace Qubit.Modules
                 new Module { name = "Fake Lag", method = Advantages.FakeLag, disableMethod =() => { ViewSerialization.OverrideSerialization = null; RigSerialization.delay = null; }, toolTip = "Forces your ping to be high."},
                 new Module { name = "Lag Range", method = Advantages.LagRange, toolTip = "Dynamically changes how much your rig updates depending on how close you are to others."},
                 new Module { name = "Blink", method = Advantages.Blink, disableMethod = Advantages.DisableBlink, toolTip = "Stops your client from sending and receiving player update packets."},
+                new Module { name = "Lava Distance Ping", disableMethod =() => Notifications.information.Remove("Lava"), method = Advantages.LavaDistancePing, toolTip = "Notifies you of the distance to the nearest tagged player."},
 
                 new Module { name = "Paintbrawl Aimbot", displayName = "Slingshot Aimbot", enableMethod =() => SlingshotLaunch.enabled = true, method = Advantages.DebugSlingshotAimbot, disableMethod =() => SlingshotLaunch.enabled = false, toolTip = "Redirects your slingshot to the closest nearby players."},
                 new Module { name = "Slingshot Helper", method = Advantages.SlingshotHelper, toolTip = "Helps you grab the small paintball on your slingshot."},
@@ -1093,6 +1111,8 @@ namespace Qubit.Modules
                 new Module { name = "Automatic Wireframe ESP", method =() => Visuals.AutomaticESP(Visuals.InfectionWireframeESP, Visuals.HuntWireframeESP, Visuals.CasualWireframeESP), disableMethod = Visuals.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows targets for the current gamemode."},
 
                 new Module { name = "Chams", method = Visuals.Chams, disableMethod = Visuals.DisableShaderChams, toolTip = "Lets you see players through walls."},
+                new Module { name = "Cosmetic Chams", method = Visuals.CosmeticEsp, disableMethod = Visuals.DisableCosmeticEsp, toolTip = "Lets you see most cosmetics on people through walls."},
+                new Module { name = "Rare Cosmetic Chams", method = Visuals.RareCosmeticEsp, disableMethod = Visuals.DisableRareCosmeticEsp, toolTip = "Lets you see rare, hard to obtain cosmetics on people through walls."},
 
                 new Module { name = "Casual Chams", method = Visuals.CasualChams, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows everyone."},
                 new Module { name = "Infection Chams", method = Visuals.InfectionChams, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows untagged when tagged, vice versa."},
@@ -1194,6 +1214,7 @@ namespace Qubit.Modules
 
                 new Module { name = "Report Gun", method = Fun.ReportGun, toolTip = "Reports whoever your hand desires for cheating."},
                 new Module { name = "Report All", method = Fun.ReportAll, isTogglable = false, toolTip = "Reports everyone in the room for cheating."},
+                new Module { name = "Automatic Reporting System", enableMethod = Fun.EnableAutomaticReportingSystem, method = Fun.AutomaticReportingSystem, disableMethod = Fun.DisableAutomaticReportingSystem, toolTip = "Automatically reports anyone in the room that's on the community-maintained cheater list."},
 
                 new Module { name = "Trigger Anti Report Gun", method = Fun.TriggerAntiReportGun, toolTip = "Triggers whoever your hand desires' anti report if enabled."},
                 new Module { name = "Trigger Anti Report All", method = Fun.TriggerAntiReportAll, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Triggers everyone in the room's anti report if enabled."},
@@ -1265,6 +1286,7 @@ namespace Qubit.Modules
 
                 new Module { name = "Basement Door Spam", method = Fun.BasementDoorSpam, toolTip = "Repeatedly opens and closes the basement door."},
                 new Module { name = "Elevator Door Spam", method = Fun.ElevatorDoorSpam, toolTip = "Repeatedly opens and closes the elevator door."},
+                new Module { name = "Elevator Proximity Sensor", disableMethod =() => Fun.elevatorSensorOpen = false, method = Fun.ElevatorProximitySensor, toolTip = "Automatically opens and closes the elevator door as you get close to and move away from it."},
 
                 new Module { name = "Custom Virtual Stump Video", enableMethod = Fun.CustomVirtualStumpVideo, disableMethod = Fun.DisableCustomVirtualStumpVideo, toolTip = "Plays a video by the virtual stump VR headset in stump."},
 
@@ -1308,6 +1330,8 @@ namespace Qubit.Modules
                 new Module { name = "Rain Building Blocks", method = Blocks.RainBuildingBlocks, toolTip = "Makes the building blocks fall around you like rain." },
                 new Module { name = "Building Block Fountain", method = Blocks.BuildingBlockFountain, toolTip = "Spurts building blocks out of your head like a fountain." },
                 new Module { name = "Building Block Aura", method = Blocks.BuildingBlockAura, toolTip = "Moves the building blocks around you at random positions." },
+                new Module { name = "Building Block Trail", enableMethod =() => Blocks.trailLastPosition = References.LocalRig.transform.position, method = Blocks.BuildingBlockTrail, toolTip = "Leaves a trail of building blocks behind you as you move." },
+                new Module { name = "Building Block Firework", method = Blocks.BuildingBlockFirework, isTogglable = false, toolTip = "Launches a spiral burst of building blocks out of your hand." },
 
                 new Module { name = "Building Block Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = Blocks.BuildingBlockTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
 
@@ -1387,6 +1411,7 @@ namespace Qubit.Modules
                 new Module { name = "Become Lucy", method = Fun.BecomeLucy, disableMethod = Movement.EnableRig, toolTip = "Turns you into the bug." },
                 new Module { name = "Fast Lucy", method = Fun.FastLucy, toolTip = "Makes lucy become really fast." },
                 new Module { name = "Slow Lucy", method = Fun.SlowLucy, toolTip = "Makes lucy become really slow." },
+                new Module { name = "Freeze Lucy", method = Fun.FreezeLucy, toolTip = "Makes lucy come to a complete stop." },
                 new Module { name = "Restless Lucy", enableMethod = Lucy.EnableRestless, disableMethod = Lucy.DisableRestless, toolTip = "Makes Lucy rise way more often, never giving anyone a break. Requires master client." },
                 new Module { name = "Hyper Lucy", enableMethod = Lucy.EnableHyper, disableMethod = Lucy.DisableHyper, toolTip = "Makes Lucy permanently accelerate, until she's breaking the sound barrier. Requires master client." },
                 new Module { name = "Lucy Rain", method = Lucy.Rain, toolTip = "Makes Lucy gong teleport between her spawn points over and over. Requires master client." },
@@ -1397,6 +1422,9 @@ namespace Qubit.Modules
                 new Module { name = "Lucy Grab Gun", method = Lucy.GrabGun, toolTip = "Teleports Lucy straight at whoever your hand desires and makes her grab them. Requires master client." },
                 new Module { name = "Lucy Bodyguard", method = Lucy.Bodyguard, disableMethod = Fun.DespawnLucy, toolTip = "Makes Lucy hunt down anyone who gets within 25 meters of you. Requires master client." },
                 new Module { name = "Lucy Siege", method = Lucy.Siege, disableMethod = Fun.DespawnLucy, toolTip = "Makes Lucy grab a random player every 2 seconds, non stop. Requires master client." },
+                new Module { name = "Disable Halloween Terraformer", enableMethod = Fun.DisableHalloweenTerraformer, disableMethod = Fun.EnableHalloweenTerraformer, toolTip = "Disables the Halloween Terraformer in forest."},
+                new Module { name = "Fast Broomsticks", enableMethod = Fun.FastBroomsticks, disableMethod = Fun.ResetBroomsticks, toolTip = "Makes the Halloween broomsticks fast. Requires master client."},
+                new Module { name = "Slow Broomsticks", enableMethod = Fun.SlowBroomsticks, disableMethod = Fun.ResetBroomsticks, toolTip = "Makes the Halloween broomsticks slow. Requires master client."},
                 new Module { name = "Carry Lucy", enableMethod = Lucy.EnableCarry, method = Lucy.Carry, disableMethod = Lucy.DisableCarry, toolTip = "Picks Lucy up and lets everyone watch you carry the ghost around in your hand. Requires master client." },
                 new Module { name = "Lucy Flight", enableMethod = Lucy.EnableFlight, method = Lucy.Flight, disableMethod = Lucy.DisableFlight, toolTip = "Makes Lucy carry you up into the sky. Everyone sees you levitating, and she grabs you on your screen." },
 
@@ -1617,6 +1645,7 @@ namespace Qubit.Modules
                 new Module { name = "Orbit Tablet", method = LckCamera.OrbitTablet, toolTip = "Orbits the tablet around you." },
                 new Module { name = "Orbit Balloons", method = Balloons.OrbitBalloons, toolTip = "Orbits the balloons around you." },
                 new Module { name = "Orbit Gliders", method = Gliders.OrbitGliders, toolTip = "Orbits the gliders around you." },
+                new Module { name = "Glider Visualizer", method = Gliders.GliderVisualizer, toolTip = "Turns the gliders into an audio visualizer that bounces with your voice." },
                 new Module { name = "Orbit Hoverboards", method = Hoverboards.OrbitHoverboards, toolTip = "Orbits the hoverboards around you."},
                 new Module { name = "Bug Aura", method =() => Bugs.ObjectAura("Floating Bug Holdable"), toolTip = "Teleports the bug around you in random positions." },
                 new Module { name = "Bat Aura", method =() => Bugs.ObjectAura("Cave Bat Holdable"), toolTip = "Teleports the bat around you in random positions." },
@@ -1664,6 +1693,7 @@ namespace Qubit.Modules
                 new Module { name = "H1D3 Name Cycle", method =() => Fun.NameCycle(new[] { "H1D3", "HE", "HAS", "AWOKEN" }), toolTip = "Sets your name on a loop to \"H1D3\", \"HE\", \"HAS\", and \"AWOKEN\"" },
                 new Module { name = "No Escape Name Cycle", method =() => Fun.NameCycle(new[] { "THERE", "IS", "NO", "ESCAPE" }), toolTip = "Sets your name on a loop to \"THERE\", \"IS\", \"NO\", and \"ESCAPE\"" },
                 new Module { name = "Run Rabbit Name Cycle", method =() => Fun.NameCycle(new[] { "RUN", "RABBIT" }), toolTip = "Sets your name on a loop to \"RUN\" and \"RABBIT\"." },
+                new Module { name = "Emoji Name Cycle", method =() => Fun.NameCycle(new[] { "☺️", "😀", "😃", "😄", "😁", "😆", "😅", "😂", "😊" }), toolTip = "Sets your name on a loop through a bunch of random emojis." },
                 new Module { name = "Random Name Cycle", method = Fun.RandomNameCycle, toolTip = "Sets your name on a loop to a bunch of random characters." },
                 new Module { name = "Custom Name Cycle", enableMethod = Fun.EnableCustomNameCycle, method =() => Fun.NameCycle(Fun.names), toolTip = "Sets your name on a loop to whatever's in the file." },
                 new Module { name = "Animated Name", method = Fun.AnimatedName, disableMethod =() => { ChangeName(Fun.name); Fun.name = null;  }, toolTip = "Animates your current username." },
@@ -1699,6 +1729,7 @@ namespace Qubit.Modules
                 new Module { name = "Spaz Holdables", method = Fun.SpazHoldables, toolTip = "Spazzes out the positions of your holdables." },
                 new Module { name = "Get ID Self", method = Fun.CopySelfID, isTogglable = false, toolTip = "Gets your player ID and copies it to the clipboard.", legal = true},
                 new Module { name = "Get ID Gun", method = Fun.CopyIDGun, toolTip = "Gets the player ID of whoever your hand desires and copies it to the clipboard." },
+                new Module { name = "Get Mothership ID Gun", method = Fun.CopyMothershipIDGun, toolTip = "Gets the mothership ID of whoever your hand desires and copies it to the clipboard." },
                 new Module { name = "Get ID All", method = Fun.CopyIDAll, isTogglable = false, toolTip = "Gets the player IDs of everyone and copies them to the clipboard." },
                 new Module { name = "Get ID Aura", method = Fun.CopyIDAura, toolTip = "Gets the player ID of players nearby you and copies it to the clipboard." },
                 new Module { name = "Get ID On Touch", method = Fun.CopyIDOnTouch, toolTip = "Gets the player ID of players you touch and copies it to the clipboard." },
@@ -1874,6 +1905,10 @@ namespace Qubit.Modules
 
                 new Module { name = "VIM Mute Gun", method = Master.VIMMuteGun, toolTip = "Mutes whoever your hand desires if you created the room as a fan club subscriber." },
                 new Module { name = "VIM Mute All", enableMethod = Master.VIMMuteAll, disableMethod = Master.VIMUnmuteAll, toolTip = "Mutes everyone if you created the room as a fan club subscriber." },
+
+                new Module { name = "Gray Zone", enableMethod = Master.ActivateGrayZone, disableMethod = Master.DeactivateGrayZone, toolTip = "Forces the gray zone event to stay active permanently. Requires master client." },
+                new Module { name = "Spam Gray Zone", enableMethod = Master.EnableSpamGrayZone, method = Master.SpamGrayZone, disableMethod = Master.DisableSpamGrayZone, toolTip = "Rapidly toggles the gray zone event on and off. Requires master client." },
+                new Module { name = "Guardian Spam", enableMethod = Master.EnableGuardianSpam, disableMethod = Master.DisableGuardianSpam, toolTip = "Spams random players as the guardian in the guardian game mode. Requires master client." },
 
                 new Module { name = "Guardian Self", method = Master.GuardianSelf, isTogglable = false, toolTip = "Makes you red."},
                 new Module { name = "Guardian Gun", method = Master.GuardianGun, toolTip = "Makes whoever your hand desires the guardian."},
@@ -2695,6 +2730,8 @@ namespace Qubit.Modules
 
                 new Module { name = "Tinnitus Self", enableMethod =() => Fun.tinnitusSelf = true, disableMethod =() => Fun.tinnitusSelf = false, toolTip = "Be able to hear the loud beep the menu creates with this mod on. God save your ears."},
 
+                new Module { name = "Weak Barrel Fling", toolTip = "Makes the Barrel Gun lock onto and fling whoever your hand desires with the barrel, instead of just spawning it."},
+
             },
             ["Holdable Settings"] = new[]
             {
@@ -2940,8 +2977,21 @@ namespace Qubit.Modules
                 pageNumber = 0;
                 pageOffset = 0;
 
+                if (GetIndex("Remember Last Category")?.enabled == true)
+                    PlayerPrefs.SetString("Qubit_LastCategory", value);
+
                 OnCategoryChanged?.Invoke();
             }
+        }
+
+        [RunOnLaunch(LaunchPriority.Preferences)]
+        public static void RestoreLastCategory()
+        {
+            if (GetIndex("Remember Last Category")?.enabled != true) return;
+
+            string lastCategory = PlayerPrefs.GetString("Qubit_LastCategory", "Main");
+            if (modules.ContainsKey(lastCategory))
+                _currentCategoryName = lastCategory;
         }
 
         private static readonly Dictionary<string, (string Category, int Index)> cacheGetIndex = new Dictionary<string, (string Category, int Index)>();

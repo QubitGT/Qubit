@@ -919,6 +919,29 @@ namespace Qubit.Modules.Categories
             RigSerialization.stopSerialization = false;
             Movement.isBlinking = false;
         }
+
+        public static void LavaDistancePing()
+        {
+            if (!Networking.InRoom || References.LocalRig.IsTagged())
+            {
+                Notifications.information.Remove("Lava");
+                return;
+            }
+
+            float closest = float.MaxValue;
+            foreach (VRRig vrrig in Players.ActiveRigs)
+            {
+                if (!vrrig.IsTagged()) continue;
+
+                float dist = Vector3.Distance(References.BodyCollider.transform.position, vrrig.transform.position);
+                if (dist < closest) closest = dist;
+            }
+
+            if (Mathf.Approximately(closest, float.MaxValue))
+                Notifications.information.Remove("Lava");
+            else
+                Notifications.information["Lava"] = $"{closest:F1}m";
+        }
         #endregion
     }
 }

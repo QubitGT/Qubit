@@ -33,6 +33,7 @@ using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Tagging;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -1727,6 +1728,121 @@ namespace Qubit.Modules.Categories
 
         public static void UpdateMasterLabel() =>
             Manager.GetIndex("MasterLabel").displayName = Networking.IsMasterClient ? "You are master client." : "You are not master client.";
+
+        public static GreyZoneManager[] grayZones;
+        public static float grayZoneSpamDelay;
+        public static Coroutine guardianSpamRoutine;
+
+        public static void ActivateGrayZone()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            grayZones = UnityEngine.Object.FindObjectsByType<GreyZoneManager>(FindObjectsSortMode.None);
+            foreach (GreyZoneManager zone in grayZones)
+            {
+                zone.forceTimeOfDayToNight = true;
+                zone.greyZoneActiveDuration = float.MaxValue;
+                zone.ActivateGreyZoneAuthority();
+                zone.gravityFactorOptionSelection = 0;
+            }
+        }
+
+        public static void DeactivateGrayZone()
+        {
+            if (!Networking.IsMasterClient || grayZones == null) return;
+
+            foreach (GreyZoneManager zone in grayZones)
+            {
+                zone.greyZoneAmbienceVolume = 0f;
+                zone.DeactivateGreyZoneAuthority();
+                zone.gravityFactorOptionSelection = 0;
+            }
+        }
+
+        public static void EnableSpamGrayZone() => grayZones = UnityEngine.Object.FindObjectsByType<GreyZoneManager>(FindObjectsSortMode.None);
+
+        public static void SpamGrayZone()
+        {
+            if (!(Time.time > grayZoneSpamDelay) || !Networking.IsMasterClient || grayZones == null) return;
+            grayZoneSpamDelay = Time.time + 0.08f;
+
+            foreach (GreyZoneManager zone in grayZones)
+                if (zone.GreyZoneActive)
+                {
+                    zone.DeactivateGreyZoneAuthority();
+                    zone.gravityFactorOptionSelection = 0;
+                }
+                else
+                {
+                    zone.greyZoneAmbienceVolume = 0f;
+                    zone.ActivateGreyZoneAuthority();
+                    zone.DeactivateGreyZoneLocal();
+                }
+        }
+
+        public static void DisableSpamGrayZone()
+        {
+            if (grayZones == null) return;
+            foreach (GreyZoneManager zone in grayZones)
+                if (zone.GreyZoneActive)
+                {
+                    zone.greyZoneAmbienceVolume = 0f;
+                    zone.DeactivateGreyZoneAuthority();
+                }
+        }
+
+        public static IEnumerator GuardianSpamCoroutine()
+        {
+            while (Networking.IsMasterClient)
+            {
+                GorillaGuardianZoneManager[] zones = GorillaGuardianZoneManager.zoneManagers.Where(z => z != null && z.enabled && z.IsZoneValid()).ToArray();
+                Player[] players = PhotonNetwork.PlayerListOthers.Where(p => p != null).ToArray();
+
+                if (zones.Length == 0 || players.Length == 0)
+                {
+                    yield return new WaitForSeconds(0.5f);
+                    continue;
+                }
+
+                GorillaGuardianZoneManager targetZone = zones[Random.Range(0, zones.Length)];
+                Player targetPlayer = players[Random.Range(0, players.Length)];
+                targetZone.SetGuardian(targetPlayer);
+
+                yield return new WaitForSeconds(0.5f);
+
+                if (targetZone != null && Equals(targetZone.CurrentGuardian.GetPlayerRef(), targetPlayer))
+                    targetZone.SetGuardian(null);
+            }
+        }
+
+        public static void EnableGuardianSpam()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            guardianSpamRoutine = Coroutines.instance.StartCoroutine(GuardianSpamCoroutine());
+        }
+
+        public static void DisableGuardianSpam()
+        {
+            if (guardianSpamRoutine != null)
+            {
+                Coroutines.instance.StopCoroutine(guardianSpamRoutine);
+                guardianSpamRoutine = null;
+            }
+
+            if (!Networking.IsMasterClient) return;
+            foreach (GorillaGuardianZoneManager zone in GorillaGuardianZoneManager.zoneManagers.Where(z => z != null && z.enabled && z.IsZoneValid()))
+                zone.SetGuardian(null);
+        }
+
         #endregion
     }
 }

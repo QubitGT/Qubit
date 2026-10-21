@@ -2935,6 +2935,105 @@ namespace Qubit.Modules.Categories
             });
         }
 
+        public static void LookAtGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+
+                if (gunLocked && lockTarget != null)
+                    References.LocalRig.head.rigTarget.LookAt(lockTarget.head.rigTarget.transform);
+
+                if (GetGunInput(true))
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        gunLocked = true;
+                        lockTarget = gunTarget;
+                    }
+                }
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
+                {
+                    if (gunLocked)
+                        gunLocked = false;
+                }
+            });
+        }
+
+        public static void ShadowCloneGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                RaycastHit Ray = GunData.Ray;
+
+                if (gunLocked && lockTarget != null)
+                {
+                    References.LocalRig.enabled = false;
+                    Vector3 offset = lockTarget.transform.right * 0.9f;
+
+                    References.LocalRig.transform.position = lockTarget.transform.position + offset;
+                    References.LocalRig.transform.rotation = lockTarget.transform.rotation;
+                    References.LocalRig.head.rigTarget.rotation = lockTarget.head.rigTarget.rotation;
+
+                    References.LocalRig.leftHand.rigTarget.transform.position = lockTarget.leftHand.rigTarget.transform.position + offset;
+                    References.LocalRig.leftHand.rigTarget.transform.rotation = lockTarget.leftHand.rigTarget.transform.rotation;
+
+                    References.LocalRig.rightHand.rigTarget.transform.position = lockTarget.rightHand.rigTarget.transform.position + offset;
+                    References.LocalRig.rightHand.rigTarget.transform.rotation = lockTarget.rightHand.rigTarget.transform.rotation;
+                }
+
+                if (GetGunInput(true))
+                {
+                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
+                    if (gunTarget && !gunTarget.IsLocal())
+                    {
+                        gunLocked = true;
+                        lockTarget = gunTarget;
+                    }
+                }
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
+                {
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        References.LocalRig.enabled = true;
+                    }
+                }
+            });
+        }
+
+        public static void PCRigPose()
+        {
+            if (XRSettings.isDeviceActive || !References.LocalRig.enabled) return;
+
+            Transform bodyTransform = References.LocalRig.bodyRenderer.transform;
+
+            References.Player.leftHand.controllerTransform.position = bodyTransform.position + bodyTransform.right * -0.7f;
+            References.Player.leftHand.controllerTransform.rotation = bodyTransform.rotation;
+
+            References.Player.rightHand.controllerTransform.position = bodyTransform.position + bodyTransform.right * 0.7f;
+            References.Player.rightHand.controllerTransform.rotation = bodyTransform.rotation;
+        }
+
+        public static void JerkOffAnimation()
+        {
+            Transform hand = References.Player.rightHand.controllerTransform;
+            Transform body = References.BodyCollider.transform;
+
+            float bob = Mathf.Sin(Time.time * 6f) * 0.1f;
+            hand.position = body.position + Vector3.down * 0.2f + body.rotation * new Vector3(0f, 0f, bob + 0.1f);
+            hand.rotation = Quaternion.Euler(0f, 10f, 0f) * body.rotation;
+
+            References.InputPoller.rightControllerGripFloat = 1f;
+            References.InputPoller.rightControllerIndexFloat = 1f;
+            References.InputPoller.rightControllerPrimaryButton = true;
+        }
+
         public static void GrabRig()
         {
             if (rightGrab)

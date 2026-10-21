@@ -30,6 +30,7 @@ using Qubit.Libraries.Interface;
 using Qubit.Modules.Categories;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -170,8 +171,23 @@ namespace Qubit.Libraries.Networking
             Security.RPCProtection();
         }
 
+        public static bool rapidMasterSwitchProtection;
+        private static readonly List<float> masterSwitchTimestamps = new List<float>();
+
         public static void OnMasterClientSwitch(NetPlayer masterClient)
         {
+            if (rapidMasterSwitchProtection)
+            {
+                masterSwitchTimestamps.Add(Time.time);
+                masterSwitchTimestamps.RemoveAll(t => Time.time - t > 3f);
+
+                if (masterSwitchTimestamps.Count >= 5)
+                {
+                    masterSwitchTimestamps.Clear();
+                    ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
+                }
+            }
+
             if (Frontend.Settings.disableMasterClientNotifications)
                 return;
 

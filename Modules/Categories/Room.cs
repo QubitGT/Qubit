@@ -20,6 +20,7 @@
  */
 
 using GorillaNetworking;
+using Photon.Pun;
 using Qubit.Core;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
@@ -188,6 +189,27 @@ namespace Qubit.Modules.Categories
                 Libraries.Networking.Rooms.JoinRoom(roomName, JoinType.Solo);
                 yield return new WaitForSeconds(Important.reconnectDelay);
             }
+        }
+
+        public static Coroutine lobbyHopperRoutine;
+
+        public static IEnumerator LobbyHopperCoroutine()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(15f);
+                JoinRandom();
+            }
+        }
+
+        public static void ConnectToRegion(string region)
+        {
+            string currentRegion = PhotonNetwork.CloudRegion?.Replace("/*", "");
+            if (currentRegion != region)
+                PhotonNetwork.ConnectToRegion(region);
+
+            NetworkSystemPUN punNetwork = (NetworkSystemPUN)ManagerRegistry.NetworkSystem;
+            punNetwork.currentRegionIndex = Array.IndexOf(punNetwork.regionNames, region);
         }
         #endregion
     }

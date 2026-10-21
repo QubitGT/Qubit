@@ -755,6 +755,9 @@ exit";
                 oldLocalPosition ??= References.Tagger.rightHandTriggerCollider.transform.localPosition;
                 References.Tagger.rightHandTriggerCollider.GetComponent<TransformFollow>().enabled = false;
                 References.Tagger.rightHandTriggerCollider.transform.position = Ray.point;
+
+                if (Manager.GetIndex("Move Hands").enabled)
+                    References.Player.rightHand.controllerTransform.position = Ray.point;
             }
             else
             {

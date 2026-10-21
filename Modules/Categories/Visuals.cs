@@ -4614,6 +4614,84 @@ namespace Qubit.Modules.Categories
             }
         }
 
+        public static readonly string[] rareCosmeticCodenames = { "LBAAD.", "LBAAK.", "LMAPY.", "LBADE.", "LBAGS.", "LBANI." };
+
+        public static void ApplyCosmeticEsp(VRRig vrrig, bool rareOnly)
+        {
+            if (!uberChams)
+                uberChams = LoadAsset<Shader>("UberChams");
+
+            foreach (GameObject obj in vrrig.cosmetics)
+            {
+                if (rareOnly && !rareCosmeticCodenames.Any(obj.name.Contains))
+                    continue;
+
+                foreach (Renderer renderer in obj.GetComponentsInChildren<Renderer>())
+                {
+                    if (renderer.sharedMaterial.shader == uberChams)
+                        continue;
+
+                    if (!originalMaterials.ContainsKey(renderer))
+                    {
+                        Material[] originals = new Material[renderer.sharedMaterials.Length];
+                        for (int i = 0; i < renderer.sharedMaterials.Length; i++)
+                            originals[i] = new Material(renderer.sharedMaterials[i]);
+                        originalMaterials[renderer] = originals;
+                    }
+
+                    Material mat = renderer.sharedMaterial;
+                    Material original = originalMaterials[renderer][0];
+                    mat.shader = uberChams;
+
+                    if (original.HasProperty("_BaseMap_Atlas"))
+                    {
+                        mat.SetTexture("_BaseMap_Atlas", original.GetTexture("_BaseMap_Atlas"));
+                        mat.SetFloat("_BaseMap_AtlasSlice", original.GetFloat("_BaseMap_AtlasSlice"));
+                    }
+                    mat.SetFloat("_UseMouthMap", 0f);
+                    mat.SetColor("_Color", mat.color);
+                }
+            }
+        }
+
+        public static void RestoreCosmeticEsp(VRRig vrrig)
+        {
+            foreach (GameObject obj in vrrig.cosmetics)
+                foreach (Renderer renderer in obj.GetComponentsInChildren<Renderer>())
+                    if (originalMaterials.TryGetValue(renderer, out Material[] originals))
+                    {
+                        Material[] restored = new Material[originals.Length];
+                        for (int i = 0; i < restored.Length; i++)
+                            restored[i] = new Material(originals[i]);
+                        renderer.materials = restored;
+                        originalMaterials.Remove(renderer);
+                    }
+        }
+
+        public static void CosmeticEsp()
+        {
+            foreach (VRRig vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal && vrrig.initializedCosmetics))
+                ApplyCosmeticEsp(vrrig, false);
+        }
+
+        public static void DisableCosmeticEsp()
+        {
+            foreach (VRRig vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+                RestoreCosmeticEsp(vrrig);
+        }
+
+        public static void RareCosmeticEsp()
+        {
+            foreach (VRRig vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal && vrrig.initializedCosmetics))
+                ApplyCosmeticEsp(vrrig, true);
+        }
+
+        public static void DisableRareCosmeticEsp()
+        {
+            foreach (VRRig vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
+                RestoreCosmeticEsp(vrrig);
+        }
+
         public static void CasualChams()
         {
             foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isLocal))
