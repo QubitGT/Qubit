@@ -628,6 +628,24 @@ namespace Qubit.Modules.Categories
             RecoverTime = -1f;
         }
 
+        public static void VoiceHijackGun()
+        {
+            Qubit.Modules.Classes.GunLibrary.Target(lockTarget =>
+            {
+                ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.UserData = lockTarget.GetPhotonView().ViewID;
+                ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            }, new Qubit.Modules.Classes.GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void DisableVoiceHijack()
+        {
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.UserData = null;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+        }
+
+        public static void SelfMute() => References.LocalRig.voiceAudio.mute = true;
+        public static void DisableSelfMute() => References.LocalRig.voiceAudio.mute = false;
+
         public static void FixMicrophone()
         {
             if (!Networking.InRoom)

@@ -925,6 +925,20 @@ namespace Qubit.Modules.Categories
                 Transform transform = bugs[i].transform;
                 Visualize(PrimitiveType.Sphere, transform.position, transform.rotation, transform.lossyScale, critterESPColor, i - 201782, critterESPColor.a);
             }
+
+            int index = 0;
+            foreach (CrittersPawn critter in ManagerRegistry.CrittersManager.crittersPawns.Where(critter => critter != null))
+            {
+                Visualize(PrimitiveType.Sphere, critter.transform.position, critter.transform.rotation, critter.transform.lossyScale, critterESPColor, index - 201882, critterESPColor.a);
+                index++;
+            }
+
+            index = 0;
+            foreach (TransferrableBall ball in GetAllType<TransferrableBall>())
+            {
+                Visualize(PrimitiveType.Sphere, ball.transform.position, ball.transform.rotation, ball.transform.lossyScale, critterESPColor, index - 201982, critterESPColor.a);
+                index++;
+            }
         }
 
         public static void EnemyESP()
@@ -1996,6 +2010,9 @@ namespace Qubit.Modules.Categories
             lineRenderer.positionCount = finalPoints.Length;
             lineRenderer.SetPositions(finalPoints);
         }
+
+        public static void SetFOV(float fov) => Camera.main.fieldOfView = fov;
+        public static void ResetFOV() => Camera.main.fieldOfView = 90f;
 
         public static void VisualizeNetworkTriggers()
         {

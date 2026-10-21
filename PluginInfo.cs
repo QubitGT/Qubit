@@ -26,7 +26,7 @@ namespace Qubit
         public const string GUID = "org.qubit.gorillatag.qubitmenu";
         public const string Name = "Qubit";
         public const string Description = "Community powered mod menu for Gorilla Tag.";
-        public const string BuildTimestamp = "2026-10-21T01:32:25Z";
+        public const string BuildTimestamp = "2026-10-21T22:16:06Z";
         public const string Version = "5.0.2";
 
         public const string BaseDirectory =

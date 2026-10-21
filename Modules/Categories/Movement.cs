@@ -1053,6 +1053,67 @@ namespace Qubit.Modules.Categories
 
             previousDash = rightPrimary;
         }
+        private static bool previousDashBack, previousDashLeft, previousDashRight;
+        public static void DashBack()
+        {
+            if (rightPrimary && !previousDashBack)
+                References.Rigidbody.linearVelocity -= References.Player.headCollider.transform.forward * FlySpeed;
+
+            previousDashBack = rightPrimary;
+        }
+        public static void DashLeft()
+        {
+            if (rightPrimary && !previousDashLeft)
+                References.Rigidbody.linearVelocity -= References.Player.headCollider.transform.right * FlySpeed;
+
+            previousDashLeft = rightPrimary;
+        }
+        public static void DashRight()
+        {
+            if (rightPrimary && !previousDashRight)
+                References.Rigidbody.linearVelocity += References.Player.headCollider.transform.right * FlySpeed;
+
+            previousDashRight = rightPrimary;
+        }
+
+        private static Vector3 lastLeftHandDragPos, lastRightHandDragPos;
+        public static void PlaySpaceDrag()
+        {
+            if (leftGrab)
+                References.Rigidbody.linearVelocity -= (References.LeftHand.position - lastLeftHandDragPos) * (scaleWithPlayer ? References.Player.scale : 1f) * 10f;
+            lastLeftHandDragPos = References.LeftHand.position;
+
+            if (rightGrab)
+                References.Rigidbody.linearVelocity -= (References.RightHand.position - lastRightHandDragPos) * (scaleWithPlayer ? References.Player.scale : 1f) * 10f;
+            lastRightHandDragPos = References.RightHand.position;
+        }
+
+        public static void ResetRig()
+        {
+            References.LocalRig.enabled = true;
+            References.LocalRig.transform.localRotation = Quaternion.identity;
+            References.HeadCollider.transform.localRotation = Quaternion.identity;
+        }
+
+        public static void BecomePlayerGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                References.LocalRig.enabled = false;
+                References.LocalRig.transform.position = lockTarget.transform.position;
+                References.LocalRig.transform.rotation = lockTarget.transform.rotation;
+
+                References.LocalRig.head.rigTarget.position = lockTarget.head.rigTarget.position;
+                References.LocalRig.head.rigTarget.rotation = lockTarget.head.rigTarget.rotation;
+                References.LocalRig.leftHand.rigTarget.position = lockTarget.leftHand.rigTarget.position;
+                References.LocalRig.leftHand.rigTarget.rotation = lockTarget.leftHand.rigTarget.rotation;
+                References.LocalRig.rightHand.rigTarget.position = lockTarget.rightHand.rigTarget.position;
+                References.LocalRig.rightHand.rigTarget.rotation = lockTarget.rightHand.rigTarget.rotation;
+
+                References.LocalRig.bodyTransform.rotation = lockTarget.bodyTransform.rotation;
+                References.LocalRig.headMesh.transform.rotation = lockTarget.headMesh.transform.rotation;
+            }, new GunLibrary.GunSettings { locks = true, onIdle = () => { if (gunLocked) { gunLocked = false; References.LocalRig.enabled = true; } } });
+        }
         public static void ReverseVelocity()
         {
             if (Time.time < nextrevTime)
@@ -3769,6 +3830,18 @@ namespace Qubit.Modules.Categories
 
         public static void SpiderCrawl() =>
             References.HeadCollider.transform.rotation = Quaternion.Euler(-270, References.HeadCollider.transform.rotation.eulerAngles.y, 0);
+
+        public static void RigPose(float pitch, float roll) =>
+            References.HeadCollider.transform.rotation = Quaternion.Euler(pitch, References.HeadCollider.transform.rotation.eulerAngles.y, roll);
+
+        public static void ButtHead() => RigPose(270, 0);
+        public static void LayDown() => RigPose(90, 0);
+        public static void FlatOnBack() => RigPose(270, 0);
+        public static void Sideways() => RigPose(90, 90);
+        public static void TiltLeft() => RigPose(0, 45);
+        public static void TiltRight() => RigPose(0, -45);
+        public static void LeanForward() => RigPose(45, 0);
+        public static void LeanBack() => RigPose(-45, 0);
 
         public static void UpwardsBody() =>
              References.HeadCollider.transform.rotation = Quaternion.Euler(-180, References.HeadCollider.transform.rotation.eulerAngles.y, References.HeadCollider.transform.rotation.eulerAngles.z);

@@ -39,6 +39,26 @@ namespace Qubit.Modules.Categories
     public static class Room
     {
         #region Methods
+        public static void KickNetTriggers()
+        {
+            if (!Qubit.Core.Networking.InRoom) return;
+
+            PhotonNetwork.CurrentRoom.IsVisible = true;
+            GameObject triggers = Qubit.Extensions.GameObj.GetObject("Environment Objects/TriggerZones_Prefab/JoinRoomTriggers_Prefab");
+            if (triggers != null)
+                triggers.SetActive(false);
+        }
+
+        public static void FixNetTriggers()
+        {
+            if (!Qubit.Core.Networking.InRoom) return;
+
+            PhotonNetwork.CurrentRoom.IsVisible = false;
+            GameObject triggers = Qubit.Extensions.GameObj.GetObject("Environment Objects/TriggerZones_Prefab/JoinRoomTriggers_Prefab");
+            if (triggers != null)
+                triggers.SetActive(true);
+        }
+
         public static void RoomCreator()
         {
             Important.CustomRoomConfig room = new Important.CustomRoomConfig();

@@ -456,6 +456,13 @@ namespace Qubit.Modules.Categories
                 Notifications.information["Anti-Report"] = notifyText;
         }
 
+        public static void DisableMessageLimit()
+        {
+            DearLemmingController.instance.maxRetriesOnFail = int.MaxValue;
+            DearLemmingController.instance.checkRetryCount = 0;
+            DearLemmingController.instance.submitRetryCount = 0;
+        }
+
         public static void AntiReportFRT(Player subject)
         {
             if (subject.IsLocal)

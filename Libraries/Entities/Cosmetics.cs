@@ -212,6 +212,30 @@ namespace Qubit.Libraries.Entities
                 }
             }
         }
+        public static void EquipAllHats()
+        {
+            string[] hats = ManagerRegistry.CosmeticsController.allCosmetics
+                .Where(cosmeticItem => cosmeticItem.itemCategory == CosmeticsController.CosmeticCategory.Hat && cosmeticItem.canTryOn)
+                .Select(cosmeticItem => cosmeticItem.itemName)
+                .Take(16)
+                .ToArray();
+
+            if (hats.Length == 0) return;
+
+            if (References.LocalRig.inTryOnRoom)
+            {
+                ManagerRegistry.CosmeticsController.tryOnSet = new CosmeticsController.CosmeticSet(hats, ManagerRegistry.CosmeticsController);
+                References.LocalRig.tryOnSet = new CosmeticsController.CosmeticSet(hats, ManagerRegistry.CosmeticsController);
+            }
+            else
+            {
+                ManagerRegistry.CosmeticsController.currentWornSet = new CosmeticsController.CosmeticSet(hats, ManagerRegistry.CosmeticsController);
+                References.LocalRig.cosmeticSet = new CosmeticsController.CosmeticSet(hats, ManagerRegistry.CosmeticsController);
+            }
+            References.MyRigView.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, PackCosmetics(hats), PackCosmetics(hats), false);
+            Security.RPCProtection();
+        }
+
         public static void TryOnAnywhere()
         {
             string[] cosmeticArray = { "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU.", "LMAJU." };

@@ -29,6 +29,7 @@ using Qubit.Libraries.Core;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Qubit.Extensions.GameObj;
@@ -486,6 +487,33 @@ namespace Qubit.Libraries.Holdables
 
                 lastInAirValues[objectName] = inAir;
             }
+        }
+
+        public static void StealObject(string objectName)
+        {
+            ThrowableBug bugObject = GetBugObject(objectName);
+            if (bugObject != null && !bugObject.IsMyItem())
+                bugObject.WorldShareableRequestOwnership();
+        }
+
+        public static Dictionary<string, float> objectSizeScale = new Dictionary<string, float>();
+        public static void ObjectSizeChanger(string objectName)
+        {
+            ThrowableBug bug = GetBugObject(objectName);
+            if (bug == null) return;
+
+            objectSizeScale.TryGetValue(objectName, out float scale);
+            if (scale <= 0f) scale = 1f;
+
+            if (rightTrigger > 0.5f)
+                scale += 0.1f;
+            if (rightGrab)
+                scale -= 0.1f;
+
+            scale = Mathf.Max(scale, 0.05f);
+            objectSizeScale[objectName] = scale;
+
+            bug.transform.localScale = Vector3.one * scale;
         }
 
         public static void ObjectToHand(string objectName)

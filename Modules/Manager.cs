@@ -512,6 +512,11 @@ namespace Qubit.Modules
                 new Module { name = "Join US Region", method =() => Room.ConnectToRegion("us"), isTogglable = false, toolTip = "Connects you to the US region."},
                 new Module { name = "Join USW Region", method =() => Room.ConnectToRegion("usw"), isTogglable = false, toolTip = "Connects you to the USW region."},
 
+                new Module { name = "Kick Net Triggers", method = Room.KickNetTriggers, isTogglable = false, toolTip = "Makes the room visible and disables its join triggers, kicking people out of the ability to rejoin through the map."},
+                new Module { name = "Fix Net Triggers", method = Room.FixNetTriggers, isTogglable = false, toolTip = "Restores the room's visibility and join triggers to normal."},
+                new Module { name = "Open All Elevators", method = Fun.OpenAllElevators, isTogglable = false, toolTip = "Opens every elevator door on the map."},
+                new Module { name = "Close All Elevators", method = Fun.CloseAllElevators, isTogglable = false, toolTip = "Closes every elevator door on the map."},
+
                 new Module { name = "Create Public", method =() => CreateRoom(RandomRoomName(), true), isTogglable = false, toolTip = "Creates a public room."},
                 new Module { name = "Create Private", method =() => CreateRoom(RandomRoomName(), false), isTogglable = false, toolTip = "Creates a private room.", legal = true},
 
@@ -679,6 +684,8 @@ namespace Qubit.Modules
 
                 new Module { name = $"Anti Report {Bracket("green", "Oculus")}", enableMethod = Safety.EnableAntiOculusReport, disableMethod = Safety.DisableAntiOculusReport, toolTip = "Disconnects you from the room when you get reported with the Oculus report menu."},
                 new Module { name = $"Anti Report {Bracket("green", "Anti Cheat")}", enableMethod =() => SendReport.AntiACReport = true, disableMethod =() => SendReport.AntiACReport = false, toolTip = "Disconnects you from the room when you get reported by the anti cheat."},
+                new Module { name = "Anti Report Quit", enableMethod =() => SendReport.AntiReportQuit = true, disableMethod =() => SendReport.AntiReportQuit = false, toolTip = "Quits Gorilla Tag the instant you get reported."},
+                new Module { name = "Disable Message Limit", method = Safety.DisableMessageLimit, isTogglable = false, toolTip = "Removes the retry limit on submitting dev messages."},
                 new Module { name = $"Anti Report {Bracket("green", "Notify")}", method = Safety.AntiReportNotify, toolTip = "Tells you when people come near your report button, but doesn't do anything."},
                 new Module { name = $"Anti Report {Bracket("green", "Overlay")}", method = Safety.AntiReportOverlay, toolTip = "Shows you an overlay when people come near your report button, but doesn't do anything."},
 
@@ -727,6 +734,10 @@ namespace Qubit.Modules
                 new Module { name = "WASD Fly", aliases = new[] { "PC Fly" }, enableMethod = Movement.EnableWASDFly, method = Movement.WASDFly, disableMethod =() => References.Player.GetControllerTransform(false).parent.rotation = Quaternion.Euler(0, 0, 0), toolTip = "Moves your rig with <color=green>WASD</color>."},
 
                 new Module { name = $"Dash {Bracket("green", "A")}", method = Movement.Dash, toolTip = "Flings your character forwards when pressing <color=green>A</color>."},
+                new Module { name = $"Dash Back {Bracket("green", "A")}", method = Movement.DashBack, toolTip = "Flings your character backwards when pressing <color=green>A</color>."},
+                new Module { name = $"Dash Left {Bracket("green", "A")}", method = Movement.DashLeft, toolTip = "Flings your character left when pressing <color=green>A</color>."},
+                new Module { name = $"Dash Right {Bracket("green", "A")}", method = Movement.DashRight, toolTip = "Flings your character right when pressing <color=green>A</color>."},
+                new Module { name = $"Play Space Drag {Bracket("green", "G")}", method = Movement.PlaySpaceDrag, toolTip = "Lets you swim through the air by dragging your hands while holding <color=green>grip</color>."},
                 new Module { name = $"Reverse Velocity {Bracket("green", "A")}", method = Movement.ReverseVelocity, toolTip = "Reverses your current velocity when you press <color=green>A</color>."},
                 new Module { name = "Bird Fly", method = Movement.BirdFly, toolTip = "Makes you fly like a bird when you flap your wings."},
                 new Module { name = "Iron Man", aliases = new[] { "Iron Monke" }, method = Movement.IronMan, toolTip = "Turns you into iron man, rotate your hands around to change direction."},
@@ -848,6 +859,8 @@ namespace Qubit.Modules
                 new Module { name = "Shadow Clone Gun", method = Movement.ShadowCloneGun, disableMethod = Movement.EnableRig, toolTip = "Copies the movement of whoever your hand desires, right beside them."},
                 new Module { name = "PC Rig", method = Movement.PCRigPose, toolTip = "Gives your rig a custom pose on PC, instead of using the default vanilla one."},
                 new Module { name = "Masturbate", method = Movement.JerkOffAnimation, toolTip = "Makes you masturbate."},
+                new Module { name = "Become Player Gun", method = Movement.BecomePlayerGun, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Copies the pose and position of whoever your hand desires, becoming them."},
+                new Module { name = "Reset Rig", method = Movement.ResetRig, isTogglable = false, toolTip = "Resets your rig back to normal if it's stuck from another mod."},
                 new Module { name = $"Grab Rig {Bracket("green", "G")}", method = Movement.GrabRig, toolTip = "Lets you grab your rig when holding <color=green>grip</color>."},
                 new Module { name = "Spin Head X", method =() => Movement.SpinHead("x"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the X axis."},
                 new Module { name = "Spin Head Y", method =() => Movement.SpinHead("y"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the Y axis."},
@@ -877,13 +890,21 @@ namespace Qubit.Modules
                 new Module { name = "Control Rig Rotation", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_Control, disableMethod =() => Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_Control, toolTip = "Control your rig rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
                 new Module { name = "Control Body Rotation", postMethod = Movement.ControlBodyRotation, toolTip = "Control your body rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
                 new Module { name = $"Flip {Bracket("green", "A")} {Bracket("green", "B")}", enableMethod =() => Torso.VRRigLateUpdate += Movement.Flip, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
-                new Module { name = "Spider Crawl", postMethod = Movement.SpiderCrawl, toolTip = "Makes you look like a spider."},
+                new Module { name = "Spider Crawl", aliases = new[] { "Crawl" }, postMethod = Movement.SpiderCrawl, toolTip = "Makes you look like a spider."},
+                new Module { name = "Butt Head", postMethod =() => Movement.ButtHead(), toolTip = "Flips your rig so your head is where your butt should be."},
+                new Module { name = "Flat On Back", postMethod =() => Movement.FlatOnBack(), toolTip = "Lays your rig flat on its back."},
+                new Module { name = "Lay Down", postMethod =() => Movement.LayDown(), toolTip = "Lays your rig down."},
+                new Module { name = "Sideways", postMethod =() => Movement.Sideways(), toolTip = "Tips your rig onto its side."},
+                new Module { name = "Tilt Left", postMethod =() => Movement.TiltLeft(), toolTip = "Tilts your rig to the left."},
+                new Module { name = "Tilt Right", postMethod =() => Movement.TiltRight(), toolTip = "Tilts your rig to the right."},
+                new Module { name = "Lean Forward", postMethod =() => Movement.LeanForward(), toolTip = "Leans your rig forward."},
+                new Module { name = "Lean Back", postMethod =() => Movement.LeanBack(), toolTip = "Leans your rig backward."},
                 new Module { name = "Upwards Body", postMethod = Movement.UpwardsBody, toolTip = "Makes your body point upwards."},
                 new Module { name = "Spin Rig Body", method =() => Movement.SetBodyPatch(true), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Makes your body spin around, but not your head."},
                 new Module { name = "Spaz Rig Body", method =() => Movement.SetBodyPatch(true, 1), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Gives your body a seizure, randomizing its rotation."},
                 new Module { name = "Reverse Rig Body", method =() => Movement.SetBodyPatch(true, 2), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Flips your body around backwards, but not your head."},
                 new Module { name = "Rec Room Body", method = Movement.RecRoomBody, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Makes your rig like how the Rec Room bodies are."},
-                new Module { name = "Dinnerbone", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_Dinnerbone, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_Dinnerbone; ghostException = false;  }, toolTip = "Flips you upside down, inspired by the easter egg in Minecraft."},
+                new Module { name = "Dinnerbone", aliases = new[] { "Upside Down" }, enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_Dinnerbone, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_Dinnerbone; ghostException = false;  }, toolTip = "Flips you upside down, inspired by the easter egg in Minecraft."},
                 new Module { name = $"Freeze Body Rotation {Bracket("green", "G")}", method = Movement.FreezeBodyRotation, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Freezes your body rotation in place, but not your head, when holding <color=green>grip</color>."},
                 new Module { name = $"Auto Dance {Bracket("green", "A")}", aliases = new[] { "Emote" }, method = Movement.AutoDance, toolTip = "Makes you dance when holding <color=green>A</color>."},
                 new Module { name = $"Auto Griddy {Bracket("green", "A")}", method = Movement.AutoGriddy, toolTip = "Makes you griddy when holding <color=green>A</color>."},
@@ -932,6 +953,9 @@ namespace Qubit.Modules
                 new Module { name = $"Grip Tag Aura {Bracket("green", "G")}", aliases = new[] { "Grip Tag Range" }, method = Advantages.GripTagAura, toolTip = "Moves your hand into nearby players when tagged and when holding <color=green>grip</color>."},
 
                 new Module { name = "Tag Aura Gun", method = Advantages.TagAuraGun, toolTip = "Gives a player tag aura."},
+                new Module { name = "Tag Random", method = Advantages.TagRandom, isTogglable = false, toolTip = "Tags a random untagged player in the room."},
+                new Module { name = "Tag Nearest", method = Advantages.TagNearest, isTogglable = false, toolTip = "Tags the nearest untagged player to you."},
+                new Module { name = "Tag Farthest", method = Advantages.TagFarthest, isTogglable = false, toolTip = "Tags the farthest untagged player from you."},
                 new Module { name = "Tag Aura All", method = Advantages.TagAuraAll, toolTip = "Gives all players tag aura."},
 
                 new Module { name = "Tag Reach", method = Advantages.TagReach, disableMethod =() => References.Tagger.maxTagDistance = 1.2f, toolTip = "Makes your hand tag hitbox larger."},
@@ -977,7 +1001,7 @@ namespace Qubit.Modules
 
                 new Module { name = "Core ESP", method = Visuals.CoreESP, toolTip = "Puts dots on your screen at where all of the cores in the ghost reactor map are."},
                 new Module { name = "Critter ESP", method = Visuals.CritterESP, toolTip = "Puts dots on your screen at where all of the critters in the critter map are."},
-                new Module { name = "Creature ESP", method = Visuals.CreatureESP, toolTip = "Puts dots on your screen at where all of the creatures are in forest and caves."},
+                new Module { name = "Creature ESP", method = Visuals.CreatureESP, toolTip = "Puts dots on your screen at where all of the creatures, critters, and balls are in forest and caves."},
                 new Module { name = "Enemy ESP", method = Visuals.EnemyESP, toolTip = "Puts dots on your screen at where all of the cores in the ghost reactor map are."},
                 new Module { name = "Resource ESP", method = Visuals.ResourceESP, toolTip = "Puts dots on your screen at where all of the resources are in the Super Infection gamemode."},
                 new Module { name = "Lucy ESP", method = Visuals.LucyESP, toolTip = "Puts a dot on your screen at where Lucy is, even when she's hiding underground.", legal = true},
@@ -1113,6 +1137,11 @@ namespace Qubit.Modules
                 new Module { name = "Chams", method = Visuals.Chams, disableMethod = Visuals.DisableShaderChams, toolTip = "Lets you see players through walls."},
                 new Module { name = "Cosmetic Chams", method = Visuals.CosmeticEsp, disableMethod = Visuals.DisableCosmeticEsp, toolTip = "Lets you see most cosmetics on people through walls."},
                 new Module { name = "Rare Cosmetic Chams", method = Visuals.RareCosmeticEsp, disableMethod = Visuals.DisableRareCosmeticEsp, toolTip = "Lets you see rare, hard to obtain cosmetics on people through walls."},
+                new Module { name = "130 FOV", method =() => Visuals.SetFOV(130f), isTogglable = false, toolTip = "Sets your camera's field of view to 130."},
+                new Module { name = "120 FOV", method =() => Visuals.SetFOV(120f), isTogglable = false, toolTip = "Sets your camera's field of view to 120."},
+                new Module { name = "110 FOV", method =() => Visuals.SetFOV(110f), isTogglable = false, toolTip = "Sets your camera's field of view to 110."},
+                new Module { name = "100 FOV", method =() => Visuals.SetFOV(100f), isTogglable = false, toolTip = "Sets your camera's field of view to 100."},
+                new Module { name = "Reset FOV", method = Visuals.ResetFOV, isTogglable = false, toolTip = "Resets your camera's field of view back to default."},
 
                 new Module { name = "Casual Chams", method = Visuals.CasualChams, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows everyone."},
                 new Module { name = "Infection Chams", method = Visuals.InfectionChams, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows untagged when tagged, vice versa."},
@@ -1238,7 +1267,9 @@ namespace Qubit.Modules
 
                 new Module { name = "Voice Changers", method =() => CurrentCategoryName = "Voice Changers", isTogglable = false, toolTip = "Brings you into a category with voice changers."},
 
-                new Module { name = "Microphone Feedback", method =() => Fun.SetDebugEchoMode(true), disableMethod =() => Fun.SetDebugEchoMode(false), toolTip = "Plays sound coming through your microphone back to your speakers.", legal = true},
+                new Module { name = "Microphone Feedback", aliases = new[] { "Hear Self" }, method =() => Fun.SetDebugEchoMode(true), disableMethod =() => Fun.SetDebugEchoMode(false), toolTip = "Plays sound coming through your microphone back to your speakers.", legal = true},
+                new Module { name = "Voice Hijack Gun", method = Sound.VoiceHijackGun, disableMethod = Sound.DisableVoiceHijack, toolTip = "Makes your voice play through whoever your hand desires' voice slot."},
+                new Module { name = "Self Mute", enableMethod = Sound.SelfMute, disableMethod = Sound.DisableSelfMute, toolTip = "Mutes your own rig's voice audio for yourself."},
                 new Module { name = "Copy Voice Gun", method = Fun.CopyVoiceGun, disableMethod = Fun.DisableCopyVoice, toolTip = "Copies the voice of whoever your hand desires."},
 
                 new Module { name = "Narrate Text", aliases = new[] { "Text to Speech", "Speech Text" }, method =() => PromptText("What would you like to be narrated?", () => SpeakText(keyboardInput), null, "Done", "Cancel"), isTogglable = false, toolTip = "Narrates the text of your desire."},
@@ -1287,6 +1318,13 @@ namespace Qubit.Modules
                 new Module { name = "Basement Door Spam", method = Fun.BasementDoorSpam, toolTip = "Repeatedly opens and closes the basement door."},
                 new Module { name = "Elevator Door Spam", method = Fun.ElevatorDoorSpam, toolTip = "Repeatedly opens and closes the elevator door."},
                 new Module { name = "Elevator Proximity Sensor", disableMethod =() => Fun.elevatorSensorOpen = false, method = Fun.ElevatorProximitySensor, toolTip = "Automatically opens and closes the elevator door as you get close to and move away from it."},
+
+                new Module { name = $"Draw Line {Bracket("green", "G")}", method = Fun.DrawLine, disableMethod = Movement.EnableRig, toolTip = "Draws a line with your rig's trail while holding <color=green>grip</color>."},
+                new Module { name = $"Draw Circle {Bracket("green", "G")}", method = Fun.DrawCircle, disableMethod = Movement.EnableRig, toolTip = "Draws a circle with your rig's trail while holding <color=green>grip</color>."},
+
+                new Module { name = "Flood Dev Messages", method = Fun.EnableFloodDevMessages, disableMethod = Fun.DisableFloodDevMessages, toolTip = "Repeatedly submits dev messages to flood the report queue."},
+                new Module { name = "Flood Logs All", method = Fun.FloodLogsAll, toolTip = "Floods everyone in the room's client logs."},
+                new Module { name = "Flood Logs Gun", method = Fun.FloodLogsGun, toolTip = "Floods whoever your hand desires's client logs."},
 
                 new Module { name = "Custom Virtual Stump Video", enableMethod = Fun.CustomVirtualStumpVideo, disableMethod = Fun.DisableCustomVirtualStumpVideo, toolTip = "Plays a video by the virtual stump VR headset in stump."},
 
@@ -1670,6 +1708,39 @@ namespace Qubit.Modules
                 new Module { name = "Destroy Bat", method =() => Bugs.DestroyObject("Cave Bat Holdable"), toolTip = "Sends the bat to hell." },
                 new Module { name = "Destroy Camera", method = LckCamera.DestroyCamera, toolTip = "Sends the camera to hell." },
                 new Module { name = "Destroy Tablet", method = LckCamera.DestroyTablet, toolTip = "Sends the tablet to hell." },
+                new Module { name = "Destroy Shark", method =() => Bugs.DestroyObject("Swimming Shark prefab"), toolTip = "Sends the shark to hell." },
+
+                new Module { name = "Steal Bug", method =() => Bugs.StealObject("Floating Bug Holdable"), isTogglable = false, toolTip = "Forcefully takes ownership of the bug from whoever has it." },
+                new Module { name = "Steal Bat", method =() => Bugs.StealObject("Cave Bat Holdable"), isTogglable = false, toolTip = "Forcefully takes ownership of the bat from whoever has it." },
+                new Module { name = "Steal Firefly", method =() => Bugs.StealObject("Firefly"), isTogglable = false, toolTip = "Forcefully takes ownership of the firefly from whoever has it." },
+                new Module { name = "Steal Shark", method =() => Bugs.StealObject("Swimming Shark prefab"), isTogglable = false, toolTip = "Forcefully takes ownership of the shark from whoever has it." },
+
+                new Module { name = $"Bug Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method =() => Bugs.ObjectSizeChanger("Floating Bug Holdable"), toolTip = "Changes the bug's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = $"Bat Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method =() => Bugs.ObjectSizeChanger("Cave Bat Holdable"), toolTip = "Changes the bat's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = $"Firefly Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method =() => Bugs.ObjectSizeChanger("Firefly"), toolTip = "Changes the firefly's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = $"Shark Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method =() => Bugs.ObjectSizeChanger("Swimming Shark prefab"), toolTip = "Changes the shark's size with <color=green>trigger</color> and <color=green>grip</color>." },
+
+                new Module { name = "Grab Shark", method =() => Bugs.ObjectToHand("Swimming Shark prefab"), toolTip = "Forces the shark into your hand when holding <color=green>grip</color>." },
+                new Module { name = "Shark Gun", method =() => Bugs.ObjectToPointGun("Swimming Shark prefab"), toolTip = "Moves the shark to wherever your hand desires." },
+                new Module { name = "Spaz Shark", method =() => Bugs.SpazObject("Swimming Shark prefab"), toolTip = "Gives the shark a seizure." },
+                new Module { name = "Orbit Shark", method =() => Bugs.OrbitObject("Swimming Shark prefab", 180f), toolTip = "Orbits the shark around you." },
+                new Module { name = "Shark Aura", method =() => Bugs.ObjectAura("Swimming Shark prefab"), toolTip = "Teleports the shark around you in random positions." },
+                new Module { name = "Ride Shark", method =() => Bugs.RideObject("Swimming Shark prefab"), toolTip = "Repeatedly teleports you on top of the shark." },
+                new Module { name = "Become Shark", method =() => Bugs.BecomeObject("Swimming Shark prefab"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the shark." },
+                new Module { name = "Freeze Shark", method =() => Bugs.FreezeObject("Swimming Shark prefab"), toolTip = "Freezes the shark in place." },
+                new Module { name = "Fast Shark", method =() => Bugs.SetObjectSpeed("Swimming Shark prefab", 5f), disableMethod =() => Bugs.SetObjectSpeed("Swimming Shark prefab"), toolTip = "Speeds up the shark." },
+                new Module { name = "Slow Shark", method =() => Bugs.SetObjectSpeed("Swimming Shark prefab", 0.1f), disableMethod =() => Bugs.SetObjectSpeed("Swimming Shark prefab"), toolTip = "Slows down the shark." },
+                new Module { name = "Physical Shark", method =() => Bugs.PhysicalObject("Swimming Shark prefab"), toolTip = "Gives the shark physics, letting you grab onto it and throw it." },
+
+                new Module { name = "Ball Gun", method = Balls.BallGun, toolTip = "Moves the ball to wherever your hand desires." },
+                new Module { name = $"Grab Ball {Bracket("green", "G")}", method = Balls.GrabBalls, toolTip = "Forces the ball into your hand when holding <color=green>grip</color>." },
+                new Module { name = "Steal Ball", method = Balls.StealBalls, isTogglable = false, toolTip = "Forcefully takes ownership of the ball from whoever has it." },
+                new Module { name = "Spaz Ball", method = Balls.SpazBalls, toolTip = "Gives the ball a seizure." },
+                new Module { name = "Orbit Ball", method = Balls.OrbitBalls, toolTip = "Orbits the ball around you." },
+                new Module { name = "Ball Aura", method = Balls.BallAura, toolTip = "Teleports the ball around you in random positions." },
+                new Module { name = $"Ball Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method = Balls.BallSizeChanger, toolTip = "Changes the ball's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Become Ball", method = Balls.BecomeBall, disableMethod = Movement.EnableRig, toolTip = "Turns you into the ball." },
+                new Module { name = "Destroy Ball", method = Balls.DestroyBalls, isTogglable = false, toolTip = "Sends the ball to hell." },
                 new Module { name = "Destroy Balloons", method = Balloons.DestroyBalloons, isTogglable = false, toolTip = "Sends every single balloon cosmetic to hell." },
                 new Module { name = "Destroy Gliders", method = Gliders.DestroyGliders, isTogglable = false, toolTip = "Sends every single glider to hell." },
                 new Module { name = "Respawn Gliders", method = Gliders.RespawnGliders, isTogglable = false, toolTip = "Respawns all the gliders." },
@@ -1909,6 +1980,12 @@ namespace Qubit.Modules
                 new Module { name = "Gray Zone", enableMethod = Master.ActivateGrayZone, disableMethod = Master.DeactivateGrayZone, toolTip = "Forces the gray zone event to stay active permanently. Requires master client." },
                 new Module { name = "Spam Gray Zone", enableMethod = Master.EnableSpamGrayZone, method = Master.SpamGrayZone, disableMethod = Master.DisableSpamGrayZone, toolTip = "Rapidly toggles the gray zone event on and off. Requires master client." },
                 new Module { name = "Guardian Spam", enableMethod = Master.EnableGuardianSpam, disableMethod = Master.DisableGuardianSpam, toolTip = "Spams random players as the guardian in the guardian game mode. Requires master client." },
+
+                new Module { name = "Steal Terminal", method = Master.StealTerminal, isTogglable = false, toolTip = "Takes driver control of the custom maps terminal."},
+                new Module { name = "Lock Terminal", method = Master.LockTerminal, isTogglable = false, toolTip = "Toggles the custom maps terminal's control lock."},
+                new Module { name = "Clear Terminal", method = Master.ClearTerminal, isTogglable = false, toolTip = "Clears whatever is currently loaded on the custom maps terminal."},
+                new Module { name = "Spaz Terminal Maps", method = Master.SpazTerminalMaps, toolTip = "Repeatedly randomizes the map on the custom maps terminal."},
+                new Module { name = "Spaz Terminal Searches", method = Master.SpazTerminalSearches, toolTip = "Repeatedly spams invalid map searches on the custom maps terminal."},
 
                 new Module { name = "Guardian Self", method = Master.GuardianSelf, isTogglable = false, toolTip = "Makes you red."},
                 new Module { name = "Guardian Gun", method = Master.GuardianGun, toolTip = "Makes whoever your hand desires the guardian."},
@@ -2731,6 +2808,7 @@ namespace Qubit.Modules
                 new Module { name = "Tinnitus Self", enableMethod =() => Fun.tinnitusSelf = true, disableMethod =() => Fun.tinnitusSelf = false, toolTip = "Be able to hear the loud beep the menu creates with this mod on. God save your ears."},
 
                 new Module { name = "Weak Barrel Fling", toolTip = "Makes the Barrel Gun lock onto and fling whoever your hand desires with the barrel, instead of just spawning it."},
+                ButtonHelper.Create("Change Splash Size", () => Fun.SplashSizeNames, Fun.splashSizeCycle, Fun.ApplySplashSize, "Changes the size of the splash effect created by the water splash mods."),
 
             },
             ["Holdable Settings"] = new[]
@@ -2862,6 +2940,7 @@ namespace Qubit.Modules
                 new Module { name = "Detected Isolate Aura", displayName = "Isolate Aura", method = Detected.IsolateAura, detected = true, toolTip = "Makes players nearby only be able to see you."},
                 new Module { name = "Detected Isolate On Touch", displayName = "Isolate On Touch", method = Detected.IsolateOnTouch, detected = true, toolTip = "Players that you touch will only be able to see you."},
 
+                new Module { name = "Exile Gun", method = Detected.ExileGun, detected = true, toolTip = "Purges whoever your hand desires from the room's event cache, desyncing them."},
                 new Module { name = "Detected Change Name Gun", displayName = "Change Name Gun", enableMethod = Detected.PromptNameChange, method = Detected.ChangeNameGun, detected = true, toolTip = "Changes the name of whoever your hand desires."},
                 new Module { name = "Detected Change Name All", displayName = "Change Name All", enableMethod = Detected.PromptNameChange, method = Detected.ChangeNameAll, detected = true, toolTip = "Changes the name of everyone in the room."},
                 new Module { name = "Detected Change Name Aura", displayName = "Change Name Aura", enableMethod = Detected.PromptNameChange, method = Detected.ChangeNameAura, detected = true, toolTip = "Changes the name of whoever is near you."},

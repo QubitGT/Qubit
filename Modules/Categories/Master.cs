@@ -20,6 +20,7 @@
  */
 
 using GorillaGameModes;
+using GorillaTagScripts.Builder;
 using GorillaTagScripts.VirtualStumpCustomMaps;
 using Photon.Pun;
 using Photon.Realtime;
@@ -1426,6 +1427,43 @@ namespace Qubit.Modules.Categories
                 controller.JumpToState(state);
                 controller.reliableState.stateStartTime = Networking.InRoom ? ManagerRegistry.NetworkSystem.SimTime : Time.timeAsDouble;
             }
+        }
+
+        private static SharedBlocksTerminal GetTerminal() => GetAllType<SharedBlocksTerminal>().FirstOrDefault();
+
+        public static void StealTerminal()
+        {
+            SharedBlocksTerminal terminal = GetTerminal();
+            terminal?.SetTerminalDriver(PhotonNetwork.LocalPlayer.ActorNumber);
+        }
+
+        public static void LockTerminal()
+        {
+            SharedBlocksTerminal terminal = GetTerminal();
+            terminal?.OnTerminalControlPressed();
+        }
+
+        public static void ClearTerminal()
+        {
+            SharedBlocksTerminal terminal = GetTerminal();
+            terminal?.OnDeleteButtonPressed();
+        }
+
+        private static float terminalSpazDelay;
+        public static void SpazTerminalMaps()
+        {
+            if (Time.time < terminalSpazDelay) return;
+            terminalSpazDelay = Time.time + 0.025f;
+
+            GetTerminal()?.OnRandomizeButtonPressed();
+        }
+
+        public static void SpazTerminalSearches()
+        {
+            if (Time.time < terminalSpazDelay) return;
+            terminalSpazDelay = Time.time + 0.025f;
+
+            GetTerminal()?.SelectMapIDAndOpenInfo("AAAAAAAA");
         }
 
         public static void TargetSpam()

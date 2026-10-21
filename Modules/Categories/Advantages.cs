@@ -257,6 +257,27 @@ namespace Qubit.Modules.Categories
             }, new GunLibrary.GunSettings { locks = true });
         }
 
+        public static void TagRandom()
+        {
+            VRRig[] candidates = Players.ActiveRigs.Where(vrrig => !vrrig.IsTagged()).ToArray();
+            if (candidates.Length > 0)
+                TagPlayer(GetPlayerFromVRRig(candidates[UnityEngine.Random.Range(0, candidates.Length)]));
+        }
+
+        public static void TagNearest()
+        {
+            VRRig target = Players.ActiveRigs.Where(vrrig => !vrrig.IsTagged()).OrderBy(vrrig => Vector3.Distance(vrrig.transform.position, References.BodyCollider.transform.position)).FirstOrDefault();
+            if (target != null)
+                TagPlayer(GetPlayerFromVRRig(target));
+        }
+
+        public static void TagFarthest()
+        {
+            VRRig target = Players.ActiveRigs.Where(vrrig => !vrrig.IsTagged()).OrderByDescending(vrrig => Vector3.Distance(vrrig.transform.position, References.BodyCollider.transform.position)).FirstOrDefault();
+            if (target != null)
+                TagPlayer(GetPlayerFromVRRig(target));
+        }
+
         public static void TagAuraAll()
         {
             foreach (VRRig vrrig in Players.ActiveRigs)

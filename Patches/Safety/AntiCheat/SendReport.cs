@@ -22,6 +22,7 @@
 using HarmonyLib;
 using Photon.Pun;
 using Qubit.Libraries.Interface;
+using UnityEngine;
 using static Qubit.Patches.PatchHandler;
 
 namespace Qubit.Patches.Safety.AntiCheat
@@ -34,11 +35,15 @@ namespace Qubit.Patches.Safety.AntiCheat
         public static bool AntiCheatAll;
         public static bool AntiCheatReasonHide;
         public static bool AntiACReport;
+        public static bool AntiReportQuit;
 
         private static bool Prefix(string susReason, string susId, string susNick)
         {
             if (susReason.ToLower() == "empty rig")
                 return false;
+
+            if (AntiReportQuit && susId == PhotonNetwork.LocalPlayer.UserId)
+                Application.Quit();
 
             if (AntiCheatSelf || AntiCheatAll)
             {

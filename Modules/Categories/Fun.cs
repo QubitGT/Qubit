@@ -1584,6 +1584,81 @@ namespace Qubit.Modules.Categories
             SetElevatorDoorState(inRange);
         }
 
+        public static void OpenAllElevators()
+        {
+            if (ManagerRegistry.GRElevatorManager == null) return;
+            foreach (GRElevatorManager.ElevatorLocation location in Enum.GetValues(typeof(GRElevatorManager.ElevatorLocation)))
+                ManagerRegistry.GRElevatorManager.OpenElevator(location);
+        }
+
+        public static void CloseAllElevators() => ManagerRegistry.GRElevatorManager?.CloseAllElevators();
+
+        public static void DrawLine()
+        {
+            if (!rightGrab) return;
+
+            References.LocalRig.enabled = false;
+            References.LocalRig.transform.position = References.BodyCollider.transform.position + References.BodyCollider.transform.forward * (Mathf.Sin(Time.time * 4f) * 2f);
+        }
+
+        public static void DrawCircle()
+        {
+            if (!rightGrab) return;
+
+            References.LocalRig.enabled = false;
+            float angle = Time.time * 4f;
+            References.LocalRig.transform.position = References.BodyCollider.transform.position + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * 2f;
+        }
+
+        public static Coroutine floodDevMessagesRoutine;
+        public static IEnumerator FloodDevMessagesCoroutine()
+        {
+            while (true)
+            {
+                DearLemmingController.instance.StartSubmit("Qubit");
+                yield return new WaitForSeconds(0.5f);
+            }
+        }
+        public static void EnableFloodDevMessages() => floodDevMessagesRoutine = Coroutines.instance.StartCoroutine(FloodDevMessagesCoroutine());
+        public static void DisableFloodDevMessages()
+        {
+            if (floodDevMessagesRoutine != null)
+                Coroutines.instance.StopCoroutine(floodDevMessagesRoutine);
+        }
+
+        private static float floodLogsDelay;
+        public static void FloodLogsAll()
+        {
+            if (!Networking.InRoom || Time.time < floodLogsDelay) return;
+            floodLogsDelay = Time.time + 0.25f;
+
+            for (int i = 0; i < 10; i++)
+                ManagerRegistry.NetworkingClient.OpRaiseEvent(200, null, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendUnreliable);
+
+            Security.RPCProtection();
+        }
+
+        public static void FloodLogsGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                if (Time.time < floodLogsDelay) return;
+                floodLogsDelay = Time.time + 0.25f;
+
+                int actorNumber = GetPlayerFromVRRig(lockTarget).ActorNumber;
+                for (int i = 0; i < 10; i++)
+                    ManagerRegistry.NetworkingClient.OpRaiseEvent(200, null, new RaiseEventOptions { TargetActors = new[] { actorNumber } }, SendOptions.SendUnreliable);
+
+                Security.RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static int splashSizeCycle = 2;
+        public static readonly string[] SplashSizeNames = { "Tiny", "Small", "Normal", "Large", "Huge" };
+        public static readonly float[] SplashSizeValues = { 1f, 2.5f, 4f, 7f, 12f };
+        public static float SplashSize = 4f;
+        public static void ApplySplashSize(int index) => SplashSize = SplashSizeValues[index];
+
         public static void BasementDoorSpam()
         {
             if (!Networking.InRoom) return;
@@ -3510,7 +3585,7 @@ namespace Qubit.Modules.Categories
 
                     if (Time.time > Fun.splashDel)
                     {
-                        References.MyRigView.SendRPC("RPC_PlaySplashEffect", lockTarget.GetPlayer(), lockTarget.transform.position + RandomVector3(0.5f), RandomQuaternion(), 4f, 100f, true, false);
+                        References.MyRigView.SendRPC("RPC_PlaySplashEffect", lockTarget.GetPlayer(), lockTarget.transform.position + RandomVector3(0.5f), RandomQuaternion(), SplashSize, 100f, true, false);
                         Security.RPCProtection();
                         Fun.splashDel = Time.time + 0.1f;
                     }
@@ -3567,7 +3642,7 @@ namespace Qubit.Modules.Categories
             {
                 Fun.splashDel = Time.time + 0.05f;
                 VRRig rig = GetRandomVRRig();
-                References.MyRigView.SendRPC("RPC_PlaySplashEffect", rig.GetPlayer(), rig.transform.position + RandomVector3(0.5f), RandomQuaternion(), 4f, 100f, true, false);
+                References.MyRigView.SendRPC("RPC_PlaySplashEffect", rig.GetPlayer(), rig.transform.position + RandomVector3(0.5f), RandomQuaternion(), SplashSize, 100f, true, false);
             }
         }
         public static void TinnitusGun()
@@ -3670,7 +3745,7 @@ namespace Qubit.Modules.Categories
                 {
                     if (Time.time > Fun.splashDel)
                     {
-                        References.MyRigView.SendRPC("RPC_PlaySplashEffect", lockTarget.GetPlayer(), lockTarget.headMesh.transform.TransformPoint(Vector3.forward * 0.2f), RandomQuaternion(), 4f, 100f, true, false);
+                        References.MyRigView.SendRPC("RPC_PlaySplashEffect", lockTarget.GetPlayer(), lockTarget.headMesh.transform.TransformPoint(Vector3.forward * 0.2f), RandomQuaternion(), SplashSize, 100f, true, false);
                         Fun.splashDel = Time.time + 0.1f;
                     }
 
@@ -3774,7 +3849,7 @@ namespace Qubit.Modules.Categories
 
             if (Time.time > Fun.splashDel)
             {
-                References.MyRigView.SendRPC("RPC_PlaySplashEffect", GetPlayerFromVRRig(randomRig), randomRig.headMesh.transform.TransformPoint(Vector3.forward * 0.2f), RandomQuaternion(), 4f, 100f, true, false);
+                References.MyRigView.SendRPC("RPC_PlaySplashEffect", GetPlayerFromVRRig(randomRig), randomRig.headMesh.transform.TransformPoint(Vector3.forward * 0.2f), RandomQuaternion(), SplashSize, 100f, true, false);
                 Fun.splashDel = Time.time + 0.1f;
             }
 
