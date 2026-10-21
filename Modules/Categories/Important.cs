@@ -778,26 +778,27 @@ exit";
 
         public static void PCControllerEmulation()
         {
-            References.InputPoller.rightControllerPrimaryButton |= UnityInput.GetKey(Key.E);
-            References.InputPoller.rightControllerSecondaryButton |= UnityInput.GetKey(Key.R);
+            bool rightPrimary = UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightPrimaryButton]);
+            bool rightSecondary = UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightSecondaryButton]);
+            bool leftPrimary = UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftPrimaryButton]);
+            bool leftSecondary = UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftSecondaryButton]);
+            bool leftGrip = UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftGrip]);
+            bool rightGrip = UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightGrip]);
+            bool leftTrigger = UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.LeftTrigger]);
+            bool rightTrigger = UnityInput.GetKey(Modules.Categories.Settings.pcBindings[Modules.Categories.Settings.ControllerBinding.RightTrigger]);
 
-            References.InputPoller.leftControllerPrimaryButton |= UnityInput.GetKey(Key.F);
-            References.InputPoller.leftControllerSecondaryButton |= UnityInput.GetKey(Key.G);
-
-            References.InputPoller.leftGrab |= UnityInput.GetKey(Key.LeftBracket);
-            References.InputPoller.leftControllerGripFloat += UnityInput.GetKey(Key.LeftBracket) ? 1f : 0f;
-
-            References.InputPoller.rightGrab |= UnityInput.GetKey(Key.RightBracket);
-            References.InputPoller.rightControllerGripFloat += UnityInput.GetKey(Key.RightBracket) ? 1f : 0f;
-
-            References.InputPoller.rightControllerTriggerButton |= UnityInput.GetKey(Key.Equals);
-            References.InputPoller.rightControllerIndexFloat += UnityInput.GetKey(Key.Equals) ? 1f : 0f;
-
-            References.InputPoller.leftControllerTriggerButton |= UnityInput.GetKey(Key.Minus);
-            References.InputPoller.leftControllerIndexFloat += UnityInput.GetKey(Key.Minus) ? 1f : 0f;
-
-            References.InputPoller.rightControllerTriggerButton |= UnityInput.GetKey(Key.Equals);
-            References.InputPoller.rightControllerIndexFloat += UnityInput.GetKey(Key.Equals) ? 1f : 0f;
+            References.InputPoller.rightControllerPrimaryButton |= rightPrimary;
+            References.InputPoller.rightControllerSecondaryButton |= rightSecondary;
+            References.InputPoller.leftControllerPrimaryButton |= leftPrimary;
+            References.InputPoller.leftControllerSecondaryButton |= leftSecondary;
+            References.InputPoller.leftGrab |= leftGrip;
+            References.InputPoller.leftControllerGripFloat += leftGrip ? 1f : 0f;
+            References.InputPoller.rightGrab |= rightGrip;
+            References.InputPoller.rightControllerGripFloat += rightGrip ? 1f : 0f;
+            References.InputPoller.leftControllerTriggerButton |= leftTrigger;
+            References.InputPoller.leftControllerIndexFloat += leftTrigger ? 1f : 0f;
+            References.InputPoller.rightControllerTriggerButton |= rightTrigger;
+            References.InputPoller.rightControllerIndexFloat += rightTrigger ? 1f : 0f;
         }
 
 

@@ -596,7 +596,7 @@ namespace Qubit.Modules
                 new Module { name = "Unlock FPS", method = Important.UncapFPS, disableMethod =() => Application.targetFrameRate = 144, toolTip = "Unlocks your FPS."},
 
                 new Module { name = "PC Button Click", aliases = new[] { "PC Click" }, method = Important.PCButtonClick, disableMethod = Important.DisablePCButtonClick, toolTip = "Lets you click in-game buttons with your mouse."},
-                new Module { name = "PC Controller Emulation", method = Important.PCControllerEmulation, toolTip = "Allows you to press buttons on your in-game controllers using your keyboard."},
+                new Module { name = "PC Controller Emulation", method = Important.PCControllerEmulation, toolTip = "Emulates controller buttons using the configured PC controller keys."},
                 new Module { name = "Unlock Competitive Queue", method =() => References.Computer.CompQueueUnlockButtonPress(), isTogglable = false, toolTip = "Permanently unlocks the competitive queue."},
                 new Module { name = "Change Queue to Default", displayName = $"Change Queue {Bracket("green", "Default")}", method =() => References.Computer.currentQueue = "DEFAULT", isTogglable = false, toolTip = "Changes your queue to default."},
                 new Module { name = "Change Queue to Minigames", displayName = $"Change Queue {Bracket("green", "Minigames")}", method =() => References.Computer.currentQueue = "MINIGAMES", isTogglable = false, toolTip = "Changes your queue to minigames."},
