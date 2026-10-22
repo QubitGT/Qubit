@@ -35,8 +35,11 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using Valve.Newtonsoft.Json.Linq;
 using static Qubit.Core.Security;
 using static Qubit.Frontend.Core;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
 using static Qubit.Libraries.Audio.Sounds;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Core.Assets;
@@ -246,7 +249,7 @@ namespace Qubit.Modules.Categories
             soundButtons.Add(new Module
             {
                 name = "Get More Sounds",
-                method = LoadSoundLibrary,
+                method = () => LoadSoundLibrary(),
                 isTogglable = false,
                 toolTip = "Opens a public audio library, where you can download your own sounds."
             });
@@ -265,21 +268,57 @@ namespace Qubit.Modules.Categories
             LoadSoundboard();
         }
 
-        public static void LoadSoundLibrary()
+        public static string librarySearchQuery = "";
+        public static int libraryPage = 1;
+
+        public static void LoadSoundLibrary(int page = 1)
         {
-            string library = GetHttp($"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/SoundLibrary.txt");
-            string[] audios = AlphabetizeNoSkip(library.Split("\n"));
+            libraryPage = page;
+
             List<Module> soundbuttons = new List<Module> { new Module { name = "Exit Sound Library", method = () => LoadSoundboard(), isTogglable = false, toolTip = "Returns you back to the soundboard." } };
-            int index = 0;
-            foreach (string audio in audios)
+
+            soundbuttons.Add(new Module
             {
-                if (audio.Length > 2)
+                name = "Search Sound Library",
+                displayName = string.IsNullOrEmpty(librarySearchQuery) ? "Search" : $"Search: {librarySearchQuery}",
+                method = () => PromptSingleText("Search for a sound on MyInstants.", () =>
+                {
+                    librarySearchQuery = keyboardInput;
+                    LoadSoundLibrary();
+                }),
+                isTogglable = false,
+                toolTip = "Searches MyInstants for a sound to download."
+            });
+
+            try
+            {
+                string endpoint = string.IsNullOrEmpty(librarySearchQuery) ? "trending" : "search";
+                string url = $"https://myinstants-api.page.gd/{endpoint}?page={page}" + (string.IsNullOrEmpty(librarySearchQuery) ? "" : $"&q={Uri.EscapeDataString(librarySearchQuery)}");
+
+                JObject json = JObject.Parse(GetHttp(url));
+                if ((int)json["status"] != 200)
+                    throw new Exception(json["message"]?.ToString() ?? "Unknown error");
+
+                int index = 0;
+                foreach (JObject sound in json["data"].Cast<JObject>())
                 {
                     index++;
-                    string[] Data = audio.Split(";");
-                    soundbuttons.Add(new Module { name = "SoundboardDownload" + index, displayName = Data[0], method = () => DownloadSound(Data[0], $"{PluginInfo.ServerResourcePath}/Audio/Mods/Fun/Soundboard/Sounds/{Data[1]}"), isTogglable = false, toolTip = "Downloads " + Data[0] + " to your sound library." });
+                    string title = sound["title"].ToString();
+                    string mp3 = sound["mp3"].ToString();
+                    soundbuttons.Add(new Module { name = "SoundboardDownload" + index, displayName = title, method = () => DownloadSound(title, mp3), isTogglable = false, toolTip = "Downloads " + title + " to your sound library." });
                 }
+
+                if (page > 1)
+                    soundbuttons.Add(new Module { name = "Previous Sound Library Page", method = () => LoadSoundLibrary(page - 1), isTogglable = false, toolTip = "Loads the previous page of sounds." });
+
+                if ((bool?)json["has_next"] == true)
+                    soundbuttons.Add(new Module { name = "Next Sound Library Page", method = () => LoadSoundLibrary(page + 1), isTogglable = false, toolTip = "Loads the next page of sounds." });
             }
+            catch (Exception ex)
+            {
+                Notifications.SendFormat("red", "ERROR", "Failed to load the sound library: " + ex.Message);
+            }
+
             Manager.modules["Sound Library"] = soundbuttons.ToArray();
             Manager.CurrentCategoryName = "Sound Library";
         }

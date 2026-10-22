@@ -124,6 +124,201 @@ namespace Qubit.Modules.Categories
 
         public static HalloweenGhostChaser GetChaser() => Lucy;
 
+        public static void ForceUnloadCustomMap()
+        {
+            VirtualStumpSerializer serializer = GetAllType<VirtualStumpSerializer>().FirstOrDefault();
+            if (serializer == null)
+                return;
+
+            serializer.UnloadMapSynced();
+            RPCProtection();
+        }
+
+        private static float scDelay;
+
+        public static void SizeChanger()
+        {
+            Movement.sizeScale = Mathf.Clamp(Movement.sizeScale, 0.1f, 10f);
+            Movement.SizeChanger();
+            Movement.sizeScale = Mathf.Clamp(Movement.sizeScale, 0.1f, 10f);
+
+            if (Time.time > scDelay)
+            {
+                scDelay = Time.time + 1.01f;
+                GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateNativeSize", RpcTarget.Others, new object[] { Movement.sizeScale });
+            }
+        }
+
+        public static void DisableSizeChanger()
+        {
+            Movement.DisableSizeChanger();
+            GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateNativeSize", RpcTarget.Others, new object[] { 1f });
+        }
+
+        public static LurkerGhost _lurker;
+        public static float lurkerDelay;
+        public static LurkerGhost Lurker
+        {
+            get
+            {
+                bool needsSearch = _lurker == null || _lurker.GetView.ViewID == 0 || (Networking.IsMasterClient && !_lurker.IsMine);
+                if (needsSearch)
+                {
+                    _lurker = GetAllType<LurkerGhost>()
+                        .Where(ghost => ghost != null && ghost.HasView && ghost.GetView.ViewID != 0)
+                        .OrderByDescending(ghost => ghost.IsMine)
+                        .ThenBy(ghost => ghost.gameObject.activeInHierarchy ? 0 : 1)
+                        .FirstOrDefault();
+                }
+
+                return _lurker;
+            }
+            set => _lurker = value;
+        }
+
+        public static void LurkerAttack(NetPlayer player)
+        {
+            LurkerGhost lurker = Lurker;
+            if (lurker == null)
+                return;
+
+            if (lurker.IsMine)
+            {
+                lurker.currentState = LurkerGhost.ghostState.possess;
+                lurker.targetPlayer = player;
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        public static void LurkerAttackGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                LurkerAttack(lockTarget.GetPlayer());
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void LurkerAttackAll()
+        {
+            LurkerGhost lurker = Lurker;
+            if (lurker == null)
+                return;
+
+            if (ViewSerialization.OverrideSerialization != null)
+            {
+                ViewSerialization.OverrideSerialization = () =>
+                {
+                    MassSerialize(true, new[] { lurker.GetView });
+                    return false;
+                };
+            }
+
+            if (lurker.IsMine)
+            {
+                foreach (NetPlayer player in ManagerRegistry.NetworkSystem.PlayerListOthers)
+                {
+                    lurker.currentState = LurkerGhost.ghostState.possess;
+                    lurker.targetPlayer = player;
+                    SendSerialize(lurker.GetView, new RaiseEventOptions { TargetActors = new[] { player.ActorNumber } });
+                }
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        public static void MoveLurkerGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                LurkerGhost lurker = Lurker;
+                if (lurker == null)
+                    return;
+
+                if (lurker.IsMine)
+                    lurker.transform.position = NewPointer.transform.position + Vector3.up;
+                else
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
+            });
+        }
+
+        public static void DespawnLurker()
+        {
+            LurkerGhost lurker = Lurker;
+            if (lurker == null)
+                return;
+
+            if (lurker.IsMine)
+            {
+                lurker.currentState = LurkerGhost.ghostState.patrol;
+                lurker.targetPlayer = null;
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        public static void SpazLurker()
+        {
+            LurkerGhost lurker = Lurker;
+            if (lurker == null)
+                return;
+
+            if (lurker.IsMine)
+            {
+                if (Time.time > lurkerDelay)
+                {
+                    lurker.currentState = lurker.currentState == LurkerGhost.ghostState.charge ? LurkerGhost.ghostState.patrol : LurkerGhost.ghostState.charge;
+                    lurkerDelay = Time.time + 0.1f;
+                }
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        public static void BreakLurker()
+        {
+            SpazLurker();
+            lurkerDelay = 0f;
+        }
+
+        public static void AnnoyingLurker()
+        {
+            LurkerGhost lurker = Lurker;
+            if (lurker == null)
+                return;
+
+            if (lurker.IsMine)
+            {
+                if (Time.time > lurkerDelay)
+                {
+                    lurker.currentState = lurker.currentState == LurkerGhost.ghostState.possess ? LurkerGhost.ghostState.charge : LurkerGhost.ghostState.possess;
+                    lurker.targetPlayer = GetRandomPlayer(true);
+                    lurkerDelay = Time.time + 0.1f;
+                }
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        public static void BecomeLurker()
+        {
+            LurkerGhost lurker = Lurker;
+            if (!Networking.IsMasterClient || lurker == null)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            References.LocalRig.enabled = false;
+            References.LocalRig.transform.position = References.BodyCollider.transform.position - Vector3.up * 99999f;
+
+            lurker.transform.position = References.BodyCollider.transform.position;
+            lurker.transform.rotation = References.HeadCollider.transform.rotation;
+
+            lurker.currentState = LurkerGhost.ghostState.charge;
+            lurker.targetPlayer = null;
+        }
+
         private static float releaseDelay;
 
         private static float flingDelay;
@@ -2080,6 +2275,18 @@ namespace Qubit.Modules.Categories
                 PhotonNetwork.SetMasterClient(PhotonNetwork.LocalPlayer);
                 setMasterDelay = Time.time + 5f;
             }
+        }
+
+        public static void SetMasterClientGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                if (Time.time > setMasterDelay)
+                {
+                    PhotonNetwork.SetMasterClient(NetPlayerToPlayer(GetPlayerFromVRRig(lockTarget)));
+                    setMasterDelay = Time.time + 5f;
+                }
+            }, new GunLibrary.GunSettings { locks = true });
         }
 
         public static void SetRoomStatus(bool status)

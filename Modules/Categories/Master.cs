@@ -1429,6 +1429,14 @@ namespace Qubit.Modules.Categories
             }
         }
 
+        public static bool spazLavaState;
+
+        public static void SpazLava()
+        {
+            ChangeLavaState(spazLavaState ? InfectionLavaController.RisingLavaState.Full : InfectionLavaController.RisingLavaState.Drained);
+            spazLavaState = !spazLavaState;
+        }
+
         private static SharedBlocksTerminal GetTerminal() => GetAllType<SharedBlocksTerminal>().FirstOrDefault();
 
         public static void StealTerminal()

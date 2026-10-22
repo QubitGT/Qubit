@@ -890,7 +890,7 @@ namespace Qubit.Frontend
                !isAdmin && (category.Key.Contains("Admin") || category.Key == "Mod Givers")
                                ? Array.Empty<Module>() : category.Value);
                 string query = (keyboardInput ?? "").Replace(" ", "").ToLowerInvariant();
-                result = result.Where(b => (!b.detected || allowDetected) &&
+                result = result.Where(b => (!b.detected || allowDetected) && (!b.legacy || allowLegacy) &&
                            (b.aliases ?? Array.Empty<string>()).Concat(new[] { b.RenderName })
                   .Any(t => t.ClearTags().Replace(" ", "").ToLowerInvariant().Contains(query)));
             }
@@ -1659,6 +1659,7 @@ result = result.Where(b => b.legal || b.label);
                                           categoryEntry.Key == "Mod Givers") &&
                                          !isAdmin)
                                         || (v.detected && !allowDetected)
+                                        || (v.legacy && !allowLegacy)
                                         || (Manager.CurrentCategoryName == "Main" && skipButtons.Contains(v.name)))
                                         continue;
 

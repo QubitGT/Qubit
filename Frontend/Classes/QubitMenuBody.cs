@@ -288,6 +288,7 @@ namespace Qubit.Frontend.Classes
                         if (index >= visible.Length) { row.gameObject.SetActive(false); continue; }
                         var info = visible[index];
                         label.text = Manager.CurrentCategoryName == "Main" ? QubitCategoryLabel(info) : info.RenderName;
+                        if (isSearching && info.legacy) label.text = $"[L] {label.text}";
                         label.color = QubitDetails.ButtonTextColor;
                         row.GetComponent<Image>().color = info.enabled ? QubitDetails.EnabledButtonColor : Color.white;
                         if (!info.label)

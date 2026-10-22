@@ -116,7 +116,7 @@ namespace Qubit.Modules
                 new Module { name = "Advantage Mods", method =() => CurrentCategoryName = "Advantage Mods", isTogglable = false, toolTip = "Opens the advantage mods."},
                 new Module { name = "Visual Mods", method =() => CurrentCategoryName = "Visual Mods", isTogglable = false, toolTip = "Opens the visual mods.", legal = true},
                 new Module { name = "Fun Mods", method =() => CurrentCategoryName = "Fun Mods", isTogglable = false, toolTip = "Opens the fun mods.", legal = true},
-                new Module { name = "Lucy Mods", method =() => CurrentCategoryName = "Lucy Mods", isTogglable = false, toolTip = "Opens the lucy mods."},
+                new Module { name = "Seasonal Mods", method =() => CurrentCategoryName = "Seasonal Mods", isTogglable = false, toolTip = "Opens the seasonal mods."},
                 new Module { name = "Entity & Gadget Mods", method =() => CurrentCategoryName = "Entity & Gadget Mods", isTogglable = false, toolTip = "Opens the entity and gadget mods."},
                 new Module { name = "Holdable Mods", method =() => CurrentCategoryName = "Holdable Mods", isTogglable = false, toolTip = "Opens the holdable mods."},
                 new Module { name = "Identity & Cosmetic Mods", method =() => CurrentCategoryName = "Identity & Cosmetic Mods", isTogglable = false, toolTip = "Opens the identity and cosmetic mods."},
@@ -126,6 +126,7 @@ namespace Qubit.Modules
                 new Module { name = "Overpowered Mods", method =() => CurrentCategoryName = "Overpowered Mods", isTogglable = false, toolTip = "Opens the overpowered mods."},
                 new Module { name = "Experimental Mods", method =() => CurrentCategoryName = "Experimental Mods", isTogglable = false, toolTip = "Opens the experimental mods.", legal = true},
                 new Module { name = "Detected Mods", displayName = "<color=red>Detected Mods</color>", method = Detected.EnterDetectedTab, isTogglable = false, toolTip = "Opens the detected mods."},
+                new Module { name = "Legacy Mods", displayName = "<color=orange>Legacy Mods</color>", method = EnterLegacyTab, isTogglable = false, toolTip = "Opens the legacy mods."},
 
                 new Module { name = "Achievements", method = Achievements.LoadTab, isTogglable = false, toolTip = "Opens the achievements page.", legal = true},
                 new Module { name = "Credits", method =() => CurrentCategoryName = "Credits", isTogglable = false, toolTip = "Opens the credits page.", legal = true}
@@ -991,6 +992,7 @@ namespace Qubit.Modules
                 new Module { name = "Evening Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(7), toolTip = "Sets your time of day to evening."},
                 new Module { name = "Night Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(0), toolTip = "Sets your time of day to night."},
                 new Module { name = "Fullbright", method =() => Visuals.SetFullbrightStatus(true), disableMethod =() => Visuals.SetFullbrightStatus(false), toolTip = "Disables the dynamic lighting in maps that use it."},
+                new Module { name = "Shaders", enableMethod = Visuals.EnableShaders, disableMethod = Visuals.DisableShaders, toolTip = "Adds bloom, motion blur, and slight saturation to the game. Credits to leah / tagmonkevr for the code."},
 
                 new Module { name = "Remove Blindfold", method = Visuals.RemoveBlindfold, toolTip = "Disables the blindfold in the prop hunt map."},
 
@@ -1195,7 +1197,7 @@ namespace Qubit.Modules
                 new Module { name = "Confuse Player Gun", method = Fun.ConfusePlayerGun, toolTip = "Makes whoever your hand desires look like they're going crazy by splashing water on their screen."},
                 new Module { name = "Confuse All Players", enableMethod = Fun.ConfuseAllPlayers, method = Fun.ConfuseAllPlayersSplash, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Splashes water on everyone's screens, making them look like they're going crazy."},
 
-                new Module { name = "Tinnitus Gun", aliases = new[] { "Ear Rape All", "Earrape All" }, method = Fun.TinnitusGun, disableMethod = Fun.DisableTinnitus, toolTip = "Plays high pitched noises for whoever your hand desires."},
+                new Module { name = "Tinnitus Gun", aliases = new[] { "Ear Rape Gun", "Earrape Gun" }, method = Fun.TinnitusGun, disableMethod = Fun.DisableTinnitus, toolTip = "Plays high pitched noises for whoever your hand desires."},
                 new Module { name = "Tinnitus All", aliases = new[] { "Ear Rape All", "Earrape All" }, enableMethod = Fun.TinnitusAll, disableMethod = Fun.DisableTinnitus, toolTip = "Plays high pitched noises for everyone in the room."},
 
                 new Module { name = "Overstimulate Gun", method = Fun.OverstimulateGun, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Overstimulates whoever your hand desires."},
@@ -1423,11 +1425,23 @@ namespace Qubit.Modules
                 new Module { name = "Instant Mining", enableMethod = ()=> Fun.StationaryMining(true), disableMethod =() => Fun.StationaryMining(false), toolTip = "Be able to mine by swinging your pickaxe at any speed."},
 
             },
-            ["Lucy Mods"] = new[]
+            ["Legacy Mods"] = new[]
             {
 
-                new Module { name = "Exit Lucy Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
+                new Module { name = "Exit Legacy Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
+                new Module { name = "Force Unload Custom Map", method = Overpowered.ForceUnloadCustomMap, isTogglable = false, legacy = true, toolTip = "Forcefully unloads the current custom map." },
+                new Module { name = "Serversided Size Changer", method = Overpowered.SizeChanger, enableMethod = Overpowered.SizeChanger, disableMethod = Overpowered.DisableSizeChanger, legacy = true, toolTip = "Increase your size by holding <color=green>trigger</color>, and decrease your size by holding <color=green>grip</color>. Everyone can see you grow or shrink." },
+                new Module { name = "Lowercase Name", method = Fun.LowercaseName, isTogglable = false, legacy = true, toolTip = "Makes your name lowercase." },
+                new Module { name = "Long Name", method = Fun.LongName, isTogglable = false, legacy = true, toolTip = "Makes your name really long." },
+
+            },
+            ["Seasonal Mods"] = new[]
+            {
+
+                new Module { name = "Exit Seasonal Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
+
+                // Halloween (Lucy)
                 new Module { name = "Spawn Red Lucy", method = Fun.SpawnRedLucy, isTogglable = false, toolTip = "Summons the red lucy in forest." },
                 new Module { name = "Spawn Blue Lucy", method = Fun.SpawnBlueLucy, isTogglable = false, toolTip = "Summons the blue lucy in forest." },
                 new Module { name = "Despawn Lucy", method = Fun.DespawnLucy, isTogglable = false, toolTip = "Despawns lucy in forest." },
@@ -1460,6 +1474,33 @@ namespace Qubit.Modules
                 new Module { name = "Slow Broomsticks", enableMethod = Fun.SlowBroomsticks, disableMethod = Fun.ResetBroomsticks, toolTip = "Makes the Halloween broomsticks slow. Requires master client."},
                 new Module { name = "Carry Lucy", enableMethod = Lucy.EnableCarry, method = Lucy.Carry, disableMethod = Lucy.DisableCarry, toolTip = "Picks Lucy up and lets everyone watch you carry the ghost around in your hand. Requires master client." },
                 new Module { name = "Lucy Flight", enableMethod = Lucy.EnableFlight, method = Lucy.Flight, disableMethod = Lucy.DisableFlight, toolTip = "Makes Lucy carry you up into the sky. Everyone sees you levitating, and she grabs you on your screen." },
+
+                new Module { name = "Lurker Attack Self", method =() => Overpowered.LurkerAttack(Networking.LocalPlayer), isTogglable = false, toolTip = "Makes the lurker ghost attack you." },
+                new Module { name = "Lurker Attack Gun", method = Overpowered.LurkerAttackGun, toolTip = "Makes the lurker ghost attack whoever your hand desires." },
+                new Module { name = "Lurker Attack All", method = Overpowered.LurkerAttackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes the lurker ghost attack everyone in the room." },
+                new Module { name = "Move Lurker Gun", method = Overpowered.MoveLurkerGun, toolTip = "Moves the lurker ghost to wherever your hand desires." },
+                new Module { name = "Despawn Lurker", method = Overpowered.DespawnLurker, isTogglable = false, toolTip = "Despawns the lurker ghost." },
+                new Module { name = "Spaz Lurker", method = Overpowered.SpazLurker, toolTip = "Gives the lurker ghost a seizure." },
+                new Module { name = "Break Lurker", method = Overpowered.BreakLurker, toolTip = "Breaks the lurker ghost." },
+                new Module { name = "Annoying Lurker", method = Overpowered.AnnoyingLurker, toolTip = "Makes the lurker ghost really annoying, by attacking everyone." },
+                new Module { name = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Movement.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the lurker ghost." },
+                new Module { name = "Anti Lurker", enableMethod =() => LurkerStates.enabled = true, disableMethod =() => LurkerStates.enabled = false, toolTip = "Prevents the lurker ghost from possessing you." },
+
+                new Module { name = "Lightning Time Overlay", method = Visuals.StrikeTimeOverlay, disableMethod =() => Notifications.information.Remove("Lightning"), toolTip = "Displays the time until lightning strikes again." },
+                new Module { name = "Spawn Lightning", method = Visuals.SpawnLightning, isTogglable = false, toolTip = "Spawns a manual lightning strike client sided." },
+
+                new Module { name = "Pumpkin Watcher", enableMethod =() => WatcherEyes.enabled = true, disableMethod =() => WatcherEyes.enabled = false, toolTip = "Makes the pumpkin in stump always look at you." },
+                new Module { name = "Pumpkin Gazer", enableMethod = WatcherEyes.EnableGazer, disableMethod = WatcherEyes.DisableGazer, toolTip = "Makes the pumpkin in stump instantly look at you when you look away." },
+
+                // Other seasons/events
+                new Module { name = $"Lava Splash Hands {Bracket("green", "G")}", method = Fun.LavaSplashHands, toolTip = "Splashes lava when holding <color=green>grip</color>, if you're near the lava forest map." },
+                new Module { name = "Lava Splash Aura", method = Fun.LavaSplashAura, toolTip = "Splashes lava around you at random positions, if you're near the lava forest map." },
+                new Module { name = "Lava Splash Gun", method = Fun.LavaSplashGun, toolTip = "Splashes lava wherever your hand desires, if you're near the lava forest map." },
+                new Module { name = "Spaz Lava", method = Master.SpazLava, toolTip = "Spazzes out the lava, rapidly flooding and draining it." },
+                new Module { name = "Kill Bees", method = Fun.KillBees, isTogglable = false, toolTip = "Sends the bees to hell. Only works during a bee swarm event." },
+                new Module { name = "Anger Bees Self", method = Fun.AngerBees, isTogglable = false, toolTip = "Angers the bees on you. Only works during a bee swarm event." },
+                new Module { name = "Anger Bees Gun", method = Fun.AngerBeesGun, toolTip = "Angers the bees wherever your hand desires. Only works during a bee swarm event." },
+                new Module { name = "Anger Bees All", method = Fun.AngerBeesAll, isTogglable = false, toolTip = "Angers the bees on everyone. Only works during a bee swarm event." },
 
             },
             ["Entity & Gadget Mods"] = new[]
@@ -2254,9 +2295,6 @@ namespace Qubit.Modules
                 new Module { name = "Grab Fling Gun", enableMethod =() => Grabbing.GrabStatus = true, method = Grabbing.GrabFlingGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to fling whoever your hand desires."},
                 new Module { name = "Grab Fling All", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabFlingAll, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to fling everyone in the room."},
 
-                //new ButtonInfo { name = "Grab Bring Player Gun", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.BringPlayerGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to bring whoever your hand desires to you."},
-                //new ButtonInfo { name = "Grab Bring All Players", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.BringAllPlayers, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to bring everyone in the room to you."},
-                //new ButtonInfo { name = "Grab Push Player Gun", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.PushPlayerGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to push whoever your hand desires away from you."},
 
                 //new ButtonInfo { name = "Grab Crash Gun", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabCrashGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to crash whoever your hand desires."},
                 //new ButtonInfo { name = "Grab Crash All", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabCrashAll, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to crash everyone in the room."},
@@ -2900,6 +2938,9 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Detected Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
+                new Module { name = "Detected Set Master Client Self", displayName = "Set Master Client Self", method =() => Overpowered.SetMasterClient(), isTogglable = false, detected = true, toolTip = "Sets you as the master client by kicking everyone above you on the leaderboard."},
+                new Module { name = "Detected Set Master Client Gun", displayName = "Set Master Client Gun", method = Overpowered.SetMasterClientGun, isTogglable = false, detected = true, toolTip = "Sets whoever your hand desires as the master client."},
+
                 new Module { name = "Detected Lag Gun", displayName = "Lag Gun", method = Detected.LagGun, detected = true, toolTip = "Lags whoever your hand desires."},
                 new Module { name = "Detected Lag All", displayName = "Lag All", method = Detected.LagAll, detected = true, toolTip = "Lags everyone in the room."},
                 new Module { name = "Detected Lag Aura", displayName = "Lag Aura", method = Detected.LagAura, detected = true, toolTip = "Lags players nearby you."},
@@ -3080,6 +3121,20 @@ namespace Qubit.Modules
 
 
 
+
+        public static void EnterLegacyTab()
+        {
+            if (!allowLegacy)
+            {
+                Qubit.Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Menu/danger.ogg", "Audio/Menu/danger.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
+                Prompt("The mods in this category are from older versions of the game and may not work, may be unstable, or may behave unexpectedly. Are you sure you would like to continue?",
+                    () =>
+                    {
+                        allowLegacy = true; CurrentCategoryName = "Legacy Mods";
+                    });
+            }
+            else CurrentCategoryName = "Legacy Mods";
+        }
 
         public static Module GetIndex(string buttonText)
         {
@@ -3444,6 +3499,11 @@ namespace Qubit.Modules
                                         Notifications.SendFormat("red", "ERROR", "This mod is detected and requires permission to run.");
                                         break;
                                     }
+                                case true when target.legacy && !allowLegacy:
+                                    {
+                                        Notifications.SendFormat("red", "ERROR", "This mod is legacy and requires permission to run.");
+                                        break;
+                                    }
                                 default:
                                     {
                                         if (target.isTogglable)
@@ -3674,6 +3734,11 @@ namespace Qubit.Modules
                             Notifications.SendFormat("red", "ERROR", "This mod is detected and requires permission to run.");
                             break;
                         }
+                    case true when target.legacy && !allowLegacy:
+                        {
+                            Notifications.SendFormat("red", "ERROR", "This mod is legacy and requires permission to run.");
+                            break;
+                        }
                     default:
                         {
                             if (dynamicAnimations)
@@ -3802,6 +3867,7 @@ namespace Qubit.Modules
                         else if (button.method != null)
                         {
                             if (button.detected && !allowDetected) return;
+                            if (button.legacy && !allowLegacy) return;
                             InvokeModule(button, button.method.Invoke);
                         }
                     }
@@ -4033,61 +4099,12 @@ new ButtonInfo { name = "Kick Master Client", enableMethod = () => Overpowered.k
 new ButtonInfo { name = "Kick Gun", method = Overpowered.KickGun, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kick whoever your hand desires, if they are master client. Credits to Rexon for making such a stupid mod." },
 new ButtonInfo { name = "Kick All", enableMethod = () => Overpowered.kickCoroutine = Coroutines.instance.StartCoroutine(Overpowered.KickAll()), method =() => { if (Overpowered.kickCoroutine == null) Toggle("Kick All"); }, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Overpowered.kickCoroutine = null; }, toolTip = "Kicks everyone above you from the room." },
 
-new ButtonInfo { name = "Lightning Time Overlay", method = Visuals.StrikeTimeOverlay, disableMethod =() => Notifications.information.Remove("Lightning"), toolTip = "Displays the time until lightning strikes again."},
-new ButtonInfo { name = "Spawn Lightning", method = Visuals.SpawnLightning, isTogglable = false, toolTip = "Spawns a manual lightning strike client sided." },
-
-new ButtonInfo { name = "Pumpkin Watcher", enableMethod =() => WatcherEyes.enabled = true, disableMethod =() => WatcherEyes.enabled = false, toolTip = "Make the pumpkin in stump always look at you."},
-new ButtonInfo { name = "Pumpkin Gazer", enableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/2025_Halloween2_TreeRoom/SetDressing (1)/HalloweenWatchingEyes").GetComponent<HalloweenWatcherEyes>().durationToBeNormalWhenPlayerLooks = 0.01f, disableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/2025_Halloween2_TreeRoom/SetDressing (1)/HalloweenWatchingEyes").GetComponent<HalloweenWatcherEyes>().durationToBeNormalWhenPlayerLooks = 0.01f, toolTip = "Make the pumpkin in stump instantly look at you when you look away."},
-
-new ButtonInfo { name = "Spawn Red Lucy", method = Fun.SpawnRedLucy, isTogglable = false, toolTip = "Summons the red lucy in forest." },
-new ButtonInfo { name = "Spawn Blue Lucy", method = Fun.SpawnBlueLucy, isTogglable = false, toolTip = "Summons the blue lucy in forest." },
-new ButtonInfo { name = "Despawn Lucy", method = Fun.DespawnLucy, isTogglable = false, toolTip = "Despawns lucy in forest." },
-
-new ButtonInfo { name = "Lucy Chase Self", method =() => Fun.LucyChase(ManagerRegistry.NetworkSystem.LocalPlayer), isTogglable = false, toolTip = "Makes lucy chase you." },
-new ButtonInfo { name = "Lucy Chase Gun", method = Fun.LucyChaseGun, toolTip = "Makes lucy chase whoever your hand desires." },
-
-new ButtonInfo { name = "Lucy Attack Self", method =() => Fun.LucyAttack(ManagerRegistry.NetworkSystem.LocalPlayer), isTogglable = false, toolTip = "Makes lucy attack you." },
-new ButtonInfo { name = "Lucy Attack Gun", method = Fun.LucyAttackGun, toolTip = "Makes lucy attack whoever your hand desires." },
-new ButtonInfo { name = "Lucy Attack All", method = Fun.LucyAttackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes lucy attack everyone in the room." },
-
-new ButtonInfo { name = "Lucy Harass Gun", method = Fun.LucyHarassGun, toolTip = "Makes lucy attack harass your hand desires." },
-new ButtonInfo { name = "Move Lucy Gun", method = Fun.MoveLucyGun, toolTip = "Moves lucy to wherever your hand desires." },
-
-new ButtonInfo { name = "Spaz Lucy", method = Fun.SpazLucy, toolTip = "Gives lucy a seizure." },
-new ButtonInfo { name = "Break Lucy", method =() => { Fun.SpazLucy(); Fun.lucyDelay = 0f; }, toolTip = "Breaks lucy." },
-new ButtonInfo { name = "Annoying Lucy", method = Fun.AnnoyingLucy, toolTip = "Makes lucy really annoying, by attacking everyone and making sounds of the bells." },
-
-new ButtonInfo { name = "Become Lucy", method = Fun.BecomeLucy, disableMethod = Movement.EnableRig, toolTip = "Turns you into the bug." },
-
-new ButtonInfo { name = "Fast Lucy", method = Fun.FastLucy, toolTip = "Makes lucy become really fast." },
-new ButtonInfo { name = "Slow Lucy", method = Fun.SlowLucy, toolTip = "Makes lucy become really slow." },
-
-new ButtonInfo { name = "Lurker Attack Self", method =() => Overpowered.LurkerAttack(ManagerRegistry.NetworkSystem.LocalPlayer), isTogglable = false, toolTip = "Makes the lurker ghost attack you." },
-new ButtonInfo { name = "Lurker Attack Gun", method = Overpowered.LurkerAttackGun, toolTip = "Makes the lurker ghost attack whoever your hand desires." },
-new ButtonInfo { name = "Lurker Attack All", method = Overpowered.LurkerAttackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes the lurker ghost attack everyone in the room." },
-
-new ButtonInfo { name = "Move Lurker Gun", method = Overpowered.MoveLurkerGun, toolTip = "Moves the lurker ghost to wherever your hand desires." },
-new ButtonInfo { name = "Despawn Lurker", method = Overpowered.DespawnLurker, isTogglable = false, toolTip = "Despawns the lurker ghost." },
-
-new ButtonInfo { name = "Spaz Lurker", method = Overpowered.SpazLurker, toolTip = "Gives the lurker ghost a seizure." },
-new ButtonInfo { name = "Break Lurker", method = Overpowered.BreakLurker, toolTip = "Breaks the lurker ghost." },
-new ButtonInfo { name = "Annoying Lurker", method = Overpowered.AnnoyingLurker, toolTip = "Makes the lurker ghost really annoying, by attacking everyone and making laugh sounds." },
-
-new ButtonInfo { name = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Movement.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the firefly." },
-
 new ButtonInfo { name = "Lag Gun", method = Overpowered.LagGun, toolTip = "Lags whoever your hand desires."},
 new ButtonInfo { name = "Lag All", method = Overpowered.LagAll, toolTip = "Lags everyone in the room."},
 new ButtonInfo { name = "Lag Aura", method = Overpowered.LagAura, toolTip = "Lags players nearby you."},
 
-new ButtonInfo { name = "Lowercase Name", method =() => Fun.LowercaseName(), isTogglable = false, toolTip = "Makes your name lowercase." },
-new ButtonInfo { name = "Long Name", method =() => Fun.LongName(), isTogglable = false, toolTip = "Makes your name really long." },
-
-new ButtonInfo { name = "Shaders", enableMethod =() => Fun.EnableShaders(), disableMethod =() => Fun.DisableShaders(), toolTip = "Adds bloom, motion blur, and slight saturation to the game. Credits to leah / tagmonkevr for the code."},
-
 new ButtonInfo { name = "Barrel Minigun <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => OverpoweredObjectMinigun(-1724683316), toolTip = "Spawns barrels out of your hand."},
 new ButtonInfo { name = "Core Minigun <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => OverpoweredObjectMinigun(166197108), toolTip = "Spawns collectible cores out of your hand."},
-
-new ButtonInfo { name = "Remove Cherry Blossoms", enableMethod = () => Visuals.EnableRemoveCherryBlossoms(), disableMethod = () => Visuals.DisableRemoveCherryBlossoms(), toolTip = "Removes cherry blossoms on trees, good for branching." },
 
 new ButtonInfo { name = "Noclip Gun", method =() => Overpowered.NoclipGun(), toolTip = "Makes whoever your hand desires clip through the floor."},
 new ButtonInfo { name = "Noclip All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method =() => Overpowered.NoclipAll(), toolTip = "Makes everyone clip through the floor when holding <color=green>trigger</color>."},
@@ -4100,12 +4117,6 @@ new ButtonInfo { name = "Lag Spike All <color=grey>[</color><color=green>T</colo
 
 new ButtonInfo { name = "Virtual Stump Kick Gun", method =() => Master.VirtualStumpKickGun(), toolTip = "Kicks whoever your hand desires in the custom map."},
 new ButtonInfo { name = "Virtual Stump Kick All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method =() => Master.VirtualStumpKickAll(), toolTip = "Kicks everybody in the custom map when holding <color=green>trigger</color>."},
-
-new ButtonInfo { name = "Force Unload Custom Map", method =() => Overpowered.ForceUnloadCustomMap(), isTogglable = false, toolTip = "Forcefully unloads the current custom map."},
-
-new ButtonInfo { name = "Serversided Size Changer", method =() => Overpowered.SizeChanger(), enableMethod =() => Overpowered.SizeChanger(), disableMethod =() => Movement.DisableSizeChanger(), toolTip = "Increase your size by holding <color=green>trigger</color>, and decrease your size by holding <color=green>grip</color>. Everyone can see you grow or shrink."},
-
-new ButtonInfo { name = "Set Master Client", method =() => Overpowered.SetMasterClient(), toolTip = "Sets you as the master client by kicking everyone above you on the leaderboard."},
 
 new ButtonInfo { name = "Crash All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method =() => Overpowered.CrashAll(), toolTip = "Crashes everybody in the room when holding <color=green>trigger</color>."},
 
@@ -4263,20 +4274,6 @@ new ButtonInfo { name = "Destroy Train", method =() => Fun.DestroyTrain(), isTog
 new ButtonInfo { name = "Slow Train", enableMethod =() => Fun.SlowTrain(), disableMethod =() => Fun.FixTrain(), toolTip = "Makes the train slower." },
 new ButtonInfo { name = "Fast Train", enableMethod =() => Fun.FastTrain(), disableMethod =() => Fun.FixTrain(), toolTip = "Makes the train faster." },
 
-new ButtonInfo { name = "Lava Splash Hands <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.LavaSplashHands(), toolTip = "Splashes lava when holding <color=green>grip</color>."},
-new ButtonInfo { name = "Lava Splash Aura", method =() => Fun.LavaSplashAura(), toolTip = "Splashes lava around you at random positions."},
-new ButtonInfo { name = "Lava Splash Gun", method =() => Fun.LavaSplashGun(), toolTip = "Splashes lava wherever your hand desires."},
-
-new ButtonInfo { name = "Force Erupt Lava", method =() => Overpowered.ForceEruptLava(), isTogglable = false, toolTip = "Forcibly rises the lava." },
-new ButtonInfo { name = "Force Drain Lava", method =() => Overpowered.ForceUneruptLava(), isTogglable = false, toolTip = "Forcibly drains the lava." },
-new ButtonInfo { name = "Instant Rise Lava", method =() => Overpowered.ForceRiseLava(), isTogglable = false, toolTip = "Instantly rises the lava." },
-new ButtonInfo { name = "Instant Drain Lava", method =() => Overpowered.ForceDrainLava(), isTogglable = false, toolTip = "Instantly drains the lava." },
-new ButtonInfo { name = "Spaz Lava", method =() => Overpowered.SpazLava(), toolTip = "Spazzes out the lava." },
-
-new ButtonInfo { name = "Kill Bees", method =() => Fun.KillBees(), isTogglable = false, toolTip = "Sends the bees to hell."},
-new ButtonInfo { name = "Anger Bees Self", method =() => Fun.AngerBees(), isTogglable = false, toolTip = "Angers the bees on you."},
-new ButtonInfo { name = "Anger Bees Gun", method =() => Fun.AngerBeesGun(), toolTip = "Angers the bees wherever your hand desires."},
-new ButtonInfo { name = "Anger Bees All", method =() => Fun.AngerBeesAll(), toolTip = "Angers the bees on everyone."},
 
 new ButtonInfo { name = "Sting Self", method =() => Fun.StingSelf(), isTogglable = false, toolTip = "Makes the bees attack you."},
 new ButtonInfo { name = "Sting Gun", method =() => Fun.StingGun(), toolTip = "Makes the bees attack whoever your hand desires."},

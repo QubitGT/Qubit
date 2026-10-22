@@ -49,6 +49,7 @@ namespace Qubit.Modules
         public bool label;
         public bool incremental;
         public bool detected;
+        public bool legacy;
 
         public bool legal;
 

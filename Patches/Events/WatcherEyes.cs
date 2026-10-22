@@ -22,6 +22,7 @@
 using HarmonyLib;
 using Qubit.Core;
 using UnityEngine;
+using static Qubit.Extensions.GameObj;
 
 namespace Qubit.Patches.Events
 {
@@ -40,6 +41,28 @@ namespace Qubit.Patches.Events
                 return false;
             }
             return true;
+        }
+
+        private static float? originalGazerDuration;
+
+        public static void EnableGazer()
+        {
+            foreach (HalloweenWatcherEyes eyes in GetAllType<HalloweenWatcherEyes>())
+            {
+                originalGazerDuration ??= eyes.durationToBeNormalWhenPlayerLooks;
+                eyes.durationToBeNormalWhenPlayerLooks = 0.01f;
+            }
+        }
+
+        public static void DisableGazer()
+        {
+            if (originalGazerDuration == null)
+                return;
+
+            foreach (HalloweenWatcherEyes eyes in GetAllType<HalloweenWatcherEyes>())
+                eyes.durationToBeNormalWhenPlayerLooks = originalGazerDuration.Value;
+
+            originalGazerDuration = null;
         }
     }
 }

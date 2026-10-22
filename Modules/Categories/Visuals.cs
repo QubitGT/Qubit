@@ -843,7 +843,44 @@ namespace Qubit.Modules.Categories
         public static void ResetFog() =>
             ManagerRegistry.ZoneShaderSettings.CopySettings(ZoneShaderSettings.defaultsInstance);
 
-        /*
+        private static Volume shaderVolume;
+
+        public static void EnableShaders()
+        {
+            if (shaderVolume == null)
+                shaderVolume = GameObject.Find("Main Camera").AddComponent<Volume>();
+
+            UnityEngine.Rendering.Universal.UniversalAdditionalCameraData camData = Camera.main.GetComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            camData.renderPostProcessing = true;
+
+            shaderVolume.isGlobal = true;
+            VolumeProfile profile = ScriptableObject.CreateInstance<VolumeProfile>();
+            shaderVolume.profile = profile;
+
+            UnityEngine.Rendering.Universal.Bloom bloom = profile.Add<UnityEngine.Rendering.Universal.Bloom>(true);
+            bloom.intensity.value = 1f;
+            bloom.threshold.value = 1f;
+            bloom.active = true;
+
+            UnityEngine.Rendering.Universal.Tonemapping tonemapping = profile.Add<UnityEngine.Rendering.Universal.Tonemapping>(true);
+            tonemapping.mode.value = UnityEngine.Rendering.Universal.TonemappingMode.ACES;
+            tonemapping.active = true;
+
+            UnityEngine.Rendering.Universal.MotionBlur motionBlur = profile.Add<UnityEngine.Rendering.Universal.MotionBlur>(true);
+            motionBlur.intensity.value = 0.4f;
+            motionBlur.active = true;
+
+            UnityEngine.Rendering.Universal.ColorAdjustments colorAdjust = profile.Add<UnityEngine.Rendering.Universal.ColorAdjustments>(true);
+            colorAdjust.saturation.value = 20f;
+            colorAdjust.active = true;
+        }
+
+        public static void DisableShaders()
+        {
+            Object.Destroy(shaderVolume);
+            shaderVolume = null;
+        }
+
         public static void SpawnLightning() =>
             ManagerRegistry.LightningManager.DoLightningStrike();
 
@@ -853,7 +890,7 @@ namespace Qubit.Modules.Categories
                 ManagerRegistry.LightningManager.lightningTimestampsRealtime.Count == 0 ||
                 ManagerRegistry.LightningManager.nextLightningTimestampIndex < 0 ||
                 ManagerRegistry.LightningManager.nextLightningTimestampIndex >= ManagerRegistry.LightningManager.lightningTimestampsRealtime.Count)
-                return -1f; 
+                return -1f;
 
             float nextStrikeTime = ManagerRegistry.LightningManager.lightningTimestampsRealtime[ManagerRegistry.LightningManager.nextLightningTimestampIndex];
             float timeUntilStrike = nextStrikeTime - Time.realtimeSinceStartup;
@@ -871,7 +908,6 @@ namespace Qubit.Modules.Categories
             }
             Notifications.information["Lightning"] = $"{timeUntilStrike:F1}s";
         }
-        */
 
         public static void CoreESP()
         {
@@ -3353,6 +3389,13 @@ namespace Qubit.Modules.Categories
                         leaves.Add(v);
                     }
                 }
+            }
+
+            GameObject cherryBlossoms = GetObject("Environment Objects/LocalObjects_Prefab/Forest/UnityTempFile-27660f060fbe5c449995964e7f219762 (combined by EdMeshCombiner)");
+            if (cherryBlossoms != null)
+            {
+                cherryBlossoms.SetActive(false);
+                leaves.Add(cherryBlossoms);
             }
         }
 

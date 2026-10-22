@@ -161,6 +161,7 @@ namespace Qubit.Frontend
 
         public static bool HasLoaded;
         public static bool allowDetected;
+        public static bool allowLegacy;
         public static float playTime;
         public static int frameCount;
         public static bool disorganized;

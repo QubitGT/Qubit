@@ -350,6 +350,9 @@ namespace Qubit.Modules.Categories
 
         public static float lucyDelay;
 
+        public static void LowercaseName() => ChangeName(PhotonNetwork.NickName.ToLower());
+        public static void LongName() => ChangeName("ǄǄǄǄǄǄǄǄǄǄǄǄ");
+
         public static int red = 10;
         public static int green = 5;
         public static int blue;
@@ -620,6 +623,88 @@ namespace Qubit.Modules.Categories
             foreach (VRRig rig in Players.ActiveRigs)
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                     WaterSplash(rig.head.rigTarget.position, RandomQuaternion());
+        }
+
+        private static WaterVolume lavaWaterVolume;
+        private static WaterVolume LavaWaterVolume => lavaWaterVolume ??= GameObject.Find("Environment Objects/LocalObjects_Prefab/Forest/ILavaYou_PrefabV/Lava/ForestLavaWaterVolume")?.GetComponent<WaterVolume>();
+
+        private static void EnterLavaVolume()
+        {
+            if (LavaWaterVolume != null)
+                References.Player.OnEnterWaterVolume(References.Player.bodyCollider, LavaWaterVolume);
+        }
+
+        public static void LavaSplashHands()
+        {
+            if (Time.time > splashDel && (rightGrab || leftGrab))
+            {
+                EnterLavaVolume();
+                WaterSplash(rightGrab ? References.RightHand.position : References.LeftHand.position, rightGrab ? References.RightHand.rotation : References.LeftHand.rotation);
+                splashDel = Time.time + 0.1f;
+            }
+        }
+
+        public static void LavaSplashAura()
+        {
+            EnterLavaVolume();
+            WaterSplash(References.LocalRig.transform.position + RandomVector3(2f), RandomQuaternion());
+        }
+
+        public static void LavaSplashGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                EnterLavaVolume();
+                WaterSplash(NewPointer.transform.position, RandomQuaternion());
+            });
+        }
+
+        private static AngryBeeSwarm angryBeeSwarm;
+        private static AngryBeeSwarm AngryBeeSwarm => angryBeeSwarm ??= GameObject.Find("Environment Objects/PersistentObjects_Prefab/Nowruz2024_PersistentObjects/AngryBeeSwarm/FloatingChaseBeeSwarm")?.GetComponent<AngryBeeSwarm>();
+
+        public static void KillBees()
+        {
+            if (AngryBeeSwarm == null)
+                return;
+
+            AngryBeeSwarm.GetComponent<PhotonView>().OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
+            AngryBeeSwarm.Emerge(new Vector3(99999f, 99999f, 99999f), new Vector3(999f, 999f, 999f));
+        }
+
+        public static void AngerBees()
+        {
+            if (AngryBeeSwarm == null)
+                return;
+
+            AngryBeeSwarm.GetComponent<PhotonView>().OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
+            Vector3 target = References.HeadCollider.transform.position + new Vector3(0f, 3f, 0f);
+            AngryBeeSwarm.Emerge(target, target);
+        }
+
+        public static void AngerBeesGun()
+        {
+            GunLibrary.Target(lockTarget =>
+            {
+                if (AngryBeeSwarm == null)
+                    return;
+
+                AngryBeeSwarm.GetComponent<PhotonView>().OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
+                Vector3 target = lockTarget.transform.position + new Vector3(0f, 3f, 0f);
+                AngryBeeSwarm.Emerge(target, target);
+            });
+        }
+
+        public static void AngerBeesAll()
+        {
+            if (AngryBeeSwarm == null)
+                return;
+
+            AngryBeeSwarm.GetComponent<PhotonView>().OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
+            foreach (VRRig rig in Players.ActiveRigs)
+            {
+                Vector3 target = rig.transform.position + new Vector3(0f, 3f, 0f);
+                AngryBeeSwarm.Emerge(target, target);
+            }
         }
 
         public static void WaterSplashWalk()

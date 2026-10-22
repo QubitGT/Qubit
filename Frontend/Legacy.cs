@@ -588,7 +588,8 @@ namespace Qubit.Frontend
                                         if (((categoryEntry.Key.Contains("Admin") ||
                                             categoryEntry.Key == "Mod Givers") &&
                                             !isAdmin)
-                                            || (v.detected && !allowDetected))
+                                            || (v.detected && !allowDetected)
+                                            || (v.legacy && !allowLegacy))
                                             continue;
 
                                         List<string> texts = v.aliases == null ? new List<string>() : v.aliases.ToList();
