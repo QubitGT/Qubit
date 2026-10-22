@@ -351,7 +351,6 @@ namespace Qubit.Modules.Categories
         public static float lucyDelay;
 
         public static void LowercaseName() => ChangeName(PhotonNetwork.NickName.ToLower());
-        public static void LongName() => ChangeName("ǄǄǄǄǄǄǄǄǄǄǄǄ");
 
         public static int red = 10;
         public static int green = 5;
@@ -659,53 +658,6 @@ namespace Qubit.Modules.Categories
             });
         }
 
-        private static AngryBeeSwarm angryBeeSwarm;
-        private static AngryBeeSwarm AngryBeeSwarm => angryBeeSwarm ??= GameObject.Find("Environment Objects/PersistentObjects_Prefab/Nowruz2024_PersistentObjects/AngryBeeSwarm/FloatingChaseBeeSwarm")?.GetComponent<AngryBeeSwarm>();
-
-        public static void KillBees()
-        {
-            if (AngryBeeSwarm == null)
-                return;
-
-            AngryBeeSwarm.GetComponent<PhotonView>().OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
-            AngryBeeSwarm.Emerge(new Vector3(99999f, 99999f, 99999f), new Vector3(999f, 999f, 999f));
-        }
-
-        public static void AngerBees()
-        {
-            if (AngryBeeSwarm == null)
-                return;
-
-            AngryBeeSwarm.GetComponent<PhotonView>().OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
-            Vector3 target = References.HeadCollider.transform.position + new Vector3(0f, 3f, 0f);
-            AngryBeeSwarm.Emerge(target, target);
-        }
-
-        public static void AngerBeesGun()
-        {
-            GunLibrary.Target(lockTarget =>
-            {
-                if (AngryBeeSwarm == null)
-                    return;
-
-                AngryBeeSwarm.GetComponent<PhotonView>().OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
-                Vector3 target = lockTarget.transform.position + new Vector3(0f, 3f, 0f);
-                AngryBeeSwarm.Emerge(target, target);
-            });
-        }
-
-        public static void AngerBeesAll()
-        {
-            if (AngryBeeSwarm == null)
-                return;
-
-            AngryBeeSwarm.GetComponent<PhotonView>().OwnerActorNr = PhotonNetwork.LocalPlayer.ActorNumber;
-            foreach (VRRig rig in Players.ActiveRigs)
-            {
-                Vector3 target = rig.transform.position + new Vector3(0f, 3f, 0f);
-                AngryBeeSwarm.Emerge(target, target);
-            }
-        }
 
         public static void WaterSplashWalk()
         {

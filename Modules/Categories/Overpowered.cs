@@ -124,37 +124,6 @@ namespace Qubit.Modules.Categories
 
         public static HalloweenGhostChaser GetChaser() => Lucy;
 
-        public static void ForceUnloadCustomMap()
-        {
-            VirtualStumpSerializer serializer = GetAllType<VirtualStumpSerializer>().FirstOrDefault();
-            if (serializer == null)
-                return;
-
-            serializer.UnloadMapSynced();
-            RPCProtection();
-        }
-
-        private static float scDelay;
-
-        public static void SizeChanger()
-        {
-            Movement.sizeScale = Mathf.Clamp(Movement.sizeScale, 0.1f, 10f);
-            Movement.SizeChanger();
-            Movement.sizeScale = Mathf.Clamp(Movement.sizeScale, 0.1f, 10f);
-
-            if (Time.time > scDelay)
-            {
-                scDelay = Time.time + 1.01f;
-                GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateNativeSize", RpcTarget.Others, new object[] { Movement.sizeScale });
-            }
-        }
-
-        public static void DisableSizeChanger()
-        {
-            Movement.DisableSizeChanger();
-            GorillaTagger.Instance.myVRRig.SendRPC("RPC_UpdateNativeSize", RpcTarget.Others, new object[] { 1f });
-        }
-
         public static LurkerGhost _lurker;
         public static float lurkerDelay;
         public static LurkerGhost Lurker
@@ -620,6 +589,18 @@ namespace Qubit.Modules.Categories
             }
         }
 
+        public static void GuardianKickAura()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && Vector3.Distance(rig.transform.position, References.LocalRig.transform.position) < 4f))
+                GuardianKickTarget(rig.GetPlayer());
+        }
+
+        public static void GuardianKickOnTouch()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && rig.IsBeingTouched()))
+                GuardianKickTarget(rig.GetPlayer());
+        }
+
         public static void GuardianCrashPlayer(NetPlayer target)
         {
             VRRig rig = GetVRRigFromPlayer(target);
@@ -656,6 +637,18 @@ namespace Qubit.Modules.Categories
                     RPCProtection();
                 }
             }
+        }
+
+        public static void GuardianCrashAura()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && Vector3.Distance(rig.transform.position, References.LocalRig.transform.position) < 4f))
+                GuardianCrashPlayer(rig.GetPlayer());
+        }
+
+        public static void GuardianCrashOnTouch()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && rig.IsBeingTouched()))
+                GuardianCrashPlayer(rig.GetPlayer());
         }
 
         public static void BecomeDriver()
@@ -821,6 +814,18 @@ namespace Qubit.Modules.Categories
                 SetVelocityPlayer(target, (rig.transform.position.y > 55f ? Vector3.right : Vector3.up) * 50f);
                 RPCProtection();
             }
+        }
+
+        public static void GuardianObliterateGun()
+        {
+            GunLibrary.Target(lockTarget => GuardianObliteratePlayer(lockTarget.GetPlayer()), new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void GuardianObliterateAll()
+        {
+            if (rightTrigger > 0.5f)
+                foreach (var rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
+                    GuardianObliteratePlayer(rig.GetPlayer());
         }
 
         public static void SetVelocityPlayer(NetPlayer victim, Vector3 velocity)

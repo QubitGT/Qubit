@@ -182,7 +182,7 @@ namespace Qubit.Modules
                 new Module { name = "Long Menu", enableMethod =() => longMenu = true, disableMethod =() => longMenu = false, toolTip = "Makes the menu long.", legal = true},
                 new Module { name = "Flip Menu", enableMethod =() => flipMenu = true, disableMethod =() => flipMenu = false, toolTip = "Flips the menu to the back of your hand.", legal = true},
 
-                new Module { name = "Legacy Menu", enableMethod =() => Legacy.Enabled = true, disableMethod =() => Legacy.Enabled = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
+                new Module { name = "Legacy Menu", enableMethod =() => Qubit.Frontend.Legacy.Enabled = true, disableMethod =() => Qubit.Frontend.Legacy.Enabled = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
 
 
                 new Module { name = "Round Menu", enableMethod =() => roundMenu = true, disableMethod =() => roundMenu = false, toolTip = "Makes the menu objects round.", legal = true},
@@ -1430,10 +1430,46 @@ namespace Qubit.Modules
 
                 new Module { name = "Exit Legacy Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { name = "Force Unload Custom Map", method = Overpowered.ForceUnloadCustomMap, isTogglable = false, legacy = true, toolTip = "Forcefully unloads the current custom map." },
-                new Module { name = "Serversided Size Changer", method = Overpowered.SizeChanger, enableMethod = Overpowered.SizeChanger, disableMethod = Overpowered.DisableSizeChanger, legacy = true, toolTip = "Increase your size by holding <color=green>trigger</color>, and decrease your size by holding <color=green>grip</color>. Everyone can see you grow or shrink." },
-                new Module { name = "Lowercase Name", method = Fun.LowercaseName, isTogglable = false, legacy = true, toolTip = "Makes your name lowercase." },
-                new Module { name = "Long Name", method = Fun.LongName, isTogglable = false, legacy = true, toolTip = "Makes your name really long." },
+                new Module { name = "Force Unload Custom Map", method = Qubit.Modules.Categories.Legacy.ForceUnloadCustomMap, isTogglable = false, legacy = true, toolTip = "Forcefully unloads the current custom map." },
+                new Module { name = "Serversided Size Changer", method = Qubit.Modules.Categories.Legacy.SizeChanger, enableMethod = Qubit.Modules.Categories.Legacy.SizeChanger, disableMethod = Qubit.Modules.Categories.Legacy.DisableSizeChanger, legacy = true, toolTip = "Increase your size by holding <color=green>trigger</color>, and decrease your size by holding <color=green>grip</color>. Everyone can see you grow or shrink." },
+                new Module { name = "Long Name", method = Qubit.Modules.Categories.Legacy.LongName, isTogglable = false, legacy = true, toolTip = "Makes your name really long." },
+
+                new Module { name = "Barrel Crash Gun", method = Overpowered.BarrelCrashGun, legacy = true, toolTip = "Crashes whoever your hand desires with a barrel." },
+                new Module { name = "Barrel Crash All", method = Overpowered.BarrelCrashAll, isTogglable = false, legacy = true, toolTip = "Crashes everyone in the room with a barrel." },
+                new Module { name = "Barrel Kick Gun", method = Overpowered.BarrelKickGun, legacy = true, toolTip = "Kicks whoever your hand desires with a barrel." },
+                new Module { name = "Barrel Kick All", method = Overpowered.BarrelKickAll, isTogglable = false, legacy = true, toolTip = "Kicks everyone in the room with a barrel." },
+                new Module { name = "Barrel Obliterate Gun", method = Overpowered.BarrelObliterateGun, legacy = true, toolTip = "Obliterates whoever your hand desires with a barrel." },
+                new Module { name = "Barrel Obliterate All", method = Overpowered.BarrelObliterateAll, isTogglable = false, legacy = true, toolTip = "Obliterates everyone in the room with a barrel." },
+                new Module { name = "Barrel Fling Gun", method = Overpowered.BarrelFlingGun, legacy = true, toolTip = "Flings whoever your hand desires with a barrel." },
+                new Module { name = "Barrel Fling All", method = Overpowered.BarrelFlingAll, isTogglable = false, legacy = true, toolTip = "Flings everyone in the room with a barrel." },
+                new Module { name = "Barrel Fling Towards Gun", method = Overpowered.BarrelFlingTowardsGun, legacy = true, toolTip = "Flings whoever your hand desires towards you with a barrel." },
+                new Module { name = "Barrel Fling Towards All", method = Overpowered.BarrelFlingTowardsAll, isTogglable = false, legacy = true, toolTip = "Flings everyone in the room towards you with a barrel." },
+                new Module { name = "Barrel Punch Mod", method = Overpowered.BarrelPunchMod, isTogglable = false, legacy = true, toolTip = "Punches anyone near your hands with a barrel." },
+
+                new Module { name = "City Kick Gun", method = Overpowered.CityKickGun, legacy = true, toolTip = "Kicks whoever your hand desires out of the city map." },
+                new Module { name = "City Kick All", method = Overpowered.CityKickAll, isTogglable = false, legacy = true, toolTip = "Kicks everyone out of the city map." },
+
+                new Module { name = "Guardian Kick Gun", method = Overpowered.GuardianKickGun, legacy = true, toolTip = "Kicks whoever your hand desires if you're the guardian." },
+                new Module { name = "Guardian Kick All", method = Overpowered.GuardianKickAll, isTogglable = false, legacy = true, toolTip = "Kicks everyone in the room if you're the guardian, while holding <color=green>trigger</color>." },
+                new Module { name = "Guardian Crash Gun", method = Overpowered.GuardianCrashGun, legacy = true, toolTip = "Crashes whoever your hand desires if you're the guardian." },
+                new Module { name = "Guardian Crash All", method = Overpowered.GuardianCrashAll, isTogglable = false, legacy = true, toolTip = "Crashes everyone in the room if you're the guardian, while holding <color=green>trigger</color>." },
+                new Module { name = "Guardian Kick Aura", method = Overpowered.GuardianKickAura, isTogglable = false, legacy = true, toolTip = "Kicks nearby players if you're the guardian." },
+                new Module { name = "Guardian Kick On Touch", method = Overpowered.GuardianKickOnTouch, isTogglable = false, legacy = true, toolTip = "Kicks players that touch you if you're the guardian." },
+                new Module { name = "Guardian Crash Aura", method = Overpowered.GuardianCrashAura, isTogglable = false, legacy = true, toolTip = "Crashes nearby players if you're the guardian." },
+                new Module { name = "Guardian Crash On Touch", method = Overpowered.GuardianCrashOnTouch, isTogglable = false, legacy = true, toolTip = "Crashes players that touch you if you're the guardian." },
+                new Module { name = "Guardian Obliterate Gun", method = Overpowered.GuardianObliterateGun, legacy = true, toolTip = "Obliterates whoever your hand desires if you're the guardian." },
+                new Module { name = "Guardian Obliterate All", method = Overpowered.GuardianObliterateAll, isTogglable = false, legacy = true, toolTip = "Obliterates everyone in the room if you're the guardian, while holding <color=green>trigger</color>." },
+
+                new Module { name = "Strobe Color Self", method = Overpowered.StrobeColorSelf, isTogglable = false, legacy = true, toolTip = "Strobes your color." },
+                new Module { name = "Strobe Color Gun", method = Overpowered.StrobeColorGun, legacy = true, toolTip = "Strobes the color of whoever your hand desires." },
+                new Module { name = "Strobe Color All", method = Overpowered.StrobeColorAll, isTogglable = false, legacy = true, toolTip = "Strobes everyone's color in the room." },
+
+                new Module { name = "Joystick Rope Control", method = Overpowered.JoystickRopeControl, isTogglable = false, legacy = true, toolTip = "Controls the nearest rope with your joystick." },
+                new Module { name = "Spaz Rope Gun", method = Overpowered.SpazRopeGun, legacy = true, toolTip = "Spazzes out whatever rope your hand desires." },
+                new Module { name = "Spaz All Ropes", method = Overpowered.SpazAllRopes, isTogglable = false, legacy = true, toolTip = "Spazzes out a random rope while holding <color=green>trigger</color>." },
+                new Module { name = "Spaz Grabbed Ropes", method = Overpowered.SpazGrabbedRopes, isTogglable = false, legacy = true, toolTip = "Spazzes out a random rope someone's currently holding." },
+                new Module { name = "Fling Rope Gun", method = Overpowered.FlingRopeGun, legacy = true, toolTip = "Flings whatever rope your hand desires." },
+                new Module { name = "Fling All Ropes Gun", method = Overpowered.FlingAllRopesGun, legacy = true, toolTip = "Flings a random rope towards wherever your hand desires." },
 
             },
             ["Seasonal Mods"] = new[]
@@ -1497,10 +1533,10 @@ namespace Qubit.Modules
                 new Module { name = "Lava Splash Aura", method = Fun.LavaSplashAura, toolTip = "Splashes lava around you at random positions, if you're near the lava forest map." },
                 new Module { name = "Lava Splash Gun", method = Fun.LavaSplashGun, toolTip = "Splashes lava wherever your hand desires, if you're near the lava forest map." },
                 new Module { name = "Spaz Lava", method = Master.SpazLava, toolTip = "Spazzes out the lava, rapidly flooding and draining it." },
-                new Module { name = "Kill Bees", method = Fun.KillBees, isTogglable = false, toolTip = "Sends the bees to hell. Only works during a bee swarm event." },
-                new Module { name = "Anger Bees Self", method = Fun.AngerBees, isTogglable = false, toolTip = "Angers the bees on you. Only works during a bee swarm event." },
-                new Module { name = "Anger Bees Gun", method = Fun.AngerBeesGun, toolTip = "Angers the bees wherever your hand desires. Only works during a bee swarm event." },
-                new Module { name = "Anger Bees All", method = Fun.AngerBeesAll, isTogglable = false, toolTip = "Angers the bees on everyone. Only works during a bee swarm event." },
+                new Module { name = "Kill Bees", method = Qubit.Modules.Categories.Legacy.KillBees, isTogglable = false, toolTip = "Sends the bees to hell. Only works during a bee swarm event." },
+                new Module { name = "Anger Bees Self", method = Qubit.Modules.Categories.Legacy.AngerBees, isTogglable = false, toolTip = "Angers the bees on you. Only works during a bee swarm event." },
+                new Module { name = "Anger Bees Gun", method = Qubit.Modules.Categories.Legacy.AngerBeesGun, toolTip = "Angers the bees wherever your hand desires. Only works during a bee swarm event." },
+                new Module { name = "Anger Bees All", method = Qubit.Modules.Categories.Legacy.AngerBeesAll, isTogglable = false, toolTip = "Angers the bees on everyone. Only works during a bee swarm event." },
 
             },
             ["Entity & Gadget Mods"] = new[]
@@ -1795,6 +1831,7 @@ namespace Qubit.Modules
                 new Module { name = "Set Name to \"RUN\"", method =() => ChangeName("RUN"), isTogglable = false, toolTip = "Sets your name to \"RUN\"." },
                 new Module { name = "Set Name to \"BEHINDYOU\"", method =() => ChangeName("BEHINDYOU"), isTogglable = false, toolTip = "Sets your name to \"BEHINDYOU\"." },
                 new Module { name = "Set Name to \"iiOnTop\"", method =() => ChangeName("iiOnTop"), isTogglable = false, toolTip = "Sets your name to \"iiOnTop\"." },
+                new Module { name = "Lowercase Name", method = Fun.LowercaseName, isTogglable = false, toolTip = "Makes your name lowercase." },
                 new Module { name = "PBBV Name Cycle", method =() => Fun.NameCycle(new[] { "PBBV", "IS", "HERE" }), toolTip = "Sets your name on a loop to \"PBBV\", \"IS\", and \"HERE\"." },
                 new Module { name = "J3VU Name Cycle", method =() => Fun.NameCycle(new[] { "J3VU", "HAS", "BECOME", "HOSTILE" }), toolTip = "Sets your name on a loop to \"J3VU\", \"HAS\", \"BECOME\", and \"HOSTILE\"" },
                 new Module { name = "H1D3 Name Cycle", method =() => Fun.NameCycle(new[] { "H1D3", "HE", "HAS", "AWOKEN" }), toolTip = "Sets your name on a loop to \"H1D3\", \"HE\", \"HAS\", and \"AWOKEN\"" },
