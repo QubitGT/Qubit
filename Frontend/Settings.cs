@@ -143,6 +143,7 @@ namespace Qubit.Frontend
         public static bool dynamicGradients;
         public static bool horizontalGradients;
         public static bool scrollingGradients;
+        public static bool legacyGradients;
         public static bool particleSpawnEffect;
         public static bool animatedTitle;
         public static bool gradientTitle;
@@ -152,8 +153,6 @@ namespace Qubit.Frontend
         #endregion
 
         #region State
-
-
 
         public static bool isOnPC;
         public static bool IsSteam = true;

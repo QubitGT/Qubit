@@ -57,30 +57,8 @@ namespace Qubit.Extensions
             return vec;
         }
 
-
-
-
-
-
-
-
         public static Vector3 World2Player(Vector3 world) =>
             world - References.BodyCollider.transform.position + References.Tagger.transform.position;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static void WorldScale(GameObject obj, Vector3 targetWorldScale)
         {

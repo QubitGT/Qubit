@@ -66,7 +66,6 @@ namespace Qubit.Frontend
 {
     public class Core : MonoBehaviour
     {
-
         public static bool UpdateFrame()
         {
             #region Controls
@@ -261,13 +260,11 @@ namespace Qubit.Frontend
                 // Load projectiles
                 ThrowableProjectiles.LoadProjectileCache();
 
-
                 if (disorganized && Manager.CurrentCategoryName != "Main")
                 {
                     Manager.CurrentCategoryName = "Main";
                     ReloadMenu();
                 }
-
 
                 // Long Menu has no layout implementation for the Modern (Qubit) menu body; forcing a reload
                 // every frame here while Modern's own pagination kept pageNumber non-zero softlocked the menu.
@@ -278,7 +275,6 @@ namespace Qubit.Frontend
                 }
 
                 VR.UpdatePhysicalReference();
-
 
                 if (themeType == 61)
                 {
@@ -305,7 +301,6 @@ namespace Qubit.Frontend
                         videoPlayer = null;
                     }
                 }
-
 
                 try
                 {
@@ -362,7 +357,6 @@ namespace Qubit.Frontend
                     }
                 }
                 catch { }
-
 
                 try
                 {
@@ -467,9 +461,7 @@ namespace Qubit.Frontend
                             ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = enabled;
                             toggleDebugEchoMode = enabled;
                         }
-
                     }
-
                 }
                 catch { }
 
@@ -670,7 +662,6 @@ namespace Qubit.Frontend
                 #region Mod Bindings
                 try
                 {
-
                     Inputs["A"] = rightPrimary;
                     Inputs["B"] = rightSecondary;
                     Inputs["X"] = leftPrimary;
@@ -976,6 +967,12 @@ result = result.Where(b => b.legal || b.label);
 
             if (CreateMenu() == null) return;
 
+            if (Bootstrapper.FirstLaunch && !askedOnboardingQuestions)
+            {
+                askedOnboardingQuestions = true;
+                RunFirstLaunchOnboarding();
+            }
+
             if (dynamicAnimations)
                 Coroutines.instance.StartCoroutine(GrowCoroutine());
 
@@ -1005,6 +1002,24 @@ result = result.Where(b => b.legal || b.label);
             if (reference == null)
                 CreateReference();
         }
+
+        private static bool askedOnboardingQuestions;
+        private static void RunFirstLaunchOnboarding()
+        {
+            Prompt(
+                "Would you like to consent to optional logging and crash reports? Your support helps make our mods better.",
+                () => PromptSingle("You can always change your mind by toggling \"Disable Mod Telemetry\".", AskModernUIOptIn),
+                () =>
+                {
+                    Manager.Toggle("Disable Mod Telemetry");
+                    PromptSingle("You can always change your mind by toggling \"Disable Mod Telemetry\".", AskModernUIOptIn);
+                });
+        }
+
+        private static void AskModernUIOptIn() =>
+            Prompt(
+                "Would you like to use the rewritten UI? This feature is in early alpha and can be disabled at any time.",
+                () => Manager.Toggle("Modern Menu"));
 
         public static event Action OnMenuClosed;
         public static void CloseMenu()
@@ -1157,18 +1172,6 @@ result = result.Where(b => b.legal || b.label);
             }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
         public static void OutlineMenuObject(GameObject toOut, bool shouldBeEnabled)
         {
             if (toOut.transform.parent != menu?.transform)
@@ -1192,16 +1195,6 @@ result = result.Where(b => b.legal || b.label);
                 RoundMenuObject(gameObject, 0.024f);
         }
 
-
-
-
-
-
-
-
-
-
-
         public static void OutlineObject(GameObject toOut, bool shouldBeEnabled)
         {
             GameObject gameObject = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -1217,34 +1210,13 @@ result = result.Where(b => b.legal || b.label);
             colorChanger.colors = buttonColors[shouldBeEnabled ? 1 : 0];
         }
 
-
-
-
-
-
-
-
-
         public static void OutlineCanvasObject(MaskableGraphic canvasObject)
         {
-
             Outline outline = canvasObject.gameObject.AddComponent<Outline>();
             outline.effectColor = Color.black;
             outline.effectDistance = new Vector2(0.001f, 0.001f);
             outline.useGraphicAlpha = true;
         }
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static void RoundMenuObject(GameObject toRound, float Bevel = 0.02f)
         {
@@ -1334,17 +1306,6 @@ result = result.Where(b => b.legal || b.label);
             if (colorChanger)
                 colorChanger.overrideTransparency = false;
         }
-
-
-
-
-
-
-
-
-
-
-
 
         public static void RoundObject(GameObject toRound, float bevel = 0.02f)
         {
@@ -1484,13 +1445,6 @@ result = result.Where(b => b.legal || b.label);
             colorChanger.colors = gradient;
         }
 
-
-
-
-
-
-
-
         public static void FollowMenuSettings(GameObject gameObject, bool shouldBeEnabled = true)
         {
             if (outlineMenu)
@@ -1499,11 +1453,6 @@ result = result.Where(b => b.legal || b.label);
             if (roundMenu)
                 RoundMenuObject(gameObject);
         }
-
-
-
-
-
 
         public static void FollowMenuSettings(TMP_Text tmp, float? overlapTargetSpacing = null)
         {
@@ -1549,11 +1498,6 @@ result = result.Where(b => b.legal || b.label);
             if (tmp.fontStyle != targetStyle)
                 tmp.fontStyle = targetStyle;
         }
-
-
-
-
-
 
         public static void FollowMenuSettings(MaskableGraphic canvasObject)
         {
@@ -1747,5 +1691,4 @@ result = result.Where(b => b.legal || b.label);
             "The letter \"A\" is at the beginning of the alphabet. The letter \"T\" is at the beginning of both of these sentences. Why are you looking there? You're wasting your time. You're wasting even MORE time reading this. Ok bye. STOP READING!!!"
         };
     }
-
 }

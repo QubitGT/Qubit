@@ -25,42 +25,21 @@ namespace Qubit.Extensions
 {
     public class Random
     {
-
-
-
-
-
         public static Vector3 RandomVector3(float range = 1f) =>
             new Vector3(UnityEngine.Random.Range(-range, range),
                         UnityEngine.Random.Range(-range, range),
                         UnityEngine.Random.Range(-range, range));
-
-
-
-
-
 
         public static Quaternion RandomQuaternion(float range = 360f) =>
             Quaternion.Euler(UnityEngine.Random.Range(0f, range),
                         UnityEngine.Random.Range(0f, range),
                         UnityEngine.Random.Range(0f, range));
 
-
-
-
-
-
-
         public static Color RandomColor(byte range = 255, byte alpha = 255) =>
             new Color32((byte)UnityEngine.Random.Range(0, range),
                         (byte)UnityEngine.Random.Range(0, range),
                         (byte)UnityEngine.Random.Range(0, range),
                         alpha);
-
-
-
-
-
 
         public static string RandomString(int length = 4)
         {

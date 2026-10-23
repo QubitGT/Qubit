@@ -2,9 +2,6 @@
 
 namespace Qubit.Libraries.DiscordRPC.Exceptions
 {
-
-
-
     [Obsolete("Not actually used anywhere")]
     public class InvalidPipeException : Exception
     {

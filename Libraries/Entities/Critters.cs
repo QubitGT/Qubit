@@ -40,7 +40,6 @@ namespace Qubit.Libraries.Entities
 {
     public static class Critters
     {
-
         public static void EffectSpam(CrittersManager.CritterEvent critterEvent)
         {
             if (rightGrab)

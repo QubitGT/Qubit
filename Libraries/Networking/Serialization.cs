@@ -36,7 +36,6 @@ namespace Qubit.Libraries.Networking
 {
     public static class Serialization
     {
-
         public static Vector3 ServerSyncPos;
         public static Vector3 ServerSyncLeftHandPos;
         public static Vector3 ServerSyncRightHandPos;
@@ -55,14 +54,6 @@ namespace Qubit.Libraries.Networking
         public static readonly Dictionary<VRRig, int> playerPing = new Dictionary<VRRig, int>();
         public static void OnPlayerSerialize(VRRig rig) =>
             playerPing[rig] = rig.GetTruePing();
-
-
-
-
-
-
-
-
 
         public static void MassSerialize(bool exclude = false, PhotonView[] viewFilter = null, int timeOffset = 0, float delay = 0f)
         {
@@ -96,14 +87,6 @@ namespace Qubit.Libraries.Networking
             foreach (PhotonView view in viewsToSerialize)
                 SendSerialize(view, null, timeOffset, delay);
         }
-
-
-
-
-
-
-
-
 
         public static void SendSerialize(PhotonView pv, RaiseEventOptions options = null, int timeOffset = 0, float delay = 0f)
         {

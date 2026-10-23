@@ -4,49 +4,22 @@ using System.Text;
 
 namespace Qubit.Libraries.DiscordRPC.Helper
 {
-
-
-
     public static class StringTools
     {
-
-
-
-
-
         public static string GetNullOrString(this string str)
         {
             return str.Length == 0 || string.IsNullOrEmpty(str.Trim()) ? null : str;
         }
-
-
-
-
-
-
 
         public static bool WithinLength(this string str, int bytes)
         {
             return str.WithinLength(bytes, Encoding.UTF8);
         }
 
-
-
-
-
-
-
-
         public static bool WithinLength(this string str, int bytes, Encoding encoding)
         {
             return encoding.GetByteCount(str) <= bytes;
         }
-
-
-
-
-
-
 
         public static string ToCamelCase(this string str)
         {
@@ -57,11 +30,6 @@ namespace Qubit.Libraries.DiscordRPC.Helper
                 .Select(s => char.ToUpper(s[0]) + s.Substring(1, s.Length - 1))
                 .Aggregate(string.Empty, (s1, s2) => s1 + s2);
         }
-
-
-
-
-
 
         public static string ToSnakeCase(this string str)
         {

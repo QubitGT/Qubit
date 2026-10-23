@@ -32,7 +32,6 @@ namespace Qubit.Libraries.Holdables
 {
     public static class Balloons
     {
-
         public static void BalloonAura()
         {
             foreach (BalloonHoldable balloon in GetAllType<BalloonHoldable>())

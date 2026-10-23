@@ -12,33 +12,15 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.RPC
 {
-
-
-
     internal class RpcConnection : IDisposable
     {
-
-
-
         public static readonly int VERSION = 1;
-
-
-
 
         public static readonly int POLL_RATE = 1000;
 
-
-
-
         private static readonly bool CLEAR_ON_SHUTDOWN = true;
 
-
-
-
         private static readonly bool LOCK_STEP = false;
-
-
-
 
         public ILogger Logger
         {
@@ -52,15 +34,9 @@ namespace Qubit.Libraries.DiscordRPC.RPC
         }
         private ILogger _logger;
 
-
-
-
         public event OnRpcMessageEvent OnRpcMessage;
 
         #region States
-
-
-
 
         public RpcState State
         {
@@ -73,9 +49,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
         private RpcState _state;
         private readonly object l_states = new object();
 
-
-
-
         public Configuration Configuration { get { Configuration tmp = null; lock (l_config) tmp = _configuration; return tmp; } }
         private Configuration _configuration = null;
         private readonly object l_config = new object();
@@ -83,14 +56,7 @@ namespace Qubit.Libraries.DiscordRPC.RPC
         private volatile bool aborting = false;
         private volatile bool shutdown = false;
 
-
-
-
         public bool IsRunning { get { return thread != null; } }
-
-
-
-
 
         public bool ShutdownOnly { get; set; }
 
@@ -120,15 +86,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
         private readonly BackoffDelay delay;
         #endregion
 
-
-
-
-
-
-
-
-
-
         public RpcConnection(string applicationID, int processID, int targetPipe, INamedPipeClient client, uint maxRxQueueSize = 128, uint maxRtQueueSize = 512)
         {
             this.applicationID = applicationID;
@@ -136,7 +93,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
             this.targetPipe = targetPipe;
             namedPipe = client;
             ShutdownOnly = true;
-
 
             Logger = new ConsoleLogger();
 
@@ -150,7 +106,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
             nonce = 0;
         }
 
-
         private long GetNextNonce()
         {
             nonce += 1;
@@ -159,38 +114,26 @@ namespace Qubit.Libraries.DiscordRPC.RPC
 
         #region Queues
 
-
-
-
         internal void EnqueueCommand(ICommand command)
         {
             Logger.Trace("Enqueue Command: {0}", command.GetType().FullName);
 
-
             if (aborting || shutdown) return;
-
 
             lock (l_rtqueue)
             {
-
                 if (_rtqueue.Count == _maxRtQueueSize)
                 {
                     Logger.Error("Too many enqueued commands, dropping oldest one. Maybe you are pushing new presences to fast?");
                     _rtqueue.Dequeue();
                 }
 
-
                 _rtqueue.Enqueue(command);
             }
         }
 
-
-
-
-
         private void EnqueueMessage(IMessage message)
         {
-
             try
             {
                 if (OnRpcMessage != null)
@@ -203,70 +146,48 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                 Logger.Error(e.StackTrace);
             }
 
-
             if (_maxRxQueueSize <= 0)
             {
                 Logger.Trace("Enqueued Message, but queue size is 0.");
                 return;
             }
 
-
             Logger.Trace("Enqueue Message: {0}", message.Type);
             lock (l_rxqueue)
             {
-
                 if (_rxqueue.Count == _maxRxQueueSize)
                 {
                     Logger.Warning("Too many enqueued messages, dropping oldest one.");
                     _rxqueue.Dequeue();
                 }
 
-
                 _rxqueue.Enqueue(message);
             }
         }
 
-
-
-
-
         internal IMessage DequeueMessage()
         {
-
             lock (l_rxqueue)
             {
-
                 return _rxqueue.Count == 0 ? null : _rxqueue.Dequeue();
             }
         }
 
-
-
-
-
         internal IMessage[] DequeueMessages()
         {
-
             lock (l_rxqueue)
             {
-
                 IMessage[] messages = _rxqueue.ToArray();
 
-
                 _rxqueue.Clear();
-
 
                 return messages;
             }
         }
         #endregion
 
-
-
-
         private void MainLoop()
         {
-
             Logger.Info("RPC Connection Started");
             if (Logger.Level <= LogLevel.Trace)
             {
@@ -283,21 +204,16 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                 Logger.Trace("============================");
             }
 
-
-
             while (!aborting && !shutdown)
             {
                 try
                 {
-
-
                     if (namedPipe == null)
                     {
                         Logger.Error("Something bad has happened with our pipe client!");
                         aborting = true;
                         return;
                     }
-
 
                     Logger.Trace("Connecting to the pipe through the {0}", namedPipe.GetType().FullName);
                     if (namedPipe.Connect(targetPipe))
@@ -310,12 +226,8 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                         EnqueueMessage(new ConnectionEstablishedMessage() { ConnectedPipe = namedPipe.ConnectedPipe });
 #pragma warning restore CS0618
 
-
                         EstablishHandshake();
                         Logger.Trace("Connection Established. Starting reading loop...");
-
-
-
 
                         PipeFrame frame;
                         bool mainloop = true;
@@ -323,16 +235,13 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                         {
                             #region Read Loop
 
-
                             if (namedPipe.ReadFrame(out frame))
                             {
                                 #region Read Payload
                                 Logger.Trace("Read Payload: {0}", frame.Opcode);
 
-
                                 switch (frame.Opcode)
                                 {
-
                                     case Opcode.Close:
 
                                         ClosePayload close = frame.GetObject<ClosePayload>();
@@ -341,34 +250,28 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                                         mainloop = false;
                                         break;
 
-
                                     case Opcode.Ping:
                                         Logger.Trace("PING");
                                         frame.Opcode = Opcode.Pong;
                                         namedPipe.WriteFrame(frame);
                                         break;
 
-
                                     case Opcode.Pong:
                                         Logger.Trace("PONG");
                                         break;
 
-
                                     case Opcode.Frame:
                                         if (shutdown)
                                         {
-
                                             Logger.Warning("Skipping frame because we are shutting down.");
                                             break;
                                         }
 
                                         if (frame.Data == null)
                                         {
-
                                             Logger.Error("We received no data from the frame so we cannot get the event payload!");
                                             break;
                                         }
-
 
                                         EventPayload response = null;
                                         try { response = frame.GetObject<EventPayload>(); }
@@ -378,7 +281,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                                             Logger.Error("Data: {0}", frame.Message);
                                         }
 
-
                                         try { if (response != null) ProcessFrame(response); }
                                         catch (Exception e)
                                         {
@@ -387,7 +289,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                                         }
 
                                         break;
-
 
                                     default:
                                     case Opcode.Handshake:
@@ -402,9 +303,7 @@ namespace Qubit.Libraries.DiscordRPC.RPC
 
                             if (!aborting && namedPipe.IsConnected)
                             {
-
                                 ProcessCommandQueue();
-
 
                                 queueUpdatedEvent.WaitOne(POLL_RATE);
                             }
@@ -421,20 +320,14 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                         EnqueueMessage(new ConnectionFailedMessage() { FailedPipe = targetPipe });
                     }
 
-
                     if (!aborting && !shutdown)
                     {
-
-
                         long sleep = delay.NextDelay();
 
                         Logger.Trace("Waiting {0}ms before attempting to connect again", sleep);
                         Thread.Sleep(delay.NextDelay());
                     }
                 }
-
-
-
 
                 catch (Exception e)
                 {
@@ -444,19 +337,15 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                 }
                 finally
                 {
-
                     if (namedPipe.IsConnected)
                     {
-
                         Logger.Trace("Closing the named pipe.");
                         namedPipe.Close();
                     }
 
-
                     SetConnectionState(RpcState.Disconnected);
                 }
             }
-
 
             Logger.Trace("Left Main Loop");
             if (namedPipe != null)
@@ -467,27 +356,20 @@ namespace Qubit.Libraries.DiscordRPC.RPC
 
         #region Reading
 
-
-
         private void ProcessFrame(EventPayload response)
         {
             Logger.Info("Handling Response. Cmd: {0}, Event: {1}", response.Command, response.Event);
 
-
             if (response.Event.HasValue && response.Event.Value == ServerEvent.Error)
             {
-
                 Logger.Error("Error received from the RPC");
-
 
                 ErrorMessage err = response.GetObject<ErrorMessage>();
                 Logger.Error("Server responded with an error message: ({0}) {1}", err.Code.ToString(), err.Message);
 
-
                 EnqueueMessage(err);
                 return;
             }
-
 
             if (State == RpcState.Connecting)
             {
@@ -497,14 +379,12 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                     SetConnectionState(RpcState.Connected);
                     delay.Reset();
 
-
                     ReadyMessage ready = response.GetObject<ReadyMessage>();
                     lock (l_config)
                     {
                         _configuration = ready.Configuration;
                         ready.User.SetConfiguration(_configuration);
                     }
-
 
                     EnqueueMessage(ready);
                     return;
@@ -515,11 +395,9 @@ namespace Qubit.Libraries.DiscordRPC.RPC
             {
                 switch (response.Command)
                 {
-
                     case Command.Dispatch:
                         ProcessDispatch(response);
                         break;
-
 
                     case Command.SetActivity:
                         if (response.Data == null)
@@ -536,13 +414,10 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                     case Command.Unsubscribe:
                     case Command.Subscribe:
 
-
                         JsonSerializer serializer = new JsonSerializer();
                         serializer.Converters.Add(new Converters.EnumSnakeCaseConverter());
 
-
                         var evt = response.GetObject<EventPayload>().Event.Value;
-
 
                         if (response.Command == Command.Subscribe)
                             EnqueueMessage(new SubscribeMessage(evt));
@@ -551,7 +426,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
 
                         break;
 
-
                     case Command.SendActivityJoinInvite:
                         Logger.Trace("Got invite response ack.");
                         break;
@@ -559,7 +433,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                     case Command.CloseActivityJoinRequest:
                         Logger.Trace("Got invite response reject ack.");
                         break;
-
 
                     default:
                         Logger.Error("Unknown frame was received! {0}", response.Command);
@@ -578,7 +451,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
 
             switch (response.Event.Value)
             {
-
                 case ServerEvent.ActivitySpectate:
                     var spectate = response.GetObject<SpectateMessage>();
                     EnqueueMessage(spectate);
@@ -594,7 +466,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                     EnqueueMessage(request);
                     break;
 
-
                 default:
                     Logger.Warning("Ignoring {0}", response.Event.Value);
                     break;
@@ -607,54 +478,38 @@ namespace Qubit.Libraries.DiscordRPC.RPC
 
         private void ProcessCommandQueue()
         {
-
-
-
             if (State != RpcState.Connected)
                 return;
-
 
             if (aborting)
                 Logger.Warning("We have been told to write a queue but we have also been aborted.");
 
-
             bool needsWriting = true;
             ICommand item = null;
-
 
             while (needsWriting && namedPipe.IsConnected)
             {
                 lock (l_rtqueue)
                 {
-
-
                     needsWriting = _rtqueue.Count > 0;
                     if (!needsWriting) break;
-
 
                     item = _rtqueue.Peek();
                 }
 
-
                 if (shutdown || (!aborting && LOCK_STEP))
                     needsWriting = false;
-
 
                 IPayload payload = item.PreparePayload(GetNextNonce());
                 Logger.Trace("Attempting to send payload: {0}", payload.Command);
 
-
                 PipeFrame frame = new PipeFrame();
                 if (item is CloseCommand)
                 {
-
-
                     SendHandwave();
-
 
                     Logger.Trace("Handwave sent, ending queue processing.");
                     lock (l_rtqueue) _rtqueue.Dequeue();
-
 
                     return;
                 }
@@ -662,15 +517,12 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                 {
                     if (aborting)
                     {
-
                         Logger.Warning("- skipping frame because of abort.");
                         lock (l_rtqueue) _rtqueue.Dequeue();
                     }
                     else
                     {
-
                         frame.SetObject(Opcode.Frame, payload);
-
 
                         Logger.Trace("Sending payload: {0}", payload.Command);
 #if DEBUG
@@ -678,13 +530,11 @@ namespace Qubit.Libraries.DiscordRPC.RPC
 #endif
                         if (namedPipe.WriteFrame(frame))
                         {
-
                             Logger.Trace("Sent Successfully.");
                             lock (l_rtqueue) _rtqueue.Dequeue();
                         }
                         else
                         {
-
                             Logger.Warning("Something went wrong during writing!");
                             return;
                         }
@@ -697,24 +547,15 @@ namespace Qubit.Libraries.DiscordRPC.RPC
 
         #region Connection
 
-
-
-
-
         private void EstablishHandshake()
         {
             Logger.Trace("Attempting to establish a handshake...");
-
-
-
-
 
             if (State != RpcState.Disconnected)
             {
                 Logger.Error("State must be disconnected in order to start a handshake!");
                 return;
             }
-
 
             Logger.Trace("Sending Handshake...");
             if (!namedPipe.WriteFrame(new PipeFrame(Opcode.Handshake, new Handshake() { Version = VERSION, ClientID = applicationID })))
@@ -723,24 +564,18 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                 return;
             }
 
-
             SetConnectionState(RpcState.Connecting);
         }
-
-
-
 
         private void SendHandwave()
         {
             Logger.Info("Attempting to wave goodbye...");
-
 
             if (State == RpcState.Disconnected)
             {
                 Logger.Error("State must NOT be disconnected in order to send a handwave!");
                 return;
             }
-
 
             if (!namedPipe.WriteFrame(new PipeFrame(Opcode.Close, new Handshake() { Version = VERSION, ClientID = applicationID })))
             {
@@ -749,22 +584,15 @@ namespace Qubit.Libraries.DiscordRPC.RPC
             }
         }
 
-
-
-
-
-
         public bool AttemptConnection()
         {
             Logger.Info("Attempting a new connection");
-
 
             if (thread != null)
             {
                 Logger.Error("Cannot attempt a new connection as the previous connection thread is not null!");
                 return false;
             }
-
 
             if (State != RpcState.Disconnected)
             {
@@ -778,7 +606,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                 return false;
             }
 
-
             thread = new Thread(MainLoop)
             {
                 Name = "Discord IPC Thread",
@@ -789,10 +616,6 @@ namespace Qubit.Libraries.DiscordRPC.RPC
             return true;
         }
 
-
-
-
-
         private void SetConnectionState(RpcState state)
         {
             Logger.Trace("Setting the connection state to {0}", state.ToString().ToSnakeCase().ToUpperInvariant());
@@ -802,16 +625,10 @@ namespace Qubit.Libraries.DiscordRPC.RPC
             }
         }
 
-
-
-
-
         public void Shutdown()
         {
-
             Logger.Trace("Initiated shutdown procedure");
             shutdown = true;
-
 
             lock (l_rtqueue)
             {
@@ -820,12 +637,8 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                 _rtqueue.Enqueue(new CloseCommand());
             }
 
-
             queueUpdatedEvent.Set();
         }
-
-
-
 
         public void Close()
         {
@@ -841,22 +654,16 @@ namespace Qubit.Libraries.DiscordRPC.RPC
                 return;
             }
 
-
             if (ShutdownOnly)
             {
                 Shutdown();
                 return;
             }
 
-
             Logger.Trace("Updating Abort State...");
             aborting = true;
             queueUpdatedEvent.Set();
         }
-
-
-
-
 
         public void Dispose()
         {
@@ -864,26 +671,13 @@ namespace Qubit.Libraries.DiscordRPC.RPC
             Close();
         }
         #endregion
-
     }
-
-
-
 
     internal enum RpcState
     {
-
-
-
         Disconnected,
 
-
-
-
         Connecting,
-
-
-
 
         Connected
     }

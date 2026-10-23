@@ -243,7 +243,6 @@ namespace Qubit.Frontend.Classes
                     assetCanvas.worldCamera = null;
                     assetCanvas.targetDisplay = 0;
                     assetCanvas.enabled = true;
-
                 }
                 foreach (Transform child in art.GetComponentsInChildren<Transform>(true))
                     child.gameObject.layer = 0;
@@ -297,7 +296,6 @@ namespace Qubit.Frontend.Classes
                 {
                     BindControl("Home", "Global Return", !disableReturnButton);
                     BindControl("Disconnect", "Disconnect", !disableDisconnectButton);
-
 
                     BindControl("Search", "Search", !disableSearchButton);
                     BindControl("Next", "NextPage", !disablePageButtons);

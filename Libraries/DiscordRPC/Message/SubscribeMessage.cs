@@ -2,18 +2,9 @@
 
 namespace Qubit.Libraries.DiscordRPC.Message
 {
-
-
-
     public class SubscribeMessage : IMessage
     {
-
-
-
         public override MessageType Type { get { return MessageType.Subscribe; } }
-
-
-
 
         public EventType Event { get; internal set; }
 

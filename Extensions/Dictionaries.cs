@@ -28,7 +28,6 @@ namespace Qubit.Extensions
 {
     public static class Dictionaries
     {
-
         public static bool TryGetKey<TKey, TValue>(this IDictionary<TKey, TValue> dictionary, TKey key, out TKey actualKey)
         {
             return dictionary == null
@@ -98,6 +97,5 @@ namespace Qubit.Extensions
             IEqualityComparer<TKey> comp = prop.GetValue(dictionary) as IEqualityComparer<TKey>;
             return comp;
         }
-
     }
 }

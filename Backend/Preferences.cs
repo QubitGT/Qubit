@@ -79,15 +79,24 @@ namespace Qubit.Backend
 
         public class CustomThemeData
         {
-            public RgbColor backgroundFirst;
-            public RgbColor backgroundSecond;
-            public RgbColor buttonDisabledFirst;
-            public RgbColor buttonDisabledSecond;
-            public RgbColor buttonEnabledFirst;
-            public RgbColor buttonEnabledSecond;
+            public RgbColor[] background;
+            public RgbColor[] buttonDisabled;
+            public RgbColor[] buttonEnabled;
             public RgbColor textTitle;
             public RgbColor textDisabled;
             public RgbColor textEnabled;
+
+            // Pre-multipoint save format; only read by Background/ButtonDisabled/ButtonEnabled below to migrate old saves.
+            public RgbColor backgroundFirst, backgroundSecond;
+            public RgbColor buttonDisabledFirst, buttonDisabledSecond;
+            public RgbColor buttonEnabledFirst, buttonEnabledSecond;
+
+            [JsonIgnore]
+            public RgbColor[] Background => background ?? (backgroundFirst != null ? new[] { backgroundFirst, backgroundSecond } : null);
+            [JsonIgnore]
+            public RgbColor[] ButtonDisabled => buttonDisabled ?? (buttonDisabledFirst != null ? new[] { buttonDisabledFirst, buttonDisabledSecond } : null);
+            [JsonIgnore]
+            public RgbColor[] ButtonEnabled => buttonEnabled ?? (buttonEnabledFirst != null ? new[] { buttonEnabledFirst, buttonEnabledSecond } : null);
         }
 
         public class PreferencesData
@@ -278,9 +287,6 @@ namespace Qubit.Backend
             }
             catch (Exception e) { Logs.Log("Error importing preferences from text: " + e.Message); }
         }
-
-
-
 
         public static bool IsSavedEnabled(string buttonText)
         {

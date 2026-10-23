@@ -35,9 +35,8 @@ using UnityEngine.UI;
 
 namespace Qubit.Frontend
 {
-    public sealed class QubitDesktopOverlay : MonoBehaviour
+    public sealed class QubitDesktopOverlay : MonoBehaviour, IDesktopOverlay
     {
-
         private static QubitDesktopOverlay current;
         private static Sprite roundedSprite;
         private InputField roomCode, playerName, red, green, blue;

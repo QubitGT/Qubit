@@ -5,9 +5,6 @@ using System.Linq;
 
 namespace Qubit.Libraries.DiscordRPC.IO
 {
-
-
-
     public static class PipeLocation
     {
         const string DiscordPipePrefix = @"discord-ipc-";
@@ -16,17 +13,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
         static readonly string[] LinuxPackageManagers = {
             "app/com.discordapp.Discord/",
             "snap.discord/",
-
         };
-
-
-
-
-
-
-
-
-
 
         public static IEnumerable<string> GetPipes(int startPipe = 0)
         {
@@ -45,10 +32,7 @@ namespace Qubit.Libraries.DiscordRPC.IO
         {
             foreach (var tempDir in TemporaryDirectories())
             {
-
-
                 yield return Path.Combine(tempDir, $"{DiscordPipePrefix}{index}");
-
 
                 foreach (var pmDir in LinuxPackageManagers)
                     yield return Path.Combine(tempDir, pmDir, $"{DiscordPipePrefix}{index}");

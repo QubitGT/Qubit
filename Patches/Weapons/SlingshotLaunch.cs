@@ -68,7 +68,6 @@ namespace Qubit.Patches.Weapons
             }
         }
 
-
         private static Vector3 CalcMinSpeed(Vector3 origin, VRRig targetRig)
         {
             Vector3 targetPos = targetRig.headMesh.transform.position;

@@ -26,7 +26,6 @@ namespace Qubit.Extensions
 {
     public static class Components
     {
-
         public static IEnumerable<GameObject> Children(this Transform t)
         {
             var list = new List<GameObject>();

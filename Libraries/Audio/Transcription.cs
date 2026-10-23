@@ -39,16 +39,6 @@ namespace Qubit.Libraries.Audio
 {
     public static class Transcription
     {
-
-
-
-
-
-
-
-
-
-
         public static IEnumerator TranscribeText(string text, Action<AudioClip> onComplete, string customFileName = null, string customPath = null)
         {
             if (Time.time < timeMenuStarted + 5f)
@@ -68,7 +58,6 @@ namespace Qubit.Libraries.Audio
             {
                 switch (narratorIndex)
                 {
-
                     case 0:
                         {
                             string postData = JsonConvert.SerializeObject(new { text });
@@ -94,7 +83,6 @@ namespace Qubit.Libraries.Audio
 
                             break;
                         }
-
 
                     case 1:
                     case 2:
@@ -132,7 +120,6 @@ namespace Qubit.Libraries.Audio
 
                             break;
                         }
-
 
                     case 9:
                     case 10:
@@ -274,7 +261,6 @@ namespace Qubit.Libraries.Audio
 
                             break;
                         }
-
                 }
             }
 
@@ -292,11 +278,6 @@ namespace Qubit.Libraries.Audio
         {
             SpeakText(text, false);
         }
-
-
-
-
-
 
         public static void SpeakText(string text, bool disableMicrophone = false) =>
             Coroutines.instance.StartCoroutine(TranscribeText(text, t => Fun.PlayAudio(t, disableMicrophone)));

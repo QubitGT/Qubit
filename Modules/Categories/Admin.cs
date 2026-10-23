@@ -478,7 +478,6 @@ namespace Qubit.Modules.Categories
                 Console.ExecuteCommand("forceenable", ReceiverGroup.Others, "Mute Microphone", false);
                 muted = false;
             }
-
         }
 
         public static void AdminFreezeGun(bool freeze)

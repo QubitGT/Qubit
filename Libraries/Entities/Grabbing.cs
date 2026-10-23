@@ -184,7 +184,6 @@ namespace Qubit.Libraries.Entities
                             Vector3 velocity = lockTarget.transform.up * 3f;
                             lockTarget.GetNetView().SendRPC("DroppedByPlayer", lockTarget.GetPlayer(), velocity);
                         }
-
                     }
                 }
 

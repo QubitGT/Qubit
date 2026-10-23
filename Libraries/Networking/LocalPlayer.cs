@@ -88,7 +88,6 @@ namespace Qubit.Libraries.Networking
 
             PhotonNetwork.LocalPlayer.NickName = PlayerName;
             RPCProtection();
-
         }
 
         public static void ChangeColor(Color color, object target = null)

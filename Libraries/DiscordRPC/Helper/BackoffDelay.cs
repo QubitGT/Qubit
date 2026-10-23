@@ -2,33 +2,17 @@
 
 namespace Qubit.Libraries.DiscordRPC.Helper
 {
-
     internal class BackoffDelay
     {
-
-
-
         public int Maximum { get; private set; }
 
-
-
-
         public int Minimum { get; private set; }
-
-
-
 
         public int Current { get { return _current; } }
         private int _current;
 
-
-
-
         public int Fails { get { return _fails; } }
         private int _fails;
-
-
-
 
         public Random Random { get; set; }
 
@@ -44,9 +28,6 @@ namespace Qubit.Libraries.DiscordRPC.Helper
             Random = random;
         }
 
-
-
-
         public void Reset()
         {
             _fails = 0;
@@ -55,12 +36,10 @@ namespace Qubit.Libraries.DiscordRPC.Helper
 
         public int NextDelay()
         {
-
             _fails++;
 
             double diff = (Maximum - Minimum) / 100f;
             _current = (int)Math.Floor(diff * _fails) + Minimum;
-
 
             return Math.Min(Math.Max(_current, Minimum), Maximum);
         }

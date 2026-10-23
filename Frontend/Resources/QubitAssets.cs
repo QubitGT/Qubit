@@ -24,7 +24,6 @@ using UnityEngine;
 
 namespace Qubit.Frontend.Resources
 {
-
     public static class QubitAssets
     {
         private static AssetBundle bundle;

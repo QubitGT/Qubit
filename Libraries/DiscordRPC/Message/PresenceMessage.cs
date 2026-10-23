@@ -2,14 +2,8 @@
 
 namespace Qubit.Libraries.DiscordRPC.Message
 {
-
-
-
     public class PresenceMessage : IMessage
     {
-
-
-
         public override MessageType Type { get { return MessageType.PresenceUpdate; } }
 
         internal PresenceMessage() : this(null) { }
@@ -29,18 +23,9 @@ namespace Qubit.Libraries.DiscordRPC.Message
             }
         }
 
-
-
-
         public BaseRichPresence Presence { get; internal set; }
 
-
-
-
         public string Name { get; internal set; }
-
-
-
 
         public string ApplicationID { get; internal set; }
     }

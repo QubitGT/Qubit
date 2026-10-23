@@ -538,7 +538,6 @@ namespace Qubit.Modules.Categories
                 }
                 catch { }
             }
-
         }
         public static void WaterSplashHands()
         {
@@ -657,7 +656,6 @@ namespace Qubit.Modules.Categories
                 WaterSplash(NewPointer.transform.position, RandomQuaternion());
             });
         }
-
 
         public static void WaterSplashWalk()
         {
@@ -1228,7 +1226,6 @@ namespace Qubit.Modules.Categories
         {
             ViewSerialization.OverrideSerialization = () =>
             {
-
                 bool isNearReportButton = false;
                 List<int> people = new List<int> { };
                 try
@@ -1856,7 +1853,6 @@ namespace Qubit.Modules.Categories
 
         public static void SetMicrophoneQuality(int bitrate, int samplingRate)
         {
-
             if (!Networking.InRoom)
                 return;
 
@@ -1912,7 +1908,6 @@ namespace Qubit.Modules.Categories
 
                 Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
             }
-
         }
 
         public static void EchoMicrophone(bool status)
@@ -2097,7 +2092,6 @@ namespace Qubit.Modules.Categories
 
                 Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
             }
-
         }
 
         public static void SetDebugEchoMode(bool value)
@@ -2414,7 +2408,6 @@ namespace Qubit.Modules.Categories
 
             if (rightGrab && Time.time > everythingSpamDelay)
             {
-
                 everythingSpamDelay = Time.time + 0.0625f;
 
                 objectIndex++;
@@ -3059,7 +3052,6 @@ namespace Qubit.Modules.Categories
                         GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/TreeRoomInteractables/UI/Wardrobe/WardrobeItemButton (2)").GetComponent<GorillaPressableButton>().ButtonActivationWithHand(false);
                         break;
                 }
-
             }
             lastHitR = rightGrab;
             if (leftPrimary && !lastHitLP)
@@ -4892,11 +4884,6 @@ namespace Qubit.Modules.Categories
             RankedRooms.targetTier = tier;
         }
 
-
-
-
-
-
         public static void SpoofPlatform(bool enabled, string target = null)
         {
             RankedRooms.enabled = enabled;
@@ -5030,7 +5017,6 @@ namespace Qubit.Modules.Categories
                     case ConsoleKey.Enter:
                         if (consoleTyped != "")
                         {
-
                             ButtonInfo selButton = Buttons.GetIndex(consoleTyped);
                             if (selButton == null)
                             {

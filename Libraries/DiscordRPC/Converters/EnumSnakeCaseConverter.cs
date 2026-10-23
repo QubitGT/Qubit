@@ -5,9 +5,6 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Converters
 {
-
-
-
     internal class EnumSnakeCaseConverter : JsonConverter
     {
         public override bool CanConvert(Type objectType)
@@ -28,7 +25,6 @@ namespace Qubit.Libraries.DiscordRPC.Converters
             var enumtype = value.GetType();
             var name = Enum.GetName(enumtype, value);
 
-
             var members = enumtype.GetMembers(BindingFlags.Public | BindingFlags.Static);
             foreach (var m in members)
             {
@@ -45,29 +41,23 @@ namespace Qubit.Libraries.DiscordRPC.Converters
             writer.WriteValue(name);
         }
 
-
         public bool TryParseEnum(Type enumType, string str, out object obj)
         {
-
             if (str == null)
             {
                 obj = null;
                 return false;
             }
 
-
             Type type = enumType;
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Nullable<>))
                 type = type.GetGenericArguments().First();
-
 
             if (!type.IsEnum)
             {
                 obj = null;
                 return false;
             }
-
-
 
             var members = type.GetMembers(BindingFlags.Public | BindingFlags.Static);
             foreach (var m in members)
@@ -79,10 +69,8 @@ namespace Qubit.Libraries.DiscordRPC.Converters
                 return true;
             }
 
-
             obj = null;
             return false;
         }
-
     }
 }

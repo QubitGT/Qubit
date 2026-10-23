@@ -191,7 +191,6 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
             }
         }
 
-
         public static float crashDelay;
         public static void CrashPlayer(int ActorNumber)
         {
@@ -295,7 +294,6 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         {
             Safety.AntiReport((vrrig, position) =>
             {
-
                 if (Time.time > crashDelay)
                 {
                     NetPlayer Player = GetPlayerFromVRRig(vrrig);

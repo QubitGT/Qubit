@@ -36,26 +36,16 @@ namespace Qubit.Modules.Classes
 {
     public static class GunLibrary
     {
-
-
-
         public sealed class GunSettings
         {
-
             public bool locks;
-
 
             public Func<bool> when;
 
-
             public Action onIdle;
-
 
             public int? layerMask;
         }
-
-
-
 
         public static void Aim(Action<(RaycastHit Ray, GameObject NewPointer)> action, GunSettings settings = null)
         {
@@ -64,10 +54,6 @@ namespace Qubit.Modules.Classes
             else
                 settings?.onIdle?.Invoke();
         }
-
-
-
-
 
         public static void Target(Action<VRRig> action, GunSettings settings = null)
         {
@@ -110,9 +96,6 @@ namespace Qubit.Modules.Classes
             });
         }
 
-
-
-
         public static void Point(Action<GameObject> action, GunSettings settings = null)
         {
             GunLibrary.Aim(gunData =>
@@ -128,11 +111,6 @@ namespace Qubit.Modules.Classes
 
         public static GameObject GunPointer;
         public static LineRenderer GunLine;
-
-
-
-
-
 
         public static (RaycastHit Ray, GameObject NewPointer) RenderGun(int? overrideLayerMask = null)
         {
@@ -450,11 +428,6 @@ namespace Qubit.Modules.Classes
             set => _giveGunTarget = value;
         }
 
-
-
-
-
-
         public static bool GetGunInput(bool isShooting)
         {
             return GiveGunTarget != null
@@ -465,11 +438,6 @@ namespace Qubit.Modules.Classes
                 ? TriggerlessGuns || (SwapGunHand ? leftTrigger > 0.5f : rightTrigger > 0.5f) || UI.IsMouseShooting()
                 : GriplessGuns || (SwapGunHand ? leftGrab : rightGrab) || (HardGunLocks && gunLocked && !rightSecondary) || UI.IsMouseGripping();
         }
-
-
-
-
-
 
         public static Vector3 GetGunDirection(Transform transform)
         {

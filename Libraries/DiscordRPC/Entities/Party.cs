@@ -4,50 +4,25 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-
-
-
     [Serializable]
     public class Party
     {
-
-
-
         public enum PrivacySetting
         {
-
-
-
             Private = 0,
-
-
-
 
             Public = 1
         }
-
-
-
-
 
         [JsonProperty("id", NullValueHandling = NullValueHandling.Ignore)]
         public string ID { get { return _partyid; } set { _partyid = value.GetNullOrString(); } }
         private string _partyid;
 
-
-
-
         [JsonIgnore]
         public int Size { get; set; }
 
-
-
-
         [JsonIgnore]
         public int Max { get; set; }
-
-
-
 
         [JsonProperty("privacy", NullValueHandling = NullValueHandling.Include, DefaultValueHandling = DefaultValueHandling.Include)]
         public PrivacySetting Privacy { get; set; }
@@ -57,7 +32,6 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         {
             get
             {
-
                 int size = Math.Max(1, Size);
                 return new[] { size, Math.Max(size, Max) };
             }

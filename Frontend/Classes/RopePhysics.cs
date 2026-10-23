@@ -165,7 +165,6 @@ namespace Qubit.Frontend.Classes
 
             Vector3 collisionPoint = hit.point + hit.normal * collisionRadius;
             return collisionPoint;
-
         }
 
         void UpdateLineRenderer() =>

@@ -64,9 +64,19 @@ namespace Qubit.Frontend.Colors
                 {
                     if (targetRenderer.sharedMaterial.shader.name != "Universal Render Pipeline/Unlit" && targetRenderer.sharedMaterial.mainTexture == null)
                     {
+                        GradientColorKey[] points = colors.colors;
+                        if (Frontend.Settings.legacyGradients && points.Length > 2)
+                        {
+                            points = points[..^1];
+                            float span = points[^1].time;
+                            if (span > 0f)
+                                for (int i = 0; i < points.Length; i++)
+                                    points[i] = new GradientColorKey(points[i].color, points[i].time / span);
+                        }
+
                         targetRenderer.material = new Material(Shader.Find("Universal Render Pipeline/Unlit"))
                         {
-                            mainTexture = Extensions.Colors.GetGradientTexture(colors.GetColor(0), colors.GetColor(1))
+                            mainTexture = Extensions.Colors.GetGradientTexture(points)
                         };
 
                         if (Frontend.Settings.scrollingGradients)

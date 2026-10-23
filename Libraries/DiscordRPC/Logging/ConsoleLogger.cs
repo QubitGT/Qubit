@@ -2,23 +2,11 @@
 
 namespace Qubit.Libraries.DiscordRPC.Logging
 {
-
-
-
     public class ConsoleLogger : ILogger
     {
-
-
-
         public LogLevel Level { get; set; }
 
-
-
-
         public bool Coloured { get; set; }
-
-
-
 
         public bool Colored
         {
@@ -26,18 +14,11 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             set => Coloured = value;
         }
 
-
-
-
         public ConsoleLogger()
         {
             Level = LogLevel.Info;
             Coloured = false;
         }
-
-
-
-
 
         public ConsoleLogger(LogLevel level)
             : this()
@@ -45,21 +26,11 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             Level = level;
         }
 
-
-
-
-
-
         public ConsoleLogger(LogLevel level, bool coloured)
         {
             Level = level;
             Coloured = coloured;
         }
-
-
-
-
-
 
         public void Trace(string message, params object[] args)
         {
@@ -79,11 +50,6 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             }
         }
 
-
-
-
-
-
         public void Info(string message, params object[] args)
         {
             if (Level > LogLevel.Info) return;
@@ -101,11 +67,6 @@ namespace Qubit.Libraries.DiscordRPC.Logging
                 Console.WriteLine(prefixedMessage);
             }
         }
-
-
-
-
-
 
         public void Warning(string message, params object[] args)
         {
@@ -125,11 +86,6 @@ namespace Qubit.Libraries.DiscordRPC.Logging
             }
         }
 
-
-
-
-
-
         public void Error(string message, params object[] args)
         {
             if (Level > LogLevel.Error) return;
@@ -147,6 +103,5 @@ namespace Qubit.Libraries.DiscordRPC.Logging
                 Console.WriteLine(prefixedMessage);
             }
         }
-
     }
 }

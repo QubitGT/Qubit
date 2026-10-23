@@ -423,6 +423,5 @@ namespace Qubit.Extensions
 
             return input;
         }
-
     }
 }

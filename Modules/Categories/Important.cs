@@ -75,7 +75,6 @@ namespace Qubit.Modules.Categories
             public byte size;
         }
 
-
         internal enum VirtualKeyCodes : uint
         {
             NEXT_TRACK = 0xB0,
@@ -225,7 +224,6 @@ namespace Qubit.Modules.Categories
             if (PhotonNetwork.LocalPlayer.UserId != oldId)
                 playTime = 0f;
         }
-
 
         public static void RestartGame()
         {
@@ -803,7 +801,6 @@ exit";
             References.InputPoller.rightControllerTriggerButton |= rightTrigger;
             References.InputPoller.rightControllerIndexFloat += rightTrigger ? 1f : 0f;
         }
-
 
         public static void DisableAprilFoolsFX()
         {

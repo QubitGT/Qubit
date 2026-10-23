@@ -53,7 +53,7 @@ namespace Qubit.Frontend
 {
     public static class Legacy
     {
-        public static bool Enabled;
+        public static bool Enabled = true;
 
         public static GameObject CreateMenu()
         {

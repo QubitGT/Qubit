@@ -154,7 +154,6 @@ namespace Qubit.Modules.Categories
                     lockTarget = gunTarget;
 
                     TagReports.blacklistedPlayers.Add(GetPlayerFromVRRig(gunTarget));
-
                 }
                 else
                     Notifications.SendFormat("red", "ERROR", "You are not master client.");
@@ -189,7 +188,6 @@ namespace Qubit.Modules.Categories
 
         public static void UntagGun()
         {
-
             GunLibrary.Aim(GunData =>
             {
                 RaycastHit Ray = GunData.Ray;
@@ -350,7 +348,6 @@ namespace Qubit.Modules.Categories
                     GameModes.SetPaintbrawlHealth(player.ActorNumber, 4);
             }
         }
-
 
         public static void PaintbrawlNoDelay()
         {
@@ -1389,7 +1386,6 @@ namespace Qubit.Modules.Categories
 
                 if (status)
                 {
-
                     ManagerRegistry.GreyZoneManager.ActivateGreyZoneAuthority();
                 }
 

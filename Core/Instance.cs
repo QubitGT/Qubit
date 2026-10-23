@@ -39,7 +39,6 @@ using Console = Qubit.Backend.Console;
 
 namespace Qubit.Core
 {
-
     public enum LaunchPriority
     {
         Settings,
@@ -60,10 +59,6 @@ namespace Qubit.Core
         Achievements,
         PatchReport,
     }
-
-
-
-
 
     [AttributeUsage(AttributeTargets.Method, Inherited = false)]
     public sealed class RunOnLaunchAttribute : Attribute
@@ -228,7 +223,6 @@ namespace Qubit.Core
 
             if (Bootstrapper.Loader)
                 Destroy(Bootstrapper.Loader);
-
         }
 
         public static void Launch()

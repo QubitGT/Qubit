@@ -710,7 +710,6 @@ namespace Qubit.Modules.Categories
             }
             else
             {
-
             }
             ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Microphone;
             ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.AudioClip = null;

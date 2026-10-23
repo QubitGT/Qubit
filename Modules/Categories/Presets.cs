@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using Qubit.Backend;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using System;
@@ -32,6 +33,13 @@ namespace Qubit.Modules.Categories
     public static class Presets
     {
         #region Methods
+        private static void SetCycle(string name, int value)
+        {
+            Module button = GetIndex(name);
+            button.value = value;
+            button.onValueChanged();
+            Preferences.SaveButton(button);
+        }
         public static void LegitimatePreset()
         {
             string[] presetMods = {
@@ -50,13 +58,9 @@ namespace Qubit.Modules.Categories
                 "Fix Rig Colors",
             };
 
-            themeType = 28;
-            pageButtonType = 1;
-            fontCycle = -1;
-
-            Qubit.Modules.Manager.GetIndex("Change Menu Theme").cycleValue(true);
-            Qubit.Modules.Manager.GetIndex("Change Page Type").cycleValue(true);
-            Qubit.Modules.Manager.GetIndex("Change Font Type").cycleValue(true);
+            SetCycle("Change Menu Theme", 28);
+            SetCycle("Change Page Type", 1);
+            SetCycle("Change Font Type", -1);
 
             Settings.Panic();
 
@@ -144,13 +148,9 @@ namespace Qubit.Modules.Categories
                 "Disable Ghostview"
             };
 
-            themeType = 30;
-            pageButtonType = 1;
-            fontCycle = 0;
-
-            Qubit.Modules.Manager.GetIndex("Change Menu Theme").cycleValue(true);
-            Qubit.Modules.Manager.GetIndex("Change Page Type").cycleValue(true);
-            Qubit.Modules.Manager.GetIndex("Change Font Type").cycleValue(true);
+            SetCycle("Change Menu Theme", 30);
+            SetCycle("Change Page Type", 1);
+            SetCycle("Change Font Type", 0);
 
             Settings.Panic();
 
@@ -172,13 +172,9 @@ namespace Qubit.Modules.Categories
                 $"Show Anti Cheat Reports {Qubit.Extensions.Strings.Bracket("green", "Self")}"
             };
 
-            themeType = 33;
-            pageButtonType = 1;
-            fontCycle = 0;
-
-            Qubit.Modules.Manager.GetIndex("Change Menu Theme").cycleValue(true);
-            Qubit.Modules.Manager.GetIndex("Change Page Type").cycleValue(true);
-            Qubit.Modules.Manager.GetIndex("Change Font Type").cycleValue(true);
+            SetCycle("Change Menu Theme", 33);
+            SetCycle("Change Page Type", 1);
+            SetCycle("Change Font Type", 0);
 
             Settings.Panic();
 
@@ -197,8 +193,7 @@ namespace Qubit.Modules.Categories
                 "PC Button Click"
             };
 
-            pageButtonType = 2;
-            Qubit.Modules.Manager.GetIndex("Change Page Type").cycleValue(true);
+            SetCycle("Change Page Type", 2);
 
             foreach (string mod in presetMods)
                 Toggle(mod);

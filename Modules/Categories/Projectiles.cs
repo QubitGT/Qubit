@@ -284,7 +284,6 @@ namespace Qubit.Modules.Categories
                         if (growingSnowballSize == -1)
                             growingSnowballSize = GrowingSnowball.MaxSizeLevel;
 
-
                         if ((Networking.InRoom && !clientSided) || friendSided)
                         {
                             if (friendSided)
@@ -301,7 +300,6 @@ namespace Qubit.Modules.Categories
                                 projectileSendData[5] = color32.b;
                                 projectileSendData[6] = GrowingSnowball.GetValidSizeLevel(SnowballSize);
                                 projectileSendData[7] = index;
-
 
                                 LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.GetValidSizeLevel(SnowballSize), index, color.Value, References.LocalRig);
                             }
@@ -328,7 +326,6 @@ namespace Qubit.Modules.Categories
 
                                 RPCProtection();
                             }
-
                         }
                         else if (!Networking.InRoom || clientSided)
                             LaunchLocalGrowingSnowball(projectile.Name, position, velocity, GrowingSnowball.snowballSizeLevels[growingSnowballSize].snowballScale, index, color.Value, References.LocalRig);
@@ -369,7 +366,6 @@ namespace Qubit.Modules.Categories
                             LaunchLocalProjectile(position, velocity, (byte)ToProjectileSource(hand), index, true, color32, friendSided ? friendProjectileScale : 1, Throwable.ProjectileHash, References.LocalRig);
                         else
                         {
-
                             SendSerialize(References.LocalRig.GetPhotonView());
                             RPCProtection();
                         }
@@ -426,7 +422,6 @@ namespace Qubit.Modules.Categories
                 PhotonNetwork.RaiseEvent(Constants.Network.ROOM_SYSTEM, sendEventData, new RaiseEventOptions { Receivers = ReceiverGroup.All }, SendOptions.SendUnreliable);
                 RPCProtection();
             }
-
         }
         public static void ChangeProjectile(bool positive = true)
         {
@@ -1356,7 +1351,6 @@ namespace Qubit.Modules.Categories
                     }
                 }
             }, new GunLibrary.GunSettings { locks = true });
-
         }
 
         public static void FlingPlayer(VRRig rig) =>
@@ -1444,7 +1438,6 @@ namespace Qubit.Modules.Categories
                 if (rightTriggerPressed)
                     SendProjectile(GetGrowingSnowballProjectileEntry(), rig.transform.position + new Vector3(0f, -0.7f, 0f), new Vector3(0f, -500f, 0f));
             }
-
         }
 
         public static void SnowballBringGun()
@@ -1602,11 +1595,6 @@ namespace Qubit.Modules.Categories
             ClearNetworkedProjectile();
             References.LocalRig.SetThrowableProjectileColor(false, Color.white);
         }
-
-
-
-
-
 
         public static SnowballThrowable GetProjectile(string projectileName)
         {

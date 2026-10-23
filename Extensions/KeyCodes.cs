@@ -26,7 +26,6 @@ namespace Qubit.Extensions
 {
     public static class KeyCodes
     {
-
         private static readonly Dictionary<KeyCode, string> normalMap = new Dictionary<KeyCode, string>
         {
             { KeyCode.Space, " " },

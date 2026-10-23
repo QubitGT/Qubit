@@ -49,17 +49,26 @@ namespace Qubit.Frontend
 
         private bool isOpen = true;
         private GameObject uiPrefab;
-        private QubitDesktopOverlay desktopOverlay;
+        private IDesktopOverlay desktopOverlay;
+        private bool usingLegacyOverlay;
 
         private void Awake()
         {
             Instance = this;
             isOpen = !File.Exists(hideGUIPath);
             uiPrefab = new GameObject("Qubit Desktop UI");
-            desktopOverlay = QubitDesktopOverlay.Attach(uiPrefab.transform);
+            AttachOverlay();
+            uiPrefab.SetActive(isOpen);
+        }
+
+        private void AttachOverlay()
+        {
+            usingLegacyOverlay = Legacy.Enabled;
+            desktopOverlay = usingLegacyOverlay
+                ? (IDesktopOverlay)LegacyDesktopUI.Attach(uiPrefab.transform)
+                : QubitDesktopOverlay.Attach(uiPrefab.transform);
             if (desktopOverlay == null)
                 Logs.LogError("The Qubit desktop interface could not load.");
-            uiPrefab.SetActive(isOpen);
         }
 
         private void Update()
@@ -67,6 +76,11 @@ namespace Qubit.Frontend
             if (uiPrefab == null) return;
             if (UnityEngine.InputSystem.Keyboard.current?.backslashKey.wasPressedThisFrame == true)
                 ToggleGUI();
+            if (usingLegacyOverlay != Legacy.Enabled)
+            {
+                foreach (Transform child in uiPrefab.transform) Destroy(child.gameObject);
+                AttachOverlay();
+            }
             uiPrefab.SetActive(isOpen);
             if (isOpen && desktopOverlay != null) desktopOverlay.Refresh();
         }
@@ -279,6 +293,5 @@ namespace Qubit.Frontend
             Mouse.current != null && Mouse.current.leftButton.isPressed;
         public static bool isMouseDown;
         public static GameObject pcBackground;
-
     }
 }

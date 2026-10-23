@@ -936,7 +936,6 @@ namespace Qubit.Libraries.Networking
 #pragma warning disable IDE1006 // Naming Styles due to JSON format
         public class FriendData
         {
-
             public Dictionary<string, Friend> friends { get; set; }
             public Dictionary<string, PendingFriend> incoming { get; set; }
             public Dictionary<string, PendingFriend> outgoing { get; set; }

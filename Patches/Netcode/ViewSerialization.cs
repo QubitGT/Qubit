@@ -30,13 +30,7 @@ namespace Qubit.Patches.Netcode
     [HarmonyPatch(typeof(PhotonNetwork), nameof(PhotonNetwork.RunViewUpdate))]
     public class ViewSerialization
     {
-
-
-
         public static event Action OnSerialize;
-
-
-
 
         public static Func<bool> OverrideSerialization;
 

@@ -44,7 +44,6 @@ namespace Qubit.Libraries.Holdables
 {
     public static class Hoverboards
     {
-
         public static Coroutine DisableHoverboardCoroutine;
         // ReSharper disable once ParameterHidesMember
         public static void DropBoard(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 avelocity, Color boardColor)

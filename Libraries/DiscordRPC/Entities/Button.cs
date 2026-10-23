@@ -5,15 +5,8 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-
-
-
     public class Button
     {
-
-
-
-
         [JsonProperty("label")]
         public string Label
         {
@@ -25,10 +18,6 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             }
         }
         private string _label;
-
-
-
-
 
         [JsonProperty("url")]
         public string Url
@@ -45,5 +34,4 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _url;
     }
-
 }

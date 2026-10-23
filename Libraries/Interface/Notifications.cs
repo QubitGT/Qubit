@@ -50,11 +50,7 @@ namespace Qubit.Libraries.Interface
         public GameObject canvas;
         private GameObject mainCamera;
 
-
         public static string PreviousNotifi;
-
-
-
 
         public static readonly Dictionary<string, string> information = new Dictionary<string, string>();
 
@@ -113,8 +109,6 @@ namespace Qubit.Libraries.Interface
             Vector3 rotation = canvasRect.rotation.eulerAngles;
             rotation.y = -270f;
             canvasRect.rotation = Quaternion.Euler(rotation);
-
-
 
             notificationText = CreateText(canvas.transform, new Vector3(-1f, -1f, -0.5f),
                 new Vector2(450f, 210f), 30, TextAlignmentOptions.BottomLeft);
@@ -305,19 +299,6 @@ namespace Qubit.Libraries.Interface
             catch (Exception e) { Logs.Log(e); }
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
         public static void Send(string notificationText, int clearTime = -1)
         {
             if (clearTime < 0)
@@ -390,36 +371,17 @@ namespace Qubit.Libraries.Interface
             }
         }
 
-
-
-
-
-
-
-
-
         public static void SendFormat(string color, string tag, string message, int clearTime = -1) =>
             Send($"{tag.FormatTag(color)} {message}", clearTime);
 
         public static void PlayNotificationSound() =>
             Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, buttonClickVolume / 10f));
 
-
-
-
-
-
-
         public static void Clear()
         {
             activeNotifications.Clear();
             notificationText.SafeSetText("");
         }
-
-
-
-
-
 
         public static void ClearPastNotifications(int amount)
         {
@@ -430,10 +392,6 @@ namespace Qubit.Libraries.Interface
             activeNotifications.RemoveRange(0, removeCount);
             RebuildNotificationText();
         }
-
-
-
-
 
         private static void UpdateNotificationExpiry()
         {
@@ -453,9 +411,6 @@ namespace Qubit.Libraries.Interface
             if (changed)
                 RebuildNotificationText();
         }
-
-
-
 
         private static void RebuildNotificationText()
         {

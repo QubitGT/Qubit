@@ -31,18 +31,8 @@ namespace Qubit.Extensions
 {
     public static class GameObj
     {
-
         public static readonly Dictionary<Type, object[]> typePool = new Dictionary<Type, object[]>();
         private static readonly Dictionary<Type, float> receiveTypeDelay = new Dictionary<Type, float>();
-
-
-
-
-
-
-
-
-
 
         public static T[] GetAllType<T>(float decayTime = 5f) where T : Object
         {
@@ -65,13 +55,6 @@ namespace Qubit.Extensions
         private static float randomIndex;
         private static float randomDecayTime;
 
-
-
-
-
-
-
-
         public static T GetRandomType<T>(float decayTime = 0f) where T : Object
         {
             T[] allOfType = GetAllType<T>();
@@ -83,11 +66,6 @@ namespace Qubit.Extensions
             return allOfType[(int)(randomIndex * allOfType.Length)];
         }
 
-
-
-
-
-
         public static void ClearType<T>() where T : Object
         {
             Type type = typeof(T);
@@ -96,21 +74,6 @@ namespace Qubit.Extensions
         }
 
         private static readonly Dictionary<string, GameObject> objectPool = new Dictionary<string, GameObject>();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static GameObject GetObject(string find)
         {

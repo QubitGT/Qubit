@@ -37,7 +37,6 @@ namespace Qubit.Libraries.Holdables
 {
     public static class Gliders
     {
-
         public static void GliderGun()
         {
             GunLibrary.Point(NewPointer =>

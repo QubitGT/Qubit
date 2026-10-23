@@ -35,11 +35,6 @@ namespace Qubit.Libraries.Audio
     {
         public static GameObject audioManager;
 
-
-
-
-
-
         public static void Play2DAudio(AudioClip sound, float volume = 1f)
         {
             if (audioManager == null)
@@ -52,13 +47,6 @@ namespace Qubit.Libraries.Audio
             ausrc.volume = volume;
             ausrc.PlayOneShot(sound);
         }
-
-
-
-
-
-
-
 
         public static void PlayPositionAudio(AudioClip sound, Vector3 position, float volume = 1f, float spatialBlend = 1f)
         {
@@ -76,12 +64,6 @@ namespace Qubit.Libraries.Audio
         }
 
         public static GameObject handAudioManager;
-
-
-
-
-
-
 
         public static void PlayHandAudio(AudioClip sound, float volume, bool left)
         {
@@ -110,7 +92,7 @@ namespace Qubit.Libraries.Audio
             {
                 { "Wood", 9 },
                 { "Keyboard", 66 },
-                { "Default", 67 },
+                { "Button", 67 },
                 { "Bubble", 84 },
                 { "Steal", "Audio/Menu/Buttons/steal.ogg" },
                 { "Anthrax", "Audio/Menu/Buttons/anthrax.ogg" },
@@ -188,7 +170,7 @@ namespace Qubit.Libraries.Audio
 
         public static Dictionary<string, string> DefaultSounds = new Dictionary<string, string>
         {
-            { "Button", "Default" },
+            { "Button", "Keyboard" },
             { "Notification", "None" },
             { "Next", "Next" },
             { "Previous", "Previous" },
@@ -197,7 +179,7 @@ namespace Qubit.Libraries.Audio
             { "Open", "Open" },
             { "Close", "Close" },
             { "Select", "Select" },
-            { "Return", "Default" }
+            { "Return", "Button" }
         };
 
         public static readonly Dictionary<string, Dictionary<string, object>> Soundpacks = new Dictionary<string, Dictionary<string, object>>
@@ -270,7 +252,6 @@ namespace Qubit.Libraries.Audio
                     { "None", "Audio/Menu/Preset/NintendoSwitch/notification.ogg" },
                 }
             },
-
         };
 
         public static string DefaultSoundpack = "None";
@@ -284,7 +265,8 @@ namespace Qubit.Libraries.Audio
                 bool archiveRightHand = rightHand;
                 if (overlapHand) rightHand = leftOverlap;
 
-                if (doButtonsVibrate)
+                // Notification sounds (e.g. player join/leave) fire from passive events, not an input, so they shouldn't vibrate like a button press.
+                if (doButtonsVibrate && GetSoundCategory(sound) != "Notifications")
                     References.Tagger.StartVibration(rightHand, References.Tagger.tagHapticStrength / 2f, References.Tagger.tagHapticDuration / 2f);
 
                 object path = ResolveSoundPath(sound);
@@ -331,6 +313,14 @@ namespace Qubit.Libraries.Audio
             }
         }
 
+        private static string GetSoundCategory(string sound)
+        {
+            foreach (var kvp in SoundList)
+                if (kvp.Value != null && kvp.Value.ContainsKey(sound))
+                    return kvp.Key;
+            return null;
+        }
+
         private static object ResolveSoundPath(string sound, string buttonText = null)
         {
             if (string.IsNullOrEmpty(sound)) return null;
@@ -343,10 +333,10 @@ namespace Qubit.Libraries.Audio
                 if (hasPack && pack.TryGetValue("Menu", out var returnMenuObj) && returnMenuObj is Dictionary<string, object> returnMenu && returnMenu.TryGetValue("Return", out var returnPathObj) && returnPathObj is string returnPath && !string.IsNullOrEmpty(returnPath))
                     return returnPath;
 
-                string fallbackButtonName = DefaultSounds.TryGetValue("Button", out var btnName) ? btnName : "Default";
+                string fallbackButtonName = DefaultSounds.TryGetValue("Button", out var btnName) ? btnName : "Button";
                 return SoundList.TryGetValue("Buttons", out var buttonsDict) && buttonsDict.TryGetValue(fallbackButtonName, out var buttonPath)
                     ? buttonPath
-                    : SoundList.TryGetValue("Buttons", out var defaultDict) && defaultDict.TryGetValue("Default", out var buttonDefaultObj) && buttonDefaultObj is string defaultPath && !string.IsNullOrEmpty(defaultPath)
+                    : SoundList.TryGetValue("Buttons", out var defaultDict) && defaultDict.TryGetValue("Button", out var buttonDefaultObj) && buttonDefaultObj is string defaultPath && !string.IsNullOrEmpty(defaultPath)
                     ? defaultPath
                     : (object)null;
             }
@@ -405,7 +395,5 @@ namespace Qubit.Libraries.Audio
 
         public static void PlayAt(this AudioClip clip, Vector3 position, float volume = 1f) =>
             PlayPositionAudio(clip, position, volume);
-
     }
 }
-

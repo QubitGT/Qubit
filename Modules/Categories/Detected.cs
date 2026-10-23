@@ -607,7 +607,6 @@ namespace Qubit.Modules.Categories
                         }
                     }
                 }
-
             }
         }
 
@@ -711,7 +710,6 @@ namespace Qubit.Modules.Categories
                     muteDelay = Time.time + 0.15f;
                 }
             }
-
         }
 
         public static void PromptNameChange() =>
@@ -814,7 +812,6 @@ namespace Qubit.Modules.Categories
                     PhotonNetwork.CurrentRoom.LoadBalancingClient.OpSetPropertiesOfActor(rig.GetPlayer().ActorNumber, hashtable);
                 }
             }
-
         }
 
         public static void BanGun()
@@ -861,7 +858,6 @@ namespace Qubit.Modules.Categories
                 if (toRemove.Count > 0)
                     player.SetCustomProperties(toRemove);
             }, new GunLibrary.GunSettings { when = () => Time.time > customPropertyDelay });
-
         }
 
         public static void BypassModCheckersAll()

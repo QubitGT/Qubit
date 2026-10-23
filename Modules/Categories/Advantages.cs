@@ -206,7 +206,6 @@ namespace Qubit.Modules.Categories
                     lockTarget = gunTarget;
 
                     TagReports.invinciblePlayers.Add(GetPlayerFromVRRig(gunTarget));
-
                 }
                 else
                     Notifications.SendFormat("red", "ERROR", "You are not master client.");

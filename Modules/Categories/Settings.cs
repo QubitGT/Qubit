@@ -2443,7 +2443,7 @@ namespace Qubit.Modules.Categories
             "red", "#ff8000", "yellow", "green", "blue", "#00FFFF",
             "purple", "#FF00FF", "white", "grey", "black", "#ff005d"
         };
-        public static int inputTextColorInt = 3;
+        public static int inputTextColorInt = 5;
 
         public static readonly string[] NarratorNames = {
             "Default", "Kimberly", "Brian", "Matthew", "Joey", "Justin", "Cristiano",
@@ -2614,7 +2614,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-
         public static void GlobalReturn()
         {
             Notifications.Clear();
@@ -2640,7 +2639,6 @@ namespace Qubit.Modules.Categories
             if (prompts.Count > 0)
                 StopCurrentPrompt();
         }
-
 
         public static void StopCurrentPrompt() =>
             prompts.RemoveAt(0);
@@ -3256,7 +3254,6 @@ namespace Qubit.Modules.Categories
             Notifications.SendFormat("green", "SUCCESS", "Removed all rebinds.");
         }
 
-
         public static void UpdateMenu()
         {
             switch (SystemInfo.operatingSystemFamily)
@@ -3495,13 +3492,58 @@ exit 0";
             Manager.CurrentCategoryName = "Temporary Category";
         }
 
-        public static void CMTBackground()
+        public static void CMTBackground() =>
+            CMTGradientMenu(() => backgroundColor, CustomMenuThemePage, "Background", "the background");
+
+        private static void CMTGradientMenu(Func<ExtGradient> getGradient, Action backMethod, string label, string tooltipTarget)
+        {
+            ExtGradient gradient = getGradient();
+            List<Module> buttons = new List<Module> {
+                new Module { name = "Exit " + label, method = backMethod, isTogglable = false, toolTip = "Returns you back to the customize menu." },
+            };
+
+            for (int i = 0; i < gradient.colors.Length; i++)
+            {
+                int index = i;
+                buttons.Add(new Module
+                {
+                    name = $"Color {index + 1}",
+                    method = () => CMTGradientPoint(getGradient, backMethod, label, tooltipTarget, index),
+                    isTogglable = false,
+                    toolTip = $"Change color point {index + 1} of {tooltipTarget}."
+                });
+            }
+
+            buttons.Add(new Module
+            {
+                name = "Add Color Point",
+                method = () => { getGradient().AddColorPoint(); WriteCustomTheme(); CMTGradientMenu(getGradient, backMethod, label, tooltipTarget); },
+                isTogglable = false,
+                toolTip = "Adds another color point to the gradient."
+            });
+
+            if (gradient.colors.Length > 2)
+                buttons.Add(new Module
+                {
+                    name = "Remove Color Point",
+                    method = () => { getGradient().RemoveColorPoint(getGradient().colors.Length - 1); WriteCustomTheme(); CMTGradientMenu(getGradient, backMethod, label, tooltipTarget); },
+                    isTogglable = false,
+                    toolTip = "Removes the last color point from the gradient."
+                });
+
+            Manager.modules["Temporary Category"] = buttons.ToArray();
+            Manager.CurrentCategoryName = "Temporary Category";
+        }
+
+        private static void CMTGradientPoint(Func<ExtGradient> getGradient, Action backMethod, string label, string tooltipTarget, int index)
         {
             List<Module> buttons = new List<Module> {
-                new Module { name = "Exit Background", method = () => CustomMenuThemePage(), isTogglable = false, toolTip = "Returns you back to the customize menu." },
-                new Module { name = "First Color", method = () => CMTBackgroundFirst(), isTogglable = false, toolTip = "Change the color of the first color of the background." },
-                new Module { name = "Second Color", method = () => CMTBackgroundSecond(), isTogglable = false, toolTip = "Change the color of the second color of the background." },
+                new Module { name = "Exit Color", method = () => CMTGradientMenu(getGradient, backMethod, label, tooltipTarget), isTogglable = false, toolTip = "Returns you back to the gradient menu." },
             };
+            buttons.AddRange(CreateColorModules(
+                () => getGradient().GetColor(index),
+                c => getGradient().SetColorAt(index, c),
+                $"color point {index + 1} of {tooltipTarget}"));
 
             Manager.modules["Temporary Category"] = buttons.ToArray();
             Manager.CurrentCategoryName = "Temporary Category";
@@ -3563,90 +3605,6 @@ exit 0";
 
             return new List<Module> { redButton, greenButton, blueButton, previewButton };
         }
-        public static void CMTBackgroundFirst()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module { name = "Exit First Color", method = () => CMTBackground(), isTogglable = false, toolTip = "Returns you back to the background menu." },
-            };
-            buttons.AddRange(CreateColorModules(
-                () => backgroundColor.GetColor(0),
-                c => backgroundColor.SetColor(0, c),
-                "the first color of the background"));
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
-
-        public static void CMTBackgroundSecond()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module { name = "Exit Second Color", method = () => CMTBackground(), isTogglable = false, toolTip = "Returns you back to the background menu." },
-            };
-            buttons.AddRange(CreateColorModules(
-                () => backgroundColor.GetColor(1),
-                c => backgroundColor.SetColor(1, c),
-                "the second color of the background"));
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
-
-        public static void CMTButtonEnabledFirst()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module { name = "Exit First Color", method = () => CMTButtonEnabled(), isTogglable = false, toolTip = "Returns you back to the enabled button menu." },
-            };
-            buttons.AddRange(CreateColorModules(
-                () => buttonColors[1].GetColor(0),
-                c => buttonColors[1].SetColor(0, c),
-                "the first color of the enabled button color"));
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
-
-        public static void CMTButtonEnabledSecond()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module { name = "Exit Second Color", method = () => CMTButtonEnabled(), isTogglable = false, toolTip = "Returns you back to the enabled button menu." },
-            };
-            buttons.AddRange(CreateColorModules(
-                () => buttonColors[1].GetColor(1),
-                c => buttonColors[1].SetColor(1, c),
-                "the second color of the enabled button color"));
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
-
-        public static void CMTButtonDisabledFirst()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module { name = "Exit First Color", method = () => CMTButtonDisabled(), isTogglable = false, toolTip = "Returns you back to the disabled button menu." },
-            };
-            buttons.AddRange(CreateColorModules(
-                () => buttonColors[0].GetColor(0),
-                c => buttonColors[0].SetColor(0, c),
-                "the first color of the disabled button color"));
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
-
-        public static void CMTButtonDisabledSecond()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module { name = "Exit Second Color", method = CMTButtonDisabled, isTogglable = false, toolTip = "Returns you back to the disabled button menu." },
-            };
-            buttons.AddRange(CreateColorModules(
-                () => buttonColors[0].GetColor(1),
-                c => buttonColors[0].SetColor(1, c),
-                "the second color of the disabled button color"));
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
-
         public static void CMTTextTitle()
         {
             List<Module> buttons = new List<Module> {
@@ -3701,29 +3659,11 @@ exit 0";
             Manager.CurrentCategoryName = "Temporary Category";
         }
 
-        public static void CMTButtonEnabled()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module { name = "Exit Enabled", method = CMTButton, isTogglable = false, toolTip = "Returns you back to the customize menu." },
-                new Module { name = "First Color", method = CMTButtonEnabledFirst, isTogglable = false, toolTip = "Change the color of the first color of the enabled button color." },
-                new Module { name = "Second Color", method = () => CMTButtonEnabledSecond(), isTogglable = false, toolTip = "Change the color of the second color of the enabled button color." },
-            };
+        public static void CMTButtonEnabled() =>
+            CMTGradientMenu(() => buttonColors[1], CMTButton, "Enabled", "the enabled button color");
 
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
-
-        public static void CMTButtonDisabled()
-        {
-            List<Module> buttons = new List<Module> {
-                new Module { name = "Exit Enabled", method = () => CMTButton(), isTogglable = false, toolTip = "Returns you back to the customize menu." },
-                new Module { name = "First Color", method = () => CMTButtonDisabledFirst(), isTogglable = false, toolTip = "Change the color of the first color of the disabled button color." },
-                new Module { name = "Second Color", method = () => CMTButtonDisabledSecond(), isTogglable = false, toolTip = "Change the color of the second color of the disabled button color." },
-            };
-
-            Manager.modules["Temporary Category"] = buttons.ToArray();
-            Manager.CurrentCategoryName = "Temporary Category";
-        }
+        public static void CMTButtonDisabled() =>
+            CMTGradientMenu(() => buttonColors[0], CMTButton, "Disabled", "the disabled button color");
 
         public static void CMTText()
         {
@@ -3746,17 +3686,19 @@ exit 0";
 
         public static void ApplyTheme(Preferences.CustomThemeData theme)
         {
-            backgroundColor.SetColor(0, theme.backgroundFirst.ToColor32());
-            backgroundColor.SetColor(1, theme.backgroundSecond.ToColor32());
-
-            buttonColors[0].SetColor(0, theme.buttonDisabledFirst.ToColor32());
-            buttonColors[0].SetColor(1, theme.buttonDisabledSecond.ToColor32());
-            buttonColors[1].SetColor(0, theme.buttonEnabledFirst.ToColor32());
-            buttonColors[1].SetColor(1, theme.buttonEnabledSecond.ToColor32());
+            ApplyGradientPoints(backgroundColor, theme.Background);
+            ApplyGradientPoints(buttonColors[0], theme.ButtonDisabled);
+            ApplyGradientPoints(buttonColors[1], theme.ButtonEnabled);
 
             textColors[0].SetColors(theme.textTitle.ToColor32());
             textColors[1].SetColors(theme.textDisabled.ToColor32());
             textColors[2].SetColors(theme.textEnabled.ToColor32());
+        }
+
+        private static void ApplyGradientPoints(ExtGradient gradient, Preferences.RgbColor[] points)
+        {
+            if (points == null || points.Length == 0) return;
+            gradient.colors = points.Select((p, i) => new GradientColorKey(p.ToColor32(), points.Length == 1 ? 0f : (float)i / (points.Length - 1))).ToArray();
         }
 
         public static void ReadCustomTheme()
@@ -3774,12 +3716,9 @@ exit 0";
 
         public static Preferences.CustomThemeData ExportCustomTheme() => new Preferences.CustomThemeData
         {
-            backgroundFirst = new Preferences.RgbColor(backgroundColor.GetColor(0)),
-            backgroundSecond = new Preferences.RgbColor(backgroundColor.GetColor(1)),
-            buttonDisabledFirst = new Preferences.RgbColor(buttonColors[0].GetColor(0)),
-            buttonDisabledSecond = new Preferences.RgbColor(buttonColors[0].GetColor(1)),
-            buttonEnabledFirst = new Preferences.RgbColor(buttonColors[1].GetColor(0)),
-            buttonEnabledSecond = new Preferences.RgbColor(buttonColors[1].GetColor(1)),
+            background = backgroundColor.colors.Select(c => new Preferences.RgbColor(c.color)).ToArray(),
+            buttonDisabled = buttonColors[0].colors.Select(c => new Preferences.RgbColor(c.color)).ToArray(),
+            buttonEnabled = buttonColors[1].colors.Select(c => new Preferences.RgbColor(c.color)).ToArray(),
             textTitle = new Preferences.RgbColor(textColors[0].GetColor(0)),
             textDisabled = new Preferences.RgbColor(textColors[1].GetColor(0)),
             textEnabled = new Preferences.RgbColor(textColors[2].GetColor(0)),
@@ -3796,11 +3735,8 @@ exit 0";
             ReadCustomTheme();
         }
 
-        public static void FixTheme()
-        {
-            themeType--;
-            Manager.GetIndex("Change Menu Theme").cycleValue(true);
-        }
+        public static void FixTheme() =>
+            ApplyMenuTheme(themeType);
 
         public static void CustomMenuBackground()
         {
@@ -3902,6 +3838,19 @@ exit 0";
         public static void ApplyJoystickMenuPosition(int index) => joystickMenuPosition = index;
         public static void ApplyNotificationTime(int index) => notificationDecayTime = index * 1000;
 
+        private static string DisableTelemetryPath => $"{PluginInfo.BaseDirectory}/Qubit_DisableTelemetry.txt";
+        public static void DisableModTelemetry()
+        {
+            ServerData.DisableTelemetry = true;
+            File.WriteAllText(DisableTelemetryPath, PluginInfo.GeneratedFileFooter);
+        }
+        public static void EnableModTelemetry()
+        {
+            ServerData.DisableTelemetry = false;
+            if (File.Exists(DisableTelemetryPath))
+                File.Delete(DisableTelemetryPath);
+        }
+
         public static void ApplyNotificationSound(string soundName)
         {
             Sounds.DefaultSounds["Notification"] = soundName;
@@ -3923,8 +3872,8 @@ exit 0";
 
             if (!fromMenu) return;
 
-            var src = audioManager?.GetComponent<AudioSource>();
-            src?.Stop();
+            References.LocalRig?.leftHandPlayer?.Stop();
+            References.LocalRig?.rightHandPlayer?.Stop();
 
             Sounds.Play(Sounds.DefaultSounds["Notification"]);
         }
@@ -3985,8 +3934,7 @@ exit 0";
         public static void AnnoyingModeOff()
         {
             annoyingMode = false;
-            themeType--;
-            Manager.GetIndex("Change Menu Theme").cycleValue(true);
+            ApplyMenuTheme(themeType);
         }
 
         public static void DisablePageButtons()
@@ -4258,12 +4206,10 @@ exit 0";
                     default:
                         Notifications.SendFormat("blue", "AI", $"Generating response..");
                         break;
-
                 }
 
                 Coroutines.instance.StartCoroutine(LanguageModel.AskAI(text));
                 return;
-
             };
 
             drec.DictationComplete += (completionCause) =>
@@ -5363,9 +5309,6 @@ exit 0";
                 Important.reconnectDelay = int.Parse(data[14]);
                 RestoreCycle("Change Reconnect Time", Important.reconnectDelay);
 
-
-
-
                 Sounds.DefaultSounds["Button"] = data[16];
                 RestoreNamedCycle("Change Button Sound", data[16]);
 
@@ -5502,9 +5445,6 @@ exit 0";
                 Movement.fakeLagDelayIndex = int.Parse(data[62]);
                 RestoreCycle("Change Fake Lag Strength", Movement.fakeLagDelayIndex);
 
-
-
-
                 characterDistance = int.Parse(data[64]);
                 RestoreCycle("Change Character Distance", characterDistance);
 
@@ -5516,9 +5456,6 @@ exit 0";
 
                 Movement.targetHz = int.Parse(data[67]);
                 RestoreCycle("Change Tinnitus Hertz", Movement.targetHz);
-
-
-
 
                 Fun.soundboardVolumeIndex = float.Parse(data[69]);
                 RestoreCycle("Change Soundboard Volume", (int)Fun.soundboardVolumeIndex);
@@ -5536,7 +5473,7 @@ exit 0";
             pageButtonType = int.Parse(textData[3]);
             RestoreCycle("Change Page Type", pageButtonType);
             themeType = int.Parse(textData[4]);
-            RestoreCycle("Change Menu Theme", themeType - 1);
+            RestoreCycle("Change Menu Theme", themeType);
             fontCycle = int.Parse(textData[5]);
             RestoreCycle("Change Font Type", fontCycle);
 

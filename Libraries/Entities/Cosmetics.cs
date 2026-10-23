@@ -52,7 +52,6 @@ namespace Qubit.Libraries.Entities
 {
     public static class Cosmetics
     {
-
         public static void EquipCosmetic(string cosmeticName)
         {
             ManagerRegistry.CosmeticsController.ApplyCosmeticItemToSet(ManagerRegistry.CosmeticsController.currentWornSet, ManagerRegistry.CosmeticsController.GetItemFromDict(cosmeticName), true, false);

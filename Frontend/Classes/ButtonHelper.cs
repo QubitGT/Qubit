@@ -38,7 +38,7 @@ namespace Qubit.Frontend.Classes
 
         public static Module Create(
             string buttonText, Func<string[]> getNames, string defaultName, Action<int> apply,
-            string toolTip = null, bool legal = false, string overlapText = null, Action<bool> onCycle = null)
+            string toolTip = null, bool legal = false, string overlapText = null, Action<bool> onCycle = null, string[] aliases = null)
         {
             string label = overlapText ?? buttonText;
 
@@ -50,7 +50,8 @@ namespace Qubit.Frontend.Classes
                 incremental = true,
                 value = defaultName,
                 toolTip = toolTip,
-                legal = legal
+                legal = legal,
+                aliases = aliases
             };
 
             if (!string.IsNullOrEmpty(overlapText))
@@ -118,14 +119,14 @@ namespace Qubit.Frontend.Classes
 
         public static Module Create(
             string buttonText, Func<string[]> getNames, int defaultIndex, Action<int> apply,
-            string toolTip = null, bool legal = false, string overlapText = null, Action<bool> onCycle = null)
+            string toolTip = null, bool legal = false, string overlapText = null, Action<bool> onCycle = null, string[] aliases = null)
         {
             var names = getNames();
             string defaultName = (names != null && defaultIndex >= 0 && defaultIndex < names.Length)
                 ? names[defaultIndex]
                 : null;
 
-            return Create(buttonText, getNames, defaultName, apply, toolTip, legal, overlapText, onCycle);
+            return Create(buttonText, getNames, defaultName, apply, toolTip, legal, overlapText, onCycle, aliases);
         }
 
         public static Module CreateNumeric(

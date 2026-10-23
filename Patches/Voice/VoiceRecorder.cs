@@ -39,7 +39,6 @@ namespace Qubit.Patches.Voice
                 return false;
             }
             return true;
-
         }
 
         [HarmonyPatch(nameof(Recorder.InputFactory), MethodType.Getter)]

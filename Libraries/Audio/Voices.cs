@@ -19,9 +19,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-
-
-
 using Photon.Voice;
 using Qubit.Libraries.Core;
 using Qubit.Modules.Categories;
@@ -94,7 +91,6 @@ namespace Qubit.Libraries.Audio
                 int maxFrames = Samples.Length / Channels;
                 _samplePosition = Mathf.Clamp(targetSample, 0, maxFrames);
             }
-
         }
 
         private readonly List<Clip> audioClips = new List<Clip>();
@@ -108,9 +104,6 @@ namespace Qubit.Libraries.Audio
             StartRecording(device);
         }
 
-
-
-
         public IReadOnlyList<Clip> AudioClips
         {
             get
@@ -122,17 +115,11 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-
-
-
         public bool MuteMicrophone
         {
             get { return muteMicrophone; }
             set { muteMicrophone = value; }
         }
-
-
-
 
         public int SamplingRate
         {
@@ -144,9 +131,6 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-
-
-
         public int OutputRate
         {
             get { return outputRate; }
@@ -157,17 +141,11 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-
-
-
         public float Gain
         {
             get { return gain; }
             set { gain = Mathf.Max(0f, value); }
         }
-
-
-
 
         public float ClipVolume
         {
@@ -175,17 +153,11 @@ namespace Qubit.Libraries.Audio
             set { clipVolume = Mathf.Max(0f, value); }
         }
 
-
-
-
         public float Pitch
         {
             get => pitch;
             set => pitch = Mathf.Max(0.1f, value);
         }
-
-
-
 
         public float ClipSpeed
         {
@@ -193,13 +165,7 @@ namespace Qubit.Libraries.Audio
             set => clipSpeed = Mathf.Max(0.1f, value);
         }
 
-
-
-
         public readonly Dictionary<string, Action<float[]>> PostProcessors = new Dictionary<string, Action<float[]>>();
-
-
-
 
         public bool PostProcessClip { get; set; }
 
@@ -209,19 +175,10 @@ namespace Qubit.Libraries.Audio
 
         public static Voices Instance { get; private set; }
 
-
-
-
-
-
         public static Voices Get(int loopLength = 1, string device = null)
         {
             return Instance ??= new Voices(loopLength, device);
         }
-
-
-
-
 
         public bool StartRecording(string device = null)
         {
@@ -276,9 +233,6 @@ namespace Qubit.Libraries.Audio
             return true;
         }
 
-
-
-
         public bool StopRecording()
         {
             if (!string.IsNullOrEmpty(currentDevice) && Microphone.IsRecording(currentDevice))
@@ -290,20 +244,11 @@ namespace Qubit.Libraries.Audio
             return true;
         }
 
-
-
-
         public bool SwitchMicrophone(string device)
             => StopRecording() && StartRecording(device);
 
-
-
-
         public bool RestartMicrophone()
             => StopRecording() && StartRecording(currentDevice);
-
-
-
 
         public Clip AudioClip(AudioClip audioClip, bool disableMicrophone = false)
         {
@@ -354,9 +299,6 @@ namespace Qubit.Libraries.Audio
             }
         }
 
-
-
-
         public static float[] Resample(float[] source, int sourceRate, int targetRate, int channels)
         {
             if (source == null || source.Length == 0 || sourceRate <= 0 || sourceRate == targetRate)
@@ -397,9 +339,6 @@ namespace Qubit.Libraries.Audio
             return target;
         }
 
-
-
-
         public bool StopAudioClip(Clip clip)
         {
             if (clip == null) return false;
@@ -407,18 +346,11 @@ namespace Qubit.Libraries.Audio
                 return audioClips.Remove(clip);
         }
 
-
-
-
         public void StopAudioClips()
         {
             lock (audioClipsLock)
                 audioClips.Clear();
         }
-
-
-
-
 
         public bool Read(float[] buffer)
         {

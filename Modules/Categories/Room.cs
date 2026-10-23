@@ -166,7 +166,6 @@ namespace Qubit.Modules.Categories
                 room.name = RandomString();
                 AskPublic();
             }, "My own", "Random");
-
         }
 
         public static void QueueRoom(string roomName)

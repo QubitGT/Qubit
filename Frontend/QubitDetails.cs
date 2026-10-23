@@ -36,10 +36,8 @@ using Object = UnityEngine.Object;
 
 namespace Qubit.Frontend
 {
-
     public sealed class QubitDetails : MonoBehaviour
     {
-
         private static QubitDetails current;
         private static string selectedMod;
         private static int mode, candidate, descriptionPage;
@@ -55,7 +53,6 @@ namespace Qubit.Frontend
         private Transform dot;
         private LineRenderer line;
         private Material dotMaterial, lineMaterial;
-
 
         private ButtonCollider[] targets;
         private Collider[] panelColliders;
@@ -127,7 +124,6 @@ namespace Qubit.Frontend
                 foreach (Graphic g in panel.GetComponentsInChildren<Graphic>()) if (g is Image) g.material = null;
                 Fonts.Apply(panel);
                 current.Bind("Info", () => { mode = 0; current.Refresh(); });
-                current.Bind("Fonts", () => current.Open(1));
                 current.Bind("Themes", () => current.Open(2));
                 current.Bind("Previous", () => current.Browse(-1));
                 current.Bind("Next", () => current.Browse(1));
@@ -175,7 +171,7 @@ namespace Qubit.Frontend
         public static bool Preview(string name, bool forward)
         {
             if (current == null || Frontend.Settings.menu == null || !current.transform.IsChildOf(Frontend.Settings.menu.transform) || !current.gameObject.activeInHierarchy || Prompts.CurrentPrompt != null || Frontend.Settings.clickGUI) return false;
-            int requested = name == "Qubit Font" || name == "Change Font Type" ? 1 : name == "Change Menu Theme" ? 2 : 0;
+            int requested = name == "Change Menu Theme" ? 2 : 0;
             if (requested == 0) return false;
             if (mode != requested) current.Open(requested);
             else current.Browse(forward ? 1 : -1);
@@ -183,18 +179,17 @@ namespace Qubit.Frontend
         }
         private void Open(int tab)
         {
-            mode = tab; candidate = tab == 1 ? Math.Max(0, Fonts.Options.ToList().IndexOf(Fonts.Selected)) : Mathf.Clamp(Frontend.Settings.themeType, 0, Modules.Categories.Settings.Themes.Count - 1);
+            mode = tab; candidate = Mathf.Clamp(Frontend.Settings.themeType, 0, Modules.Categories.Settings.Themes.Count - 1);
             Refresh();
         }
         private void Browse(int delta)
         {
             if (mode == 0) descriptionPage = Math.Max(0, descriptionPage + delta);
-            else { int count = mode == 1 ? Fonts.Options.Count : Modules.Categories.Settings.Themes.Count; candidate = (candidate + delta + count) % count; }
+            else { int count = Modules.Categories.Settings.Themes.Count; candidate = (candidate + delta + count) % count; }
             Refresh();
         }
         private void Apply()
         {
-            if (mode == 1) Fonts.Select(Fonts.Options[candidate]);
             if (mode == 2)
             {
                 var custom = Manager.GetIndex("Custom Menu Theme");
@@ -211,10 +206,10 @@ namespace Qubit.Frontend
         {
             if (canvas == null) return;
             var info = selectedMod == null ? null : Manager.GetIndex(selectedMod);
-            Label("Title").text = mode == 1 ? "Font preview" : mode == 2 ? "Theme preview" : info?.RenderName ?? "Select a mod";
+            Label("Title").text = mode == 2 ? "Theme preview" : info?.RenderName ?? "Select a mod";
             Label("Title").enableAutoSizing = true; Label("Title").fontSizeMin = 13; Label("Title").fontSizeMax = 25;
             Label("Status").text = mode != 0 ? "Preview only / Apply to save" : info == null ? "Point at a row to inspect it" : info.isTogglable ? (info.enabled ? "ENABLED" : "DISABLED") : "ACTION / SETTING";
-            string description = info?.toolTip ?? "Point at a mod to read its pop-up description. Use Fonts or Themes to try a style before applying it. Pointer controls are in Menu Settings.";
+            string description = info?.toolTip ?? "Point at a mod to read its pop-up description. Use Themes to try a style before applying it. Pointer controls are in Menu Settings.";
             description = Regex.Replace(description, "<[^>]+>", "");
             var pages = new System.Collections.Generic.List<string>();
             while (description.Length > 160)
@@ -223,13 +218,12 @@ namespace Qubit.Frontend
                 pages.Add(description.Substring(0, end)); description = description.Substring(end).TrimStart();
             }
             pages.Add(description); descriptionPage = Mathf.Clamp(descriptionPage, 0, pages.Count - 1);
-            Label("Description").text = mode == 1 ? Fonts.Options[candidate] + "\n\nThe quick brown fox jumps over the lazy dog." : mode == 2 ? Modules.Categories.Settings.Themes[candidate].Name + "\n\nPreview of the menu background, button and text colors." : pages[descriptionPage];
+            Label("Description").text = mode == 2 ? Modules.Categories.Settings.Themes[candidate].Name + "\n\nPreview of the menu background, button and text colors." : pages[descriptionPage];
             Label("Description").enableAutoSizing = true; Label("Description").fontSizeMin = 12; Label("Description").fontSizeMax = 19;
             Label("Hint").text = mode == 0 ? "Description " + (descriptionPage + 1) + "/" + pages.Count + " / < > to browse" : "Preview only - choose Apply to save";
             transform.Find("Apply").gameObject.SetActive(mode != 0);
             transform.Find("Cancel").gameObject.SetActive(mode != 0);
-            var font = Fonts.Resolve(mode == 1 ? Fonts.Options[candidate] : Fonts.Selected);
-            Label("PreviewText").font = Label("PreviewSample").font = font;
+            Label("PreviewText").font = Label("PreviewSample").font = Fonts.activeFont;
             Label("PreviewText").text = "Favorite Mods";
             Label("PreviewText").enableAutoSizing = Label("PreviewSample").enableAutoSizing = true;
             Label("PreviewText").fontSizeMin = Label("PreviewSample").fontSizeMin = 12;

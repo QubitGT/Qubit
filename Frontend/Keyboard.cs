@@ -47,7 +47,6 @@ namespace Qubit.Frontend
 {
     public static class Keyboard
     {
-
         public static List<Key> lastPressedKeys = new List<Key>();
         public static readonly Dictionary<Key, (float, float)> keyPressedTimes = new Dictionary<Key, (float, float)>();
         public static readonly Key[] detectedKeys = {
@@ -420,11 +419,10 @@ namespace Qubit.Frontend
         public static bool lowercaseMode;
         public static bool uppercaseMode;
 
-        public static string inputTextColor = "green";
+        public static string inputTextColor = "#00FFFF";
 
         public sealed class View : MonoBehaviour
         {
-
             private static GameObject prefab;
             private Canvas face;
             private TMP_Text input;
@@ -512,7 +510,6 @@ namespace Qubit.Frontend
             }
             private void LateUpdate()
             {
-
                 face.enabled = Vector3.Dot(References.HeadCollider.transform.position - face.transform.position, -face.transform.forward) >= 0;
                 if (lastText != keyboardInput)
                 {

@@ -182,8 +182,9 @@ namespace Qubit.Modules
                 new Module { name = "Long Menu", enableMethod =() => longMenu = true, disableMethod =() => longMenu = false, toolTip = "Makes the menu long.", legal = true},
                 new Module { name = "Flip Menu", enableMethod =() => flipMenu = true, disableMethod =() => flipMenu = false, toolTip = "Flips the menu to the back of your hand.", legal = true},
 
-                new Module { name = "Legacy Menu", enableMethod =() => Qubit.Frontend.Legacy.Enabled = true, disableMethod =() => Qubit.Frontend.Legacy.Enabled = false, toolTip = "Uses the legacy menu, instead of the new design", legal = true},
-
+                new Module { name = "Modern Menu", aliases = new[] { "Rewritten Menu", "New Menu", "Modern UI", "Rewritten UI", "New UI" }, enableMethod =() => Qubit.Frontend.Legacy.Enabled = false, disableMethod =() => Qubit.Frontend.Legacy.Enabled = true, toolTip = "Uses the new rewritten menu design, instead of the legacy one.", legal = true},
+                new Module { name = "Disable Mod Telemetry", enableMethod = Modules.Categories.Settings.DisableModTelemetry, disableMethod = Modules.Categories.Settings.EnableModTelemetry, toolTip = "Disables the optional crash and usage reports sent to Qubit's server.", legal = true},
+                new Module { name = "Click GUI", enableMethod = Modules.Categories.Settings.EnableClickGUI, disableMethod = Modules.Categories.Settings.DisableClickGUI, toolTip = "Replaces the menu with a flat, mouse-clickable desktop GUI.", legal = true},
 
                 new Module { name = "Round Menu", enableMethod =() => roundMenu = true, disableMethod =() => roundMenu = false, toolTip = "Makes the menu objects round.", legal = true},
                 new Module { name = "Outline Menu", enableMethod =() => outlineMenu = true, disableMethod =() => outlineMenu = false, toolTip = "Gives the menu objects an outline.", legal = true},
@@ -212,6 +213,7 @@ namespace Qubit.Modules
                 new Module { name = "Dynamic Gradients", enableMethod =() => dynamicGradients = true, disableMethod =() => dynamicGradients = false, toolTip = "Makes gradients dynamic, showing you the full gradient instead of a pulsing color.", legal = true},
                 new Module { name = "Horizontal Gradients", enableMethod =() => { horizontalGradients = true; cacheGradients.Clear(); }, disableMethod =() => { horizontalGradients = false; cacheGradients.Clear(); }, toolTip = "Rotates the dynamic gradients by 90 degrees.", legal = true},
                 new Module { name = "Scrolling Gradients", enableMethod =() => scrollingGradients = true, disableMethod =() => scrollingGradients = false, toolTip = "Scrolls the dynamic gradients over time.", legal = true},
+                new Module { name = "Legacy Gradients", enableMethod =() => { legacyGradients = true; cacheGradients.Clear(); }, disableMethod =() => { legacyGradients = false; cacheGradients.Clear(); }, toolTip = "Makes dynamic gradients drop the final color point, so cyclic themes (e.g. red to blue to red) only show the first half instead of looping back.", legal = true},
                 new Module { name = "Dynamic Sounds", enableMethod =() => dynamicSounds = true, disableMethod =() => dynamicSounds = false, toolTip = "Adds more sounds to the menu, giving you a better sense of control.", legal = true},
                 new Module { name = "Disable Adaptive Buttons", enableMethod =() => adaptiveButtons = false, disableMethod =() => adaptiveButtons = true, toolTip = "Disables the rebinding of buttons to make your experience better based on what controllers you're using.", legal = true},
                 new Module { name = "Incremental Boost", enableMethod =() => incrementalBoost = true, disableMethod =() => incrementalBoost = false, toolTip = "Allows you to increment faster by holding down your <color=green>grip</color>.", legal = true},
@@ -223,7 +225,6 @@ namespace Qubit.Modules
                 new Module { name = "Voice Commands", enableMethod = Modules.Categories.Settings.VoiceRecognitionOn, method = Modules.Categories.Settings.CheckFocus, disableMethod = Modules.Categories.Settings.VoiceRecognitionOff, toolTip = "Enable and disable mods using your voice. Activate it like how you would any other voice assistant, such as \"Jarvis, Platforms\".", legal = true},
                 new Module { name = "Chain Voice Commands", toolTip = "Makes voice commands chain together, so you don't have to repeatedly ask it to listen to you.", legal = true},
                 new Module { name = "AI Assistant", enableMethod =() => Coroutines.instance.StartCoroutine(Modules.Categories.Settings.DictationOn()), method = Modules.Categories.Settings.CheckFocus, disableMethod = Modules.Categories.Settings.DictationOff, toolTip = "A voice assistant with artificial intelligence capabilities.", legal = true},
-
 
                 new Module { name = "Narrate Assistant", toolTip = "Narrates what the voice assistant says locally.", legal = true},
                 new Module { name = "Global Narrate Assistant", toolTip = "Narrates what the voice assistant says globally.", legal = true},
@@ -237,7 +238,6 @@ namespace Qubit.Modules
                 new Module { name = "Reset System Prompt", method = Modules.Categories.Settings.ResetSystemPrompt, isTogglable = false, toolTip = "Resets the system prompt for the AI Assistant.", legal = true},
 
                 new Module { name = "Player Select", method = Modules.Categories.Settings.PlayerSelect, toolTip = "Spawns a line in your hand when moving your hand away from the menu that you can select players with.", legal = true},
-
 
                 new Module { name = "Annoying Mode", enableMethod =() => annoyingMode = true, disableMethod = Modules.Categories.Settings.AnnoyingModeOff, toolTip = "Turns on the April Fools 2024 settings.", legal = true},
                 new Module { name = "Lowercase Mode", enableMethod =() => lowercaseMode = true, disableMethod =() => lowercaseMode = false, toolTip = "Makes the entire menu's text lowercase.", legal = true},
@@ -262,7 +262,7 @@ namespace Qubit.Modules
                 new Module { name = "Disable Watermark", enableMethod =() => disableWatermark = true, disableMethod =() => disableWatermark = false, toolTip = "Disables the watermark on the UI and the back of the menu.", legal = true},
                 ButtonHelper.CreateNumeric("Change Page Type", 1, 6, pageButtonType, Modules.Categories.Settings.ApplyPageType, toolTip: "Changes the type of page buttons.", legal: true),
                 ButtonHelper.CreateNumeric("Change Arrow Type", 0, arrowTypes.Length - 1, arrowType, Modules.Categories.Settings.ApplyArrowType, toolTip: "Changes the type of arrows on the page buttons.", legal: true),
-                ButtonHelper.CreateNumeric("Change Font Type", 0, 14, fontCycle, Fonts.ApplyFontType, toolTip: "Changes the type of font.", legal: true),
+                ButtonHelper.CreateNumeric("Change Font Type", 0, 14, 9, Fonts.ApplyFontType, toolTip: "Changes the type of font.", legal: true),
                 new Module { name = "Rapid Font Changer", method = Modules.Categories.Settings.ChangeFontRapid, toolTip = "Changes the type of font every menu refresh.", legal = true},
                 new Module { name = "Custom Font Type", enableMethod = Modules.Categories.Settings.CustomFontType, method = Modules.Categories.Settings.PersistCustomFont, disableMethod = Modules.Categories.Settings.DisableCustomFont, toolTip = $"Changes the font type on the menu to a custom font. You can change the photo inside of your Gorilla Tag files ({PluginInfo.BaseDirectory}/Qubit_CustomWatermark.txt).", legal = true},
                 ButtonHelper.CreateNumeric("Change Font Style Type", 0, 3, Modules.Categories.Settings.fontStyleType, Fonts.ApplyFontStyleType, toolTip: "Changes the style of the font.", legal: true),
@@ -271,7 +271,7 @@ namespace Qubit.Modules
                 ButtonHelper.CreateNumeric("Change PC Menu Background", 0, 5, pcBackgroundIndex, Modules.Categories.Settings.ApplyPCUI, toolTip: "Changes the background of the PC ui.", legal: true),
                 ButtonHelper.CreateNumeric("Change Joystick Menu Position", 0, joystickMenuPositions.Length - 1, joystickMenuPosition, Modules.Categories.Settings.ApplyJoystickMenuPosition, toolTip: "Changes the position of the joystick menu.", legal: true),
                 ButtonHelper.CreateNumeric("Change Notification Time", 0, 5, notificationDecayTime / 1000, Modules.Categories.Settings.ApplyNotificationTime, v => v.ToString(), "Changes the time before a notification is removed.", legal: true),
-                ButtonHelper.Create("Change Notification Sound", () => Sounds.SoundList["Notifications"].Keys.ToArray(), 0, v => Modules.Categories.Settings.ApplyNotificationSound(Sounds.SoundList["Notifications"].Keys.ToArray()[v]), toolTip: "Changes the sound that plays when receiving a notification.", legal: true, onCycle: _ => { var src = audioManager?.GetComponent<AudioSource>(); src?.Stop(); Sounds.Play(Sounds.DefaultSounds["Notification"]); }),
+                ButtonHelper.Create("Change Notification Sound", () => Sounds.SoundList["Notifications"].Keys.ToArray(), 0, v => Modules.Categories.Settings.ApplyNotificationSound(Sounds.SoundList["Notifications"].Keys.ToArray()[v]), toolTip: "Changes the sound that plays when receiving a notification.", legal: true, onCycle: _ => { References.LocalRig?.leftHandPlayer?.Stop(); References.LocalRig?.rightHandPlayer?.Stop(); Sounds.Play(Sounds.DefaultSounds["Notification"]); }),
                 new Module { name = "Notification Sound on Error", enableMethod =() => Notifications.soundOnError = true, disableMethod =() => Notifications.soundOnError = false, toolTip = "Plays your target notification sound when an error happens.", legal = true},
                 ButtonHelper.Create("Change Narration Voice", () => Modules.Categories.Settings.NarratorNames, narratorIndex, Modules.Categories.Settings.ApplyNarrationVoice, "Changes the voice of the narrator.", legal: true),
                 ButtonHelper.CreateNumeric("Change Pointer Position", 0, Modules.Categories.Settings.PointerPositions.Length - 1, pointerIndex, Modules.Categories.Settings.ApplyPointerPosition, toolTip: "Changes the position of the pointer.", legal: true),
@@ -304,9 +304,9 @@ namespace Qubit.Modules
                         References.LocalRig.leftHandPlayer?.Stop();
                         References.LocalRig.rightHandPlayer?.Stop();
                         Sounds.Play(Sounds.DefaultSounds["Button"]);
-                    }),
+                    }, aliases: new[] { "Button Click Sounds" }),
                 ButtonHelper.CreateNumeric("Change Button Volume", 0, 10, buttonClickVolume, Modules.Categories.Settings.ApplyButtonVolume, v => v.ToString(), "Changes the volume of the buttons.", legal: true, onCycle: Modules.Categories.Settings.PreviewButtonVolume),
-                new Module { name = "Serversided Button Sounds", enableMethod =() => serversidedButtonSounds = true, disableMethod =() => serversidedButtonSounds = false, toolTip = "Lets everyone in the the room hear the buttons."},
+                new Module { name = "Serversided Button Sounds", aliases = new[] { "Serversided Click Sounds" }, enableMethod =() => serversidedButtonSounds = true, disableMethod =() => serversidedButtonSounds = false, toolTip = "Lets everyone in the the room hear the buttons."},
                 new Module { name = "Disable Button Vibration", enableMethod =() => doButtonsVibrate = false, disableMethod =() => doButtonsVibrate = true, toolTip = "Disables the slight vibration that happens when you click a button."},
 
                 ButtonHelper.Create("Change Menu Soundpack", () => Sounds.Soundpacks.Keys.ToArray(), Sounds.DefaultSoundpack, v => Modules.Categories.Settings.ApplyMenuSoundpack(Sounds.Soundpacks.Keys.ToArray()[v]), toolTip: "Changes the sound pack used for the menu.", legal: true,
@@ -434,7 +434,6 @@ namespace Qubit.Modules
             },
             ["Rig Settings"] = new[]
             {
-
                 new Module { name = "Exit Rig Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings page."},
 
                 ButtonHelper.Create("Change Arm Length", () => Movement.ArmLengthNames, Movement.longarmCycle, Movement.ApplyArmLength, "Changes the length of the long arm mods."),
@@ -838,7 +837,6 @@ namespace Qubit.Modules
             },
             ["Rig Mods"] = new[]
             {
-
                 new Module { name = "Exit Rig Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
 
                 new Module { name = "Uncap Arm Length", aliases = new[] { "Armmax" }, method =() => { References.Player.leftHand.maxArmLength = float.MaxValue; References.Player.rightHand.maxArmLength = float.MaxValue; }, disableMethod =() => { References.Player.leftHand.maxArmLength = 1; References.Player.rightHand.maxArmLength = 1; }, toolTip = "Removes the arm distance limit."},
@@ -1427,7 +1425,6 @@ namespace Qubit.Modules
             },
             ["Legacy Mods"] = new[]
             {
-
                 new Module { name = "Exit Legacy Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
                 new Module { name = "Force Unload Custom Map", method = Qubit.Modules.Categories.Legacy.ForceUnloadCustomMap, isTogglable = false, legacy = true, toolTip = "Forcefully unloads the current custom map." },
@@ -1455,7 +1452,6 @@ namespace Qubit.Modules
             },
             ["Seasonal Mods"] = new[]
             {
-
                 new Module { name = "Exit Seasonal Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
 
                 // Halloween (Lucy)
@@ -1522,7 +1518,6 @@ namespace Qubit.Modules
             },
             ["Entity & Gadget Mods"] = new[]
             {
-
                 new Module { name = "Exit Entity & Gadget Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
 
                 new Module { name = $"Critter Spam {Bracket("green", "G")}", method = Critters.CritterSpam, toolTip = "Spawns critters on your hand when holding <color=green>grip</color>"},
@@ -1638,7 +1633,6 @@ namespace Qubit.Modules
             },
             ["Holdable Mods"] = new[]
             {
-
                 new Module { name = "Exit Holdable Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
 
                 new Module { name = "Fast Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.5f, 0.5f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders fast."},
@@ -1808,7 +1802,6 @@ namespace Qubit.Modules
             },
             ["Identity & Cosmetic Mods"] = new[]
             {
-
                 new Module { name = "Exit Identity & Cosmetic Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
 
                 new Module { name = "Golden Name Tag", method =() => Fun.GoldenNameTag(true), disableMethod =() => Fun.GoldenNameTag(false), toolTip = "Changes your name tag to a golden color. This mod only works if you are subscribed to the fan club." },
@@ -1817,7 +1810,6 @@ namespace Qubit.Modules
                 new Module { name = "Set Name to \"HIDE\"", method =() => ChangeName("HIDE"), isTogglable = false, toolTip = "Sets your name to \"HIDE\"." },
                 new Module { name = "Set Name to \"RUN\"", method =() => ChangeName("RUN"), isTogglable = false, toolTip = "Sets your name to \"RUN\"." },
                 new Module { name = "Set Name to \"BEHINDYOU\"", method =() => ChangeName("BEHINDYOU"), isTogglable = false, toolTip = "Sets your name to \"BEHINDYOU\"." },
-                new Module { name = "Set Name to \"iiOnTop\"", method =() => ChangeName("iiOnTop"), isTogglable = false, toolTip = "Sets your name to \"iiOnTop\"." },
                 new Module { name = "Lowercase Name", method = Fun.LowercaseName, isTogglable = false, toolTip = "Makes your name lowercase." },
                 new Module { name = "PBBV Name Cycle", method =() => Fun.NameCycle(new[] { "PBBV", "IS", "HERE" }), toolTip = "Sets your name on a loop to \"PBBV\", \"IS\", and \"HERE\"." },
                 new Module { name = "J3VU Name Cycle", method =() => Fun.NameCycle(new[] { "J3VU", "HAS", "BECOME", "HOSTILE" }), toolTip = "Sets your name on a loop to \"J3VU\", \"HAS\", \"BECOME\", and \"HOSTILE\"" },
@@ -2057,22 +2049,6 @@ namespace Qubit.Modules
 
                 new Module { name = "Guardian Spaz", method = Master.GuardianSpaz, toolTip = "Spams the guardian position for everyone in the room."},
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
                 new Module { name = "Material Self", method =() => { if (!(Time.time > Master.materialDelay)) return; Master.MaterialTarget(References.LocalRig); Master.materialDelay = Time.time + 0.1f; }, toolTip = "Flashes the materials of yourself."},
                 new Module { name = "Material Gun", method = Master.MaterialGun, toolTip = "Flashes the materials of whoever your hand desires."},
                 new Module { name = "Material All", method = Master.MaterialAll, toolTip = "Flashes the materials of everyone in the room."},
@@ -2128,9 +2104,6 @@ namespace Qubit.Modules
                 new Module { name = "Drain Lava", method =() => Master.ChangeLavaState(InfectionLavaController.RisingLavaState.Draining), isTogglable = false, toolTip = "Drains the lava in the forest lava map."},
                 new Module { name = "Empty Lava", method =() => Master.ChangeLavaState(InfectionLavaController.RisingLavaState.Drained), isTogglable = false, toolTip = "Makes the lava in the forest lava map drained."},
                 new Module { name = "Erupt Lava", method =() => Master.ChangeLavaState(InfectionLavaController.RisingLavaState.Erupting), isTogglable = false, toolTip = "Erupts the lava in the forest lava map."},
-
-
-
 
                 new Module { name = "Kill Self", method =() => Master.SetStateSelf(1), isTogglable = false, toolTip = "Turns you into a ghost."},
                 new Module { name = "Kill Gun", method =() => Master.SetStateGun(1), toolTip = "Turns whoever your hand desires into a ghost."},
@@ -2304,17 +2277,8 @@ namespace Qubit.Modules
                 new Module { name = "Guardian Freeze Gun", method = Overpowered.GuardianPhysicalFreezeGun, toolTip = "Freezes whoever your hand desires." },
                 new Module { name = $"Guardian Freeze All {Bracket("green", "T")}", method = Overpowered.GuardianPhysicalFreezeAll, toolTip = "Freezes everyone in the room when holding <color=green>trigger</color>." },
 
-
-
-
-
-
-
                 new Module { name = "Delay Ban Gun", method = Overpowered.DelayBanGun, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Delay bans whoever your hand desires."},
                 new Module { name = "Delay Ban All", enableMethod = Overpowered.DelayBanAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Delay bans everyone in the room."},
-
-
-
 
                 new Module { name = "Force Grab", method =()=> Grabbing.ForceGrab(References.LocalRig.transform.position), toolTip = "Attempts to grab the hand of anyone who presses their grips." },
                 new Module { name = "Force Grab Gun", postMethod = Grabbing.ForceGrabGun, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Forcibly grab whoever your hand desires." },
@@ -2331,7 +2295,6 @@ namespace Qubit.Modules
                 new Module { name = "Grab Fling Gun", enableMethod =() => Grabbing.GrabStatus = true, method = Grabbing.GrabFlingGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to fling whoever your hand desires."},
                 new Module { name = "Grab Fling All", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabFlingAll, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to fling everyone in the room."},
 
-
                 //new ButtonInfo { name = "Grab Crash Gun", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabCrashGun, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to crash whoever your hand desires."},
                 //new ButtonInfo { name = "Grab Crash All", enableMethod =() => Grabbing.GrabStatus = true, postMethod = Grabbing.GrabCrashAll, disableMethod =() => Grabbing.GrabStatus = false, toolTip = "Tries to crash everyone in the room."},
 
@@ -2343,28 +2306,6 @@ namespace Qubit.Modules
                 new Module { name = "Server Mute All", method = VoiceControl.ServerMuteAll, toolTip = "Mutes everyone in the server."},
                 new Module { name = "Deafen Gun", method = VoiceControl.DeafenGun, toolTip = "Makes whoever your hand deseries not be able to hear anyone else."},
                 new Module { name = "Deafen All", method = VoiceControl.DeafenAll, toolTip = "Makes everyone not be able to hear anyone except you."},
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                 new Module { name = "Lock Room", method =() => Overpowered.SetRoomStatus(false), isTogglable = false, toolTip = "Locks the room so no one else can join."},
                 new Module { name = "Unlock Room", method =() => Overpowered.SetRoomStatus(true), isTogglable = false, toolTip = "Unlocks the room so anyone can join."},
@@ -2749,7 +2690,6 @@ namespace Qubit.Modules
 
                 new Module { name = "Better FPS Boost", enableMethod = Experimental.BetterFPSBoost, disableMethod = Experimental.DisableBetterFPSBoost, toolTip = "Makes everything one color, boosting your FPS."},
 
-
                 new Module { name = "Disorganize Menu", method = Experimental.DisorganizeMenu, isTogglable = false, toolTip = "Disorganizes the entire menu. This cannot be undone."},
             },
 
@@ -2805,7 +2745,6 @@ namespace Qubit.Modules
                 new Module { name = "Rejoin on Kick", enableMethod =() => Overpowered.rejoinOnKick = true, disableMethod =() => Overpowered.rejoinOnKick = false, toolTip = "Makes room based kick mods join the room you kicked the target in once they have been kicked." },
                 new Module { name = "Fast Kick", enableMethod =() => Overpowered.instantCreate = true, disableMethod =() => Overpowered.instantCreate = false, toolTip = "Instantly creates a room instead of checking if one already exists." },
                 new Module { name = "Kick Fix", enableMethod =() => EntityJoining.enabled = true, disableMethod =() => EntityJoining.enabled = false, toolTip = "Stops the super infection, virtual stump, and other kick mods from breaking." },
-
 
             },
 
@@ -2887,7 +2826,6 @@ namespace Qubit.Modules
             },
             ["Holdable Settings"] = new[]
             {
-
                 new Module { name = "Exit Holdable Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings page."},
 
                 new Module { name = "Zero Gravity Bugs", toolTip = "Removes the gravity from the bugs on the Bug Spam mod."},
@@ -2898,7 +2836,6 @@ namespace Qubit.Modules
             },
             ["Entity & Gadget Settings"] = new[]
             {
-
                 new Module { name = "Exit Entity & Gadget Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings page."},
 
                 new Module { name = "Entity Gravity", toolTip = "Gives gravity to any spawned entities in the ghost reactor or Super Infection gamemode."},
@@ -2906,7 +2843,6 @@ namespace Qubit.Modules
             },
             ["Identity & Cosmetic Settings"] = new[]
             {
-
                 new Module { name = "Exit Identity & Cosmetic Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings page."},
 
                 ButtonHelper.CreateNumeric("Change Cycle Delay", 1, 4, Fun.cycleSpeedIndex, Fun.ApplyCycleDelay, v => (v / 2f).ToString(), "Changes the delay on name cycle mods.", overlapText: "Change Name Cycle Delay"),
@@ -3127,9 +3063,6 @@ namespace Qubit.Modules
         private static string _currentCategoryName = "Main";
         public static event Action OnCategoryChanged;
 
-
-
-
         public static string CurrentCategoryName
         {
             get => _currentCategoryName;
@@ -3157,10 +3090,6 @@ namespace Qubit.Modules
         }
 
         private static readonly Dictionary<string, (string Category, int Index)> cacheGetIndex = new Dictionary<string, (string Category, int Index)>();
-
-
-
-
 
         public static void EnterLegacyTab()
         {
@@ -3218,25 +3147,11 @@ namespace Qubit.Modules
             return null;
         }
 
-
-
-
-
         public static void AddCategory(string categoryName) =>
             modules.Add(categoryName, new Module[] { });
 
-
-
-
-
         public static void RemoveCategory(string categoryName) =>
             modules.Remove(categoryName);
-
-
-
-
-
-
 
         public static void AddModule(string category, Module module, int index = -1)
         {
@@ -3248,12 +3163,6 @@ namespace Qubit.Modules
 
             modules[category] = moduleList.ToArray();
         }
-
-
-
-
-
-
 
         public static void AddModules(string category, Module[] modulesToAdd, int index = -1)
         {
@@ -3268,12 +3177,6 @@ namespace Qubit.Modules
 
             modules[category] = moduleList.ToArray();
         }
-
-
-
-
-
-
 
         public static void RemoveModule(string category, string name, int index = -1)
         {
@@ -3379,20 +3282,6 @@ namespace Qubit.Modules
             leftTrigger = _leftTrigger; rightTrigger = _rightTrigger;
             leftJoystickClick = _leftJoystickClick; rightJoystickClick = _rightJoystickClick;
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static void Toggle(string buttonText, bool fromMenu = false, bool ignoreForce = false)
         {
@@ -3640,25 +3529,8 @@ namespace Qubit.Modules
                 ReloadMenu();
         }
 
-
-
-
-
-
-
-
-
         public static void Toggle(Module buttonInfo, bool fromMenu = false, bool ignoreForce = false) =>
             Toggle(buttonInfo.name, fromMenu, ignoreForce);
-
-
-
-
-
-
-
-
-
 
         public static void ToggleIncremental(string buttonText, bool increment, bool reload = true, bool ignoreForce = false)
         {
@@ -3867,9 +3739,6 @@ namespace Qubit.Modules
                 ReloadMenu();
         }
 
-
-
-
         public static void Prefix()
         {
             if (!HasLoaded)
@@ -3894,7 +3763,6 @@ namespace Qubit.Modules
                 #region Execute Mods
 
                 Plugins.ExecuteUpdate();
-
 
                 foreach (Module[] buttonList in Manager.modules.Values)
                 {
@@ -4313,7 +4181,6 @@ new ButtonInfo { name = "Train Gun", method =() => Fun.TrainGun(), toolTip = "Mo
 new ButtonInfo { name = "Destroy Train", method =() => Fun.DestroyTrain(), isTogglable = false, toolTip = "Sends the train to hell." },
 new ButtonInfo { name = "Slow Train", enableMethod =() => Fun.SlowTrain(), disableMethod =() => Fun.FixTrain(), toolTip = "Makes the train slower." },
 new ButtonInfo { name = "Fast Train", enableMethod =() => Fun.FastTrain(), disableMethod =() => Fun.FixTrain(), toolTip = "Makes the train faster." },
-
 
 new ButtonInfo { name = "Sting Self", method =() => Fun.StingSelf(), isTogglable = false, toolTip = "Makes the bees attack you."},
 new ButtonInfo { name = "Sting Gun", method =() => Fun.StingGun(), toolTip = "Makes the bees attack whoever your hand desires."},

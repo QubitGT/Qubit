@@ -35,13 +35,11 @@ namespace Qubit.Libraries.Core
     {
         private static Action<Level, string> _sink;
 
-
         public static void SetLogger(Action<Level, string> sink) => _sink = sink;
 
         private static void Write(Level level, object log)
         {
             string msg = log?.ToString() ?? string.Empty;
-
 
             if (_sink is null)
             {

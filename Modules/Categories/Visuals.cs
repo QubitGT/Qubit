@@ -66,7 +66,6 @@ namespace Qubit.Modules.Categories
 {
     public class Visuals
     {
-
         private static Module followThemeModule, transparentThemeModule;
 
         private static Color ThemedColor(Color color)
@@ -427,9 +426,6 @@ namespace Qubit.Modules.Categories
 
         private static readonly Dictionary<VRRig, GameObject> hitboxESP = new Dictionary<VRRig, GameObject>();
 
-
-
-
         public static readonly Dictionary<SlingshotProjectile, LineRenderer> trajectoryPool = new Dictionary<SlingshotProjectile, LineRenderer>();
         public static LineRenderer localTrajectoryLine;
 
@@ -754,8 +750,6 @@ namespace Qubit.Modules.Categories
 
         static GameObject LeftSphere;
         static GameObject RightSphere;
-
-
 
         private static readonly List<TextMeshPro> nameTagPool = new List<TextMeshPro>();
 
@@ -1167,7 +1161,6 @@ namespace Qubit.Modules.Categories
 
                 watchText += "</color>";
                 tmp.SafeSetText(lowercaseMode ? watchText.ToLower() : uppercaseMode ? watchText.ToUpper() : watchText);
-
             }
             else
             {
@@ -1346,18 +1339,6 @@ namespace Qubit.Modules.Categories
             frames.Add(Time.frameCount);
             return 0.1f + frames.Count * 0.1f;
         }
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static void GetLabel(string codeName, bool leftHand, string text, Color color)
         {
@@ -5257,7 +5238,6 @@ namespace Qubit.Modules.Categories
             breadcrumbs.Clear();
         }
 
-
         public static bool DoPerformanceCheck()
         {
             if (PerformanceVisuals)
@@ -5340,7 +5320,6 @@ namespace Qubit.Modules.Categories
             }
             catch { }
         }
-
 
         public static void CasualTracers()
         {
@@ -5516,7 +5495,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-
         public static void CasualBeacons()
         {
             if (DoPerformanceCheck())
@@ -5656,7 +5634,6 @@ namespace Qubit.Modules.Categories
             }
         }
 
-
         public static void CasualDistanceESP()
         {
             if (DoPerformanceCheck())
@@ -5772,15 +5749,12 @@ namespace Qubit.Modules.Categories
                     }
                 }
             }
-
         }
 
         public static void HuntDistanceESP()
         {
             if (DoPerformanceCheck())
                 return;
-
-
 
             if (ManagerRegistry.GorillaGameManager == null)
                 return;
@@ -5793,7 +5767,6 @@ namespace Qubit.Modules.Categories
             if (sillyComputer == null)
                 return;
 
-
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
             bool transparentTheme = Manager.GetIndex("Transparent Theme").enabled;
             bool hiddenOnCamera = Manager.GetIndex("Hidden on Camera").enabled;
@@ -5801,8 +5774,6 @@ namespace Qubit.Modules.Categories
             Color menuColor = backgroundColor.GetCurrentColor();
 
             NetPlayer currentTarget = sillyComputer.GetTargetOf(PhotonNetwork.LocalPlayer);
-
-
 
             foreach (var playerRig in Players.ActiveRigs.Where(playerRig => !playerRig.isLocal))
             {
@@ -5884,8 +5855,6 @@ namespace Qubit.Modules.Categories
 
                 TextMeshPro.SafeSetFontStyle(activeFontStyle);
                 TextMeshPro.SafeSetFont(activeFont);
-
-
 
                 finalTextMeshPro = TextMeshPro;
             }

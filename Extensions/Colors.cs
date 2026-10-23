@@ -28,10 +28,10 @@ namespace Qubit.Extensions
 {
     public static class Colors
     {
-
         private const int MaxGradientCacheSize = 64;
-        private static readonly LinkedList<(Color, Color)> gradientUsage = new LinkedList<(Color, Color)>();
-        public static readonly Dictionary<(Color, Color), Texture2D> cacheGradients = new Dictionary<(Color, Color), Texture2D>();
+        private static readonly LinkedList<string> gradientUsage = new LinkedList<string>();
+        public static readonly Dictionary<string, Texture2D> cacheGradients = new Dictionary<string, Texture2D>();
+        private static Gradient evaluationGradient;
 
         private static Color Quantize(Color c, float step = 1f / 64f)
         {
@@ -43,9 +43,17 @@ namespace Qubit.Extensions
             );
         }
 
-        public static Texture2D GetGradientTexture(Color colorA, Color colorB)
+        private static string GradientKey(GradientColorKey[] colors)
         {
-            var key = (Quantize(colorA), Quantize(colorB));
+            var key = new System.Text.StringBuilder();
+            foreach (var point in colors)
+                key.Append(Quantize(point.color)).Append('@').Append(point.time.ToString("F3")).Append(';');
+            return key.ToString();
+        }
+
+        public static Texture2D GetGradientTexture(GradientColorKey[] colors)
+        {
+            string key = GradientKey(colors);
 
             if (cacheGradients.TryGetValue(key, out Texture2D cachedTexture))
             {
@@ -54,6 +62,9 @@ namespace Qubit.Extensions
                 return cachedTexture;
             }
 
+            evaluationGradient ??= new Gradient();
+            evaluationGradient.colorKeys = colors;
+
             Texture2D txt2d = new Texture2D(128, 128);
             Color[] pixels = new Color[128 * 128];
 
@@ -61,7 +72,7 @@ namespace Qubit.Extensions
             {
                 for (int y = 0; y < 128; y++)
                 {
-                    Color rowColor = Color.Lerp(colorA, colorB, y / 128f);
+                    Color rowColor = evaluationGradient.Evaluate(y / 128f);
                     for (int x = 0; x < 128; x++)
                         pixels[y * 128 + x] = rowColor;
                 }
@@ -70,7 +81,7 @@ namespace Qubit.Extensions
             {
                 for (int i = 0; i < 128; i++)
                 {
-                    Color rowColor = Color.Lerp(colorA, colorB, i / 128f);
+                    Color rowColor = evaluationGradient.Evaluate(i / 128f);
                     for (int j = 0; j < 128; j++)
                         pixels[j * 128 + i] = rowColor;
                 }

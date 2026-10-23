@@ -26,11 +26,6 @@ using UnityEngine;
 
 namespace Qubit.Core
 {
-
-
-
-
-
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class AddOnStartAttribute : Attribute
     {
@@ -39,10 +34,6 @@ namespace Qubit.Core
 
         public AddOnStartAttribute(bool condition = true) =>
             Condition = condition;
-
-
-
-
 
         public static void Apply(GameObject host, bool attached)
         {

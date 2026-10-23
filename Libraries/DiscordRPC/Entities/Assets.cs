@@ -4,19 +4,12 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.Entities
 {
-
-
-
     [Serializable]
     public class Assets
     {
         private const string EXTERNAL_KEY_PREFIX = "mp:external";
 
         #region Large Image
-
-
-
-
 
         [JsonProperty("large_image", NullValueHandling = NullValueHandling.Ignore)]
         public string LargeImageKey
@@ -27,15 +20,10 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 if (!BaseRichPresence.ValidateString(value, out _largeimagekey, false, 256))
                     throw new StringOutOfRangeException(256);
 
-
                 LargeImageID = null;
             }
         }
         private string _largeimagekey;
-
-
-
-
 
         [JsonProperty("large_text", NullValueHandling = NullValueHandling.Ignore)]
         public string LargeImageText
@@ -48,10 +36,6 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             }
         }
         private string _largeimagetext;
-
-
-
-
 
         [JsonProperty("large_url", NullValueHandling = NullValueHandling.Ignore)]
         public string LargeImageUrl
@@ -68,24 +52,14 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _largeimageurl;
 
-
-
-
         [JsonIgnore]
         public string LargeImageID { get; private set; }
-
-
-
 
         [JsonIgnore]
         public bool IsLargeImageKeyExternal { get; private set; }
         #endregion
 
         #region Small Image
-
-
-
-
 
         [JsonProperty("small_image", NullValueHandling = NullValueHandling.Ignore)]
         public string SmallImageKey
@@ -96,15 +70,10 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 if (!BaseRichPresence.ValidateString(value, out _smallimagekey, false, 256))
                     throw new StringOutOfRangeException(256);
 
-
                 SmallImageID = null;
             }
         }
         private string _smallimagekey;
-
-
-
-
 
         [JsonProperty("small_text", NullValueHandling = NullValueHandling.Ignore)]
         public string SmallImageText
@@ -117,10 +86,6 @@ namespace Qubit.Libraries.DiscordRPC.Entities
             }
         }
         private string _smallimagetext;
-
-
-
-
 
         [JsonProperty("small_url", NullValueHandling = NullValueHandling.Ignore)]
         public string SmallImageUrl
@@ -137,32 +102,19 @@ namespace Qubit.Libraries.DiscordRPC.Entities
         }
         private string _smallimageurl;
 
-
-
-
         [JsonIgnore]
         public string SmallImageID { get; private set; }
-
-
-
 
         [JsonIgnore]
         public bool IsSmallImageKeyExternal { get; private set; }
         #endregion
 
-
-
-
-
-
         internal void Merge(Assets other)
         {
-
             _smallimagetext = other._smallimagetext;
             _smallimageurl = other._smallimageurl;
             _largeimagetext = other._largeimagetext;
             _largeimageurl = other._largeimageurl;
-
 
             string largeKey = other._largeimagekey ?? "";
             if (largeKey.StartsWith(EXTERNAL_KEY_PREFIX))
@@ -181,8 +133,6 @@ namespace Qubit.Libraries.DiscordRPC.Entities
                 LargeImageID = null;
                 _largeimagekey = largeKey;
             }
-
-
 
             string smallKey = other._smallimagekey ?? "";
             if (smallKey.StartsWith(EXTERNAL_KEY_PREFIX))

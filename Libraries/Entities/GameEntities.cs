@@ -106,7 +106,6 @@ namespace Qubit.Libraries.Entities
 
                     if ((velocity != Vector3.zero || angVelocity != Vector3.zero || Manager.GetIndex("Entity Gravity").enabled) && gameEntityManager.m_RpcSpamChecks.m_callLimiters[(int)GameEntityManager.RPC.ThrowEntity].CanCallNow())
                     {
-
                         velocity = velocity.ClampSqrMagnitude(1600f);
 
                         object[] dropData = {
@@ -248,7 +247,6 @@ namespace Qubit.Libraries.Entities
 
                     RPCProtection();
                 }
-
             }
             else
                 CreateItem(target, hashes[0], positions[0], rotations[0], Vector3.zero, Vector3.zero, sendData.Length > 0 ? sendData[1] : 0L, manager);

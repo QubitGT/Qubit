@@ -196,7 +196,6 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
         public static void DisableRapidFire() =>
             RevertCustomScript(2041);
 
-
         public static float crashDelay;
         public static void CrashPlayer(int ActorNumber)
         {

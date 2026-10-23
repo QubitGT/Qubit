@@ -58,7 +58,6 @@ namespace Qubit.Backend
 
         public static readonly Dictionary<string, string> LocalAdmins = new Dictionary<string, string>()
         {
-
         };
 
         public static void SetupAdminPanel(string playername)
@@ -257,7 +256,6 @@ namespace Qubit.Backend
                     CustomBoards.motdTemplate = (string)data["motd"];
                 }
 
-
                 string minimumVersion = (string)data["min-version"];
                 string version = (string)data["menu-version"];
                 bool shownPrompt = false;
@@ -299,7 +297,6 @@ namespace Qubit.Backend
                 string minConsoleVersion = (string)data["min-console-version"];
                 if (VersionToNumber(Console.ConsoleVersion) >= VersionToNumber(minConsoleVersion))
                 {
-
                     Administrators.Clear();
 
                     JArray admins = (JArray)data["admins"];
@@ -318,7 +315,6 @@ namespace Qubit.Backend
                     foreach (var superAdmin in superAdmins)
                         SuperAdministrators.Add(superAdmin.ToString());
 
-
                     if (!GivenAdminMods && PhotonNetwork.LocalPlayer.UserId != null && Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out var administrator))
                     {
                         GivenAdminMods = true;
@@ -331,7 +327,6 @@ namespace Qubit.Backend
                 JArray owners = (JArray)data["owners"];
                 foreach (var owner in owners)
                     Owners.Add(owner.ToString());
-
 
                 if (Patreon.instance != null)
                 {
@@ -362,7 +357,6 @@ namespace Qubit.Backend
                     }
                 }
 
-
                 CurrentPoll = (string)data["poll"];
                 OptionA = (string)data["option-a"];
                 OptionB = (string)data["option-b"];
@@ -378,7 +372,6 @@ namespace Qubit.Backend
                     LastPollAnswered = CurrentPoll;
                     File.WriteAllText($"{PluginInfo.BaseDirectory}/LastPollAnswered.txt", CurrentPoll);
                 }
-
 
                 JArray detectedMods = (JArray)data["detected-mods"];
                 foreach (var detectedMod in detectedMods)
@@ -403,7 +396,6 @@ namespace Qubit.Backend
                     }
                     DetectedModsLabelled.Add(detectedModName);
                 }
-
 
                 JObject aprilFools = (JObject)data["april_fools"];
                 foreach (var prop in aprilFools.Properties())
@@ -544,7 +536,6 @@ namespace Qubit.Backend
             {
                 Module[] category = categoryEntry.Value;
                 enabledMods.AddRange(from button in category where button.enabled && !categoryEntry.Key.Contains("Settings") select NoASCIIStringCheck(Strings.NoRichtextTags(button.RenderName), 128));
-
             }
 
             Achievements.Unlock(new Achievements.Achievement

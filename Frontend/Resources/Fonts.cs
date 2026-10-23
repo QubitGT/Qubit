@@ -19,15 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using Qubit.Backend;
 using Qubit.Core;
-using Qubit.Modules;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.TextCore.LowLevel;
 using static Qubit.Libraries.Core.Assets;
 using static Qubit.Modules.Categories.Settings;
 
@@ -35,88 +29,11 @@ namespace Qubit.Frontend.Resources
 {
     public static class Fonts
     {
-        private const string Default = "Inter";
-        private static readonly Dictionary<string, TMP_FontAsset> cache = new Dictionary<string, TMP_FontAsset>();
-        private static readonly HashSet<TMP_FontAsset> stereoFonts = new HashSet<TMP_FontAsset>();
-
-        private static void PrepareStereoFont(TMP_FontAsset font)
-        {
-            if (font == null || stereoFonts.Contains(font)) return;
-            var gameFont = LiberationSans ?? TMP_Settings.defaultFontAsset;
-            var shader = gameFont != null && gameFont.material != null ? gameFont.material.shader : null;
-            if (shader == null || !shader.isSupported)
-                throw new InvalidOperationException("The game's TMP shader is unavailable for stereo text.");
-            var material = new Material(font.material)
-            {
-                shader = shader,
-                name = font.name + " Stereo Material",
-                enableInstancing = true
-            };
-            font.material = material;
-            stereoFonts.Add(font);
-            foreach (var weight in font.fontWeightTable)
-            {
-                PrepareStereoFont(weight.regularTypeface);
-                PrepareStereoFont(weight.italicTypeface);
-            }
-        }
-        private static List<string> options;
-        private static Module setting;
-        private static string selected = Default;
-
-        public static IReadOnlyList<string> Options => options;
-        public static string Selected => selected;
-
-        public static void Register()
-        {
-            if (options != null) return;
-            options = new[] { Default }.Concat(Font.GetOSInstalledFontNames()
-                .Where(name => !string.IsNullOrWhiteSpace(name)).Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(name => name, StringComparer.OrdinalIgnoreCase).Select(name => "Windows: " + name)).ToList();
-            setting = new Module
-            {
-                name = "Qubit Font",
-                displayName = "Font: " + Default,
-                isTogglable = false,
-                incremental = true,
-                isSetting = true,
-                value = Default,
-                legal = true,
-                toolTip = "Changes the menu and keyboard font. Uses Qubit's clean default or an installed Windows font.",
-                cycleValue = Cycle,
-                method = () => Cycle(true),
-                onValueChanged = Restore
-            };
-            Manager.AddModule("Menu Settings", setting, 1);
-            Restore();
-        }
-
-        private static void Cycle(bool forward)
-        {
-            int index = Math.Max(0, options.IndexOf(selected));
-            Select(options[(index + (forward ? 1 : options.Count - 1)) % options.Count]);
-        }
-
-        private static void Restore()
-        {
-            string name = setting.GetValue<string>();
-            selected = options.Contains(name) ? name : Default;
-            setting.value = selected;
-            setting.displayName = "Font: " + selected;
-            if (Frontend.Settings.menu != null) Apply(Frontend.Settings.menu);
-            if (Keyboard.VRKeyboard != null) Apply(Keyboard.VRKeyboard);
-        }
-
         public static void Apply(GameObject root)
         {
-            // "Change Font Type"/"Change Font Style Type" only ever touched activeFont/activeFontStyle,
-            // which this (Modern-only) path ignored in favor of the separate "Qubit Font" OS picker.
-            // Fall back to activeFont while that picker is left on its default so both settings work.
-            var font = selected == Default ? activeFont : Resolve(selected);
             foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
             {
-                text.font = text.name == "Indicator" || text.transform.parent.name == "Search"
-                    ? Resolve(Default) : font;
+                text.font = activeFont;
                 text.fontSharedMaterial = text.font.material;
                 text.fontStyle = activeFontStyle;
                 text.extraPadding = true;
@@ -124,53 +41,6 @@ namespace Qubit.Frontend.Resources
                 text.SetAllDirty();
             }
         }
-
-        public static void Select(string name)
-        {
-            if (!options.Contains(name)) return;
-            setting.value = name;
-            Restore();
-            Preferences.SaveButton(setting);
-        }
-
-        public static TMP_FontAsset Resolve(string name)
-        {
-            if (cache.TryGetValue(name, out var font) && font != null) return font;
-            if (name.StartsWith("Windows: ", StringComparison.Ordinal))
-            {
-                var source = Font.CreateDynamicFontFromOSFont(name.Substring(9), 96);
-                font = TMP_FontAsset.CreateFontAsset(source, 96, 12, GlyphRenderMode.SDFAA,
-                    2048, 2048, AtlasPopulationMode.Dynamic, true);
-            }
-            else font = QubitAssets.Load<TMP_FontAsset>("Qubit Inter Regular SDF");
-            if (font == null) font = QubitAssets.Load<TMP_FontAsset>("Qubit Inter Regular SDF");
-            PrepareStereoFont(font);
-            cache[name] = font;
-            return font;
-        }
-        public static void InitializeFonts()
-        {
-            AgencyFB ??= LoadAsset<TMP_FontAsset>("Agency");
-            FreeSans ??= LoadAsset<TMP_FontAsset>("FreeSans");
-            Candara ??= LoadAsset<TMP_FontAsset>("Candara");
-            ComicSans ??= LoadAsset<TMP_FontAsset>("ComicSans");
-            CascadiaMono ??= LoadAsset<TMP_FontAsset>("CascadiaMono");
-            Anton ??= LoadAsset<TMP_FontAsset>("Anton");
-            Minecraft ??= LoadAsset<TMP_FontAsset>("Minecraft");
-            MSGothic ??= LoadAsset<TMP_FontAsset>("MSGothic");
-            OpenDyslexic ??= LoadAsset<TMP_FontAsset>("OpenDyslexic");
-            SimSun ??= LoadAsset<TMP_FontAsset>("SimSun");
-            Taiko ??= LoadAsset<TMP_FontAsset>("Taiko");
-            Terminal ??= LoadAsset<TMP_FontAsset>("Terminal");
-            Utopium ??= LoadAsset<TMP_FontAsset>("Utopium");
-            DejaVuSans ??= LoadAsset<TMP_FontAsset>("DejaVuSans");
-
-            foreach (TMP_FontAsset font in new[] { AgencyFB, FreeSans, Candara, ComicSans,
-                CascadiaMono, Anton, Minecraft, MSGothic, OpenDyslexic, SimSun, Taiko,
-                Terminal, Utopium, DejaVuSans })
-                font.fallbackFontAssetTable.Add(LiberationSans);
-        }
-
 
         public static TMP_FontAsset activeFont = LiberationSans;
         public static FontStyles activeFontStyle = FontStyles.Normal;
@@ -200,50 +70,52 @@ namespace Qubit.Frontend.Resources
             {
                 case 0:
                     activeFont = AgencyFB;
-                    return;
+                    break;
                 case 1:
                     activeFont = FreeSans;
-                    return;
+                    break;
                 case 2:
                     activeFont = DejaVuSans;
-                    return;
+                    break;
                 case 3:
                     activeFont = Utopium;
-                    return;
+                    break;
                 case 4:
                     activeFont = ComicSans;
-                    return;
+                    break;
                 case 5:
                     activeFont = CascadiaMono;
-                    return;
+                    break;
                 case 6:
                     activeFont = Candara;
-                    return;
+                    break;
                 case 7:
                     activeFont = MSGothic;
-                    return;
+                    break;
                 case 8:
                     activeFont = Anton;
-                    return;
+                    break;
                 case 9:
                     activeFont = SimSun;
-                    return;
+                    break;
                 case 10:
                     activeFont = Minecraft;
-                    return;
+                    break;
                 case 11:
                     activeFont = Terminal;
-                    return;
+                    break;
                 case 12:
                     activeFont = OpenDyslexic;
-                    return;
+                    break;
                 case 13:
                     activeFont = Taiko;
-                    return;
+                    break;
                 case 14:
                     activeFont = LiberationSans;
-                    return;
+                    break;
             }
+            if (Frontend.Settings.menu != null) Apply(Frontend.Settings.menu);
+            if (Keyboard.VRKeyboard != null) Apply(Keyboard.VRKeyboard);
         }
         public static void ApplyFontStyleType(int index)
         {
@@ -261,9 +133,31 @@ namespace Qubit.Frontend.Resources
         [RunOnLaunch(LaunchPriority.Fonts)]
         public static void Initialize()
         {
-            Register();
             InitializeFonts();
-            activeFont = AgencyFB;
+            ApplyFontType(9);
+        }
+
+        public static void InitializeFonts()
+        {
+            AgencyFB ??= LoadAsset<TMP_FontAsset>("Agency");
+            FreeSans ??= LoadAsset<TMP_FontAsset>("FreeSans");
+            Candara ??= LoadAsset<TMP_FontAsset>("Candara");
+            ComicSans ??= LoadAsset<TMP_FontAsset>("ComicSans");
+            CascadiaMono ??= LoadAsset<TMP_FontAsset>("CascadiaMono");
+            Anton ??= LoadAsset<TMP_FontAsset>("Anton");
+            Minecraft ??= LoadAsset<TMP_FontAsset>("Minecraft");
+            MSGothic ??= LoadAsset<TMP_FontAsset>("MSGothic");
+            OpenDyslexic ??= LoadAsset<TMP_FontAsset>("OpenDyslexic");
+            SimSun ??= LoadAsset<TMP_FontAsset>("SimSun");
+            Taiko ??= LoadAsset<TMP_FontAsset>("Taiko");
+            Terminal ??= LoadAsset<TMP_FontAsset>("Terminal");
+            Utopium ??= LoadAsset<TMP_FontAsset>("Utopium");
+            DejaVuSans ??= LoadAsset<TMP_FontAsset>("DejaVuSans");
+
+            foreach (TMP_FontAsset font in new[] { AgencyFB, FreeSans, Candara, ComicSans,
+                CascadiaMono, Anton, Minecraft, MSGothic, OpenDyslexic, SimSun, Taiko,
+                Terminal, Utopium, DejaVuSans })
+                font.fallbackFontAssetTable.Add(LiberationSans);
         }
     }
 }

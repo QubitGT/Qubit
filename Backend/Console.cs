@@ -591,7 +591,6 @@ namespace Qubit.Backend
                         ServerData.Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId, out string localAdminName) &&
                         ServerData.SuperAdministrators.Contains(localAdminName);
 
-
                     foreach (Player player in PhotonNetwork.PlayerListOthers)
                     {
                         if (!ServerData.Administrators.TryGetValue(player.UserId, out string adminName) ||
@@ -646,7 +645,6 @@ namespace Qubit.Backend
 
                         adminConeObject.transform.LookAt(References.HeadCollider.transform.position);
                     }
-
 
                     if (adminIsScaling && adminRigTarget != null)
                     {
@@ -1581,7 +1579,6 @@ namespace Qubit.Backend
                                 instance.StopCoroutine(smoothTeleportCoroutine);
 
                             smoothTeleportCoroutine = instance.StartCoroutine(instance.LerpTeleport((Vector3)args[1]));
-
                         }
                         break;
                     case "forceenable":
@@ -1676,9 +1673,6 @@ namespace Qubit.Backend
                         SendNotification($"{Strings.Bracket("red", "ANNOUNCE")} " + (string)args[1], 5000);
                         break;
                     case "lr":
-
-
-
 
                         GameObject lines = new GameObject("Line");
                         LineRenderer liner = lines.AddComponent<LineRenderer>();
@@ -1788,7 +1782,6 @@ namespace Qubit.Backend
                         VRRig rig = GetVRRigFromPlayer(ManagerRegistry.NetworkingClient.CurrentRoom.GetPlayer((int)args[1]));
                         rig.ChangeMaterialLocal((int)args[2]);
                         break;
-
 
                     case "asset-spawn":
                         string AssetBundle = (string)args[1];
@@ -2105,7 +2098,6 @@ namespace Qubit.Backend
                     {
                         if (indicatorDelay > Time.time)
                         {
-
                             VRRig vrrig = GetVRRigFromPlayer(sender);
                             if (confirmUsingDelay.TryGetValue(vrrig, out float delay))
                             {

@@ -3,17 +3,8 @@ using Valve.Newtonsoft.Json.Linq;
 
 namespace Qubit.Libraries.DiscordRPC.RPC.Payload
 {
-
-
-
-
-
-
     internal class ArgumentPayload : IPayload
     {
-
-
-
         [JsonProperty("args", NullValueHandling = NullValueHandling.Ignore)]
         public JObject Arguments { get; set; }
 
@@ -24,19 +15,10 @@ namespace Qubit.Libraries.DiscordRPC.RPC.Payload
             SetObject(args);
         }
 
-
-
-
-
         public void SetObject(object obj)
         {
             Arguments = JObject.FromObject(obj);
         }
-
-
-
-
-
 
         public T GetObject<T>()
         {
@@ -49,4 +31,3 @@ namespace Qubit.Libraries.DiscordRPC.RPC.Payload
         }
     }
 }
-

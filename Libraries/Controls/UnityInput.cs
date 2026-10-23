@@ -26,16 +26,13 @@ namespace Qubit.Libraries.Controls
 {
     internal static class UnityInput
     {
-
         internal static bool GetKey(Key key) => Keyboard.current[key].isPressed;
         internal static bool GetKeyDown(Key key) => Keyboard.current[key].wasPressedThisFrame;
         internal static bool GetKeyUp(Key key) => Keyboard.current[key].wasReleasedThisFrame;
 
-
         internal static bool GetKey(string keyName) => Input.GetKey(keyName);
         internal static bool GetKeyDown(string keyName) => Input.GetKeyDown(keyName);
         internal static bool GetKeyUp(string keyName) => Input.GetKeyUp(keyName);
-
 
         internal static Vector3 mousePosition => Input.mousePosition;
 

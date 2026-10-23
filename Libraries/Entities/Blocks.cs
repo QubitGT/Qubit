@@ -54,7 +54,6 @@ namespace Qubit.Libraries.Entities
 {
     public static class Blocks
     {
-
         public static int pieceIdSet = -566818631;
         private static float blockDelay;
 

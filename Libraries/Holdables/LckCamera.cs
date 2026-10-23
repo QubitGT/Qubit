@@ -37,7 +37,6 @@ namespace Qubit.Libraries.Holdables
 {
     public static class LckCamera
     {
-
         public static void CameraGun()
         {
             GunLibrary.Point(NewPointer =>

@@ -316,12 +316,6 @@ namespace Qubit.Modules.Categories
         public static bool isLeftGrappling;
         public static bool isRightGrappling;
 
-
-
-
-
-
-
         public static GameObject portalGun;
         public static GameObject bluePortal;
         public static GameObject orangePortal;
@@ -863,7 +857,6 @@ namespace Qubit.Modules.Categories
             velocity *= FlySpeed;
             References.Rigidbody.linearVelocity = Vector3.Lerp(References.Rigidbody.linearVelocity, velocity, 0.12875f);
 
-
             ZeroGravity();
         }
 
@@ -1011,7 +1004,6 @@ namespace Qubit.Modules.Categories
                 lastPosition = References.Rigidbody.transform.position;
         }
         public static void ApplyDriveSpeed(int index) => driveSpeed = DriveSpeedAmounts[index];
-
 
         public static void ApplyFastRopesSpeed(int index) => RopeAttach.amplifier = FastRopesSpeedAmounts[index];
         public static void Drive()
@@ -2065,7 +2057,6 @@ namespace Qubit.Modules.Categories
         {
             References.Player.UnsetGravityOverride(References.Player);
             GTPlayerTransform.ApplyRotationOverride(Quaternion.identity, Time.frameCount);
-
         }
         public static void Rewind()
         {
@@ -2321,7 +2312,6 @@ namespace Qubit.Modules.Categories
                 References.InputPoller.rightControllerGripFloat = Mathf.Lerp(lastPosition.rightGrip ? 1f : 0f, currentPosition.rightGrip ? 1f : 0f, t);
                 References.InputPoller.leftControllerIndexFloat = Mathf.Lerp(lastPosition.leftTrigger ? 1f : 0f, currentPosition.leftTrigger ? 1f : 0f, t);
 
-
                 Notifications.information["Macro Time"] = $"{macroEndTime - elapsed:F1}s";
                 Notifications.information["Macro Name"] = macro.name;
 
@@ -2431,7 +2421,6 @@ namespace Qubit.Modules.Categories
                 ZeroGravity();
             }
         }
-
 
         public static void LegitimateWallWalk()
         {
@@ -3894,7 +3883,6 @@ namespace Qubit.Modules.Categories
         }
         public static void ClimbyHands()
         {
-
             if (climb == null)
             {
                 climb = new GameObject("GR");

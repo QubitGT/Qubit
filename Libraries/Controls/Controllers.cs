@@ -135,19 +135,6 @@ namespace Qubit.Libraries.Controls
             public float dataCacheTime;
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
         public static ControllerType GetControllerType(bool left)
         {
             try
@@ -186,40 +173,9 @@ namespace Qubit.Libraries.Controls
             }
         }
 
-
-
-
-
-
-
-
         public static ControllerType GetLeftControllerType() => GetControllerType(true);
 
-
-
-
-
-
-
-
         public static ControllerType GetRightControllerType() => GetControllerType(false);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right) GetTrueHandPosition(bool left)
         {
@@ -230,27 +186,10 @@ namespace Qubit.Libraries.Controls
             return (controllerTransform.position + controllerTransform.rotation * (handState.handOffset * References.Player.scale), rot, rot * Vector3.up, rot * Vector3.forward, rot * Vector3.right);
         }
 
-
-
-
-
-
-
-
-
         public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right)
             GetTrueLeftHand() => GetTrueHandPosition(true);
 
-
-
-
-
-
-
-
-
         public static (Vector3 position, Quaternion rotation, Vector3 up, Vector3 forward, Vector3 right)
             GetTrueRightHand() => GetTrueHandPosition(false);
-
     }
 }

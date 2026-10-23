@@ -378,9 +378,6 @@ namespace Qubit.Modules.Categories
 
         public static bool legacyKickFreeze;
 
-
-
-
         private static bool _optimizeEvents;
         public static bool OptimizeEvents
         {
@@ -539,7 +536,6 @@ namespace Qubit.Modules.Categories
         {
             if (Networking.InRoom)
             {
-
                 if (!IsGuardian(PhotonNetwork.LocalPlayer)) return;
                 foreach (TappableGuardianIdol tgi in GetAllType<TappableGuardianIdol>())
                 {

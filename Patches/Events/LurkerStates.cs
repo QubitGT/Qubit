@@ -34,6 +34,5 @@ namespace Qubit.Patches.Events
             !(enabled &&
                 newState == LurkerGhost.ghostState.possess &&
                 __instance.targetPlayer == Networking.LocalPlayer);
-
     }
 }

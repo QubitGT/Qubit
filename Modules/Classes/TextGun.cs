@@ -28,7 +28,6 @@ namespace Qubit.Modules.Classes
 {
     public static class TextGun
     {
-
         public static Dictionary<string, bool[][]> Letters = new Dictionary<string, bool[][]> {
             { "A", new[]
             {

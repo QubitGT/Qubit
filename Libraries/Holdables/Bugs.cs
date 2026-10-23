@@ -49,7 +49,6 @@ namespace Qubit.Libraries.Holdables
 {
     public static class Bugs
     {
-
         public static Coroutine BugCoroutine;
 
         public static ThrowableBug _firefly;

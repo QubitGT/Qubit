@@ -22,6 +22,7 @@
 using Qubit.Core;
 using Qubit.Extensions;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Qubit.Extensions.Random;
@@ -57,7 +58,6 @@ namespace Qubit.Frontend.Colors
             targetColor.a = 0f;
 
             return targetColor;
-
         }
 
         public void SetColor(int index, Color color, bool setMirror = true)
@@ -80,6 +80,31 @@ namespace Qubit.Frontend.Colors
             }
             else
                 colors[index].color = color;
+        }
+
+        public void SetColorAt(int index, Color color) =>
+            colors[index].color = color;
+
+        public void AddColorPoint()
+        {
+            var points = colors.ToList();
+            points.Add(new GradientColorKey(points.Count > 0 ? points[^1].color : Color.white, 1f));
+            Respace(points);
+            colors = points.ToArray();
+        }
+
+        public void RemoveColorPoint(int index)
+        {
+            if (colors.Length <= 2 || index < 0 || index >= colors.Length) return;
+            var points = colors.Where((_, i) => i != index).ToList();
+            Respace(points);
+            colors = points.ToArray();
+        }
+
+        private static void Respace(List<GradientColorKey> points)
+        {
+            for (int i = 0; i < points.Count; i++)
+                points[i] = new GradientColorKey(points[i].color, points.Count == 1 ? 0f : (float)i / (points.Count - 1));
         }
 
         public void SetColors(Color color)

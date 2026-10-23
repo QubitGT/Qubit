@@ -477,7 +477,6 @@ namespace Qubit.Modules.Categories
             {
                 try
                 {
-
                     VRRig plr = vrrig;
                     NetPlayer player = GetPlayerFromVRRig(plr);
                     if (player != null)
@@ -488,7 +487,6 @@ namespace Qubit.Modules.Categories
                         float b = 0f;
                         try
                         {
-
                             r = plr.playerColor.r * 255;
                             g = plr.playerColor.r * 255;
                             b = plr.playerColor.r * 255;
@@ -521,7 +519,6 @@ namespace Qubit.Modules.Categories
             {
                 try
                 {
-
                     VRRig plr = vrrig;
                     NetPlayer player = GetPlayerFromVRRig(plr);
                     if (player != null)
@@ -532,7 +529,6 @@ namespace Qubit.Modules.Categories
                         float b = 0f;
                         try
                         {
-
                             r = plr.playerColor.r * 255;
                             g = plr.playerColor.r * 255;
                             b = plr.playerColor.r * 255;

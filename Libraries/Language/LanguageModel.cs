@@ -71,7 +71,6 @@ namespace Qubit.Libraries.Language
         {
             int count = input.Split(new[] { ' ', '\n', '\r', '\t' }, StringSplitOptions.RemoveEmptyEntries).Length;
             return (count * 400) + 500;
-
         }
 
         static Module FindSimilar(string argument)

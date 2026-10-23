@@ -3,19 +3,10 @@ using Valve.Newtonsoft.Json;
 
 namespace Qubit.Libraries.DiscordRPC.RPC.Payload
 {
-
-
-
     internal abstract class IPayload
     {
-
-
-
         [JsonProperty("cmd"), JsonConverter(typeof(EnumSnakeCaseConverter))]
         public Command Command { get; set; }
-
-
-
 
         [JsonProperty("nonce")]
         public string Nonce { get; set; }
@@ -32,4 +23,3 @@ namespace Qubit.Libraries.DiscordRPC.RPC.Payload
         }
     }
 }
-

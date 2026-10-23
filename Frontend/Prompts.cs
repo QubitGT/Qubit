@@ -43,7 +43,6 @@ namespace Qubit.Frontend
 {
     public static class Prompts
     {
-
         public static void RenderPrompt()
         {
             TextMeshPro promptText = new GameObject
@@ -305,20 +304,6 @@ namespace Qubit.Frontend
 
         public static Material promptMaterial;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         public static void Prompt(string Message, Action Accept = null, Action Decline = null, string AcceptButton = "Yes", string DeclineButton = "No")
         {
             Modules.Categories.Settings.DestroyKeyboard();
@@ -328,19 +313,6 @@ namespace Qubit.Frontend
             if (menu != null && prompts.Count <= 1)
                 ReloadMenu();
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static void PromptSingle(string Message, Action Accept = null, string AcceptButton = "Ok")
         {
@@ -352,20 +324,6 @@ namespace Qubit.Frontend
                 ReloadMenu();
         }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         public static void PromptText(string Message, Action Accept = null, Action Decline = null, string AcceptButton = "Yes", string DeclineButton = "No")
         {
             Modules.Categories.Settings.DestroyKeyboard();
@@ -375,18 +333,6 @@ namespace Qubit.Frontend
             if (menu != null && prompts.Count <= 1)
                 ReloadMenu();
         }
-
-
-
-
-
-
-
-
-
-
-
-
 
         public static void PromptSingleText(string Message, Action Accept = null, string AcceptButton = "Ok")
         {

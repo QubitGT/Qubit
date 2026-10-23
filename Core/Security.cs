@@ -77,9 +77,6 @@ namespace Qubit.Core
             return false;
         }
 
-
-
-
         public static void RPCProtection()
         {
             if (!Networking.InRoom)
@@ -118,10 +115,6 @@ namespace Qubit.Core
 
             return html;
         }
-
-
-
-
 
         public static string CurrentTimestamp()
         {
