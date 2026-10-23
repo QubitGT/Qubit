@@ -55,7 +55,7 @@ namespace Qubit.Modules.Categories.CustomMaps.Maps
 
             new Module { name = "Monke Magic Crash Gun", displayName = "Crash Gun", method = CrashGun, toolTip = "Crashes whoever your hand desires in the custom map." },
             new Module { name = "Monke Magic Crash All", displayName = "Crash All", method = CrashAll, isTogglable = false, toolTip = "Crashes everyone in the custom map." },
-            new Module { name = "Monke Magic Anti Report", displayName = "Anti Report <color=grey>[</color><color=green>Crash</color><color=grey>]</color>", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
+            new Module { name = "Monke Magic Anti Report", displayName = $"Anti Report {Strings.Bracket("green", "Crash")}", method = AntiReportCrash, toolTip = "Crashes everyone who tries to report you." },
             new Module { name = "Monke Magic Crash Aura", displayName = "Crash Aura", method = CrashAura, toolTip = "Crashes players nearby you in the custom map." },
             new Module { name = "Monke Magic Crash On Touch", displayName = "Crash On Touch", method = CrashOnTouch, toolTip = "Crashes whoever you touch in the custom map." },
             new Module { name = "Monke Magic Crash When Touched", displayName = "Crash When Touched", method = CrashWhenTouched, toolTip = "Crashes whoever touches you in the custom map." }

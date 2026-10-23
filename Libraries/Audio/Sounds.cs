@@ -114,7 +114,7 @@ namespace Qubit.Libraries.Audio
                 { "Bubble", 84 },
                 { "Steal", "Audio/Menu/Buttons/steal.ogg" },
                 { "Anthrax", "Audio/Menu/Buttons/anthrax.ogg" },
-                { "Lever", "Audio/Menu/Buttons/lever.ogg" },
+                { "Lever", "Audio/Menu/Buttons/leverup.ogg" },
                 { "Minecraft", "Audio/Menu/Buttons/minecraft.ogg" },
                 { "Rec Room", "Audio/Menu/Buttons/lever$1.ogg" },
                 { "Watch", "Audio/Menu/Buttons/watch.ogg" },
@@ -143,15 +143,15 @@ namespace Qubit.Libraries.Audio
 
             ["Menu"] = new Dictionary<string, object>
             {
-                { "Next", "next.ogg" },
-                { "Previous", "previous.ogg" },
+                { "Next", "Audio/Menu/next.ogg" },
+                { "Previous", "Audio/Menu/prev.ogg" },
                 { "Up", "Audio/Menu/up.ogg" },
                 { "Down", "Audio/Menu/down.ogg" },
-                { "Open", "open.ogg" },
-                { "Close", "close.ogg" },
-                { "Select", "click.ogg" },
+                { "Open", "Audio/Menu/open.ogg" },
+                { "Close", "Audio/Menu/close.ogg" },
+                { "Select", "Audio/Menu/Buttons/click.ogg" },
                 { "Achievement", "Audio/Menu/achievement.ogg" },
-                { "Admin", "notification.ogg" },
+                { "Admin", "Audio/Menu/admin.ogg" },
                 { "Patreon", "Audio/Menu/patreon.ogg" }
             },
 

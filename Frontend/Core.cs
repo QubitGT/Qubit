@@ -269,7 +269,9 @@ namespace Qubit.Frontend
                 }
 
 
-                if (longMenu && pageNumber != 0)
+                // Long Menu has no layout implementation for the Modern (Qubit) menu body; forcing a reload
+                // every frame here while Modern's own pagination kept pageNumber non-zero softlocked the menu.
+                if (longMenu && !UseQubit && pageNumber != 0)
                 {
                     pageNumber = 0;
                     ReloadMenu();

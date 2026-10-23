@@ -3878,8 +3878,9 @@ exit 0";
 
         public static void DisableCustomFont()
         {
-            fontCycle--;
-            Manager.GetIndex("Change Font Type").cycleValue(true);
+            // Reapply the already-selected font type instead of advancing the cycle index,
+            // which previously made the font type drift forward one step per toggle.
+            ApplyFontType(fontCycle);
         }
 
         public static void ApplyPageType(int index) { pageButtonType = index; buttonOffset = index == 2 ? 2 : 0; }
@@ -3905,7 +3906,7 @@ exit 0";
         {
             Sounds.DefaultSounds["Notification"] = soundName;
             Manager.GetIndex("Change Notification Sound").displayName =
-                $"Change Notification Sound <color=grey>[</color><color=green>{soundName}</color><color=grey>]</color>";
+                $"Change Notification Sound {Bracket("green", soundName)}";
         }
         public static void ChangeNotificationSound(bool positive = true, bool fromMenu = false)
         {
@@ -5670,7 +5671,7 @@ exit 0";
         {
             Sounds.DefaultSounds["Button"] = soundName;
             Manager.GetIndex("Change Button Sound").displayName =
-                $"Change Button Sound <color=grey>[</color><color=green>{soundName}</color><color=grey>]</color>";
+                $"Change Button Sound {Bracket("green", soundName)}";
         }
         public static void ChangeButtonSound(bool positive = true, bool fromMenu = false)
         {

@@ -442,7 +442,7 @@ namespace Qubit.Modules.Categories
             if (ProjectileMode < 0)
                 ProjectileMode = projectileNames.Length - 1;
 
-            Manager.GetIndex("Change Projectile").displayName = "Change Projectile <color=grey>[</color><color=green>" + projectileNames[ProjectileMode] + "</color><color=grey>]</color>";
+            Manager.GetIndex("Change Projectile").displayName = "Change Projectile " + Strings.Bracket("green", projectileNames[ProjectileMode]);
         }
         public static void ApplyProjectileIndex(int index) => targetProjectileIndex = index;
         public static void ApplyShootSpeed(int index) => ShootStrength = ShootStrengthTypes[index];

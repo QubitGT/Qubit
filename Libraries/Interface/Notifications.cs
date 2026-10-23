@@ -148,6 +148,7 @@ namespace Qubit.Libraries.Interface
         }
 
         private float updateArraylistTimer;
+        private float updateArraylistColorTimer;
         private void FixedUpdate()
         {
             try
@@ -262,7 +263,13 @@ namespace Qubit.Libraries.Interface
                                 sb.Append(sortedMods[i]).Append('\n');
                         }
                         arraylistText.SafeSetText(sb.ToString());
+                    }
 
+                    // The gradient on the arraylist followed the (slower) list-rebuild cadence above;
+                    // give it its own ~0.1s timer so the color itself always looks smooth.
+                    if (Time.time > updateArraylistColorTimer)
+                    {
+                        updateArraylistColorTimer = Time.time + 0.1f;
                         arraylistText.color = Manager.GetIndex("Swap GUI Colors").enabled ? textColors[1].GetColor(0) : backgroundColor.GetCurrentColor();
                     }
                 }

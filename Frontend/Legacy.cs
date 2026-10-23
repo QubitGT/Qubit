@@ -285,7 +285,7 @@ namespace Qubit.Frontend
                 title.text = Strings.FollowMenuSettings(title.text, !doCustomName, true);
 
                 if (!noPageNumber)
-                    title.text += $" <color=grey>[</color><color=white>{(pageScrolling ? pageOffset : pageNumber) + 1}</color><color=grey>]</color>";
+                    title.text += $" {Strings.Bracket("white", ((pageScrolling ? pageOffset : pageNumber) + 1).ToString())}";
 
                 if (gradientTitle)
                     title.text = RichtextGradient(NoRichtextTags(title.text),

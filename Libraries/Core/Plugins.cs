@@ -123,7 +123,7 @@ namespace Qubit.Libraries.Core
             {
                 try
                 {
-                    Manager.AddModule("Plugin Settings", new Module { name = plugin.FileName, displayName = (plugin.Enabled ? "<color=grey>[</color><color=green>ON</color><color=grey>]</color>" : "<color=grey>[</color><color=red>OFF</color><color=grey>]</color>") + " " + plugin.Name, method = () => TogglePlugin(plugin), isTogglable = false, toolTip = plugin.Description });
+                    Manager.AddModule("Plugin Settings", new Module { name = plugin.FileName, displayName = (plugin.Enabled ? Qubit.Extensions.Strings.Bracket("green", "ON") : Qubit.Extensions.Strings.Bracket("red", "OFF")) + " " + plugin.Name, method = () => TogglePlugin(plugin), isTogglable = false, toolTip = plugin.Description });
                 }
                 catch (Exception e) { Logs.Log("Error with enabling plugin " + plugin.Name + ": " + e); }
             }
@@ -194,7 +194,7 @@ namespace Qubit.Libraries.Core
 
             File.WriteAllText($"{PluginInfo.BaseDirectory}/Plugins/DisabledPlugins.txt", disabledPluginsString);
 
-            Manager.GetIndex(plugin.FileName).displayName = (plugin.Enabled ? "<color=grey>[</color><color=green>ON</color><color=grey>]</color>" : "<color=grey>[</color><color=red>OFF</color><color=grey>]</color>") + " " + plugin.Name;
+            Manager.GetIndex(plugin.FileName).displayName = (plugin.Enabled ? Qubit.Extensions.Strings.Bracket("green", "ON") : Qubit.Extensions.Strings.Bracket("red", "OFF")) + " " + plugin.Name;
         }
 
         public static void ExecuteUpdate()

@@ -33,6 +33,8 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.XR;
+using static Qubit.Extensions.Colors;
+using static Qubit.Extensions.Strings;
 using static Qubit.Frontend.Core;
 using static Qubit.Frontend.Keyboard;
 using static Qubit.Frontend.Prompts;
@@ -105,7 +107,8 @@ namespace Qubit.Frontend.Classes
             }
             art.Find("Front").localPosition = new Vector3(0, 0, -HalfDepth - .0003f);
             art.Find("Back").localPosition = new Vector3(0, 0, HalfDepth + .0003f);
-            Add(art, "Shell", 0, 0, 540, 800, 36);
+            // Modern is round by default; "Round Menu" is relabeled "Pointy Menu" here and squares the shell off instead.
+            Add(art, "Shell", 0, 0, 540, 800, roundMenu ? 0 : 36);
         }
 
         public static void LayoutRows(Transform front, int count)
@@ -218,7 +221,12 @@ namespace Qubit.Frontend.Classes
             qubitJoystickTargets.Clear();
             qubitJoystickMarker = null;
             qubitClock = qubitDate = qubitStats = qubitSearch = null;
-            if (!UseQubit) return Legacy.CreateMenu();
+            if (!UseQubit)
+            {
+                Manager.GetIndex("Round Menu").displayName = null;
+                return Legacy.CreateMenu();
+            }
+            Manager.GetIndex("Round Menu").displayName = "Pointy Menu";
             try
             {
                 if (qubitPrefab == null) qubitPrefab = QubitAssets.Load<GameObject>("QubitMenu");
@@ -249,6 +257,30 @@ namespace Qubit.Frontend.Classes
                 QubitMenuBody.LayoutRows(qubitFront, QubitRowCount);
                 LayoutHeader(qubitFront);
                 LayoutPageButtons(qubitFront);
+
+                // Modern never ran the title through the same name/gradient/animation/decoration
+                // pipeline Legacy uses, so Custom Menu Name, Dynamic/Animated Title and the text
+                // decorator toggles below had no effect here.
+                var qubitTitleLabel = qubitFront.Find("Home/Title").GetComponent<TMP_Text>();
+                string qubitTitleText = doCustomName ? customMenuName : "Qubit";
+                qubitTitleText = FollowMenuSettings(qubitTitleText, !doCustomName, true);
+                if (gradientTitle)
+                    qubitTitleText = RichtextGradient(NoRichtextTags(qubitTitleText),
+                        new[]
+                        {
+                            new GradientColorKey(BrightenColor(buttonColors[0].GetColor(0)), 0f),
+                            new GradientColorKey(BrightenColor(buttonColors[0].GetColor(0), 0.95f), 0.5f),
+                            new GradientColorKey(BrightenColor(buttonColors[0].GetColor(0)), 1f)
+                        });
+                if (animatedTitle)
+                {
+                    string targetString = doCustomName ? NoRichtextTags(customMenuName) : "Qubit";
+                    int length = (int)Mathf.PingPong(Time.time / 0.25f, targetString.Length);
+                    qubitTitleText = length > 0 ? targetString[..length] : "";
+                }
+                qubitTitleLabel.richText = true;
+                qubitTitleLabel.text = FixTMProTags(qubitTitleText);
+                FollowMenuSettings(qubitTitleLabel);
                 qubitFrontCanvas = qubitFront.GetComponent<Canvas>();
                 qubitBackCanvas = art.transform.Find("Back").GetComponent<Canvas>();
                 foreach (Graphic graphic in art.GetComponentsInChildren<Graphic>(true))
@@ -280,16 +312,23 @@ namespace Qubit.Frontend.Classes
                     {
                         var row = (RectTransform)qubitFront.Find("Row" + i);
                         var label = row.Find("Label").GetComponent<TMP_Text>();
-                        label.enableAutoSizing = true; label.fontSizeMin = 12; label.fontSizeMax = 23;
+                        label.richText = true;
+                        label.enableAutoSizing = !noAutoSizeText;
+                        if (noAutoSizeText) label.fontSize = 23;
+                        label.fontSizeMin = 12; label.fontSizeMax = 23;
                         label.textWrappingMode = TextWrappingModes.Normal;
+                        label.overflowMode = noAutoSizeText ? TextOverflowModes.Overflow : TextOverflowModes.Truncate;
 
                         if (isSearching && i == 0) { qubitSearch = label; row.Find("Indicator").gameObject.SetActive(false); continue; }
                         int index = i - (isSearching ? 1 : 0);
                         if (index >= visible.Length) { row.gameObject.SetActive(false); continue; }
                         var info = visible[index];
-                        label.text = Manager.CurrentCategoryName == "Main" ? QubitCategoryLabel(info) : info.RenderName;
+                        string rowText = Manager.CurrentCategoryName == "Main" ? QubitCategoryLabel(info) : info.RenderName;
+                        rowText = FixTMProTags(FollowMenuSettings(rowText));
+                        label.text = rowText;
                         if (isSearching && info.legacy) label.text = $"[L] {label.text}";
                         label.color = QubitDetails.ButtonTextColor;
+                        FollowMenuSettings(label);
                         row.GetComponent<Image>().color = info.enabled ? QubitDetails.EnabledButtonColor : Color.white;
                         if (!info.label)
                         {
@@ -300,6 +339,10 @@ namespace Qubit.Frontend.Classes
                                 AddHitbox(row, info.name, 1, row.rect.width - 70, 70);
                                 AddHitbox(row, info.name, 0, 70, row.rect.width - 140, true);
 
+                                // Numeric rows have no ON/OFF state, so the toggle indicator arrow doesn't belong here.
+                                row.Find("Indicator").gameObject.SetActive(false);
+                                // Force no-wrap so the leading "−" can never roll onto its own line.
+                                label.textWrappingMode = TextWrappingModes.NoWrap;
                                 label.text = "−   " + label.text + "   +";
                             }
                             else AddHitbox(row, info.name);

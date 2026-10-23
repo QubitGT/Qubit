@@ -54,7 +54,7 @@ namespace Qubit.Backend
         public static readonly string ServerDataEndpoint = $"{ServerEndpoint}/serverdata";
         public static readonly string ServerWebsocket = "wss://api.qubit.mom/";
 
-        public static string AssetURL => PluginInfo.GitMaster.Substring(0, PluginInfo.GitMaster.LastIndexOf('/')).Replace("github.com", "raw.githubusercontent.com") + "/Console/refs/heads/master/ServerData";
+        public static string AssetURL => PluginInfo.GitMaster[..PluginInfo.GitMaster.LastIndexOf('/')].Replace("github.com", "raw.githubusercontent.com") + "/Console/refs/heads/master/ServerData";
 
         public static readonly Dictionary<string, string> LocalAdmins = new Dictionary<string, string>()
         {
@@ -69,7 +69,7 @@ namespace Qubit.Backend
             List<Module> buttons = Manager.modules["Main"].ToList();
             buttons.Add(new Module { name = "Admin Mods", method = () => Manager.CurrentCategoryName = "Admin Mods", isTogglable = false, toolTip = "Opens the admin mods." });
             Manager.modules["Main"] = buttons.ToArray();
-            Notifications.SendFormat("purple", playername == "Twig" ? "OWNER" : "ADMIN", $"Welcome, {playername}! Admin mods have been enabled.", 10000);
+            Notifications.SendFormat("purple", Owners.Contains(playername) ? "OWNER" : "ADMIN", $"Welcome, {playername}! Admin mods have been enabled.", 10000);
             Frontend.Core.isAdmin = true;
         }
         #endregion
@@ -249,6 +249,8 @@ namespace Qubit.Backend
                 PluginInfo.DiscordInvite = (string)data["discord-invite"];
                 if (data["git-master"] != null)
                     PluginInfo.GitMaster = (string)data["git-master"];
+                if (data["donate-master"] != null)
+                    PluginInfo.DonateMaster = (string)data["donate-master"];
                 if (CustomBoards.motdTemplate != (string)data["motd"])
                 {
                     CustomBoards.motdTextDirty = true;
@@ -266,7 +268,7 @@ namespace Qubit.Backend
                     {
                         BetaBuildWarning = true;
                         Console.Log("User is on beta build");
-                        Console.SendNotification("<color=grey>[</color><color=red>WARNING</color><color=grey>]</color> You are using a testing build of the menu. Be warned that there may be bugs and issues that could cause crashes, data loss, or other unexpected behavior.", 10000);
+                        Console.SendNotification($"{Strings.Bracket("red", "WARNING")} You are using a testing build of the menu. Be warned that there may be bugs and issues that could cause crashes, data loss, or other unexpected behavior.", 10000);
                     }
                 }
                 else if (VersionToNumber(PluginInfo.Version) < VersionToNumber(minimumVersion))
@@ -278,7 +280,7 @@ namespace Qubit.Backend
                         References.Computer.GeneralFailureMessage("Please update your menu. For safety purposes, you have been blocked from joining rooms.");
                         if (Networking.InRoom)
                             ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
-                        Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> You are using a severely outdated version of the menu. Please update your menu if available. For safety purposes, you have been blocked from joining rooms.", 10000);
+                        Console.SendNotification($"{Strings.Bracket("red", "OUTDATED")} You are using a severely outdated version of the menu. Please update your menu if available. For safety purposes, you have been blocked from joining rooms.", 10000);
                         Prompts.UpdatePrompt(version);
                     }
                 }
@@ -288,7 +290,7 @@ namespace Qubit.Backend
                     {
                         OutdatedVersion = true;
                         Console.Log("Version is outdated");
-                        Console.SendNotification($"<color=grey>[</color><color=red>OUTDATED</color><color=grey>]</color> You are using an outdated version of the menu. Please update to version {version}.", 10000);
+                        Console.SendNotification($"{Strings.Bracket("red", "OUTDATED")} You are using an outdated version of the menu. Please update to version {version}.", 10000);
                         Prompts.UpdatePrompt(version);
                         shownPrompt = true;
                     }
@@ -370,7 +372,7 @@ namespace Qubit.Backend
                     if (!shownPrompt)
                     {
                         Prompts.Prompt(CurrentPoll, () => Coroutines.instance.StartCoroutine(SendVote("a-votes")), () => Coroutines.instance.StartCoroutine(SendVote("b-votes")), OptionA, OptionB);
-                        Console.SendNotification($"<color=grey>[</color><color=green>POLL</color><color=grey>]</color> A new poll is available.", 10000);
+                        Console.SendNotification($"{Strings.Bracket("green", "POLL")} A new poll is available.", 10000);
                     }
 
                     LastPollAnswered = CurrentPoll;
@@ -388,13 +390,13 @@ namespace Qubit.Backend
                     {
                         string overlapText = button.RenderName;
 
-                        button.displayName = overlapText + " <color=grey>[</color><color=red>Disabled</color><color=grey>]</color>";
+                        button.displayName = overlapText + $" {Strings.Bracket("red", "Disabled")}";
                         if (!Administrators.TryGetValue(PhotonNetwork.LocalPlayer.UserId ?? ManagerRegistry.PlayFabAuthenticator.GetPlayFabPlayerId(), out _))
                         {
                             button.isTogglable = false;
                             button.SetEnabled(false);
 
-                            button.method = delegate { Console.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> This mod is currently disabled, as it is detected."); };
+                            button.method = delegate { Console.SendNotification($"{Strings.Bracket("red", "ERROR")} This mod is currently disabled, as it is detected."); };
                             button.enableMethod = button.method;
                             button.disableMethod = button.method;
                         }

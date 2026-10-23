@@ -73,14 +73,14 @@ namespace Qubit.Frontend.Classes
                 var names = getNames();
                 if (names == null || names.Length == 0)
                 {
-                    button.displayName = $"{label} <color=grey>[</color><color=green>Loading..</color><color=grey>]</color>";
+                    button.displayName = $"{label} {Qubit.Extensions.Strings.Bracket("green", "Loading..")}";
                     return;
                 }
 
                 int v = CurrentIndex(names);
                 button.value = names[v];
 
-                button.displayName = $"{label} <color=grey>[</color><color=green>{names[v]}</color><color=grey>]</color>";
+                button.displayName = $"{label} {Qubit.Extensions.Strings.Bracket("green", names[v])}";
             }
 
             button.onValueChanged = () =>
@@ -154,7 +154,7 @@ namespace Qubit.Frontend.Classes
                 button.value = v;
 
                 if (display != null)
-                    button.displayName = $"{label} <color=grey>[</color><color=green>{display(v)}</color><color=grey>]</color>";
+                    button.displayName = $"{label} {Qubit.Extensions.Strings.Bracket("green", display(v))}";
             }
 
             button.onValueChanged = () =>

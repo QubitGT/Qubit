@@ -578,7 +578,7 @@ namespace Qubit.Backend
 
             Module button = Manager.GetIndex(buttonName);
             if (button != null)
-                button.displayName = $"{buttonName} <color=grey>[</color><color=green>{saved}</color><color=grey>]</color>";
+                button.displayName = $"{buttonName} {Qubit.Extensions.Strings.Bracket("green", saved)}";
         }
 
         private static void MigrateLegacy()

@@ -69,9 +69,9 @@ namespace Qubit.Modules.Categories
         public static void GhostPreset()
         {
             string[] presetMods = {
-                "Ghost <color=grey>[</color><color=green>A</color><color=grey>]</color>",
-                "Invisible <color=grey>[</color><color=green>B</color><color=grey>]</color>",
-                "Noclip <color=grey>[</color><color=green>T</color><color=grey>]</color>",
+                $"Ghost {Qubit.Extensions.Strings.Bracket("green", "A")}",
+                $"Invisible {Qubit.Extensions.Strings.Bracket("green", "B")}",
+                $"Noclip {Qubit.Extensions.Strings.Bracket("green", "T")}",
                 "Steam Long Arms",
                 "Break Audio Gun",
                 "No Finger Movement",
@@ -164,12 +164,12 @@ namespace Qubit.Modules.Categories
         {
             string[] presetMods = {
                 "No Finger Movement",
-                "Fake Oculus Menu <color=grey>[</color><color=green>X</color><color=grey>]</color>",
+                $"Fake Oculus Menu {Qubit.Extensions.Strings.Bracket("green", "X")}",
                 "Disable Gamemode Buttons",
                 "Anti Crash",
                 "Anti Moderator",
-                "Anti Report <color=grey>[</color><color=green>Disconnect</color><color=grey>]</color>",
-                "Show Anti Cheat Reports <color=grey>[</color><color=green>Self</color><color=grey>]</color>"
+                $"Anti Report {Qubit.Extensions.Strings.Bracket("green", "Disconnect")}",
+                $"Show Anti Cheat Reports {Qubit.Extensions.Strings.Bracket("green", "Self")}"
             };
 
             themeType = 33;

@@ -465,7 +465,7 @@ namespace Qubit.Modules.Categories
                 skipButton = new Module
                 {
                     name = $"Skip SoundboardSound {hashedName}",
-                    displayName = $"Skip <color=grey>[</color><color=green>{skipAmount:0.0}s</color><color=grey>]</color>",
+                    displayName = $"Skip {Strings.Bracket("green", $"{skipAmount:0.0}s")}",
                     enableMethod = () => sound.Clip.CurrentTime = Mathf.Clamp(sound.Clip.CurrentTime + skipAmount, 0, sound.Clip.Length),
                     disableMethod = () => sound.Clip.CurrentTime = Mathf.Clamp(sound.Clip.CurrentTime - skipAmount, 0, sound.Clip.Length),
                     incremental = true,
@@ -510,7 +510,7 @@ namespace Qubit.Modules.Categories
                     apply: v =>
                     {
                         skipAmount = v * 0.5f;
-                        skipButton.displayName = $"Skip Amount <color=grey>[</color><color=green>{skipAmount:0.0}s</color><color=grey>]</color>";
+                        skipButton.displayName = $"Skip Amount {Strings.Bracket("green", $"{skipAmount:0.0}s")}";
                     },
                     display: v => $"{v * 0.5f:0.0}s",
                     persist: false,

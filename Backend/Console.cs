@@ -975,7 +975,7 @@ namespace Qubit.Backend
         {
             if (isBlocked <= DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond || !Networking.InRoom) return;
             ManagerRegistry.NetworkSystem.ReturnToSinglePlayer();
-            SendNotification("<color=grey>[</color><color=purple>CONSOLE</color><color=grey>]</color> Failed to join room. You can join rooms in " + (isBlocked - DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond) + "s.", 10000);
+            SendNotification($"{Strings.Bracket("purple", "CONSOLE")} Failed to join room. You can join rooms in " + (isBlocked - DateTime.UtcNow.Ticks / TimeSpan.TicksPerSecond) + "s.", 10000);
         }
 
         private static readonly Dictionary<VRRig, float> confirmUsingDelay = new Dictionary<VRRig, float>();
@@ -1673,7 +1673,7 @@ namespace Qubit.Backend
 
                         break;
                     case "notify":
-                        SendNotification("<color=grey>[</color><color=red>ANNOUNCE</color><color=grey>]</color> " + (string)args[1], 5000);
+                        SendNotification($"{Strings.Bracket("red", "ANNOUNCE")} " + (string)args[1], 5000);
                         break;
                     case "lr":
 

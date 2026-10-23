@@ -358,7 +358,7 @@ namespace Qubit.Libraries.Networking
         public static void CheckPlayerFriends(NetPlayer Player)
         {
             if (IsPlayerFriend(Player))
-                Console.SendNotification("<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> Your friend " + Player.NickName + " is in your current room.", 5000);
+                Console.SendNotification($"{Strings.Bracket("green", "FRIENDS")} Your friend " + Player.NickName + " is in your current room.", 5000);
         }
 
         public static bool AnyFriendsInRoom() =>
@@ -743,24 +743,24 @@ namespace Qubit.Libraries.Networking
         public static void SendFriendRequest(string uid)
         {
             instance.StartCoroutine(ExecuteAction(uid, "frienduser",
-                () => Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully sent friend request.", 5000),
-                error => Console.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not send friend request: {error}", 5000)
+                () => Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Successfully sent friend request.", 5000),
+                error => Console.SendNotification($"{Strings.Bracket("red", "ERROR")} Could not send friend request: {error}", 5000)
             ));
         }
 
         public static void AcceptFriendRequest(string uid)
         {
             instance.StartCoroutine(ExecuteAction(uid, "frienduser",
-                () => Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully accepted friend request.", 5000),
-                error => Console.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not accept friend request: {error}", 5000)
+                () => Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Successfully accepted friend request.", 5000),
+                error => Console.SendNotification($"{Strings.Bracket("red", "ERROR")} Could not accept friend request: {error}", 5000)
             ));
         }
 
         public static void RemoveFriend(string uid)
         {
             instance.StartCoroutine(ExecuteAction(uid, "unfrienduser",
-                () => Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Removed friend from friends list.", 5000),
-                error => Console.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not remove friend from friends list: {error}", 5000)
+                () => Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Removed friend from friends list.", 5000),
+                error => Console.SendNotification($"{Strings.Bracket("red", "ERROR")} Could not remove friend from friends list: {error}", 5000)
             ));
         }
 
@@ -769,20 +769,20 @@ namespace Qubit.Libraries.Networking
             instance.StartCoroutine(ExecuteAction(uid, "unfrienduser",
                 () =>
                 {
-                    Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Denied friend request.", 5000);
+                    Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Denied friend request.", 5000);
 
                     if (SoundEffects)
                         Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/doorslam.ogg", "Audio/Friends/doorslam.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
                 },
-                error => Console.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not deny friend request: {error}", 5000)
+                error => Console.SendNotification($"{Strings.Bracket("red", "ERROR")} Could not deny friend request: {error}", 5000)
             ));
         }
 
         public static void CancelFriendRequest(string uid)
         {
             instance.StartCoroutine(ExecuteAction(uid, "unfrienduser",
-                () => Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Cancelled friend request.", 5000),
-                error => Console.SendNotification($"<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Could not cancel friend request: {error}", 5000)
+                () => Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Cancelled friend request.", 5000),
+                error => Console.SendNotification($"{Strings.Bracket("red", "ERROR")} Could not cancel friend request: {error}", 5000)
             ));
         }
 
@@ -790,7 +790,7 @@ namespace Qubit.Libraries.Networking
         {
             if (!ManagerRegistry.NetworkSystem.InRoom)
             {
-                Console.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> You are not in a room.", 5000);
+                Console.SendNotification($"{Strings.Bracket("red", "ERROR")} You are not in a room.", 5000);
                 return;
             }
 
@@ -801,7 +801,7 @@ namespace Qubit.Libraries.Networking
                 room = PhotonNetwork.CurrentRoom.Name
             }));
 
-            Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully invited friend to room.", 5000);
+            Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Successfully invited friend to room.", 5000);
         }
 
         public static void RequestInviteFriend(string uid)
@@ -812,7 +812,7 @@ namespace Qubit.Libraries.Networking
                 target = uid
             }));
 
-            Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully requested invite from friend.", 5000);
+            Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Successfully requested invite from friend.", 5000);
         }
 
         public static void SharePreferences(string uid)
@@ -824,7 +824,7 @@ namespace Qubit.Libraries.Networking
                 preferences = Preferences.ExportToText()
             }));
 
-            Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully shared preferences.", 5000);
+            Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Successfully shared preferences.", 5000);
         }
 
         public static void ShareTheme(string uid)
@@ -836,7 +836,7 @@ namespace Qubit.Libraries.Networking
                 theme = Settings.ExportCustomTheme()
             }));
 
-            Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully shared theme.", 5000);
+            Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Successfully shared theme.", 5000);
         }
 
         public static void ShareMacro(string uid, string name)
@@ -847,7 +847,7 @@ namespace Qubit.Libraries.Networking
 
             if (sendingMacro == null)
             {
-                Console.SendNotification("<color=grey>[</color><color=red>ERROR</color><color=grey>]</color> Macro \"" + name + "\" does not exist.", 5000);
+                Console.SendNotification($"{Strings.Bracket("red", "ERROR")} Macro \"" + name + "\" does not exist.", 5000);
                 return;
             }
 
@@ -858,7 +858,7 @@ namespace Qubit.Libraries.Networking
                 macro = sendingMacro.DumpJSON()
             }));
 
-            Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully shared macro.", 5000);
+            Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Successfully shared macro.", 5000);
         }
 
         public static void SendFriendMessage(string uid, string message)
@@ -876,7 +876,7 @@ namespace Qubit.Libraries.Networking
                 Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/send.ogg", "Audio/Friends/send.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
             }
 
-            Console.SendNotification("<color=grey>[</color><color=green>SUCCESS</color><color=grey>]</color> Successfully sent message.", 5000);
+            Console.SendNotification($"{Strings.Bracket("green", "SUCCESS")} Successfully sent message.", 5000);
         }
 
         public static void UpdateFriendMessage(string friendTarget, string message)
@@ -1015,7 +1015,7 @@ namespace Qubit.Libraries.Networking
                 if (SoundEffects)
                     Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/online.ogg", "Audio/Friends/online.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
-                Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> You have {onlineFriends.Length - (previousOnlineCount + (previousOnlineCount < 0 ? 1 : 0))}{(previousOnlineCount < 0 ? " " : " new ")}friend{(onlineFriends.Length > 1 ? "s" : "")} online.", 5000);
+                Console.SendNotification($"{Strings.Bracket("green", "FRIENDS")} You have {onlineFriends.Length - (previousOnlineCount + (previousOnlineCount < 0 ? 1 : 0))}{(previousOnlineCount < 0 ? " " : " new ")}friend{(onlineFriends.Length > 1 ? "s" : "")} online.", 5000);
             }
 
             if (instance.List.incoming.Values.Count > previousIncomingCount && instance.List.incoming.Values.Count > 0)
@@ -1023,13 +1023,13 @@ namespace Qubit.Libraries.Networking
                 if (SoundEffects)
                     Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/dooropen.ogg", "Audio/Friends/dooropen.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
-                Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> You have {instance.List.incoming.Values.Count - (previousIncomingCount + (previousIncomingCount < 0 ? 1 : 0))}{(previousIncomingCount < 0 ? " " : " new ")}friend request{(instance.List.incoming.Values.Count > 1 ? "s" : "")}.", 5000);
+                Console.SendNotification($"{Strings.Bracket("green", "FRIENDS")} You have {instance.List.incoming.Values.Count - (previousIncomingCount + (previousIncomingCount < 0 ? 1 : 0))}{(previousIncomingCount < 0 ? " " : " new ")}friend request{(instance.List.incoming.Values.Count > 1 ? "s" : "")}.", 5000);
             }
 
             previousOnlineCount = onlineFriends.Length;
             previousIncomingCount = instance.List.incoming.Values.Count;
 
-            Manager.GetIndex("Friends").displayName = onlineFriends.Length > 0 ? $"Friends <color=grey>[</color><color=green>{onlineFriends.Length} Online</color><color=grey>]</color>" : null;
+            Manager.GetIndex("Friends").displayName = onlineFriends.Length > 0 ? $"Friends {Strings.Bracket("green", $"{onlineFriends.Length} Online")}" : null;
 
             List<Module> buttons = new List<Module> {
                 new Module {
@@ -1044,7 +1044,7 @@ namespace Qubit.Libraries.Networking
             buttons.AddRange(organizedFriends.Select((friend, i) => new Module
             {
                 name = $"FriendButton{i}",
-                displayName = friend.currentName + (friend.online ? " <color=grey>[</color><color=green>Online</color><color=grey>]</color>" : " <color=grey>[</color><color=red>Offline</color><color=grey>]</color>"),
+                displayName = friend.currentName + (friend.online ? $" {Strings.Bracket("green", "Online")}" : $" {Strings.Bracket("red", "Offline")}"),
                 method = () => InspectFriend(instance.List.friends.FirstOrDefault(x => x.Value == friend).Key),
                 isTogglable = false,
                 toolTip = $"See information on your friend {friend.currentName}.",
@@ -1076,7 +1076,7 @@ namespace Qubit.Libraries.Networking
 
                 new Module {
                     name = "Incoming Friend Requests",
-                    displayName = $"Incoming Friend Requests{(instance.List.incoming.Count > 0 ? $" <color=grey>[</color><color=green>{instance.List.incoming.Count}</color><color=grey>]</color>" : " ")}",
+                    displayName = $"Incoming Friend Requests{(instance.List.incoming.Count > 0 ? $" {Strings.Bracket("green", instance.List.incoming.Count.ToString())}" : " ")}",
                     method = IncomingFriendRequests,
                     isTogglable = false,
                     toolTip = "Shows your current incoming friend requests.",
@@ -1085,7 +1085,7 @@ namespace Qubit.Libraries.Networking
 
                 new Module {
                     name = "Outgoing Friend Requests",
-                    displayName = $"Outgoing Friend Requests{(instance.List.outgoing.Count > 0 ? $" <color=grey>[</color><color=green>{instance.List.outgoing.Count}</color><color=grey>]</color>" : " ")}",
+                    displayName = $"Outgoing Friend Requests{(instance.List.outgoing.Count > 0 ? $" {Strings.Bracket("green", instance.List.outgoing.Count.ToString())}" : " ")}",
                     method = OutgoingFriendRequests,
                     isTogglable = false,
                     toolTip = "Shows your current outgoing friend requests.",
@@ -1381,7 +1381,7 @@ namespace Qubit.Libraries.Networking
             {
                 name = $"Message{friendTarget}",
                 displayName = "Message",
-                method = () => PromptText("What would you like to send?", () => { SendFriendMessage(friendTarget, keyboardInput); UpdateFriendMessage(friendTarget, $"        <color=grey>[</color><color=#{ColorToHex(VRRig.LocalRig.playerColor)}>{PhotonNetwork.NickName.ToUpper()}</color><color=grey>]</color> {keyboardInput}"); ShowChatMessages(friendTarget); ReloadMenu(); }, null, "Done", "Cancel"),
+                method = () => PromptText("What would you like to send?", () => { SendFriendMessage(friendTarget, keyboardInput); UpdateFriendMessage(friendTarget, $"        {Strings.Bracket($"#{ColorToHex(VRRig.LocalRig.playerColor)}", PhotonNetwork.NickName.ToUpper())} {keyboardInput}"); ShowChatMessages(friendTarget); ReloadMenu(); }, null, "Done", "Cancel"),
                 isTogglable = false,
                 toolTip = $"Sends a message to {friend.currentName}.",
                 legal = true
@@ -1521,7 +1521,7 @@ namespace Qubit.Libraries.Networking
                                 Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
                             }
 
-                            Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has invited you to join them.", 5000);
+                            Console.SendNotification($"{Strings.Bracket("green", "FRIENDS")} {friendName} has invited you to join them.", 5000);
 
                             Prompt($"{friendName} has invited you to the room {to}, would you like to join them?", () => Rooms.JoinRoom(to));
                             break;
@@ -1537,7 +1537,7 @@ namespace Qubit.Libraries.Networking
                             if (SoundEffects)
                                 Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
-                            Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has requested an invite from you.", 5000);
+                            Console.SendNotification($"{Strings.Bracket("green", "FRIENDS")} {friendName} has requested an invite from you.", 5000);
 
                             Prompt($"{friendName} has requested an invite from you, would you like to invite them?", () => InviteFriend(from));
                             break;
@@ -1550,7 +1550,7 @@ namespace Qubit.Libraries.Networking
                             if (SoundEffects)
                                 Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
-                            Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has shared their preferences with you.", 5000);
+                            Console.SendNotification($"{Strings.Bracket("green", "FRIENDS")} {friendName} has shared their preferences with you.", 5000);
 
                             string preferences = (string)obj["data"];
                             Prompt($"{friendName} has shared their preferences with you, would you like to use them?", () => { Preferences.ImportFromText(preferences); });
@@ -1578,7 +1578,7 @@ namespace Qubit.Libraries.Networking
                             if (SoundEffects)
                                 Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
-                            Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has shared their theme with you.", 5000);
+                            Console.SendNotification($"{Strings.Bracket("green", "FRIENDS")} {friendName} has shared their theme with you.", 5000);
 
                             Prompt($"{friendName} has shared their theme with you, would you like to use it?", () =>
                             {
@@ -1598,7 +1598,7 @@ namespace Qubit.Libraries.Networking
                                 Libraries.Core.Assets.LoadSoundFromURL($"{PluginInfo.ServerResourcePath}/Audio/Friends/alert.ogg", "Audio/Friends/alert.ogg", clip => Play2DAudio(clip, buttonClickVolume / 10f));
 
                             Movement.Macro macro = Movement.Macro.LoadJSON((string)obj["data"]);
-                            Console.SendNotification($"<color=grey>[</color><color=green>FRIENDS</color><color=grey>]</color> {friendName} has shared their macro " + macro.name + " with you.", 5000);
+                            Console.SendNotification($"{Strings.Bracket("green", "FRIENDS")} {friendName} has shared their macro " + macro.name + " with you.", 5000);
                             Prompt($"{friendName} has shared their macro " + macro.name + " with you, would you like to use it?", () => { Movement.macros[Movement.FormatMacroName(macro.name)] = macro; });
                             break;
                         }
@@ -1624,8 +1624,8 @@ namespace Qubit.Libraries.Networking
                             string message = (string)obj["message"];
                             string color = (string)obj["color"];
 
-                            Console.SendNotification($"<color=grey>[</color><color=#{color}>{friendName.ToUpper()}</color><color=grey>]</color> {Regex.Replace(message, @"<\s*https?://[^\s>]+\s*>", "[Media]")}", 5000);
-                            UpdateFriendMessage(from, $"<color=grey>[</color><color=#{color}>{friendName.ToUpper()}</color><color=grey>]</color> {message}        ");
+                            Console.SendNotification($"{Strings.Bracket($"#{color}", friendName.ToUpper())} {Regex.Replace(message, @"<\s*https?://[^\s>]+\s*>", "[Media]")}", 5000);
+                            UpdateFriendMessage(from, $"{Strings.Bracket($"#{color}", friendName.ToUpper())} {message}        ");
 
                             if (Manager.CurrentCategoryName == "Chat Messages")
                             {

@@ -2154,7 +2154,7 @@ namespace Qubit.Modules.Categories
 
             buttons.AddRange(new[]
             {
-                new Module { name = "Record <color=grey>[</color><color=green>LT</color><color=grey>]</color>", method = RecordMacro, toolTip = "Record your macros with your <color=green>left trigger</color>." },
+                new Module { name = $"Record {Strings.Bracket("green", "LT")}", method = RecordMacro, toolTip = "Record your macros with your <color=green>left trigger</color>." },
                 new Module { name = "Open Macros Folder", method = OpenMacrosFolder, isTogglable = false, toolTip = "Opens the folder in which your plugins are located." },
                 new Module { name = "Reload Macros", method = LoadMacros, isTogglable = false, toolTip = "Reloads your macros." },
                 new Module

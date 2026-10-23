@@ -123,16 +123,16 @@ namespace Qubit.Modules.Categories
         #region Methods
         public static void GeneralSafety()
         {
-            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Disconnect</color><color=grey>]</color>").enabled) AntiReportDisconnect();
-            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) SendReport.AntiACReport = true;
+            if (!Manager.GetIndex($"Anti Report {Strings.Bracket("green", "Disconnect")}").enabled) AntiReportDisconnect();
+            if (!Manager.GetIndex($"Anti Report {Strings.Bracket("green", "Anti Cheat")}").enabled) SendReport.AntiACReport = true;
             if (!Manager.GetIndex("Anti Moderator").enabled) AntiModerator();
-            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>").enabled && !antiOculusReportHooked) { antiOculusReportHooked = true; EnableAntiOculusReport(); }
+            if (!Manager.GetIndex($"Anti Report {Strings.Bracket("green", "Oculus")}").enabled && !antiOculusReportHooked) { antiOculusReportHooked = true; EnableAntiOculusReport(); }
         }
 
         public static void DisableGeneral()
         {
-            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Anti Cheat</color><color=grey>]</color>").enabled) SendReport.AntiACReport = false;
-            if (!Manager.GetIndex("Anti Report <color=grey>[</color><color=green>Oculus</color><color=grey>]</color>").enabled) DisableAntiOculusReport();
+            if (!Manager.GetIndex($"Anti Report {Strings.Bracket("green", "Anti Cheat")}").enabled) SendReport.AntiACReport = false;
+            if (!Manager.GetIndex($"Anti Report {Strings.Bracket("green", "Oculus")}").enabled) DisableAntiOculusReport();
         }
 
         public static void NoFinger()

@@ -182,11 +182,14 @@ namespace Qubit.Libraries.Interface
         public const int ForestLeaderboardIndex = 7;
 
         public static bool motdTextDirty = true;
-        public static string motdTemplate = "You are using build {0}. This menu was created by Qubit Software. " +
-        "This menu is completely free and open sourced, if you paid for this menu you have been scammed. " +
-        "There are a total of <b>{1}</b> mods on this menu. " +
-        "<color=red>Qubit is not responsible for any bans using this menu.</color> " +
-        "If you get banned while using this, it's your responsibility.\n\nCurrent menu status: <b>Loading...</b>\nMade with <3 by the community.\n\n<alpha=128>{2} {0} {3}<alpha=255>";
+        public static string motdTemplate = "You are using build {0}. This menu was created by the Qubit development team. " +
+            "This menu is completely free and open sourced, if you paid for this menu you have been scammed. " +
+            "There are a total of <b>{1}</b> mods on this menu. " +
+            "<color=red>Qubit is not responsible for any bans using this menu.</color> " +
+            "If you get banned while using this, it's your responsibility." +
+            "\n\nCurrent menu status: <b>Loading...</b> - {4} users online" +
+            "\nMade with <3 by the community." +
+            "\n\n<alpha=128>{2} {0} {3}<alpha=255>";
 
         public Material forestMaterial;
         public Material stumpMaterial;
@@ -205,7 +208,7 @@ namespace Qubit.Libraries.Interface
         private void RebuildMotdText()
         {
             cachedMotdHeading = FollowMenuSettings($"Thanks for using {(doCustomName ? customMenuName : menuName)}!");
-            cachedMotdBody = FollowMenuSettings(string.Format(motdTemplate, PluginInfo.Version, fullModAmount, PluginInfo.BetaBuild ? "Beta" : "Release", PluginInfo.BuildTimestamp));
+            cachedMotdBody = FollowMenuSettings(string.Format(motdTemplate, PluginInfo.Version, fullModAmount, PluginInfo.BetaBuild ? "Beta" : "Release", PluginInfo.BuildTimestamp, Backend.ServerData.onlineUsers));
             motdTextDirty = false;
         }
 
@@ -387,6 +390,7 @@ namespace Qubit.Libraries.Interface
                     if (!txt.isActiveAndEnabled) continue;
 
                     txt.color = targetColor;
+                    FollowMenuSettings(txt);
 
                     if (!CustomBoardFonts) continue;
                     archiveGorillaTagFont ??= txt.font;

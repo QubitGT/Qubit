@@ -253,7 +253,7 @@ namespace Qubit.Modules
                 ButtonHelper.CreateNumeric("Change Notification Scale", 1, 20, 6, Modules.Categories.Settings.ApplyNotificationScale, v => v.ToString(), "Changes the scale of the notifications.", legal: true),
                 ButtonHelper.CreateNumeric("Change Arraylist Scale", 1, 20, 4, Modules.Categories.Settings.ApplyArraylistScale, v => v.ToString(), "Changes the scale of the arraylist.", legal: true),
                 ButtonHelper.CreateNumeric("Change Overlay Scale", 1, 20, 6, Modules.Categories.Settings.ApplyOverlayScale, v => v.ToString(), "Changes the scale of the overlay.", legal: true),
-                ButtonHelper.CreateNumeric("Change Page Size", 4, QubitMaxRows, _pageSize, Modules.Categories.Settings.ApplyPageSize, v => v.ToString(), "Changes the amount of rows per page, from 4 to 8. Search uses one row for the query.", legal: true),
+                ButtonHelper.CreateNumeric("Change Page Size", 4, 16, _pageSize, Modules.Categories.Settings.ApplyPageSize, v => v.ToString(), "Changes the amount of rows per page, from 4 to 16. Search uses one row for the query. The Modern theme is still capped at 8 rows.", legal: true),
                 ButtonHelper.CreateNumeric("Change Character Distance", 0, 15, characterDistance, Modules.Categories.Settings.ApplyCharacterDistance, v => (v + 1).ToString(), "Changes the distance between characters on the menu.", legal: true),
                 new Module { name = "Custom Menu Theme", enableMethod = Modules.Categories.Settings.CustomMenuTheme, disableMethod = Modules.Categories.Settings.FixTheme, toolTip = "Changes the theme of the menu to a custom one.", legal = true},
                 new Module { name = "Change Custom Menu Theme", method = Modules.Categories.Settings.ChangeCustomMenuTheme, isTogglable = false, toolTip = "Changes the theme of custom the menu.", legal = true},
@@ -1434,18 +1434,6 @@ namespace Qubit.Modules
                 new Module { name = "Serversided Size Changer", method = Qubit.Modules.Categories.Legacy.SizeChanger, enableMethod = Qubit.Modules.Categories.Legacy.SizeChanger, disableMethod = Qubit.Modules.Categories.Legacy.DisableSizeChanger, legacy = true, toolTip = "Increase your size by holding <color=green>trigger</color>, and decrease your size by holding <color=green>grip</color>. Everyone can see you grow or shrink." },
                 new Module { name = "Long Name", method = Qubit.Modules.Categories.Legacy.LongName, isTogglable = false, legacy = true, toolTip = "Makes your name really long." },
 
-                new Module { name = "Barrel Crash Gun", method = Overpowered.BarrelCrashGun, legacy = true, toolTip = "Crashes whoever your hand desires with a barrel." },
-                new Module { name = "Barrel Crash All", method = Overpowered.BarrelCrashAll, isTogglable = false, legacy = true, toolTip = "Crashes everyone in the room with a barrel." },
-                new Module { name = "Barrel Kick Gun", method = Overpowered.BarrelKickGun, legacy = true, toolTip = "Kicks whoever your hand desires with a barrel." },
-                new Module { name = "Barrel Kick All", method = Overpowered.BarrelKickAll, isTogglable = false, legacy = true, toolTip = "Kicks everyone in the room with a barrel." },
-                new Module { name = "Barrel Obliterate Gun", method = Overpowered.BarrelObliterateGun, legacy = true, toolTip = "Obliterates whoever your hand desires with a barrel." },
-                new Module { name = "Barrel Obliterate All", method = Overpowered.BarrelObliterateAll, isTogglable = false, legacy = true, toolTip = "Obliterates everyone in the room with a barrel." },
-                new Module { name = "Barrel Fling Gun", method = Overpowered.BarrelFlingGun, legacy = true, toolTip = "Flings whoever your hand desires with a barrel." },
-                new Module { name = "Barrel Fling All", method = Overpowered.BarrelFlingAll, isTogglable = false, legacy = true, toolTip = "Flings everyone in the room with a barrel." },
-                new Module { name = "Barrel Fling Towards Gun", method = Overpowered.BarrelFlingTowardsGun, legacy = true, toolTip = "Flings whoever your hand desires towards you with a barrel." },
-                new Module { name = "Barrel Fling Towards All", method = Overpowered.BarrelFlingTowardsAll, isTogglable = false, legacy = true, toolTip = "Flings everyone in the room towards you with a barrel." },
-                new Module { name = "Barrel Punch Mod", method = Overpowered.BarrelPunchMod, isTogglable = false, legacy = true, toolTip = "Punches anyone near your hands with a barrel." },
-
                 new Module { name = "City Kick Gun", method = Overpowered.CityKickGun, legacy = true, toolTip = "Kicks whoever your hand desires out of the city map." },
                 new Module { name = "City Kick All", method = Overpowered.CityKickAll, isTogglable = false, legacy = true, toolTip = "Kicks everyone out of the city map." },
 
@@ -1463,13 +1451,6 @@ namespace Qubit.Modules
                 new Module { name = "Strobe Color Self", method = Overpowered.StrobeColorSelf, isTogglable = false, legacy = true, toolTip = "Strobes your color." },
                 new Module { name = "Strobe Color Gun", method = Overpowered.StrobeColorGun, legacy = true, toolTip = "Strobes the color of whoever your hand desires." },
                 new Module { name = "Strobe Color All", method = Overpowered.StrobeColorAll, isTogglable = false, legacy = true, toolTip = "Strobes everyone's color in the room." },
-
-                new Module { name = "Joystick Rope Control", method = Overpowered.JoystickRopeControl, isTogglable = false, legacy = true, toolTip = "Controls the nearest rope with your joystick." },
-                new Module { name = "Spaz Rope Gun", method = Overpowered.SpazRopeGun, legacy = true, toolTip = "Spazzes out whatever rope your hand desires." },
-                new Module { name = "Spaz All Ropes", method = Overpowered.SpazAllRopes, isTogglable = false, legacy = true, toolTip = "Spazzes out a random rope while holding <color=green>trigger</color>." },
-                new Module { name = "Spaz Grabbed Ropes", method = Overpowered.SpazGrabbedRopes, isTogglable = false, legacy = true, toolTip = "Spazzes out a random rope someone's currently holding." },
-                new Module { name = "Fling Rope Gun", method = Overpowered.FlingRopeGun, legacy = true, toolTip = "Flings whatever rope your hand desires." },
-                new Module { name = "Fling All Ropes Gun", method = Overpowered.FlingAllRopesGun, legacy = true, toolTip = "Flings a random rope towards wherever your hand desires." },
 
             },
             ["Seasonal Mods"] = new[]
@@ -1665,6 +1646,12 @@ namespace Qubit.Modules
                 new Module { name = "Glider Blind Gun", method = Gliders.GliderBlindGun, toolTip = "Moves all of the gliders to whoever your hand desires' faces." },
                 new Module { name = "Glider Blind All", method = Gliders.GliderBlindAll, toolTip = "Moves all of the gliders to everyone's faces." },
                 new Module { name = "Fast Ropes", enableMethod =() => RopeAttach.enabled = true, disableMethod =() => RopeAttach.enabled = false, toolTip = "Makes ropes go five times faster when jumping on them."},
+                new Module { name = "Joystick Rope Control", method = Overpowered.JoystickRopeControl, isTogglable = false, toolTip = "Controls the nearest rope with your joystick." },
+                new Module { name = "Spaz Rope Gun", method = Overpowered.SpazRopeGun, toolTip = "Spazzes out whatever rope your hand desires." },
+                new Module { name = "Spaz All Ropes", method = Overpowered.SpazAllRopes, isTogglable = false, toolTip = "Spazzes out a random rope while holding <color=green>trigger</color>." },
+                new Module { name = "Spaz Grabbed Ropes", method = Overpowered.SpazGrabbedRopes, isTogglable = false, toolTip = "Spazzes out a random rope someone's currently holding." },
+                new Module { name = "Fling Rope Gun", method = Overpowered.FlingRopeGun, toolTip = "Flings whatever rope your hand desires." },
+                new Module { name = "Fling All Ropes Gun", method = Overpowered.FlingAllRopesGun, toolTip = "Flings a random rope towards wherever your hand desires." },
                 new Module { name = "Rope Grab Reach", method = Fun.RopeGrabReach, disableMethod =() => Climbing.enabled = false, toolTip = "Allows you to grab ropes from farther away."},
                 new Module { name = "No Respawn Gliders", enableMethod =() => GliderRespawn.enabled = true, disableMethod =() => GliderRespawn.enabled = false, toolTip = "Doesn't respawn gliders that go too far outside the bounds of clouds."},
                 new Module { name = "Anti Grab", enableMethod =() => GuardianGrabs.enabled = true, disableMethod =() => GuardianGrabs.enabled = false, toolTip = "Prevents players from picking you up in guardian."},
@@ -2286,6 +2273,18 @@ namespace Qubit.Modules
 
                 new Module { name = "Bring Away All Gun", method = Overpowered.GuardianBringAwayAllGun, toolTip = "Brings everyone in the room towards wherever your hand desires."},
 
+                new Module { name = "Barrel Crash Gun", method = Overpowered.BarrelCrashGun, toolTip = "Crashes whoever your hand desires with a barrel." },
+                new Module { name = "Barrel Crash All", method = Overpowered.BarrelCrashAll, isTogglable = false, toolTip = "Crashes everyone in the room with a barrel." },
+                new Module { name = "Barrel Kick Gun", method = Overpowered.BarrelKickGun, toolTip = "Kicks whoever your hand desires with a barrel." },
+                new Module { name = "Barrel Kick All", method = Overpowered.BarrelKickAll, isTogglable = false, toolTip = "Kicks everyone in the room with a barrel." },
+                new Module { name = "Barrel Obliterate Gun", method = Overpowered.BarrelObliterateGun, toolTip = "Obliterates whoever your hand desires with a barrel." },
+                new Module { name = "Barrel Obliterate All", method = Overpowered.BarrelObliterateAll, isTogglable = false, toolTip = "Obliterates everyone in the room with a barrel." },
+                new Module { name = "Barrel Fling Gun", method = Overpowered.BarrelFlingGun, toolTip = "Flings whoever your hand desires with a barrel." },
+                new Module { name = "Barrel Fling All", method = Overpowered.BarrelFlingAll, isTogglable = false, toolTip = "Flings everyone in the room with a barrel." },
+                new Module { name = "Barrel Fling Towards Gun", method = Overpowered.BarrelFlingTowardsGun, toolTip = "Flings whoever your hand desires towards you with a barrel." },
+                new Module { name = "Barrel Fling Towards All", method = Overpowered.BarrelFlingTowardsAll, isTogglable = false, toolTip = "Flings everyone in the room towards you with a barrel." },
+                new Module { name = "Barrel Punch Mod", method = Overpowered.BarrelPunchMod, isTogglable = false, toolTip = "Punches anyone near your hands with a barrel." },
+
                 new Module { name = "Guardian Anti Stump", method = Overpowered.GuardianAntiStump, toolTip = "Anyone who gets too close to the stump entrance will be launched away."},
 
                 new Module { name = $"Guardian Orbit All {Bracket("green", "T")}", method = Overpowered.GuardianOrbitAll, toolTip = "Orbits everyone in the room around you."},
@@ -2714,7 +2713,7 @@ namespace Qubit.Modules
                 new Module { name = "Search", method = Modules.Categories.Settings.Search, isTogglable = false, toolTip = "Lets you search for specific mods.", legal = true},
                 new Module { name = "Global Return", method = Modules.Categories.Settings.GlobalReturn, isTogglable = false, toolTip = "Returns you to the previous category.", legal = true},
                 new Module { name = "Info Screen", method = Modules.Categories.Settings.Debug, enableMethod = Modules.Categories.Settings.ShowDebug, disableMethod = Modules.Categories.Settings.HideDebug, toolTip = "Shows game and modding related information.", legal = true},
-                new Module { name = "Donate Button", method =() => { Notifications.Clear(); acceptedDonations = true; File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_HideDonationButton.txt", "true"); Prompt($"If you like this menu and would like to support, you should join our Patreon! ", () => Files.Start("https://patreon.com/Qubit")); }, isTogglable = false, toolTip = "An advertisement for Qubit's Patreon.", legal = true},
+                new Module { name = "Donate Button", method =() => { Notifications.Clear(); acceptedDonations = true; File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_HideDonationButton.txt", "true"); Prompt($"If you like this menu and would like to support, you should join our Patreon! ", () => Files.Start(PluginInfo.DonateMaster)); }, isTogglable = false, toolTip = "An advertisement for Qubit's Patreon.", legal = true},
                 new Module { name = "Update Button", method =() => UpdatePrompt(), isTogglable = false, toolTip = "Prompts you to update the menu.", legal = true },
 
                 new Module { name = "Accept Prompt", method =() => { Notifications.Clear(); if (inTextInput) Modules.Categories.Settings.DestroyKeyboard(); CurrentPrompt.AcceptAction?.Invoke(); Modules.Categories.Settings.StopCurrentPrompt(); }, isTogglable = false, legal = true},
@@ -3117,7 +3116,7 @@ namespace Qubit.Modules
 
             ["Sound Properties"] = new[]
             {
-                new Module { name = "Exit Sound's Properties", method = () => CurrentCategoryName = "Soundboard", isTogglable = false, toolTip = "Returns you back to the Soundboard page.", legal = true}
+                new Module { name = "Exit Sound Properties", method = () => CurrentCategoryName = "Soundboard", isTogglable = false, toolTip = "Returns you back to the Soundboard page.", legal = true}
             },
         };
 

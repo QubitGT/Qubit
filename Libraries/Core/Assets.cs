@@ -36,7 +36,7 @@ namespace Qubit.Libraries.Core
         private static AssetBundle assetBundle;
         private static void LoadAssetBundle()
         {
-            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.seralythmenu");
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{PluginInfo.ClientResourcePath}.qubitcore");
             if (stream != null)
                 assetBundle = AssetBundle.LoadFromStream(stream);
             else

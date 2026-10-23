@@ -109,12 +109,16 @@ namespace Qubit.Frontend.Resources
 
         public static void Apply(GameObject root)
         {
-            var font = Resolve(selected);
+            // "Change Font Type"/"Change Font Style Type" only ever touched activeFont/activeFontStyle,
+            // which this (Modern-only) path ignored in favor of the separate "Qubit Font" OS picker.
+            // Fall back to activeFont while that picker is left on its default so both settings work.
+            var font = selected == Default ? activeFont : Resolve(selected);
             foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
             {
                 text.font = text.name == "Indicator" || text.transform.parent.name == "Search"
                     ? Resolve(Default) : font;
                 text.fontSharedMaterial = text.font.material;
+                text.fontStyle = activeFontStyle;
                 text.extraPadding = true;
                 text.UpdateMeshPadding();
                 text.SetAllDirty();

@@ -99,12 +99,16 @@ namespace Qubit.Frontend
             {
                 if (UnityInput.GetKey(key))
                 {
+                    bool isRepeatFire = false;
                     if (keyPressedTimes.TryGetValue(key, out (float, float) delay))
                     {
                         float newDelay = Mathf.Max(delay.Item2 * 0.75f, 0.05f);
 
                         if (Time.time > delay.Item1)
+                        {
                             keyPressedTimes[key] = (Time.time + newDelay, newDelay);
+                            isRepeatFire = true;
+                        }
                         else
                         {
                             keysPressed.Add(key);
@@ -116,7 +120,8 @@ namespace Qubit.Frontend
 
                     keysPressed.Add(key);
 
-                    if (lastPressedKeys.Contains(key)) continue;
+                    // Backspace repeats while held (initial 0.5s delay, then decaying interval down to 0.05s); other keys keep edge-trigger behavior.
+                    if (lastPressedKeys.Contains(key) && !(isRepeatFire && key == Key.Backspace)) continue;
 
                     if (UnityInput.GetKey(Key.LeftCtrl))
                     {
