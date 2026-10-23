@@ -156,6 +156,7 @@ namespace Qubit.Libraries.Networking
 
             Notifications.RoomJoined(lastRoom);
             OnMasterClientSwitch(ManagerRegistry.NetworkSystem.MasterClient);
+            Overpowered.UpdateModdedLabel();
             Security.RPCProtection();
         }
 
@@ -168,6 +169,7 @@ namespace Qubit.Libraries.Networking
 
             Notifications.RoomLeft(lastRoom);
             Visuals.CleanVisualsOnLeave();
+            Overpowered.UpdateModdedLabel();
             Security.RPCProtection();
         }
 

@@ -2378,6 +2378,7 @@ namespace Qubit.Modules
 
                 new Module { name = "Stump Kick Gun", method = Overpowered.StumpKickGun, toolTip = "Kicks whoever your hand desires if they are in stump." },
                 new Module { name = "Stump Kick All", method = Overpowered.StumpKickAll, isTogglable = false, toolTip = "Kicks everyone in stump." },
+                new Module { name = "Stump Anti Ban", method = Overpowered.StumpAntiBan, isTogglable = false, toolTip = "Sends everyone in stump to a modded lobby, invalidating their reports." },
 
                 new Module { name = "Elevator Kick Gun", method = Overpowered.ElevatorKickGun, toolTip = "Kicks whoever your hand desires if they are in the elevator."},
                 new Module { name = "Elevator Kick All", method = Overpowered.ElevatorKickAll, isTogglable = false, toolTip = "Kicks everyone in the elevator."},
@@ -2395,6 +2396,7 @@ namespace Qubit.Modules
 
                 new Module { name = "Kick All in Party", displayName = "Party Send All", method = Overpowered.KickAllInParty, isTogglable = false, toolTip = "Sends everyone in your party to a random room." },
                 new Module { name = "Ban All in Party", displayName = "Party Ban All", method = Overpowered.BanAllInParty, isTogglable = false, toolTip = "Sends everyone in your party to a bannable code." },
+                new Module { name = "Party Anti Ban", method = Overpowered.PartyAntiBan, isTogglable = false, toolTip = "Sends everyone in your party to a modded lobby, invalidating their reports." },
 
                 new Module { name = "Auto Party Kick", method = Overpowered.AutoPartyKick, toolTip = "When you party, you will automatically send everyone in your party to a random room." },
                 new Module { name = "Auto Party Ban", method = Overpowered.AutoPartyBan, toolTip = "When you party, you will automatically send everyone in your party to a bannable code." },
@@ -2973,6 +2975,8 @@ namespace Qubit.Modules
             ["Detected Mods"] = new[]
             {
                 new Module { name = "Exit Detected Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+
+                new Module { name = "Modded Label", displayName = "You are not in a modded lobby.", label = true},
 
                 new Module { name = "Detected Set Master Client Self", displayName = "Set Master Client Self", method =() => Overpowered.SetMasterClient(), isTogglable = false, detected = true, toolTip = "Sets you as the master client by kicking everyone above you on the leaderboard."},
                 new Module { name = "Detected Set Master Client Gun", displayName = "Set Master Client Gun", method = Overpowered.SetMasterClientGun, isTogglable = false, detected = true, toolTip = "Sets whoever your hand desires as the master client."},

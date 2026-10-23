@@ -1818,6 +1818,27 @@ namespace Qubit.Modules.Categories
             return modded;
         }
 
+        public static IEnumerator AntiBanRoomDelay()
+        {
+            yield return new WaitUntil(() => Networking.InRoom);
+            yield return new WaitForSeconds(0.5f);
+
+            Hashtable hash = new Hashtable
+            {
+                { RoomConfig.Room_GameModePropKey, string.Join("", References.Computer.allowedMapsToJoin) + (References.Computer.currentQueue + "MODDED_") + References.Computer.currentGameMode.Value }
+            };
+            PhotonNetwork.CurrentRoom.SetCustomProperties(hash);
+
+            UpdateModdedLabel();
+        }
+
+        public static void UpdateModdedLabel()
+        {
+            Module label = Manager.GetIndex("Modded Label");
+            if (label != null)
+                label.displayName = IsModded(false) ? "You are in a modded lobby." : "You are not in a modded lobby.";
+        }
+
         public static void NearbyFollowCommand(GorillaFriendCollider friendCollider, Player player)
         {
             ManagerRegistry.PhotonNetworkController.FriendIDList.Add(player.UserId);
@@ -1930,6 +1951,37 @@ namespace Qubit.Modules.Categories
             else
                 Notifications.SendFormat("red", "ERROR", "You are not in a room.");
         }
+
+        public static void StumpAntiBan()
+        {
+            if (!Networking.InRoom)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not in a room.");
+                return;
+            }
+
+            if (!ManagerRegistry.NetworkSystem.SessionIsPrivate)
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in a private room.");
+                return;
+            }
+
+            Coroutines.instance.StartCoroutine(StumpKickDelay(() =>
+            {
+                ManagerRegistry.PhotonNetworkController.shuffler = Random.Range(0, 99).ToString().PadLeft(2, '0') + Random.Range(0, 99999999).ToString().PadLeft(8, '0');
+                ManagerRegistry.PhotonNetworkController.keyStr = Random.Range(0, 99999999).ToString().PadLeft(8, '0');
+
+                foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal() && References.Computer.friendJoinCollider.playerIDsCurrentlyTouching.Contains(rig.GetPlayer().UserId)))
+                    NearbyFollowCommand(References.Computer.friendJoinCollider, NetPlayerToPlayer(rig.GetPlayer()));
+
+                RPCProtection();
+            }, () =>
+            {
+                CreateKickRoom();
+                Coroutines.instance.StartCoroutine(AntiBanRoomDelay());
+            }));
+        }
+
         public static void ElevatorKickGun()
         {
             GunLibrary.Target(gunTarget =>
@@ -2063,6 +2115,23 @@ namespace Qubit.Modules.Categories
                 partyKickReconnecting = false;
                 amountPartying = ManagerRegistry.FriendshipGroupDetection.myPartyMemberIDs.Count - 1;
                 Notifications.SendFormat("purple", "PARTY", "Kicking " + amountPartying + " party members, please be patient..");
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not in a party.");
+        }
+
+        public static void PartyAntiBan()
+        {
+            if (ManagerRegistry.FriendshipGroupDetection.IsInParty)
+            {
+                partyLastCode = PhotonNetwork.CurrentRoom.Name;
+                waitForPlayerJoin = false;
+                Libraries.Networking.Rooms.JoinRoom(Libraries.Networking.Rooms.RandomRoomName(), JoinType.ForceJoinWithParty);
+                partyTime = Time.time + 0.25f;
+                partyKickReconnecting = false;
+                amountPartying = ManagerRegistry.FriendshipGroupDetection.myPartyMemberIDs.Count - 1;
+                Coroutines.instance.StartCoroutine(AntiBanRoomDelay());
+                Notifications.SendFormat("purple", "PARTY", "Sending " + amountPartying + " party members to a modded lobby, please be patient..");
             }
             else
                 Notifications.SendFormat("red", "ERROR", "You are not in a party.");
