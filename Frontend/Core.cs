@@ -1416,6 +1416,8 @@ result = result.Where(b => b.legal || b.label);
             float elapsedTime = 0f;
             while (elapsedTime < 0.1f)
             {
+                if (render == null) yield break;
+
                 int from = buttonIndex < 0 && swapButtonColors ? 0 : 1;
                 int to = 1 - from;
 
@@ -1428,6 +1430,8 @@ result = result.Where(b => b.legal || b.label);
                 elapsedTime += Time.deltaTime;
                 yield return null;
             }
+
+            if (render == null) yield break;
 
             ObjectColors colorChanger = render.gameObject.AddComponent<ObjectColors>();
             colorChanger.colors = buttonColors[buttonIndex < 0 && swapButtonColors ? 1 : 0];
