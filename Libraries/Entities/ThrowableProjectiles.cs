@@ -189,11 +189,11 @@ namespace Qubit.Libraries.Entities
             IReadOnlyList<ProjectileEntry> all = GetAll();
             if (all.Count == 0)
                 return null;
-            int index = Projectiles.ProjectileMode;
+            int index = Projectile.ProjectileMode;
             if (index < 0 || index >= all.Count)
             {
                 index = 0;
-                Projectiles.ProjectileMode = index;
+                Projectile.ProjectileMode = index;
             }
             all[index].Resolve();
             return all[index];
@@ -247,10 +247,10 @@ namespace Qubit.Libraries.Entities
 
             int index = BarrelIndex;
 
-            if (Projectiles.DisableThrowableCoroutine != null)
-                Coroutines.instance.StopCoroutine(Projectiles.DisableThrowableCoroutine);
+            if (Projectile.DisableThrowableCoroutine != null)
+                Coroutines.instance.StopCoroutine(Projectile.DisableThrowableCoroutine);
 
-            Projectiles.DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(Projectiles.DisableThrowable(index));
+            Projectile.DisableThrowableCoroutine = Coroutines.instance.StartCoroutine(Projectile.DisableThrowable(index));
             TransferrableObject transferrableObject = References.LocalRig.myBodyDockPositions.allObjects[index];
 
             if (transferrableObject == null)

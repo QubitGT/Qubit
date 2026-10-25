@@ -38,6 +38,7 @@ using static Qubit.Core.Security;
 using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Modules.Manager;
+using Soundboard = Qubit.Modules.Categories.Sound.Soundboard;
 
 namespace Qubit.Backend
 {

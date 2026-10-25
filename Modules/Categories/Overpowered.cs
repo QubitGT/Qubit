@@ -20,9 +20,7 @@
  */
 
 using ExitGames.Client.Photon;
-using GorillaExtensions;
 using GorillaGameModes;
-using GorillaLocomotion.Gameplay;
 using GorillaTag;
 using GorillaTagScripts;
 using Photon.Pun;
@@ -430,12 +428,12 @@ namespace Qubit.Modules.Categories
 
         public static float vibrateDelay;
 
-        public static Coroutine RopeCoroutine;
 
-        private static float randomRopeDelay;
-        private static GorillaRopeSwing randomRope;
 
-        private static float RopeDelay;
+
+
+
+
 
         public static bool instantCreate;
         public static bool isRightHand;
@@ -672,7 +670,7 @@ namespace Qubit.Modules.Categories
 
         public static void VisualizeMasterClient()
         {
-            if (Visuals.DoPerformanceCheck())
+            if (Visual.DoPerformanceCheck())
                 return;
 
             if (Networking.IsMasterClient)
@@ -686,13 +684,13 @@ namespace Qubit.Modules.Categories
             switch (masterVisualizationType)
             {
                 case 0:
-                    Visuals.Visualize(PrimitiveType.Sphere, rig.transform.position, Quaternion.identity, new Vector3(0.15f, 0.15f, 0.15f), Color.blue, visualizeId, 0.1f);
+                    Visual.Visualize(PrimitiveType.Sphere, rig.transform.position, Quaternion.identity, new Vector3(0.15f, 0.15f, 0.15f), Color.blue, visualizeId, 0.1f);
                     break;
                 case 1:
-                    Visuals.Visualize(PrimitiveType.Cube, rig.transform.position, Quaternion.Euler(Time.time * 90, Time.time * 60, Time.time * 30), new Vector3(0.3f, 0.3f, 0.3f), Color.blue);
+                    Visual.Visualize(PrimitiveType.Cube, rig.transform.position, Quaternion.Euler(Time.time * 90, Time.time * 60, Time.time * 30), new Vector3(0.3f, 0.3f, 0.3f), Color.blue);
                     break;
                 case 2:
-                    LineRenderer line = Visuals.GetLineRender();
+                    LineRenderer line = Visual.GetLineRender();
 
                     line.startColor = Color.blue;
                     line.endColor = Color.blue;
@@ -1171,7 +1169,7 @@ namespace Qubit.Modules.Categories
                         thingdeb = Time.time + 0.1f;
 
                         if (Manager.GetIndex("Graphic Punch Mod").enabled)
-                            Projectiles.SendProjectile(ThrowableProjectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
+                            Projectile.SendProjectile(ThrowableProjectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
                     }
                 }
             }
@@ -1181,13 +1179,13 @@ namespace Qubit.Modules.Categories
         {
             foreach (VRRig rig1 in Players.ActiveRigs)
             {
-                if (Time.time < Projectiles.GetBoxingDelay(rig1))
+                if (Time.time < Projectile.GetBoxingDelay(rig1))
                     continue;
 
                 foreach (var targetDirection in from rig2 in Players.ActiveRigs where rig2 != rig1 where Vector3.Distance(rig2.leftHandTransform.position, rig1.headMesh.transform.position) < 0.25f || Vector3.Distance(rig2.rightHandTransform.position, rig1.headMesh.transform.position) < 0.25f select (rig1.headMesh.transform.position - rig2.headMesh.transform.position) * 20f)
                 {
                     SetVelocityPlayer(GetPlayerFromVRRig(rig1), targetDirection);
-                    Projectiles.SetBoxingDelay(rig1);
+                    Projectile.SetBoxingDelay(rig1);
                 }
             }
         }
@@ -1648,7 +1646,7 @@ namespace Qubit.Modules.Categories
                     ThrowableProjectiles.SendBarrelProjectile(rig.transform.position + (References.HeadCollider.transform.position - rig.headMesh.transform.position).normalized * 0.1f, targetDirection.normalized * 50f, Quaternion.Euler(Random.Range(0, 360), Random.Range(0, 360), Random.Range(0, 360)), new RaiseEventOptions { TargetActors = new[] { NetPlayerToPlayer(rig.GetPlayer()).ActorNumber } });
 
                     if (Manager.GetIndex("Graphic Punch Mod").enabled)
-                        Projectiles.SendProjectile(ThrowableProjectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
+                        Projectile.SendProjectile(ThrowableProjectiles.FindProjectile("Apple"), rig.headMesh.transform.position, Vector3.down * 600f, new Color32(100, 0, 0, 255));
                 }
             }
         }
@@ -2516,7 +2514,7 @@ namespace Qubit.Modules.Categories
 
             snowballOverloadDelay = Time.time + 0.05f;
 
-            Projectiles.SendProjectile(
+            Projectile.SendProjectile(
                 ThrowableProjectiles.GetPreferredProjectileEntry(),
                 References.LocalRig.transform.position + Vector3.up,
                 new Vector3(UnityEngine.Random.Range(-15f, 15f), UnityEngine.Random.Range(10f, 20f), UnityEngine.Random.Range(-15f, 15f))
@@ -2525,149 +2523,23 @@ namespace Qubit.Modules.Categories
 
         public static void SnowballSpamOff() =>
             snowballOverloadDelay = 0f;
-        public static IEnumerator RopeEnableRig()
-        {
-            yield return new WaitForSeconds(0.3f);
-            References.LocalRig.enabled = true;
-        }
 
-        public static void SetRopeVelocity(int RopeId, Vector3 Velocity)
-        {
-            Velocity = Velocity.ClampMagnitudeSafe(15f);
 
-            if (ManagerRegistry.RopeSwingManager.ropes.TryGetValue(RopeId, out GorillaRopeSwing Rope))
-            {
-                var ClosestNode = Rope.nodes
-                    .Skip(1)
-                    .Select((v, i) => new
-                    {
-                        index = i,
-                        transform = v,
-                        distance = Vector3.Distance(References.BodyCollider.transform.position, v.transform.position)
-                    })
-                    .OrderBy(x => x.distance)
-                    .First();
 
-                if (ClosestNode.distance > 5f)
-                {
-                    if (RopeCoroutine != null)
-                        Coroutines.instance.StopCoroutine(RopeCoroutine);
 
-                    RopeCoroutine = Coroutines.instance.StartCoroutine(RopeEnableRig());
 
-                    References.LocalRig.enabled = false;
-                    References.LocalRig.transform.position = ClosestNode.transform.position;
-                }
 
-                if (Vector3.Distance(ServerPos, ClosestNode.transform.position) < 5f)
-                    ManagerRegistry.RopeSwingManager.SendSetVelocity_RPC(RopeId, ClosestNode.index, Velocity, true);
-                else
-                    RopeDelay = 0f;
 
-                RPCProtection();
-            }
-        }
 
-        public static void SetRopeVelocity(GorillaRopeSwing Rope, Vector3 Velocity) =>
-            SetRopeVelocity(ManagerRegistry.RopeSwingManager.ropes.FirstOrDefault(x => x.Value == Rope).Key, Velocity);
-        public static GorillaRopeSwing GetRandomRope()
-        {
-            if (Time.time > randomRopeDelay)
-            {
-                randomRopeDelay = Time.time + 0.5f;
-                randomRope = ManagerRegistry.RopeSwingManager.ropes.Values.OrderBy(_ => Random.value).FirstOrDefault();
-            }
-            return randomRope;
-        }
-        public static void JoystickRopeControl()
-        {
-            Vector2 r = rightJoystick;
-            Vector2 l = leftJoystick;
 
-            Vector2 stick = (l.sqrMagnitude > r.sqrMagnitude) ? l : r;
 
-            if (stick.sqrMagnitude > 0.0025f && Time.time > RopeDelay)
-            {
-                RopeDelay = Time.time + 0.125f;
 
-                GorillaRopeSwing rope = GetRandomType<GorillaRopeSwing>(0.25f);
-                SetRopeVelocity(rope, new Vector3(stick.x * 100f, stick.y * 100f, 0f));
-            }
-        }
 
-        public static void SpazRopeGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
 
-                if (GetGunInput(true))
-                {
-                    GorillaRopeSwing gunTarget = Ray.collider.GetComponentInParent<GorillaRopeSwing>();
-                    if (gunTarget && Time.time > RopeDelay)
-                    {
-                        RopeDelay = Time.time + 0.25f;
-                        SetRopeVelocity(gunTarget, RandomVector3(100f));
-                    }
-                }
-            });
-        }
 
-        public static void SpazAllRopes()
-        {
-            if (rightTrigger > 0.5f && Time.time > RopeDelay)
-            {
-                RopeDelay = Time.time + 0.125f;
 
-                GorillaRopeSwing rope = GetRandomRope();
-                SetRopeVelocity(rope, RandomVector3(100f));
-            }
-        }
 
-        public static void SpazGrabbedRopes()
-        {
-            if (Time.time > RopeDelay)
-            {
-                RopeDelay = Time.time + 0.125f;
-                VRRig randomRig = Players.ActiveRigs
-                    .Where(rig => rig.currentRopeSwing != null)
-                    .OrderBy(_ => Random.value)
-                    .FirstOrDefault();
 
-                if (randomRig != null)
-                    SetRopeVelocity(randomRig.currentRopeSwing, RandomVector3(100f));
-            }
-        }
-
-        public static void FlingRopeGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
-
-                if (GetGunInput(true))
-                {
-                    GorillaRopeSwing gunTarget = Ray.collider.GetComponentInParent<GorillaRopeSwing>();
-
-                    if (gunTarget && Time.time > RopeDelay)
-                    {
-                        RopeDelay = Time.time + 0.125f;
-                        SetRopeVelocity(gunTarget, RandomVector3(100f));
-                    }
-                }
-            });
-        }
-
-        public static void FlingAllRopesGun()
-        {
-            GunLibrary.Point(NewPointer =>
-            {
-                RopeDelay = Time.time + 0.125f;
-
-                GorillaRopeSwing rope = GetRandomRope();
-                SetRopeVelocity(rope, (NewPointer.transform.position - rope.transform.position).normalized * 100f);
-            }, new GunLibrary.GunSettings { when = () => Time.time > RopeDelay });
-        }
         public static void InstantParty()
         {
             if (Time.time > Fun.instantPartyDelay)
@@ -2698,6 +2570,24 @@ namespace Qubit.Modules.Categories
                 return;
 
             PromptText("What would you like the room code to be?", () => Overpowered.specificRoom = keyboardInput.ToUpper(), () => Manager.Toggle("Kick to Specific Room"), "Done", "Cancel");
+        }
+        public static void VoiceHijackGun()
+        {
+            Qubit.Modules.Classes.GunLibrary.Target(lockTarget =>
+            {
+                ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.UserData = lockTarget.GetPhotonView().ViewID;
+                ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+            }, new Qubit.Modules.Classes.GunLibrary.GunSettings { locks = true });
+        }
+        public static void DisableVoiceHijack()
+        {
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.UserData = null;
+            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.RestartRecording(true);
+        }
+        public static IEnumerator RopeEnableRig()
+        {
+            yield return new WaitForSeconds(0.3f);
+            References.LocalRig.enabled = true;
         }
         #endregion
     }

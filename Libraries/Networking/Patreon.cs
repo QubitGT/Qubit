@@ -159,11 +159,11 @@ namespace Qubit.Libraries.Networking
 
                 float distance = Qubit.Backend.Console.GetIndicatorDistance(playerRig);
                 playerIndicator.transform.localScale = new Vector3(0.4f, 0.4f, 0.01f) * playerRig.scaleFactor;
-                playerIndicator.transform.position = Visuals.GetNameTagTransform(playerRig).position + Visuals.GetNameTagTransform(playerRig).up * (distance * playerRig.scaleFactor);
+                playerIndicator.transform.position = Visual.GetNameTagTransform(playerRig).position + Visual.GetNameTagTransform(playerRig).up * (distance * playerRig.scaleFactor);
                 playerIndicator.transform.LookAt(References.HeadCollider.transform.position);
 
                 GameObject nameTag = playerIndicator.transform.Find("Qubit_Nametag").gameObject;
-                nameTag.transform.position = Visuals.GetNameTagTransform(playerRig).position + Visuals.GetNameTagTransform(playerRig).up * ((distance + 0.25f) * playerRig.scaleFactor);
+                nameTag.transform.position = Visual.GetNameTagTransform(playerRig).position + Visual.GetNameTagTransform(playerRig).up * ((distance + 0.25f) * playerRig.scaleFactor);
                 nameTag.transform.LookAt(Camera.main.transform.position);
                 nameTag.transform.Rotate(0f, 180f, 0f);
             }

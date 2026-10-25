@@ -816,12 +816,12 @@ namespace Qubit.Modules.Categories
                     nametag.Value.GetComponent<TextMeshPro>().fontStyle = activeFontStyle;
                     nametag.Value.GetComponent<TextMeshPro>().font = activeFont;
 
-                    if (Visuals.nameTagChams)
+                    if (Visual.nameTagChams)
                         nametag.Value.GetComponent<TextMeshPro>().Chams();
 
                     nametag.Value.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f) * nametag.Key.scaleFactor;
 
-                    nametag.Value.transform.position = Visuals.GetNameTagPosition(nametag.Key);
+                    nametag.Value.transform.position = Visual.GetNameTagPosition(nametag.Key);
                     nametag.Value.transform.LookAt(Camera.main.transform.position);
                     nametag.Value.transform.Rotate(0f, 180f, 0f);
                 }
@@ -854,7 +854,7 @@ namespace Qubit.Modules.Categories
             if (!Networking.InRoom)
                 lastPlayerCount = -1;
 
-            if (Visuals.DoPerformanceCheck())
+            if (Visual.DoPerformanceCheck())
                 return;
 
             bool followMenuTheme = Manager.GetIndex("Follow Menu Theme").enabled;
@@ -872,7 +872,7 @@ namespace Qubit.Modules.Categories
 
                 Color lineColor = Console.GetMenuTypeName(userData.Value);
 
-                LineRenderer line = Visuals.GetLineRender();
+                LineRenderer line = Visual.GetLineRender();
 
                 if (followMenuTheme)
                     lineColor = menuColor;

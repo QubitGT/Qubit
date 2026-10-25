@@ -168,7 +168,7 @@ namespace Qubit.Libraries.Networking
             inRoomStatus = false;
 
             Notifications.RoomLeft(lastRoom);
-            Visuals.CleanVisualsOnLeave();
+            Visual.CleanVisualsOnLeave();
             Overpowered.UpdateModdedLabel();
             Security.RPCProtection();
         }
@@ -206,7 +206,7 @@ namespace Qubit.Libraries.Networking
 
             var rig = player.VRRig();
             if (rig != null)
-                Visuals.CleanVisualsOnLeave(rig);
+                Visual.CleanVisualsOnLeave(rig);
         }
 
         [RunOnLaunch(LaunchPriority.Rooms)]

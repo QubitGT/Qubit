@@ -30,7 +30,7 @@ using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.Serialization;
-using static Qubit.Modules.Categories.Projectiles;
+using static Qubit.Modules.Categories.Projectile;
 using static Qubit.Modules.Classes.GunLibrary;
 using Object = UnityEngine.Object;
 using Overpowered = Qubit.Modules.Categories.Overpowered;

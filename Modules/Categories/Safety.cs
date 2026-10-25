@@ -44,6 +44,7 @@ using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Serialization;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Microphone = Qubit.Modules.Categories.Sound.Microphone;
 using Random = UnityEngine.Random;
 using Security = Qubit.Core.Security;
 
@@ -298,10 +299,10 @@ namespace Qubit.Modules.Categories
                 if (line.linePlayer != Networking.LocalPlayer) continue;
                 Transform report = line.reportButton.gameObject.transform;
 
-                Visuals.Visualize(PrimitiveType.Sphere, report.position, Quaternion.identity, new Vector3(threshold, threshold, threshold), Color.red, alpha: 0.1f);
+                Visual.Visualize(PrimitiveType.Sphere, report.position, Quaternion.identity, new Vector3(threshold, threshold, threshold), Color.red, alpha: 0.1f);
 
                 if (antiMute)
-                    Visuals.Visualize(PrimitiveType.Sphere, line.muteButton.gameObject.transform.position, Quaternion.identity, new Vector3(threshold, threshold, threshold), Color.red, -1, 0.1f);
+                    Visual.Visualize(PrimitiveType.Sphere, line.muteButton.gameObject.transform.position, Quaternion.identity, new Vector3(threshold, threshold, threshold), Color.red, -1, 0.1f);
             }
         }
 
@@ -515,7 +516,7 @@ namespace Qubit.Modules.Categories
 
         public static void AntiContentCreator()
         {
-            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isOfflineVRRig && Visuals.specialCosmetics.Keys.Any(x => vrrig.Cosmetics().Contains(x))))
+            foreach (var vrrig in Players.ActiveRigs.Where(vrrig => !vrrig.isOfflineVRRig && Visual.specialCosmetics.Keys.Any(x => vrrig.Cosmetics().Contains(x))))
             {
                 try
                 {
@@ -561,7 +562,7 @@ namespace Qubit.Modules.Categories
 
             foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal()))
             {
-                foreach (var cosmetic in Visuals.specialCosmetics.Where(cosmetic => rig.Cosmetics().Contains(cosmetic.Key)))
+                foreach (var cosmetic in Visual.specialCosmetics.Where(cosmetic => rig.Cosmetics().Contains(cosmetic.Key)))
                 {
                     specialRig = rig;
                     specialCosmetic = cosmetic.Value;
@@ -913,12 +914,12 @@ namespace Qubit.Modules.Categories
             if (reachable && !micGateMuted)
             {
                 micGateMuted = true;
-                Fun.MuteMicrophone(true);
+                Microphone.MuteMicrophone(true);
             }
             else if (!reachable && micGateMuted)
             {
                 micGateMuted = false;
-                Fun.MuteMicrophone(false);
+                Microphone.MuteMicrophone(false);
             }
         }
 
@@ -927,7 +928,7 @@ namespace Qubit.Modules.Categories
             if (micGateMuted)
             {
                 micGateMuted = false;
-                Fun.MuteMicrophone(false);
+                Microphone.MuteMicrophone(false);
             }
         }
         #endregion

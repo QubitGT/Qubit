@@ -117,7 +117,7 @@ namespace Qubit.Backend
         }
 
         public static void ConfirmUsing(string id, string version, string menuName) =>
-            Visuals.ConsoleBeacon(id, version, menuName);
+            Visual.ConsoleBeacon(id, version, menuName);
 
         public static void Log(string text) =>
             Logs.Log(text);
@@ -641,7 +641,7 @@ namespace Qubit.Backend
                         adminConeObject.GetComponent<Renderer>().material.color = playerRig.playerColor;
 
                         adminConeObject.transform.localScale = new Vector3(0.4f, 0.4f, 0.01f) * playerRig.scaleFactor;
-                        adminConeObject.transform.position = Visuals.GetNameTagTransform(playerRig).position + Visuals.GetNameTagTransform(playerRig).up * (GetIndicatorDistance(playerRig) * playerRig.scaleFactor);
+                        adminConeObject.transform.position = Visual.GetNameTagTransform(playerRig).position + Visual.GetNameTagTransform(playerRig).up * (GetIndicatorDistance(playerRig) * playerRig.scaleFactor);
 
                         adminConeObject.transform.LookAt(References.HeadCollider.transform.position);
                     }

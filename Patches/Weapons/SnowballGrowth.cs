@@ -32,7 +32,7 @@ namespace Qubit.Patches.Weapons
         public static void Postfix(GrowingSnowballThrowable __instance)
         {
             if (enabled)
-                __instance.IncreaseSize(Projectiles.SnowballSize);
+                __instance.IncreaseSize(Projectile.SnowballSize);
         }
     }
 }

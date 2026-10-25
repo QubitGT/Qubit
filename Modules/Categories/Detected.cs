@@ -19,7 +19,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using ExitGames.Client.Photon;using GorillaGameModes;using GorillaNetworking;using Photon.Pun;using Photon.Realtime;using Qubit.Core;using Qubit.Extensions;using Qubit.Libraries.Core;using Qubit.Modules.Classes;using System.Collections.Generic;using System.Linq;using UnityEngine;using static Qubit.Extensions.Players;using static Qubit.Frontend.Keyboard;using static Qubit.Frontend.Prompts;using static Qubit.Frontend.Settings;using static Qubit.Libraries.Audio.Sounds;using static Qubit.Libraries.Core.Assets;using Hashtable = ExitGames.Client.Photon.Hashtable;using Random = UnityEngine.Random;
+using ExitGames.Client.Photon;
+using GorillaGameModes;
+using GorillaNetworking;
+using Photon.Pun;
+using Photon.Realtime;
+using Qubit.Core;
+using Qubit.Extensions;
+using Qubit.Libraries.Core;
+using Qubit.Modules.Classes;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEngine;
+using static Qubit.Extensions.Players;
+using static Qubit.Frontend.Keyboard;
+using static Qubit.Frontend.Prompts;
+using static Qubit.Frontend.Settings;
+using static Qubit.Libraries.Audio.Sounds;
+using static Qubit.Libraries.Core.Assets;
+using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Random = UnityEngine.Random;
 
 namespace Qubit.Modules.Categories
 {
@@ -939,7 +958,7 @@ namespace Qubit.Modules.Categories
                 customPropertyDelay = Time.time + 0.25f;
 
                 Hashtable props = new Hashtable();
-                foreach (string mod in Visuals.modDictionary.Keys)
+                foreach (string mod in Visual.modDictionary.Keys)
                     props[mod] = true;
 
                 gunTarget.GetPhotonPlayer().SetCustomProperties(props);
@@ -949,7 +968,7 @@ namespace Qubit.Modules.Categories
         public static void BreakModCheckersAll()
         {
             Hashtable props = new Hashtable();
-            foreach (string mod in Visuals.modDictionary.Keys)
+            foreach (string mod in Visual.modDictionary.Keys)
                 props[mod] = true;
 
             foreach (Player player in PhotonNetwork.PlayerList)
@@ -974,7 +993,7 @@ namespace Qubit.Modules.Categories
                 foreach (VRRig nearbyPlayer in nearbyPlayers)
                 {
                     Hashtable props = new Hashtable();
-                    foreach (string mod in Visuals.modDictionary.Keys)
+                    foreach (string mod in Visual.modDictionary.Keys)
                         props[mod] = true;
 
                     nearbyPlayer.GetPhotonPlayer().SetCustomProperties(props);
@@ -991,7 +1010,7 @@ namespace Qubit.Modules.Categories
                 if (!rig.IsLocal() && rig.IsBeingTouched())
                 {
                     Hashtable props = new Hashtable();
-                    foreach (string mod in Visuals.modDictionary.Keys)
+                    foreach (string mod in Visual.modDictionary.Keys)
                         props[mod] = true;
 
                     rig.GetPhotonPlayer().SetCustomProperties(props);

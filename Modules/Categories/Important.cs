@@ -58,7 +58,6 @@ using static Qubit.Frontend.Prompts;
 using static Qubit.Frontend.Resources.Fonts;
 using static Qubit.Frontend.Settings;
 using static Qubit.Libraries.Controls.Controllers;
-using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
 using Object = UnityEngine.Object;
 using TextMeshPro = TMPro.TextMeshPro;
@@ -748,7 +747,7 @@ exit";
         }
         public static void PCButtonClick()
         {
-            if (Mouse.current.leftButton.isPressed && GunPointer == null)
+            if (Mouse.current.leftButton.isPressed)
             {
                 Ray ray = TPC.ScreenPointToRay(Mouse.current.position.ReadValue());
                 Physics.Raycast(ray, out var Ray, 512f, NoInvisLayerMask());

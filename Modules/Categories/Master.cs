@@ -30,6 +30,7 @@ using Qubit.Libraries.Core;
 using Qubit.Libraries.Entities;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
+using Qubit.Modules.Categories.Gamemode;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Tagging;
@@ -48,6 +49,7 @@ using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
+using Audio = Qubit.Modules.Categories.Sound.Audio;
 using Random = UnityEngine.Random;
 
 namespace Qubit.Modules.Categories
@@ -75,8 +77,8 @@ namespace Qubit.Modules.Categories
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
-                if (!(Time.time > Advantages.spamTagDelay)) return;
-                Advantages.spamTagDelay = Time.time + 0.1f;
+                if (!(Time.time > Tag.spamTagDelay)) return;
+                Tag.spamTagDelay = Time.time + 0.1f;
                 if (InfectedList().Contains(PhotonNetwork.LocalPlayer))
                     RemoveInfected(PhotonNetwork.LocalPlayer);
                 else
@@ -96,9 +98,9 @@ namespace Qubit.Modules.Categories
                         Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
-                        if (Time.time > Advantages.spamTagDelay)
+                        if (Time.time > Tag.spamTagDelay)
                         {
-                            Advantages.spamTagDelay = Time.time + 0.1f;
+                            Tag.spamTagDelay = Time.time + 0.1f;
                             if (InfectedList().Contains(lockTarget.GetPlayer()))
                                 RemoveInfected(lockTarget.GetPlayer());
                             else
@@ -129,8 +131,8 @@ namespace Qubit.Modules.Categories
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
             else
             {
-                if (!(Time.time > Advantages.spamTagDelay)) return;
-                Advantages.spamTagDelay = Time.time + 0.1f;
+                if (!(Time.time > Tag.spamTagDelay)) return;
+                Tag.spamTagDelay = Time.time + 0.1f;
                 foreach (Player v in PhotonNetwork.PlayerList)
                 {
                     if (InfectedList().Contains(v))
@@ -267,10 +269,10 @@ namespace Qubit.Modules.Categories
         }
         public static void PaintbrawlBalloonSpamSelf()
         {
-            if (Time.time < Advantages.paintbrawlSpamDelay)
+            if (Time.time < Paintbrawl.paintbrawlSpamDelay)
                 return;
 
-            Advantages.paintbrawlSpamDelay = Time.time + 0.1f;
+            Paintbrawl.paintbrawlSpamDelay = Time.time + 0.1f;
 
             if (!Networking.IsMasterClient)
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
@@ -292,9 +294,9 @@ namespace Qubit.Modules.Categories
                         Notifications.SendFormat("red", "ERROR", "You are not master client.");
                     else
                     {
-                        if (Time.time > Advantages.paintbrawlSpamDelay)
+                        if (Time.time > Paintbrawl.paintbrawlSpamDelay)
                         {
-                            Advantages.paintbrawlSpamDelay = Time.time + 0.1f;
+                            Paintbrawl.paintbrawlSpamDelay = Time.time + 0.1f;
 
                             if (!Networking.IsMasterClient)
                                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
@@ -329,10 +331,10 @@ namespace Qubit.Modules.Categories
 
         public static void PaintbrawlBalloonSpam()
         {
-            if (Time.time < Advantages.paintbrawlSpamDelay)
+            if (Time.time < Paintbrawl.paintbrawlSpamDelay)
                 return;
 
-            Advantages.paintbrawlSpamDelay = Time.time + 0.1f;
+            Paintbrawl.paintbrawlSpamDelay = Time.time + 0.1f;
 
             if (!Networking.IsMasterClient)
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
@@ -1794,7 +1796,7 @@ namespace Qubit.Modules.Categories
         public static void SoundSpam(int id)
         {
             if (rightGrab)
-                Sound.PlayTag(id, 999999f);
+                Audio.PlayTag(id, 999999f);
         }
 
         public static void UpdateMasterLabel() =>

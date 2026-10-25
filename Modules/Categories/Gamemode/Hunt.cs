@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Modules/Categories/Soundboard.cs
+ * Qubit Menu  Modules/Categories/Gamemode/Hunt.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -19,19 +19,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-using System.Collections.Generic;
-
-namespace Qubit.Modules.Categories
+namespace Qubit.Modules.Categories.Gamemode
 {
-    public static class Soundboard
+    public static class Hunt
     {
-        #region Settings
-        public static bool LegacySoundboard = false;
-        public static bool LoopAudio = false;
-        public static bool OverlapAudio = false;
-        public static readonly Dictionary<string, Module[]> CachedButtons = new Dictionary<string, Module[]>();
-
-        public static bool disableLocalSoundboard;
-        #endregion
     }
 }

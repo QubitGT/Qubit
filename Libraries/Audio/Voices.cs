@@ -21,7 +21,6 @@
 
 using Photon.Voice;
 using Qubit.Libraries.Core;
-using Qubit.Modules.Categories;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -275,7 +274,7 @@ namespace Qubit.Libraries.Audio
                     MuteMicrophone = disableMicrophone,
                     Volume = clipVolume,
                     Speed = clipSpeed,
-                    Looping = Soundboard.LoopAudio
+                    Looping = Qubit.Modules.Categories.Sound.Soundboard.LoopAudio
                 };
 
                 lock (audioClipsLock)

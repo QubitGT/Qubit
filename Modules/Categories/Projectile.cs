@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Modules/Categories/Projectiles.cs
+ * Qubit Menu  Modules/Categories/Projectile.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -57,7 +57,7 @@ using Security = Qubit.Core.Security;
 
 namespace Qubit.Modules.Categories
 {
-    public static class Projectiles
+    public static class Projectile
     {
         #region Types
 
@@ -453,7 +453,7 @@ namespace Qubit.Modules.Categories
         public static string DisplayProjectileDelay(int index) => index == -1 ? "Default" : (index / 20f).ToString();
         public static void ProjectileDelayWarning(bool positive)
         {
-            if (projDebounceType != -1f && (!Manager.GetIndex("Friend Sided Projectiles").enabled || !Manager.GetIndex("Client Sided Projectiles").enabled))
+            if (projDebounceType != -1f && (!Manager.GetIndex("Friend Sided Projectile").enabled || !Manager.GetIndex("Client Sided Projectile").enabled))
                 Notifications.SendFormat("red", "WARNING", $"Using a projectile delay thats not the default may not work and have the possibility of getting you banned. Use at your own caution.", 5000);
         }
 
@@ -470,7 +470,7 @@ namespace Qubit.Modules.Categories
                 b = (byte)Random.Range(0, 255);
             }
 
-            else if (Manager.GetIndex("Rainbow Projectiles").enabled)
+            else if (Manager.GetIndex("Rainbow Projectile").enabled)
             {
                 float h = Time.frameCount / 180f % 1f;
                 Color rgbcolor = Color.HSVToRGB(h, 1f, 1f);
@@ -479,7 +479,7 @@ namespace Qubit.Modules.Categories
                 b = (byte)(rgbcolor.b * 255);
             }
 
-            else if (Manager.GetIndex("Hard Rainbow Projectiles").enabled)
+            else if (Manager.GetIndex("Hard Rainbow Projectile").enabled)
             {
                 float h = Time.frameCount / 180f % 1f;
                 Color rgbcolor = Color.HSVToRGB(h, 1f, 1f);
@@ -488,7 +488,7 @@ namespace Qubit.Modules.Categories
                 b = (byte)(Mathf.Floor(rgbcolor.b * 2f) / 2f * 255f);
             }
 
-            else if (Manager.GetIndex("Custom Colored Projectiles").enabled)
+            else if (Manager.GetIndex("Custom Colored Projectile").enabled)
             {
                 r = (byte)(Fun.red / 10f * 255);
                 g = (byte)(Fun.green / 10f * 255);
@@ -542,10 +542,10 @@ namespace Qubit.Modules.Categories
 
         public static void ProjectileSpam()
         {
-            bool fireLeft = (Manager.GetIndex("Left Handed Projectiles").enabled || Manager.GetIndex("Both Handed Projectiles").enabled) && leftGrab;
+            bool fireLeft = (Manager.GetIndex("Left Handed Projectile").enabled || Manager.GetIndex("Both Handed Projectile").enabled) && leftGrab;
             bool fireRight = rightGrab || Mouse.current.leftButton.isPressed;
 
-            if (Manager.GetIndex("Both Handed Projectiles").enabled)
+            if (Manager.GetIndex("Both Handed Projectile").enabled)
             {
                 fireLeft = leftGrab;
                 fireRight = rightGrab;
@@ -563,7 +563,7 @@ namespace Qubit.Modules.Categories
                     Vector3 startpos = hands[i].position;
                     Vector3 charvel = References.Player.RigidbodyVelocity;
 
-                    if (Manager.GetIndex("Shoot Projectiles").enabled)
+                    if (Manager.GetIndex("Shoot Projectile").enabled)
                     {
                         charvel += GetGunDirection(hands[i]) * ShootStrength;
 
@@ -601,7 +601,7 @@ namespace Qubit.Modules.Categories
                     Vector3 startpos = NewPointer.transform.position + Vector3.up;
                     Vector3 charvel = Vector3.zero;
 
-                    if (Manager.GetIndex("Shoot Projectiles").enabled)
+                    if (Manager.GetIndex("Shoot Projectile").enabled)
                     {
                         charvel = References.Player.RigidbodyVelocity + GetGunDirection(References.RightHand) * ShootStrength;
                         if (Mouse.current.leftButton.isPressed)
@@ -629,7 +629,7 @@ namespace Qubit.Modules.Categories
                 Vector3 startpos = References.HeadCollider.transform.position;
                 Vector3 charvel = References.HeadCollider.transform.forward * 30f;
 
-                if (Manager.GetIndex("Shoot Projectiles").enabled)
+                if (Manager.GetIndex("Shoot Projectile").enabled)
                 {
                     charvel = References.Player.RigidbodyVelocity + GetGunDirection(References.RightHand) * ShootStrength;
                     if (Mouse.current.leftButton.isPressed)
@@ -656,7 +656,7 @@ namespace Qubit.Modules.Categories
                 Vector3 startpos = lockTarget.rightHandTransform.position;
                 Vector3 charvel = Vector3.zero;
 
-                if (Manager.GetIndex("Shoot Projectiles").enabled)
+                if (Manager.GetIndex("Shoot Projectile").enabled)
                     charvel = lockTarget.rightHandTransform.transform.forward * ShootStrength;
 
                 SendProjectile(GetPreferredProjectileEntry(), startpos, charvel, CalculateProjectileColor());

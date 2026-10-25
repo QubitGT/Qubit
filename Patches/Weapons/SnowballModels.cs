@@ -39,8 +39,8 @@ namespace Qubit.Patches.Weapons
                     return false;
                 }
 
-                __instance.randModelIndex = Projectiles.targetProjectileIndex % __instance.localModels.Count;
-                __result = Projectiles.targetProjectileIndex;
+                __instance.randModelIndex = Projectile.targetProjectileIndex % __instance.localModels.Count;
+                __result = Projectile.targetProjectileIndex;
 
                 return false;
             }

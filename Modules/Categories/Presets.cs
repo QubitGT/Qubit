@@ -24,8 +24,6 @@ using Qubit.Libraries.Core;
 using Qubit.Libraries.Interface;
 using System;
 using System.IO;
-using static Qubit.Frontend.Resources.Fonts;
-using static Qubit.Frontend.Settings;
 using static Qubit.Modules.Manager;
 
 namespace Qubit.Modules.Categories

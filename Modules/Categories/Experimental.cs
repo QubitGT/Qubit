@@ -315,7 +315,7 @@ namespace Qubit.Modules.Categories
                                     if (args.Length > 2)
                                         userColor = Console.GetMenuTypeName((string)args[2]);
 
-                                    if (Visuals.nameTagChams)
+                                    if (Visual.nameTagChams)
                                         textMesh.Chams();
                                     textMesh.color = userColor;
                                     textMesh.text = Strings.ToTitleCase((string)args[2]);

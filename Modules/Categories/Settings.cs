@@ -33,6 +33,7 @@ using Qubit.Libraries.Core;
 using Qubit.Libraries.Entities;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Language;
+using Qubit.Modules.Categories.Gamemode;
 using Qubit.Patches.Netcode;
 using System;
 using System.Collections;
@@ -67,12 +68,14 @@ using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Core.Assets;
 using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Serialization;
-using static Qubit.Modules.Categories.Visuals;
+using static Qubit.Modules.Categories.Visual;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
+using Audio = Qubit.Modules.Categories.Sound.Audio;
 using Console = Qubit.Backend.Console;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
+using Soundboard = Qubit.Modules.Categories.Sound.Soundboard;
 using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules.Categories
@@ -2553,7 +2556,39 @@ namespace Qubit.Modules.Categories
                 lastPressedKeys.Add(KeyboardBind);
 
             if (!isKeyboardPc && VRKeyboard == null)
-                VRKeyboard = Qubit.Frontend.Keyboard.View.Create();
+            {
+                if (Qubit.Frontend.Legacy.Enabled)
+                {
+                    VRKeyboard = LoadObject<GameObject>("VRKeyboard");
+                    VRKeyboard.transform.position = References.BodyCollider.transform.position;
+                    VRKeyboard.transform.rotation = References.BodyCollider.transform.rotation;
+
+                    menuSpawnPosition = VRKeyboard.transform.Find("MenuSpawnPosition").gameObject;
+                    VRKeyboard.transform.Find("Canvas").gameObject.GetOrAddComponent<ObjectColors>().colors = textColors[1];
+
+                    VRKeyboard.transform.localScale *= scaleWithPlayer ? References.Player.scale * menuScale : menuScale;
+                    menuSpawnPosition.transform.localScale *= scaleWithPlayer ? References.Player.scale * menuScale : menuScale;
+
+                    VRKeyboard.transform.Find("Background").gameObject.GetOrAddComponent<ObjectColors>().colors = menuBackgroundColor;
+
+                    foreach (GameObject key in VRKeyboard.transform.Find("Seperate").Children()
+                        .Concat(new[] { VRKeyboard.transform.Find("Keys/default").gameObject }))
+                        key.GetOrAddComponent<ObjectColors>().colors = buttonColors[0];
+
+                    IEnumerable<GameObject> keys = new[] { "Numbers", "Letters", "Special", "Seperate" }
+                        .Select(name => VRKeyboard.transform.Find(name))
+                        .Where(t => t != null)
+                        .SelectMany(t => t.Children());
+
+                    foreach (GameObject key in keys)
+                    {
+                        key.AddComponent<KeyboardKey>().key = key.name;
+                        key.layer = 2;
+                    }
+                }
+                else
+                    VRKeyboard = Qubit.Frontend.Keyboard.View.Create();
+            }
 
             if (lKeyReference == null)
             {
@@ -2868,40 +2903,40 @@ namespace Qubit.Modules.Categories
                 new Module {
                     name = "Copy Movement",
                     displayName = $"Copy Movement {targetName}",
-                    method =() => Movement.CopyMovementPlayer(player),
-                    disableMethod = Movement.EnableRig,
+                    method =() => Rig.CopyMovementPlayer(player),
+                    disableMethod = Rig.EnableRig,
                     toolTip = $"Copies the movement of {targetName}."
                 },
                 new Module {
                     name = "Follow Player",
                     displayName = $"Follow {targetName}",
-                    method =() => Movement.FollowPlayer(player),
-                    disableMethod = Movement.EnableRig,
+                    method =() => Rig.FollowPlayer(player),
+                    disableMethod = Rig.EnableRig,
                     toolTip = $"Follows {targetName}."
                 },
                 new Module {
                     name = "Tag Player",
                     displayName = $"Tag {targetName}",
-                    method =() => Advantages.TagPlayer(player),
-                    disableMethod = Movement.EnableRig,
+                    method =() => Tag.TagPlayer(player),
+                    disableMethod = Rig.EnableRig,
                     toolTip = $"Tags {targetName}."
                 },
                 new Module {
                     name = "Snowball Fling Player",
                     displayName = $"Snowball Fling {targetName}",
-                    method =() => Projectiles.FlingPlayer(player.VRRig()),
+                    method =() => Projectile.FlingPlayer(player.VRRig()),
                     toolTip = $"Flings {targetName} with snowballs."
                 },
                 new Module {
                     name = "Projectile Blind Player",
                     displayName = $"Projectile Blind {targetName}",
-                    method =() => Projectiles.ProjectileBlindPlayer(player),
+                    method =() => Projectile.ProjectileBlindPlayer(player),
                     toolTip = $"Blinds {targetName} using the egg projectiles."
                 },
                 new Module {
                     name = "Projectile Lag Player",
                     displayName = $"Projectile Lag {targetName}",
-                    method =() => Projectiles.ProjectileLagPlayer(player),
+                    method =() => Projectile.ProjectileLagPlayer(player),
                     toolTip = $"Lags {targetName} using the firework projectiles."
                 },
                 new Module {
@@ -4381,7 +4416,7 @@ exit 0";
                 "Important Mods",
                 "Safety Mods",
                 "Movement Mods",
-                "Advantage Mods",
+                "Gamemode Mods",
                 "Visual Mods",
                 "Fun Mods",
                 "Sound Mods",
@@ -4933,7 +4968,7 @@ exit 0";
 
                         if (lastTarget == null)
                         {
-                            Visuals.FixRigMaterialESPColors(rigTarget);
+                            Visual.FixRigMaterialESPColors(rigTarget);
 
                             rigTarget.mainSkin.material.shader = Shader.Find("GUI/Text Shader");
                             rigTarget.mainSkin.material.color = targetColor;
@@ -5111,11 +5146,11 @@ exit 0";
                 Movement.flySpeedCycle.ToString(),
                 Movement.longarmCycle.ToString(),
                 Movement.speedboostCycle.ToString(),
-                Projectiles.ProjectileMode.ToString(),
+                Projectile.ProjectileMode.ToString(),
                 Movement.timerPowerIndex.ToString(),
-                Projectiles.shootCycle.ToString(),
+                Projectile.shootCycle.ToString(),
                 pointerIndex.ToString(),
-                Advantages.tagAuraIndex.ToString(),
+                Tag.tagAuraIndex.ToString(),
                 notificationDecayTime.ToString(),
                 fontStyleType.ToString(),
                 arrowType.ToString(),
@@ -5125,30 +5160,30 @@ exit 0";
                 Sounds.DefaultSounds["Button"],
                 buttonClickVolume.ToString(),
                 Safety.antiReportRangeIndex.ToString(),
-                Advantages.tagRangeIndex.ToString(),
-                Sound.BindMode.ToString(),
+                Tag.tagRangeIndex.ToString(),
+                Soundboard.BindMode.ToString(),
                 Movement.driveInt.ToString(),
                 langInd.ToString(),
                 inputTextColorInt.ToString(),
                 Movement.pullPowerInt.ToString(),
                 Sounds.DefaultSounds["Notification"],
-                Visuals.PerformanceModeStepIndex.ToString(),
+                Visual.PerformanceModeStepIndex.ToString(),
                 gunVariation.ToString(),
                 GunDirection.ToString(),
                 narratorIndex.ToString(),
                 Movement.predInt.ToString(),
                 gunLineQualityIndex.ToString(),
-                Projectiles.projDebounceIndex.ToString(),
+                Projectile.projDebounceIndex.ToString(),
                 Fun.red.ToString(),
                 Fun.green.ToString(),
                 Fun.blue.ToString(),
                 Safety.rankIndex.ToString(),
-                Projectiles.SnowballSize.ToString(),
+                Projectile.SnowballSize.ToString(),
                 Overpowered.lagIndex.ToString(),
                 Blocks.blockDebounceIndex.ToString(),
                 Fun.nameCycleIndex.ToString(),
                 menuScaleIndex.ToString(),
-                Sound.soundId.ToString(),
+                Audio.soundId.ToString(),
                 Fun.targetQuestScore.ToString(),
                 notificationScaleIndex.ToString(),
                 overlayScaleIndex.ToString(),
@@ -5156,7 +5191,7 @@ exit 0";
                 ((int)MathF.Ceiling(playTime)).ToString(),
                 PhotonNetwork.LocalPlayer?.UserId ?? "null",
                 _pageSize.ToString(),
-                Projectiles.snowballMultiplicationFactor.ToString(),
+                Projectile.snowballMultiplicationFactor.ToString(),
                 menuButtonIndex.ToString(),
                 Safety.targetElo.ToString(),
                 Safety.targetBadge.ToString(),
@@ -5167,7 +5202,7 @@ exit 0";
                 joystickMenuPosition.ToString(),
                 Movement.multiplicationAmount.ToString(),
                 Fun.targetFOV.ToString(),
-                Projectiles.targetProjectileIndex.ToString(),
+                Projectile.targetProjectileIndex.ToString(),
                 Movement.fakeLagDelayIndex.ToString(),
                 "0",
                 characterDistance.ToString(),
@@ -5287,20 +5322,20 @@ exit 0";
                 Movement.speedboostCycle = int.Parse(data[4]);
                 RestoreCycle("Change Speed Boost Amount", Movement.speedboostCycle);
 
-                Projectiles.ProjectileMode = int.Parse(data[5]);
-                RestoreCycle("Change Projectile", Projectiles.ProjectileMode);
+                Projectile.ProjectileMode = int.Parse(data[5]);
+                RestoreCycle("Change Projectile", Projectile.ProjectileMode);
 
                 Movement.timerPowerIndex = int.Parse(data[6]);
                 RestoreCycle("Change Timer Speed", Movement.timerPowerIndex);
 
-                Projectiles.shootCycle = int.Parse(data[7]);
-                RestoreCycle("Change Shoot Speed", Projectiles.shootCycle);
+                Projectile.shootCycle = int.Parse(data[7]);
+                RestoreCycle("Change Shoot Speed", Projectile.shootCycle);
 
                 pointerIndex = int.Parse(data[8]);
                 RestoreCycle("Change Pointer Position", pointerIndex);
 
-                Advantages.tagAuraIndex = int.Parse(data[9]);
-                RestoreCycle("ctaRange", Advantages.tagAuraIndex);
+                Tag.tagAuraIndex = int.Parse(data[9]);
+                RestoreCycle("ctaRange", Tag.tagAuraIndex);
 
                 notificationDecayTime = int.Parse(data[10]);
                 RestoreCycle("Change Notification Time", notificationDecayTime / 1000);
@@ -5326,11 +5361,11 @@ exit 0";
                 Safety.antiReportRangeIndex = int.Parse(data[18]);
                 RestoreCycle("Change Anti Report Distance", Safety.antiReportRangeIndex);
 
-                Advantages.tagRangeIndex = int.Parse(data[19]);
-                RestoreCycle("ctrRange", Advantages.tagRangeIndex);
+                Tag.tagRangeIndex = int.Parse(data[19]);
+                RestoreCycle("ctrRange", Tag.tagRangeIndex);
 
-                Sound.BindMode = int.Parse(data[20]);
-                RestoreCycle("Sound Bindings", Sound.BindMode);
+                Soundboard.BindMode = int.Parse(data[20]);
+                RestoreCycle("Sound Bindings", Soundboard.BindMode);
 
                 Movement.driveInt = int.Parse(data[21]);
                 RestoreCycle("cdSpeed", Movement.driveInt);
@@ -5347,8 +5382,8 @@ exit 0";
                 Sounds.DefaultSounds["Notification"] = data[25];
                 RestoreNamedCycle("Change Notification Sound", data[25]);
 
-                Visuals.PerformanceModeStepIndex = int.Parse(data[26]);
-                RestoreCycle("Change Performance Visuals Step", Visuals.PerformanceModeStepIndex);
+                Visual.PerformanceModeStepIndex = int.Parse(data[26]);
+                RestoreCycle("Change Performance Visual Step", Visual.PerformanceModeStepIndex);
 
                 gunVariation = int.Parse(data[27]);
                 RestoreCycle("Change Gun Variation", gunVariation);
@@ -5377,8 +5412,8 @@ exit 0";
                 Safety.rankIndex = int.Parse(data[36]);
                 RestoreCycle("Change Ranked Tier", Safety.rankIndex);
 
-                Projectiles.SnowballSize = int.Parse(data[37]);
-                RestoreCycle("Change Snowball Size", Projectiles.SnowballSize);
+                Projectile.SnowballSize = int.Parse(data[37]);
+                RestoreCycle("Change Snowball Size", Projectile.SnowballSize);
 
                 Overpowered.lagIndex = int.Parse(data[38]);
                 RestoreCycle("Change Lag Power", Overpowered.lagIndex);
@@ -5392,8 +5427,8 @@ exit 0";
                 menuScaleIndex = int.Parse(data[41]);
                 RestoreCycle("Change Menu Scale", menuScaleIndex);
 
-                Sound.soundId = int.Parse(data[42]);
-                RestoreCycle("Custom Sound ID", Sound.soundId);
+                Audio.soundId = int.Parse(data[42]);
+                RestoreCycle("Custom Sound ID", Audio.soundId);
 
                 Fun.targetQuestScore = int.Parse(data[43]);
                 RestoreCycle("Change Custom Quest Score", Fun.targetQuestScore);
@@ -5414,8 +5449,8 @@ exit 0";
                 _pageSize = int.Parse(data[49]);
                 RestoreCycle("Change Page Size", _pageSize);
 
-                Projectiles.snowballMultiplicationFactor = int.Parse(data[50]);
-                RestoreCycle("Change Snowball Multiplication Factor", Projectiles.snowballMultiplicationFactor);
+                Projectile.snowballMultiplicationFactor = int.Parse(data[50]);
+                RestoreCycle("Change Snowball Multiplication Factor", Projectile.snowballMultiplicationFactor);
 
                 menuButtonIndex = int.Parse(data[51]);
                 RestoreCycle("Change Menu Button", menuButtonIndex);
@@ -5447,8 +5482,8 @@ exit 0";
                 Fun.targetFOV = int.Parse(data[60]);
                 RestoreCycle("Change Target FOV", Fun.targetFOV);
 
-                Projectiles.targetProjectileIndex = int.Parse(data[61]);
-                RestoreCycle("Change Projectile Index", Projectiles.targetProjectileIndex);
+                Projectile.targetProjectileIndex = int.Parse(data[61]);
+                RestoreCycle("Change Projectile Index", Projectile.targetProjectileIndex);
 
                 Movement.fakeLagDelayIndex = int.Parse(data[62]);
                 RestoreCycle("Change Fake Lag Strength", Movement.fakeLagDelayIndex);
@@ -5650,8 +5685,8 @@ exit 0";
 
         public static void ConductDebug()
         {
-            if (Time.time < Visuals.debugUpdateTimer) return;
-            Visuals.debugUpdateTimer = Time.time + 1f;
+            if (Time.time < Visual.debugUpdateTimer) return;
+            Visual.debugUpdateTimer = Time.time + 1f;
 
             TextMeshPro title = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>();
             TextMeshPro body = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>();

@@ -207,7 +207,7 @@ namespace Qubit.Frontend.Classes
         public static int QubitRowCount => Mathf.Clamp(_pageSize, 4, QubitMaxRows);
         public static int QubitPageCapacity => QubitRowCount - (isSearching ? 1 : 0);
         public static readonly string[] QubitHomeOrder = {
-            "Settings", "Movement Mods", "Room Mods", "Players", "Advantage Mods",
+            "Settings", "Movement Mods", "Room Mods", "Players", "Gamemode Mods",
             "Overpowered Mods", "Visual Mods", "Safety Mods"
         };
         public static string QubitCategoryLabel(Module info)

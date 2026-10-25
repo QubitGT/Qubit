@@ -281,7 +281,7 @@ namespace Qubit.Libraries.Entities
         {
             rememberdirectory = pageNumber;
 
-            List<Module> cosmeticbuttons = new List<Module> { new Module { name = "Exit Cosmetic Browser", method =() => { pageNumber = rememberdirectory; Manager.CurrentCategoryName = "Identity & Cosmetic Mods"; }, isTogglable = false, toolTip = "Returns you back to the identity and cosmetic mods." } };
+            List<Module> cosmeticbuttons = new List<Module> { new Module { name = "Exit Cosmetic Browser", method = () => { pageNumber = rememberdirectory; Manager.CurrentCategoryName = "Identity & Cosmetic Mods"; }, isTogglable = false, toolTip = "Returns you back to the identity and cosmetic mods." } };
             foreach (CosmeticsController.CosmeticItem hat in ManagerRegistry.CosmeticsController.allCosmetics)
             {
                 if (hat.canTryOn)

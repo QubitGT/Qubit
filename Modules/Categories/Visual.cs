@@ -1,5 +1,5 @@
 ﻿/*
- * Qubit Menu  Modules/Categories/Visuals.cs
+ * Qubit Menu  Modules/Categories/Visual.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -64,9 +64,30 @@ using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules.Categories
 {
-    public class Visuals
+    public class Visual
     {
         private static Module followThemeModule, transparentThemeModule;
+
+        private static GameObject urpGlass;
+        public static void CrystalBallVision()
+        {
+            if (urpGlass == null)
+            {
+                urpGlass = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Object.Destroy(urpGlass.GetComponent<Collider>());
+                urpGlass.transform.SetParent(GorillaTagger.Instance.headCollider.transform, false);
+                urpGlass.transform.localPosition = new Vector3(0f, 0f, 0.25f);
+                urpGlass.transform.localScale = new Vector3(10f, 10f, 0f);
+                urpGlass.GetComponent<Renderer>().material.shader = Shader.Find("GorillaTag/URPScryGlass");
+                urpGlass.GetComponent<Renderer>().material.color = Color.clear;
+            }
+        }
+
+        public static void DisableCrystalBallVision()
+        {
+            if (urpGlass != null)
+                Object.Destroy(urpGlass);
+        }
 
         private static Color ThemedColor(Color color)
         {
@@ -315,12 +336,12 @@ namespace Qubit.Modules.Categories
                         textureList.Add(tex);
                     }
 
-                    AddSprite("Steam", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/steam.png", "Images/Mods/Visuals/steam.png"));
-                    AddSprite("Quest", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/meta.png", "Images/Mods/Visuals/meta.png"));
-                    AddSprite("Rift", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/oculus.png", "Images/Mods/Visuals/oculus.png"));
-                    AddSprite("PC", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/pc.png", "Images/Mods/Visuals/pc.png"));
+                    AddSprite("Steam", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/steam.png", "Images/Mods/Visual/steam.png"));
+                    AddSprite("Quest", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/meta.png", "Images/Mods/Visual/meta.png"));
+                    AddSprite("Rift", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/oculus.png", "Images/Mods/Visual/oculus.png"));
+                    AddSprite("PC", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/pc.png", "Images/Mods/Visual/pc.png"));
                     for (int i = 1; i <= 5; i++)
-                        AddSprite($"Ping{i}", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/ping{i}.png", $"Images/Mods/Visuals/ping{i}.png"));
+                        AddSprite($"Ping{i}", LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/ping{i}.png", $"Images/Mods/Visual/ping{i}.png"));
 
                     int maxSize = 512;
                     Texture2D spriteSheet = new Texture2D(maxSize, maxSize);
@@ -1254,8 +1275,8 @@ namespace Qubit.Modules.Categories
                 tapMat.renderQueue = (int)RenderQueue.Transparent;
             }
 
-            if (tapTxt == null) tapTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/footstep.png", "footstep.png");
-            if (warningTxt == null) warningTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/warning.png", "warning.png");
+            if (tapTxt == null) tapTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/footstep.png", "footstep.png");
+            if (warningTxt == null) warningTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/warning.png", "warning.png");
 
             Renderer renderer = cube.GetComponent<Renderer>();
             renderer.material = tapMat;
@@ -3583,7 +3604,7 @@ namespace Qubit.Modules.Categories
 
                     if (!cosmeticTextures.TryGetValue(currentCosmetic, out Texture2D texture))
                     {
-                        texture = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/{currentCosmetic}.png", $"Images/Mods/Visuals/{currentCosmetic}.png");
+                        texture = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/{currentCosmetic}.png", $"Images/Mods/Visual/{currentCosmetic}.png");
                         cosmeticTextures.Add(currentCosmetic, texture);
                     }
 
@@ -3613,11 +3634,11 @@ namespace Qubit.Modules.Categories
         {
             return rig.GetPlatform() switch
             {
-                Players.PlatformType.Steam => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/steam.png", "Images/Mods/Visuals/steam.png"),
-                Players.PlatformType.Quest => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/meta.png", "Images/Mods/Visuals/meta.png"),
-                Players.PlatformType.Rift => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/oculus.png", "Images/Mods/Visuals/oculus.png"),
-                Players.PlatformType.PC => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/pc.png", "Images/Mods/Visuals/pc.png"),
-                _ => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/unknown.png", "Images/Mods/Visuals/unknown.png"),
+                Players.PlatformType.Steam => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/steam.png", "Images/Mods/Visual/steam.png"),
+                Players.PlatformType.Quest => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/meta.png", "Images/Mods/Visual/meta.png"),
+                Players.PlatformType.Rift => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/oculus.png", "Images/Mods/Visual/oculus.png"),
+                Players.PlatformType.PC => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/pc.png", "Images/Mods/Visual/pc.png"),
+                _ => LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/unknown.png", "Images/Mods/Visual/unknown.png"),
             };
         }
 
@@ -3733,7 +3754,7 @@ namespace Qubit.Modules.Categories
                                 voiceMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
 
                                 if (voiceTxt == null)
-                                    voiceTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/speak.png", $"Images/Mods/Visuals/speak.png");
+                                    voiceTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/speak.png", $"Images/Mods/Visual/speak.png");
 
                                 voiceMat.mainTexture = voiceTxt;
 
@@ -3791,7 +3812,7 @@ namespace Qubit.Modules.Categories
                                 voiceEspMat = new Material(Shader.Find("GUI/Text Shader"));
 
                             if (voiceTxt == null)
-                                voiceTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/speak.png", $"Images/Mods/Visuals/speak.png");
+                                voiceTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/speak.png", $"Images/Mods/Visual/speak.png");
 
                             voiceEspMat.mainTexture = voiceTxt;
 
@@ -3858,7 +3879,7 @@ namespace Qubit.Modules.Categories
                         }
 
                         if (gripTxt == null)
-                            gripTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visuals/grip.png", $"Images/Mods/Visuals/grip.png");
+                            gripTxt = LoadTextureFromURL($"{PluginInfo.ServerResourcePath}/Images/Mods/Visual/grip.png", $"Images/Mods/Visual/grip.png");
 
                         gripEspMat.mainTexture = gripTxt;
                     }
@@ -6001,14 +6022,14 @@ namespace Qubit.Modules.Categories
             if (rig)
             {
                 playerPing.Remove(rig);
-                Visuals.ntDistanceList.Remove(rig);
-                Visuals.convertedRigs.Remove(rig);
+                Visual.ntDistanceList.Remove(rig);
+                Visual.convertedRigs.Remove(rig);
             }
             else
             {
                 playerPing.Clear();
-                Visuals.ntDistanceList.Clear();
-                Visuals.convertedRigs.Clear();
+                Visual.ntDistanceList.Clear();
+                Visual.convertedRigs.Clear();
             }
         }
 
@@ -6026,7 +6047,7 @@ namespace Qubit.Modules.Categories
                     isTogglable = false
                 }
             };
-            var mods = Visuals.modDictionary
+            var mods = Visual.modDictionary
                .Where(mod => customProps.ContainsKey(mod.Key.ToLower()))
                .Select((mod, index) => new Module
                {
@@ -6047,7 +6068,7 @@ namespace Qubit.Modules.Categories
             Manager.CurrentCategoryName = "Temporary Category";
         }
 
-        [RunOnLaunch(LaunchPriority.Visuals)]
+        [RunOnLaunch(LaunchPriority.Visual)]
         public static void Initialize()
         {
             for (int i = 0; i < 2; i++)

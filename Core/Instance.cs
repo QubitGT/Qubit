@@ -47,7 +47,7 @@ namespace Qubit.Core
         DonationState,
         Rooms,
         Serialization,
-        Visuals,
+        Visual,
         Scene,
         ModuleTags,
         Plugins,
@@ -208,8 +208,8 @@ namespace Qubit.Core
 
             try
             {
-                Visuals.ClearLinePool();
-                Visuals.ClearNameTagPool();
+                Visual.ClearLinePool();
+                Visual.ClearNameTagPool();
             }
             catch { }
 

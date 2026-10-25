@@ -25,7 +25,6 @@ using UnityEngine;
 using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
-using Random = UnityEngine.Random;
 
 namespace Qubit.Libraries.Holdables
 {

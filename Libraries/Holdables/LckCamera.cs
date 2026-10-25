@@ -28,7 +28,7 @@ using UnityEngine;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Modules.Categories.Fun;
-using static Qubit.Modules.Categories.Projectiles;
+using static Qubit.Modules.Categories.Projectile;
 using static Qubit.Modules.Classes.GunLibrary;
 using Manager = Qubit.Modules.Manager;
 using Object = UnityEngine.Object;

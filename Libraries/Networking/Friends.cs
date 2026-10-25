@@ -226,7 +226,7 @@ namespace Qubit.Libraries.Networking
                     playerStar.GetComponent<Renderer>().material.color = playerRig.playerColor;
 
                     playerStar.transform.localScale = new Vector3(0.4f, 0.4f, 0.01f) * playerRig.scaleFactor;
-                    playerStar.transform.position = Visuals.GetNameTagTransform(playerRig).position + Visuals.GetNameTagTransform(playerRig).up * (Console.GetIndicatorDistance(playerRig) * playerRig.scaleFactor);
+                    playerStar.transform.position = Visual.GetNameTagTransform(playerRig).position + Visual.GetNameTagTransform(playerRig).up * (Console.GetIndicatorDistance(playerRig) * playerRig.scaleFactor);
                     playerStar.transform.LookAt(References.Tagger.headCollider.transform.position);
                 }
 
@@ -615,7 +615,7 @@ namespace Qubit.Libraries.Networking
                             {
                                 object[] projectileArgs = (object[])args[1];
 
-                                Projectiles.LaunchLocalProjectile(
+                                Projectile.LaunchLocalProjectile(
                                     (Vector3)projectileArgs[0],
                                     (Vector3)projectileArgs[1],
                                     (byte)Convert.ToInt32(projectileArgs[2]),
@@ -645,7 +645,7 @@ namespace Qubit.Libraries.Networking
 
                                 float scale = Mathf.Clamp((float)args[7], 1f, 6f);
                                 int index = (int)args[8];
-                                Projectiles.LaunchLocalGrowingSnowball(
+                                Projectile.LaunchLocalGrowingSnowball(
                                     snowballName,
                                     position,
                                     velocity,

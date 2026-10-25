@@ -41,6 +41,8 @@ using Qubit.Libraries.Language;
 using Qubit.Libraries.Networking;
 using Qubit.Modules;
 using Qubit.Modules.Categories;
+using Qubit.Modules.Categories.Gamemode;
+using Qubit.Modules.Categories.Regional;
 using Qubit.Patches.Building;
 using Qubit.Patches.Economics;
 using Qubit.Patches.Events;
@@ -84,10 +86,13 @@ using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Rooms;
 using static Qubit.Modules.Categories.Settings;
 using static Qubit.Modules.Classes.GunLibrary;
+using Audio = Qubit.Modules.Categories.Sound.Audio;
 using Console = Qubit.Backend.Console;
+using Microphone = Qubit.Modules.Categories.Sound.Microphone;
 using Random = UnityEngine.Random;
 using Room = Qubit.Modules.Categories.Room;
 using Security = Qubit.Core.Security;
+using Soundboard = Qubit.Modules.Categories.Sound.Soundboard;
 using TextMeshPro = TMPro.TextMeshPro;
 
 namespace Qubit.Modules
@@ -113,11 +118,11 @@ namespace Qubit.Modules
                 new Module { name = "Safety Mods", method =() => CurrentCategoryName = "Safety Mods", isTogglable = false, toolTip = "Opens the safety mods.", legal = true},
                 new Module { name = "Movement Mods", method =() => CurrentCategoryName = "Movement Mods", isTogglable = false, toolTip = "Opens the movement mods."},
                 new Module { name = "Rig Mods", method =() => CurrentCategoryName = "Rig Mods", isTogglable = false, toolTip = "Opens the rig mods."},
-                new Module { name = "Advantage Mods", method =() => CurrentCategoryName = "Advantage Mods", isTogglable = false, toolTip = "Opens the advantage mods."},
+                new Module { name = "Gamemode Mods", method =() => CurrentCategoryName = "Gamemode Mods", isTogglable = false, toolTip = "Opens the gamemode mods."},
                 new Module { name = "Visual Mods", method =() => CurrentCategoryName = "Visual Mods", isTogglable = false, toolTip = "Opens the visual mods.", legal = true},
                 new Module { name = "Fun Mods", method =() => CurrentCategoryName = "Fun Mods", isTogglable = false, toolTip = "Opens the fun mods.", legal = true},
                 new Module { name = "Seasonal Mods", method =() => CurrentCategoryName = "Seasonal Mods", isTogglable = false, toolTip = "Opens the seasonal mods."},
-                new Module { name = "Entity & Gadget Mods", method =() => CurrentCategoryName = "Entity & Gadget Mods", isTogglable = false, toolTip = "Opens the entity and gadget mods."},
+                new Module { name = "Regional Mods", method =() => CurrentCategoryName = "Regional Mods", isTogglable = false, toolTip = "Opens the regional mods."},
                 new Module { name = "Holdable Mods", method =() => CurrentCategoryName = "Holdable Mods", isTogglable = false, toolTip = "Opens the holdable mods."},
                 new Module { name = "Identity & Cosmetic Mods", method =() => CurrentCategoryName = "Identity & Cosmetic Mods", isTogglable = false, toolTip = "Opens the identity and cosmetic mods."},
                 new Module { name = "Sound Mods", method =() => CurrentCategoryName = "Sound Mods", isTogglable = false, toolTip = "Opens the sound mods."},
@@ -199,7 +204,7 @@ namespace Qubit.Modules
 
                 new Module { name = "Disable Favorite Keybind", enableMethod =() => Manager.disableFavoritingKeybind = true, disableMethod =() => Manager.disableFavoritingKeybind = false, toolTip = "Makes it so toggling a button while holding left grip does nothing.", legal = true},
                 new Module { name = "Freeze Player in Menu", method = Modules.Categories.Settings.FreezePlayerInMenu, enableMethod =() => closePosition = References.Rigidbody.transform.position, toolTip = "Freezes your character when inside the menu.", legal = true},
-                new Module { name = "Freeze Rig in Menu", displayName = "Ghost Rig in Menu", method = Modules.Categories.Settings.FreezeRigInMenu, disableMethod = Movement.EnableRig, toolTip = "Freezes your rig when inside the menu.", legal = true},
+                new Module { name = "Freeze Rig in Menu", displayName = "Ghost Rig in Menu", method = Modules.Categories.Settings.FreezeRigInMenu, disableMethod = Rig.EnableRig, toolTip = "Freezes your rig when inside the menu.", legal = true},
                 new Module { name = "Zero Gravity Menu", enableMethod =() => zeroGravityMenu = true, disableMethod =() => zeroGravityMenu = false, toolTip = "Disables gravity on the menu when dropping it.", legal = true},
                 new Module { name = "Menu Collisions", enableMethod =() => menuCollisions = true, disableMethod =() => menuCollisions = false, toolTip = "Gives the menu collisions when dropping it.", legal = true},
                 new Module { name = "Player Scale Menu", enableMethod =() => scaleWithPlayer = true, disableMethod =() => scaleWithPlayer = false, toolTip = "Scales the menu with your player scale.", legal = true},
@@ -453,44 +458,44 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Projectile Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true},
 
-                ButtonHelper.Create("Change Projectile", () => ThrowableProjectiles.GetAll()?.Select(e => e.Name).ToArray() ?? Array.Empty<string>(), Projectiles.ProjectileMode, v => Projectiles.ProjectileMode = v, toolTip: "Changes the projectile of the projectile mods."),
+                ButtonHelper.Create("Change Projectile", () => ThrowableProjectiles.GetAll()?.Select(e => e.Name).ToArray() ?? Array.Empty<string>(), Projectile.ProjectileMode, v => Projectile.ProjectileMode = v, toolTip: "Changes the projectile of the projectile mods."),
                 new Module { name = "Random Projectile", toolTip = "Makes the projectiles random." },
                 new Module { name = "Random Direction", toolTip = "Makes the projectiles go everywhere." },
                 new Module { name = "Random Color", toolTip = "Makes the projectiles random colors." },
 
                 new Module { name = "Alternate Projectile Hand", toolTip = "Constantly swaps the hand that the projectile mods shoot from." },
-                new Module { name = "Left Handed Projectiles", toolTip = "Allows you to shoot projectiles from your left hand as well." },
+                new Module { name = "Left Handed Projectile", toolTip = "Allows you to shoot projectiles from your left hand as well." },
 
-                new Module { name = "Both Handed Projectiles", toolTip = "Allows you to shoot projectiles from your both hands." },
+                new Module { name = "Both Handed Projectile", toolTip = "Allows you to shoot projectiles from your both hands." },
 
-                ButtonHelper.Create("Change Shoot Speed", () => Projectiles.ShootStrengthNames, Projectiles.shootCycle, Projectiles.ApplyShootSpeed, "Changes the speed of shooting projectiles."),
-                new Module { name = "Shoot Projectiles", toolTip = "Shoots projectiles like a gun." },
+                ButtonHelper.Create("Change Shoot Speed", () => Projectile.ShootStrengthNames, Projectile.shootCycle, Projectile.ApplyShootSpeed, "Changes the speed of shooting projectiles."),
+                new Module { name = "Shoot Projectile", toolTip = "Shoots projectiles like a gun." },
 
                 new Module { name = "Include Hand Velocity", toolTip = "Adds the hand velocity to the projectile velocity." },
 
-                new Module { name = "Rainbow Projectiles", toolTip = "Makes the projectiles' color be rainbow." },
-                new Module { name = "Hard Rainbow Projectiles", toolTip = "Makes the projectiles' color be a harsher form of rainbow." },
+                new Module { name = "Rainbow Projectile", toolTip = "Makes the projectiles' color be rainbow." },
+                new Module { name = "Hard Rainbow Projectile", toolTip = "Makes the projectiles' color be a harsher form of rainbow." },
 
-                new Module { name = "Custom Colored Projectiles", toolTip = "Makes the projectile color the custom color (buttons above)." },
+                new Module { name = "Custom Colored Projectile", toolTip = "Makes the projectile color the custom color (buttons above)." },
 
-                ButtonHelper.CreateNumeric("RedProj", 0, 10, Fun.red, Projectiles.ApplyRed, v => v.ToString(), "Makes projectiles more red.", overlapText: "Red"),
-                ButtonHelper.CreateNumeric("GreenProj", 0, 10, Fun.green, Projectiles.ApplyGreen, v => v.ToString(), "Makes projectiles more green.", overlapText: "Green"),
-                ButtonHelper.CreateNumeric("BlueProj", 0, 10, Fun.blue, Projectiles.ApplyBlue, v => v.ToString(), "Makes projectiles more blue.", overlapText: "Blue"),
+                ButtonHelper.CreateNumeric("RedProj", 0, 10, Fun.red, Projectile.ApplyRed, v => v.ToString(), "Makes projectiles more red.", overlapText: "Red"),
+                ButtonHelper.CreateNumeric("GreenProj", 0, 10, Fun.green, Projectile.ApplyGreen, v => v.ToString(), "Makes projectiles more green.", overlapText: "Green"),
+                ButtonHelper.CreateNumeric("BlueProj", 0, 10, Fun.blue, Projectile.ApplyBlue, v => v.ToString(), "Makes projectiles more blue.", overlapText: "Blue"),
 
-                new Module { name = "Friend Sided Projectiles", enableMethod =() => Projectiles.friendSided = true, disableMethod =() => Projectiles.friendSided = false, toolTip = "Makes projectiles only appear for you and your friends on the menu." },
-                ButtonHelper.CreateNumeric("Friend Projectile Scale", 1, 5, Projectiles.friendProjectileScale, Projectiles.ApplyFriendProjectileScale, v => v.ToString(), "Changes the scale of projectiles sent by the Friend system."),
-                new Module { name = "Client Sided Projectiles", enableMethod =() => Projectiles.clientSided = true, disableMethod =() => Projectiles.clientSided = false, toolTip = "Makes projectiles only appear for you." },
+                new Module { name = "Friend Sided Projectile", enableMethod =() => Projectile.friendSided = true, disableMethod =() => Projectile.friendSided = false, toolTip = "Makes projectiles only appear for you and your friends on the menu." },
+                ButtonHelper.CreateNumeric("Friend Projectile Scale", 1, 5, Projectile.friendProjectileScale, Projectile.ApplyFriendProjectileScale, v => v.ToString(), "Changes the scale of projectiles sent by the Friend system."),
+                new Module { name = "Client Sided Projectile", enableMethod =() => Projectile.clientSided = true, disableMethod =() => Projectile.clientSided = false, toolTip = "Makes projectiles only appear for you." },
 
                 new Module { name = "Override Projectile Index", method =() => SnowballModels.enabled = true, disableMethod =() => SnowballModels.enabled = false, toolTip = "Forces a specific projectile index on random projectiles." },
-                ButtonHelper.CreateNumeric("Change Projectile Index", 0, 15, Projectiles.targetProjectileIndex, Projectiles.ApplyProjectileIndex, v => (v + 1).ToString(), "Changes the targetted projectile index on the \"Override Projectile Index\" mod."),
+                ButtonHelper.CreateNumeric("Change Projectile Index", 0, 15, Projectile.targetProjectileIndex, Projectile.ApplyProjectileIndex, v => (v + 1).ToString(), "Changes the targetted projectile index on the \"Override Projectile Index\" mod."),
 
-                ButtonHelper.CreateNumeric("Change Projectile Delay", -1, 20, Projectiles.projDebounceIndex, Projectiles.ApplyProjectileDelay, Projectiles.DisplayProjectileDelay, "Gives the projectiles a delay before spawning another.", onCycle: Projectiles.ProjectileDelayWarning),
+                ButtonHelper.CreateNumeric("Change Projectile Delay", -1, 20, Projectile.projDebounceIndex, Projectile.ApplyProjectileDelay, Projectile.DisplayProjectileDelay, "Gives the projectiles a delay before spawning another.", onCycle: Projectile.ProjectileDelayWarning),
 
-                ButtonHelper.CreateNumeric("Change Snowball Size", 0, Projectiles.MaximumSnowballSize, Projectiles._snowballSize, Projectiles.ApplySnowballSize, v => (v + 1).ToString(), "Changes the size of the growing snowballs.", overlapText: "Change Growing Snowball Size"),
+                ButtonHelper.CreateNumeric("Change Snowball Size", 0, Projectile.MaximumSnowballSize, Projectile._snowballSize, Projectile.ApplySnowballSize, v => (v + 1).ToString(), "Changes the size of the growing snowballs.", overlapText: "Change Growing Snowball Size"),
                 new Module { name = "Random Growing Snowball Size", isTogglable = false, toolTip = "Randomizes the size of the growing snowballs." },
-                ButtonHelper.CreateNumeric("Change Snowball Multiplication Factor", 1, 5, Projectiles.snowballMultiplicationFactor, Projectiles.ApplySnowballMultiplicationFactor, v => v.ToString(), "Changes the multiplication factor of the snowballs."),
+                ButtonHelper.CreateNumeric("Change Snowball Multiplication Factor", 1, 5, Projectile.snowballMultiplicationFactor, Projectile.ApplySnowballMultiplicationFactor, v => v.ToString(), "Changes the multiplication factor of the snowballs."),
 
-                new Module { name = "Disable Snowball Impact Effect", method = Projectiles.DisableSnowballImpactEffect, toolTip = "Disables the impact effect that people get when hit with snowballs."},
+                new Module { name = "Disable Snowball Impact Effect", method = Projectile.DisableSnowballImpactEffect, toolTip = "Disables the impact effect that people get when hit with snowballs."},
             },
 
             ["Room Mods"] = new[]
@@ -611,7 +616,6 @@ namespace Qubit.Modules
                 new Module { name = "Change Queue to Minigames", displayName = $"Change Queue {Bracket("green", "Minigames")}", method =() => References.Computer.currentQueue = "MINIGAMES", isTogglable = false, toolTip = "Changes your queue to minigames."},
                 new Module { name = "Change Queue to Competitive", displayName = $"Change Queue {Bracket("green", "Competitive")}", method =() => References.Computer.currentQueue = "COMPETITIVE", isTogglable = false, toolTip = "Changes your queue to competitive."},
 
-                new Module { name = "Disable April Fools FX", enableMethod = Important.DisableAprilFoolsFX, disableMethod = Important.EnableAprilFoolsFX, toolTip = "Disables the April Fools effect in Gorilla Tag 2026."},
 
                 new Module { name = $"Change Target Gamemode {Bracket("green", "Casual")}", method =() => References.Computer.SetGameModeWithoutButton("Casual"), isTogglable = false, toolTip = "Changes your target gamemode to casual."},
                 new Module { name = $"Change Target Gamemode {Bracket("green", "Infection")}", method =() => References.Computer.SetGameModeWithoutButton("Infection"), isTogglable = false, toolTip = "Changes your target gamemode to infection."},
@@ -641,7 +645,7 @@ namespace Qubit.Modules
                 new Module { name = "Watchdog Auto-Leave", method = Safety.WatchdogAutoLeave, toolTip = "Automatically leaves the room whenever a player on your watchlist joins or is already in it." },
                 new Module { name = "Watchdog Mark All", aliases = new[] { "Mark All Players" }, method = Safety.WatchdogMarkAll, isTogglable = false, toolTip = "Adds everyone currently in the room to your watchlist." },
                 new Module { name = "Watchdog Clear", method = Safety.WatchdogClear, isTogglable = false, toolTip = "Clears your watchlist." },
-                new Module { name = "Mic Safety Gate", method = Safety.MicSafetyGate, disableMethod = Safety.DisableMicSafetyGate, toolTip = "Mutes your microphone whenever someone can reach your report button, unmutes once they can't." },
+                new Module { name = "Microphone Safety Gate", aliases = new[] { "Mic Safety Gate" }, method = Safety.MicSafetyGate, disableMethod = Safety.DisableMicSafetyGate, toolTip = "Mutes your microphone whenever someone can reach your report button, unmutes once they can't." },
 
                 new Module { name = "No Finger Movement", aliases = new[] { "Disable Fingers" }, postMethod = Safety.NoFinger, toolTip = "Makes your fingers not move, so you can use wall walk without getting called out." },
 
@@ -770,8 +774,6 @@ namespace Qubit.Modules
                 new Module { name = "Zero Gravity", aliases = new[] { "No Gravity" }, postMethod = Movement.ZeroGravity, toolTip = "Disables gravity on your character."},
                 new Module { name = "High Gravity", aliases = new[] { "Mars Gravity" }, postMethod = Movement.HighGravity, toolTip = "Makes gravity higher on your character."},
                 new Module { name = "Reverse Gravity", aliases = new[] { "Flip Gravity" }, enableMethod = Movement.ReverseGravity, disableMethod = Movement.UnflipCharacter, toolTip = "Reverses gravity on your character."},
-                new Module { name = "Disable Space Gravity", method =() => Movement.ToggleSpaceGravity(false), disableMethod =() => Movement.ToggleSpaceGravity(true), toolTip = "Disables the main space map zone. This may fix fly."},
-                new Module { name = "Disable Planet Zones", method =() => Movement.TogglePlanetZones(false), disableMethod =() => Movement.TogglePlanetZones(true), toolTip = "Disables the planet zones that rotate your character and change the velocity in the space map."},
 
                 new Module { name = $"Rewind {Bracket("green", "T")}", aliases = new[] { "Reverse" }, method = Movement.Rewind, disableMethod = Movement.ClearRewind, toolTip = "Brings you back in time when holding <color=green>trigger</color>."},
                 new Module { name = "Macros", method =() => CurrentCategoryName = "Macros", isTogglable = false, toolTip = "Opens a category to manage your macros."},
@@ -798,6 +800,14 @@ namespace Qubit.Modules
                 new Module { name = $"Long Jump {Bracket("green", "A")}", displayName = $"Playspace Abuse {Bracket("green", "A")}", aliases = new[] { "Long Jump" }, method = Movement.PlayspaceAbuse, toolTip = "Makes you look like you're legitimately long jumping when holding <color=green>A</color>."},
                 new Module { name = "Velocity Long Arms", displayName = "Predictions", aliases = new[] { "Velocity Long Arms" }, enableMethod = Movement.CreateVelocityTrackers, method = Movement.VelocityLongArms, disableMethod = Movement.DestroyVelocityTrackers, toolTip = "Moves your arms farther depending on how fast you move them."},
 
+                new Module { name = "Uncap Arm Length", aliases = new[] { "Armmax" }, method =() => { References.Player.leftHand.maxArmLength = float.MaxValue; References.Player.rightHand.maxArmLength = float.MaxValue; }, disableMethod =() => { References.Player.leftHand.maxArmLength = 1; References.Player.rightHand.maxArmLength = 1; }, toolTip = "Removes the arm distance limit."},
+                new Module { name = "Steam Long Arms", method = Movement.EnableSteamLongArms, disableMethod = Movement.DisableSteamLongArms, toolTip = "Gives you long arms similar to override world scale."},
+                new Module { name = "Stick Long Arms", method = Movement.StickLongArms, toolTip = "Makes you look like you're using sticks."},
+                new Module { name = "Multiplied Long Arms", method = Movement.MultipliedLongArms, toolTip = "Gives you a weird version of long arms."},
+                new Module { name = "Vertical Long Arms", method = Movement.VerticalLongArms, toolTip = "Gives you a version of long arms to help you vertically."},
+                new Module { name = "Horizontal Long Arms", method = Movement.HorizontalLongArms, toolTip = "Gives you a version of long arms to help you horizontally."},
+                new Module { name = $"Extenders {Bracket("green", "J")}", method = Movement.Extenders, enableMethod =() => Movement.extendingTime = 0f, disableMethod = Movement.DisableSteamLongArms, toolTip = "Steam long arms, but it slowly disables when holding the right trigger."},
+
                 new Module { name = "Timer", enableMethod =() => TaggerTimer.enabled = true, method = Movement.Timer, disableMethod =() => { TaggerTimer.enabled = false; Time.timeScale = 1f; References.Player.debugMovement = false;  }, toolTip = "Speeds up or slows down the time of your game."},
 
                 new Module { name = "Speed Boost", method = Movement.SpeedBoost, toolTip = "Changes your speed to whatever you set it to."},
@@ -813,7 +823,6 @@ namespace Qubit.Modules
                 new Module { name = "Slippery Hands", displayName = "Slippery Surfaces", aliases = new[] { "Slippery Hands" }, enableMethod =() => SlidePercentage.everythingSlippery = true, disableMethod =() => SlidePercentage.everythingSlippery = false, toolTip = "Makes everything ice, as in extremely slippery."},
                 new Module { name = "Grippy Hands", displayName = "No Slippery Surfaces", aliases = new[] { "Grippy Hands" }, enableMethod =() => SlidePercentage.everythingGrippy = true, disableMethod =() => SlidePercentage.everythingGrippy = false, toolTip = "Disables any slipperiness of any surfaces."},
                 new Module { name = "Slippery Surface Helper", aliases = new[] { "Slippery Wall Helper" }, enableMethod =() => SlidePercentage.minimalSlip = true, disableMethod =() => SlidePercentage.minimalSlip = false, toolTip = "Helps you stick to slippery walls more, but doesn't remove the slipperiness."},
-                new Module { name = "Remove Forest Colliders", enableMethod = Movement.RemoveForestColliders, disableMethod = Movement.RestoreForestColliders, toolTip = "Removes the colliders on the roof and the entrance to tutorial inside Forest."},
                 new Module { name = "Sticky Hands", method = Movement.StickyHands, disableMethod = Movement.DisableStickyHands, toolTip = "Makes your hands really sticky."},
                 new Module { name = "Climby Hands", method = Movement.ClimbyHands, disableMethod = Movement.DisableClimbyHands, toolTip = "Lets you climb everything like a rope."},
                 new Module { name = "Disable Hands", method =() => Movement.SetHandEnabled(false), disableMethod =() => Movement.SetHandEnabled(true), toolTip = "Disables your hand colliders."},
@@ -848,149 +857,227 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Rig Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
 
-                new Module { name = "Uncap Arm Length", aliases = new[] { "Armmax" }, method =() => { References.Player.leftHand.maxArmLength = float.MaxValue; References.Player.rightHand.maxArmLength = float.MaxValue; }, disableMethod =() => { References.Player.leftHand.maxArmLength = 1; References.Player.rightHand.maxArmLength = 1; }, toolTip = "Removes the arm distance limit."},
-                new Module { name = "Steam Long Arms", method = Movement.EnableSteamLongArms, disableMethod = Movement.DisableSteamLongArms, toolTip = "Gives you long arms similar to override world scale."},
-                new Module { name = "Stick Long Arms", method = Movement.StickLongArms, toolTip = "Makes you look like you're using sticks."},
-                new Module { name = "Multiplied Long Arms", method = Movement.MultipliedLongArms, toolTip = "Gives you a weird version of long arms."},
-                new Module { name = "Vertical Long Arms", method = Movement.VerticalLongArms, toolTip = "Gives you a version of long arms to help you vertically."},
-                new Module { name = "Horizontal Long Arms", method = Movement.HorizontalLongArms, toolTip = "Gives you a version of long arms to help you horizontally."},
-                new Module { name = $"Extenders {Bracket("green", "J")}", method = Movement.Extenders, enableMethod =() => Movement.extendingTime = 0f, disableMethod = Movement.DisableSteamLongArms, toolTip = "Steam long arms, but it slowly disables when holding the right trigger."},
-                new Module { name = $"Ghost {Bracket("green", "A")}", method = Movement.Ghost, disableMethod = Movement.EnableRig, toolTip = "Keeps your rig still when holding <color=green>A</color>."},
-                new Module { name = $"Invisible {Bracket("green", "B")}", method = Movement.Invisible, disableMethod = Movement.EnableRig, toolTip = "Makes you go invisible when holding <color=green>B</color>."},
-                new Module { name = "Weeping Angel", method = Movement.WeepingAngel, disableMethod = Movement.DisableWeepingAngel, toolTip = "Freezes your rig in place whenever someone is watching you." },
+                new Module { name = $"Draw Line {Bracket("green", "G")}", method = Fun.DrawLine, disableMethod = Rig.EnableRig, toolTip = "Draws a line with your rig's trail while holding <color=green>grip</color>."},
+                new Module { name = $"Draw Circle {Bracket("green", "G")}", method = Fun.DrawCircle, disableMethod = Rig.EnableRig, toolTip = "Draws a circle with your rig's trail while holding <color=green>grip</color>."},
+
+                new Module { name = $"Ghost {Bracket("green", "A")}", method = Rig.Ghost, disableMethod = Rig.EnableRig, toolTip = "Keeps your rig still when holding <color=green>A</color>."},
+                new Module { name = $"Invisible {Bracket("green", "B")}", method = Rig.Invisible, disableMethod = Rig.EnableRig, toolTip = "Makes you go invisible when holding <color=green>B</color>."},
+                new Module { name = "Weeping Angel", method = Rig.WeepingAngel, disableMethod = Rig.DisableWeepingAngel, toolTip = "Freezes your rig in place whenever someone is watching you." },
                 new Module { name = "Weeping Angel Chase", toolTip = "Makes the weeping angel mod chase whoever isn't watching you instead of staying still." },
-                ButtonHelper.Create("cwaMode", () => Movement.WeepingAngelModeNames, Movement.weepingAngelMode, Movement.ApplyWeepingAngelMode, "Changes who can trigger the weeping angel mod.", overlapText: "Change Weeping Angel Mode"),
-                new Module { name = "Rig Gun", method = Movement.RigGun, toolTip = "Moves your rig to wherever your hand desires."},
-                new Module { name = "Look At Gun", method = Movement.LookAtGun, toolTip = "Makes you stare at whoever your hand desires."},
-                new Module { name = "Shadow Clone Gun", method = Movement.ShadowCloneGun, disableMethod = Movement.EnableRig, toolTip = "Copies the movement of whoever your hand desires, right beside them."},
-                new Module { name = "PC Rig", method = Movement.PCRigPose, toolTip = "Gives your rig a custom pose on PC, instead of using the default vanilla one."},
-                new Module { name = "Masturbate", method = Movement.JerkOffAnimation, toolTip = "Makes you masturbate."},
-                new Module { name = "Become Player Gun", method = Movement.BecomePlayerGun, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Copies the pose and position of whoever your hand desires, becoming them."},
-                new Module { name = "Reset Rig", method = Movement.ResetRig, isTogglable = false, toolTip = "Resets your rig back to normal if it's stuck from another mod."},
-                new Module { name = $"Grab Rig {Bracket("green", "G")}", method = Movement.GrabRig, toolTip = "Lets you grab your rig when holding <color=green>grip</color>."},
-                new Module { name = "Spin Head X", method =() => Movement.SpinHead("x"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the X axis."},
-                new Module { name = "Spin Head Y", method =() => Movement.SpinHead("y"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the Y axis."},
-                new Module { name = "Spin Head Z", method =() => Movement.SpinHead("z"), disableMethod = Fun.FixHead, toolTip = "Spins your head on the Z axis."},
-                new Module { name = $"Spaz Rig {Bracket("green", "A")}", enableMethod = Movement.EnableSpazRig, method = Movement.SpazRig, disableMethod = Movement.DisableSpazRig, toolTip = "Makes every part of your rig spaz out a little bit when holding <color=green>A</color>."},
-                new Module { name = "Spaz Full Body", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_SpazBody, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_SpazBody; ghostException = false; }, toolTip = "Makes your body spaz in a bunch of different directions."},
-                new Module { name = $"Spaz Rig Hands {Bracket("green", "A")}", method = Movement.SpazHands, toolTip = "Makes your rig's hands spaz out everywhere when holding <color=green>A</color>."},
-                new Module { name = $"Spaz Hands {Bracket("green", "A")}", method = Movement.SpazRealHands, toolTip = "Makes your hands spaz out everywhere when holding <color=green>A</color>."},
-                new Module { name = "Random Spaz Head Position", enableMethod = Movement.EnableSpazHead, method = Movement.RandomSpazHeadPosition, disableMethod = Movement.FixHeadPosition, toolTip = "Makes your head position spaz out for 0 to 1 seconds every 1 to 4 seconds."},
-                new Module { name = "Random Spaz Head", displayName = "Random Spaz Head Rotation", method = Movement.RandomSpazHead, disableMethod = Fun.FixHead, toolTip = "Makes your head rotation spaz out for 0 to 1 seconds every 1 to 4 seconds."},
-                new Module { name = "Spaz Head Position", enableMethod = Movement.EnableSpazHead, method = Movement.SpazHeadPosition, disableMethod = Movement.FixHeadPosition, toolTip = "Makes your head position spaz out."},
-                new Module { name = "Spaz Head", displayName = "Spaz Head Rotation", method = Movement.SpazHead, disableMethod = Fun.FixHead, toolTip = "Makes your head rotation spaz out."},
-                new Module { name = "Spaz Head X", method =() => Fun.SpazHead("x"), disableMethod = Fun.FixHead, toolTip = "Spaz your head on the X axis."},
-                new Module { name = "Spaz Head Y", method =() => Fun.SpazHead("y"), disableMethod = Fun.FixHead, toolTip = "Spaz your head on the Y axis."},
-                new Module { name = "Spaz Head Z", method =() => Fun.SpazHead("z"), disableMethod = Fun.FixHead, toolTip = "Spaz your head on the Z axis."},
-                new Module { name = "Laggy Rig", method = Movement.LaggyRig, disableMethod = Movement.EnableRig, toolTip = "Makes your rig laggy."},
+                ButtonHelper.Create("cwaMode", () => Rig.WeepingAngelModeNames, Rig.weepingAngelMode, Rig.ApplyWeepingAngelMode, "Changes who can trigger the weeping angel mod.", overlapText: "Change Weeping Angel Mode"),
+                new Module { name = "Rig Gun", method = Rig.RigGun, toolTip = "Moves your rig to wherever your hand desires."},
+                new Module { name = "Look At Gun", method = Rig.LookAtGun, toolTip = "Makes you stare at whoever your hand desires."},
+                new Module { name = "Shadow Clone Gun", method = Rig.ShadowCloneGun, disableMethod = Rig.EnableRig, toolTip = "Copies the movement of whoever your hand desires, right beside them."},
+                new Module { name = "PC Rig", method = Rig.PCRigPose, toolTip = "Gives your rig a custom pose on PC, instead of using the default vanilla one."},
+                new Module { name = "Masturbate", method = Rig.JerkOffAnimation, toolTip = "Makes you masturbate."},
+                new Module { name = "Become Player Gun", method = Rig.BecomePlayerGun, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Copies the pose and position of whoever your hand desires, becoming them."},
+                new Module { name = "Reset Rig", method = Rig.ResetRig, isTogglable = false, toolTip = "Resets your rig back to normal if it's stuck from another mod."},
+                new Module { name = $"Grab Rig {Bracket("green", "G")}", method = Rig.GrabRig, toolTip = "Lets you grab your rig when holding <color=green>grip</color>."},
+                new Module { name = "Spin Head X", method =() => Rig.SpinHead("x"), disableMethod = Rig.FixHead, toolTip = "Spins your head on the X axis."},
+                new Module { name = "Spin Head Y", method =() => Rig.SpinHead("y"), disableMethod = Rig.FixHead, toolTip = "Spins your head on the Y axis."},
+                new Module { name = "Spin Head Z", method =() => Rig.SpinHead("z"), disableMethod = Rig.FixHead, toolTip = "Spins your head on the Z axis."},
+                new Module { name = $"Spaz Rig {Bracket("green", "A")}", enableMethod = Rig.EnableSpazRig, method = Rig.SpazRig, disableMethod = Rig.DisableSpazRig, toolTip = "Makes every part of your rig spaz out a little bit when holding <color=green>A</color>."},
+                new Module { name = "Spaz Full Body", enableMethod =() => Torso.VRRigLateUpdate += Rig.VRRigLateUpdate_SpazBody, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Rig.VRRigLateUpdate_SpazBody; ghostException = false; }, toolTip = "Makes your body spaz in a bunch of different directions."},
+                new Module { name = $"Spaz Rig Hands {Bracket("green", "A")}", method = Rig.SpazHands, toolTip = "Makes your rig's hands spaz out everywhere when holding <color=green>A</color>."},
+                new Module { name = $"Spaz Hands {Bracket("green", "A")}", method = Rig.SpazRealHands, toolTip = "Makes your hands spaz out everywhere when holding <color=green>A</color>."},
+                new Module { name = "Random Spaz Head Position", enableMethod = Rig.EnableSpazHead, method = Rig.RandomSpazHeadPosition, disableMethod = Rig.FixHeadPosition, toolTip = "Makes your head position spaz out for 0 to 1 seconds every 1 to 4 seconds."},
+                new Module { name = "Random Spaz Head", displayName = "Random Spaz Head Rotation", method = Rig.RandomSpazHead, disableMethod = Rig.FixHead, toolTip = "Makes your head rotation spaz out for 0 to 1 seconds every 1 to 4 seconds."},
+                new Module { name = "Spaz Head Position", enableMethod = Rig.EnableSpazHead, method = Rig.SpazHeadPosition, disableMethod = Rig.FixHeadPosition, toolTip = "Makes your head position spaz out."},
+                new Module { name = "Spaz Head", displayName = "Spaz Head Rotation", method = Rig.SpazHead, disableMethod = Rig.FixHead, toolTip = "Makes your head rotation spaz out."},
+                new Module { name = "Spaz Head X", method =() => Rig.SpazHead("x"), disableMethod = Rig.FixHead, toolTip = "Spaz your head on the X axis."},
+                new Module { name = "Spaz Head Y", method =() => Rig.SpazHead("y"), disableMethod = Rig.FixHead, toolTip = "Spaz your head on the Y axis."},
+                new Module { name = "Spaz Head Z", method =() => Rig.SpazHead("z"), disableMethod = Rig.FixHead, toolTip = "Spaz your head on the Z axis."},
+                new Module { name = "Laggy Rig", method = Rig.LaggyRig, disableMethod = Rig.EnableRig, toolTip = "Makes your rig laggy."},
                 new Module { name = "Smooth Rig", method =() => PhotonNetwork.SerializationRate = 30, disableMethod =() => PhotonNetwork.SerializationRate = 10, toolTip = "Makes your rig really smooth."},
-                new Module { name = $"Update Rig {Bracket("green", "A")}", method = Movement.UpdateRig, disableMethod = Movement.EnableRig, toolTip = "Freezes your rig in place. Whenever you click <color=green>A</color>, your rig will update."},
-                new Module { name = "Freeze Rig Limbs", method = Movement.FreezeRigLimbs, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your hands and head freeze on your rig, but not your body."},
-                new Module { name = "Freeze Rig Body", method = Movement.FreezeRigBody, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your body freeze on your rig, but not your hands and head."},
-                new Module { name = "Freeze Rig", method = Movement.FreezeRig, disableMethod =() => { References.LocalRig.enabled = true; Movement.startPosition = null; }, toolTip = "Makes your body freeze on your rig, but not your hands and head."},
-                new Module { name = "Paralyze Rig", method = Movement.ParalyzeRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Removes your arms from your rig."},
-                new Module { name = "Chicken Rig", method = Movement.ChickenRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your rig look like a chicken."},
-                new Module { name = "Amputate Rig", method = Movement.AmputateRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Removes all of your limbs from your rig."},
-                new Module { name = "Decapitate Rig", enableMethod =() => Torso.VRRigLateUpdate += Movement.DecapitateRigUpdate, disableMethod =() => Torso.VRRigLateUpdate -= Movement.DecapitateRigUpdate, toolTip = "Removes the head from your rig."},
-                new Module { name = "Fake Full Body Tracking", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_FakeFBT, disableMethod =() => Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_FakeFBT, toolTip = "Fakes full body tracking by making your rig follow your camera orientation."},
-                new Module { name = "Control Rig Rotation", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_Control, disableMethod =() => Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_Control, toolTip = "Control your rig rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
-                new Module { name = "Control Body Rotation", postMethod = Movement.ControlBodyRotation, toolTip = "Control your body rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
-                new Module { name = "Flip", enableMethod =() => Torso.VRRigLateUpdate += Movement.Flip, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
-                new Module { name = "Spider Crawl", aliases = new[] { "Crawl" }, postMethod = Movement.SpiderCrawl, toolTip = "Makes you look like a spider."},
-                new Module { name = "Butt Head", postMethod =() => Movement.ButtHead(), toolTip = "Flips your rig so your head is where your butt should be."},
-                new Module { name = "Flat On Back", postMethod =() => Movement.FlatOnBack(), toolTip = "Lays your rig flat on its back."},
-                new Module { name = "Lay Down", postMethod =() => Movement.LayDown(), toolTip = "Lays your rig down."},
-                new Module { name = "Sideways", postMethod =() => Movement.Sideways(), toolTip = "Tips your rig onto its side."},
-                new Module { name = "Tilt Left", postMethod =() => Movement.TiltLeft(), toolTip = "Tilts your rig to the left."},
-                new Module { name = "Tilt Right", postMethod =() => Movement.TiltRight(), toolTip = "Tilts your rig to the right."},
-                new Module { name = "Lean Forward", postMethod =() => Movement.LeanForward(), toolTip = "Leans your rig forward."},
-                new Module { name = "Lean Back", postMethod =() => Movement.LeanBack(), toolTip = "Leans your rig backward."},
-                new Module { name = "Upwards Body", postMethod = Movement.UpwardsBody, toolTip = "Makes your body point upwards."},
-                new Module { name = "Spin Rig Body", method =() => Movement.SetBodyPatch(true), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Makes your body spin around, but not your head."},
-                new Module { name = "Spaz Rig Body", method =() => Movement.SetBodyPatch(true, 1), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Gives your body a seizure, randomizing its rotation."},
-                new Module { name = "Reverse Rig Body", method =() => Movement.SetBodyPatch(true, 2), disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Flips your body around backwards, but not your head."},
-                new Module { name = "Rec Room Body", method = Movement.RecRoomBody, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Makes your rig like how the Rec Room bodies are."},
-                new Module { name = "Dinnerbone", aliases = new[] { "Upside Down" }, enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_Dinnerbone, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_Dinnerbone; ghostException = false;  }, toolTip = "Flips you upside down, inspired by the easter egg in Minecraft."},
-                new Module { name = $"Freeze Body Rotation {Bracket("green", "G")}", method = Movement.FreezeBodyRotation, disableMethod =() => Movement.SetBodyPatch(false), toolTip = "Freezes your body rotation in place, but not your head, when holding <color=green>grip</color>."},
-                new Module { name = $"Auto Dance {Bracket("green", "A")}", aliases = new[] { "Emote" }, method = Movement.AutoDance, toolTip = "Makes you dance when holding <color=green>A</color>."},
-                new Module { name = $"Auto Griddy {Bracket("green", "A")}", method = Movement.AutoGriddy, toolTip = "Makes you griddy when holding <color=green>A</color>."},
-                new Module { name = $"Auto T Pose {Bracket("green", "A")}", displayName = $"T Pose {Bracket("green", "A")}", method = Movement.AutoTPose, toolTip = "Makes you t pose when holding <color=green>A</color>. Good for fly trolling."},
-                new Module { name = $"Helicopter {Bracket("green", "A")}", method = Movement.Helicopter, toolTip = "Turns you into a helicopter when holding <color=green>A</color>."},
-                new Module { name = $"Beyblade {Bracket("green", "A")}", method = Movement.Beyblade, toolTip = "Turns you into a beyblade when holding <color=green>A</color>."},
-                new Module { name = $"Still Beyblade {Bracket("green", "A")}", method = Movement.StillBeyblade, disableMethod =() => Movement.stillBeybladeStartPos = Vector3.zero, toolTip = "Turns you into a beyblade when holding <color=green>A</color>. Doesn't move you."},
-                new Module { name = "Spin Bot", enableMethod =() => Torso.VRRigLateUpdate += Movement.TorsoPatch_VRRigLateUpdate, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.TorsoPatch_VRRigLateUpdate; ghostException = false; }, toolTip = "Makes your body spin around, but not your head."},
-                new Module { name = $"Fan {Bracket("green", "A")}", method = Movement.Fan, toolTip = "Turns you into a fan when holding <color=green>A</color>."},
-                new Module { name = "Ghost Animations", method = Movement.GhostAnimations, disableMethod = Movement.DisableGhostAnimations, toolTip = "Makes you look like a ghost, making your movement snappy and slow."},
-                new Module { name = "Minecraft Animations", method = Movement.MinecraftAnimations, disableMethod = Movement.EnableRig, toolTip = "Puts your hands down, and makes you walk when holding <color=green>A</color>. You can also point with <color=green>B</color>."},
-                new Module { name = "Stare at Nearby", displayName = "Stare At Player Nearby", enableMethod =() => Torso.VRRigLateUpdate += Movement.StareAtNearby, disableMethod =() => Torso.VRRigLateUpdate -= Movement.StareAtNearby, toolTip = "Makes you stare at the nearest player."},
-                new Module { name = "Stare at Player Gun", method = Movement.StareAtGun, disableMethod =() => Torso.VRRigLateUpdate -= Movement.StareAtTarget, toolTip = "Makes you stare at whoever your hand desires."},
-                new Module { name = "Stare at All Players", aliases = new[] { "Owl" }, enableMethod = Movement.StareAtAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you stare at everyone in the room."},
-                new Module { name = "Eye Contact", enableMethod =() => Torso.VRRigLateUpdate += Movement.EyeContact, disableMethod =() => Torso.VRRigLateUpdate -= Movement.EyeContact, toolTip = "Makes you stare at anyone who is looking at you."},
-                new Module { name = "Floating Rig", enableMethod = Movement.EnableFloatingRig, method = Movement.FloatingRig, disableMethod = Movement.DisableFloatingRig, toolTip = "Makes your rig float."},
-                new Module { name = "Bees", method = Movement.Bees, disableMethod = Movement.EnableRig, toolTip = "Makes your rig teleport to random players, imitating the bees ghost."},
-                new Module { name = "Piggyback Gun", aliases = new[] { "Ride Gun" }, method = Movement.PiggybackGun, toolTip = "Teleports you on top of whoever your hand desires repeatedly."},
-                new Module { name = "Piggyback All", aliases = new[] { "Ride All" }, enableMethod = Movement.PiggybackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you appear on top of everyone in the room"},
-                new Module { name = "Copy Movement Gun", method = Movement.CopyMovementGun, toolTip = "Makes your rig copy the movement of whoever your hand desires."},
-                new Module { name = "Copy Movement All", enableMethod = Movement.CopyMovementAll, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Movement.followPositions.Clear(); }, toolTip = "Makes your rig copy the movement of every player in the room."},
-                new Module { name = "Follow Player Gun", method = Movement.FollowPlayerGun, toolTip = "Flies your rig towards whoever your hand desires."},
-                new Module { name = "Follow All Players", enableMethod = Movement.FollowAllPlayers, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Flies your rig towards everyone in the room."},
-                new Module { name = "Orbit Player Gun", method = Movement.OrbitPlayerGun, toolTip = "Orbits your rig around whoever your hand desires."},
-                new Module { name = "Orbit All Players", enableMethod = Movement.OrbitAllPlayers, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Orbits your rig around everyone in the room."},
-                new Module { name = "Jumpscare Gun", method = Movement.JumpscareGun, toolTip = "Makes you jumpscare whoever your hand desires."},
-                new Module { name = "Jumpscare All", enableMethod = Movement.JumpscareAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you jumpscare everyone in the room."},
-                new Module { name = "Annoy Player Gun", method = Movement.AnnoyPlayerGun, toolTip = "Spazzes your body around whoever your hand desires, with sounds."},
-                new Module { name = "Annoy All Players", enableMethod = Movement.AnnoyAllPlayers, method =() => Sound.SoundSpam(337, true), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Spazzes your body around everyone in the room, with sounds."},
-                new Module { name = "Intercourse Gun", aliases = new[] { "Sex Gun" }, method = Movement.IntercourseGun, toolTip = "Makes you thrust whoever your hand desires, with sounds."},
-                new Module { name = "Intercourse All", aliases = new[] { "Sex All" }, enableMethod = Movement.IntercourseAll, method = Movement.IntercourseNoises, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you thrust everyone in the room, with sounds."},
-                new Module { name = "Head Gun", aliases = new[] { "Blowjob Gun" }, method = Movement.HeadGun, toolTip = "Makes you thrust whoever your hand desires, but lower, with sounds."},
-                new Module { name = "Head All", aliases = new[] { "Blowjob All" }, enableMethod = Movement.HeadAll, method = Movement.IntercourseNoises, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you thrust everyone in the room, but lower, with sounds."}
+                new Module { name = $"Update Rig {Bracket("green", "A")}", method = Rig.UpdateRig, disableMethod = Rig.EnableRig, toolTip = "Freezes your rig in place. Whenever you click <color=green>A</color>, your rig will update."},
+                new Module { name = "Freeze Rig Limbs", method = Rig.FreezeRigLimbs, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your hands and head freeze on your rig, but not your body."},
+                new Module { name = "Freeze Rig Body", method = Rig.FreezeRigBody, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your body freeze on your rig, but not your hands and head."},
+                new Module { name = "Freeze Rig", method = Rig.FreezeRig, disableMethod =() => { References.LocalRig.enabled = true; Rig.startPosition = null; }, toolTip = "Makes your body freeze on your rig, but not your hands and head."},
+                new Module { name = "Paralyze Rig", method = Rig.ParalyzeRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Removes your arms from your rig."},
+                new Module { name = "Chicken Rig", method = Rig.ChickenRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Makes your rig look like a chicken."},
+                new Module { name = "Amputate Rig", method = Rig.AmputateRig, disableMethod =() => References.LocalRig.enabled = true, toolTip = "Removes all of your limbs from your rig."},
+                new Module { name = "Decapitate Rig", enableMethod =() => Torso.VRRigLateUpdate += Rig.DecapitateRigUpdate, disableMethod =() => Torso.VRRigLateUpdate -= Rig.DecapitateRigUpdate, toolTip = "Removes the head from your rig."},
+                new Module { name = "Fake Full Body Tracking", enableMethod =() => Torso.VRRigLateUpdate += Rig.VRRigLateUpdate_FakeFBT, disableMethod =() => Torso.VRRigLateUpdate -= Rig.VRRigLateUpdate_FakeFBT, toolTip = "Fakes full body tracking by making your rig follow your camera orientation."},
+                new Module { name = "Control Rig Rotation", enableMethod =() => Torso.VRRigLateUpdate += Rig.VRRigLateUpdate_Control, disableMethod =() => Torso.VRRigLateUpdate -= Rig.VRRigLateUpdate_Control, toolTip = "Control your rig rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
+                new Module { name = "Control Body Rotation", postMethod = Rig.ControlBodyRotation, toolTip = "Control your body rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
+                new Module { name = "Flip", enableMethod =() => Torso.VRRigLateUpdate += Rig.Flip, disableMethod =() => { Torso.VRRigLateUpdate -= Rig.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
+                new Module { name = "Spider Crawl", aliases = new[] { "Crawl" }, postMethod = Rig.SpiderCrawl, toolTip = "Makes you look like a spider."},
+                new Module { name = "Butt Head", postMethod =() => Rig.ButtHead(), toolTip = "Flips your rig so your head is where your butt should be."},
+                new Module { name = "Flat On Back", postMethod =() => Rig.FlatOnBack(), toolTip = "Lays your rig flat on its back."},
+                new Module { name = "Lay Down", postMethod =() => Rig.LayDown(), toolTip = "Lays your rig down."},
+                new Module { name = "Sideways", postMethod =() => Rig.Sideways(), toolTip = "Tips your rig onto its side."},
+                new Module { name = "Tilt Left", postMethod =() => Rig.TiltLeft(), toolTip = "Tilts your rig to the left."},
+                new Module { name = "Tilt Right", postMethod =() => Rig.TiltRight(), toolTip = "Tilts your rig to the right."},
+                new Module { name = "Lean Forward", postMethod =() => Rig.LeanForward(), toolTip = "Leans your rig forward."},
+                new Module { name = "Lean Back", postMethod =() => Rig.LeanBack(), toolTip = "Leans your rig backward."},
+                new Module { name = "Upwards Body", postMethod = Rig.UpwardsBody, toolTip = "Makes your body point upwards."},
+                new Module { name = "Spin Rig Body", method =() => Rig.SetBodyPatch(true), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Makes your body spin around, but not your head."},
+                new Module { name = "Spaz Rig Body", method =() => Rig.SetBodyPatch(true, 1), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Gives your body a seizure, randomizing its rotation."},
+                new Module { name = "Reverse Rig Body", method =() => Rig.SetBodyPatch(true, 2), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Flips your body around backwards, but not your head."},
+                new Module { name = "Rec Room Body", method = Rig.RecRoomBody, disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Makes your rig like how the Rec Room bodies are."},
+                new Module { name = "Upside Down Rig", aliases = new[] { "Dinnerbone" }, enableMethod =() => Torso.VRRigLateUpdate += Rig.VRRigLateUpdate_Dinnerbone, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Rig.VRRigLateUpdate_Dinnerbone; ghostException = false;  }, toolTip = "Flips you upside down, inspired by the easter egg in Minecraft."},
+                new Module { name = $"Freeze Body Rotation {Bracket("green", "G")}", method = Rig.FreezeBodyRotation, disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Freezes your body rotation in place, but not your head, when holding <color=green>grip</color>."},
+                new Module { name = $"Auto Dance {Bracket("green", "A")}", aliases = new[] { "Emote" }, method = Rig.AutoDance, toolTip = "Makes you dance when holding <color=green>A</color>."},
+                new Module { name = $"Auto Griddy {Bracket("green", "A")}", method = Rig.AutoGriddy, toolTip = "Makes you griddy when holding <color=green>A</color>."},
+                new Module { name = $"Auto T Pose {Bracket("green", "A")}", displayName = $"T Pose {Bracket("green", "A")}", method = Rig.AutoTPose, toolTip = "Makes you t pose when holding <color=green>A</color>. Good for fly trolling."},
+                new Module { name = $"Helicopter {Bracket("green", "A")}", method = Rig.Helicopter, toolTip = "Turns you into a helicopter when holding <color=green>A</color>."},
+                new Module { name = $"Beyblade {Bracket("green", "A")}", method = Rig.Beyblade, toolTip = "Turns you into a beyblade when holding <color=green>A</color>."},
+                new Module { name = $"Still Beyblade {Bracket("green", "A")}", method = Rig.StillBeyblade, disableMethod =() => Rig.stillBeybladeStartPos = Vector3.zero, toolTip = "Turns you into a beyblade when holding <color=green>A</color>. Doesn't move you."},
+                new Module { name = "Spin Bot", enableMethod =() => Torso.VRRigLateUpdate += Rig.TorsoPatch_VRRigLateUpdate, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Rig.TorsoPatch_VRRigLateUpdate; ghostException = false; }, toolTip = "Makes your body spin around, but not your head."},
+                new Module { name = $"Fan {Bracket("green", "A")}", method = Rig.Fan, toolTip = "Turns you into a fan when holding <color=green>A</color>."},
+                new Module { name = "Ghost Animations", method = Rig.GhostAnimations, disableMethod = Rig.DisableGhostAnimations, toolTip = "Makes you look like a ghost, making your movement snappy and slow."},
+                new Module { name = "Minecraft Animations", method = Rig.MinecraftAnimations, disableMethod = Rig.EnableRig, toolTip = "Puts your hands down, and makes you walk when holding <color=green>A</color>. You can also point with <color=green>B</color>."},
+                new Module { name = "Stare at Nearby", displayName = "Stare At Player Nearby", enableMethod =() => Torso.VRRigLateUpdate += Rig.StareAtNearby, disableMethod =() => Torso.VRRigLateUpdate -= Rig.StareAtNearby, toolTip = "Makes you stare at the nearest player."},
+                new Module { name = "Stare at Player Gun", method = Rig.StareAtGun, disableMethod =() => Torso.VRRigLateUpdate -= Rig.StareAtTarget, toolTip = "Makes you stare at whoever your hand desires."},
+                new Module { name = "Stare at All Players", aliases = new[] { "Owl" }, enableMethod = Rig.StareAtAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you stare at everyone in the room."},
+                new Module { name = "Eye Contact", enableMethod =() => Torso.VRRigLateUpdate += Rig.EyeContact, disableMethod =() => Torso.VRRigLateUpdate -= Rig.EyeContact, toolTip = "Makes you stare at anyone who is looking at you."},
+                new Module { name = "Floating Rig", enableMethod = Rig.EnableFloatingRig, method = Rig.FloatingRig, disableMethod = Rig.DisableFloatingRig, toolTip = "Makes your rig float."},
+                new Module { name = "Bees", method = Rig.Bees, disableMethod = Rig.EnableRig, toolTip = "Makes your rig teleport to random players, imitating the bees ghost."},
+                new Module { name = "Piggyback Gun", aliases = new[] { "Ride Gun" }, method = Rig.PiggybackGun, toolTip = "Teleports you on top of whoever your hand desires repeatedly."},
+                new Module { name = "Piggyback All", aliases = new[] { "Ride All" }, enableMethod = Rig.PiggybackAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you appear on top of everyone in the room"},
+                new Module { name = "Copy Movement Gun", method = Rig.CopyMovementGun, toolTip = "Makes your rig copy the movement of whoever your hand desires."},
+                new Module { name = "Copy Movement All", enableMethod = Rig.CopyMovementAll, disableMethod =() => { ViewSerialization.OverrideSerialization = null; Rig.followPositions.Clear(); }, toolTip = "Makes your rig copy the movement of every player in the room."},
+                new Module { name = "Follow Player Gun", method = Rig.FollowPlayerGun, toolTip = "Flies your rig towards whoever your hand desires."},
+                new Module { name = "Follow All Players", enableMethod = Rig.FollowAllPlayers, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Flies your rig towards everyone in the room."},
+                new Module { name = "Orbit Player Gun", method = Rig.OrbitPlayerGun, toolTip = "Orbits your rig around whoever your hand desires."},
+                new Module { name = "Orbit All Players", enableMethod = Rig.OrbitAllPlayers, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Orbits your rig around everyone in the room."},
+                new Module { name = "Jumpscare Gun", method = Rig.JumpscareGun, toolTip = "Makes you jumpscare whoever your hand desires."},
+                new Module { name = "Jumpscare All", enableMethod = Rig.JumpscareAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you jumpscare everyone in the room."},
+                new Module { name = "Annoy Player Gun", method = Rig.AnnoyPlayerGun, toolTip = "Spazzes your body around whoever your hand desires, with sounds."},
+                new Module { name = "Annoy All Players", enableMethod = Rig.AnnoyAllPlayers, method =() => Audio.SoundSpam(337, true), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Spazzes your body around everyone in the room, with sounds."},
+                new Module { name = "Intercourse Gun", aliases = new[] { "Sex Gun" }, method = Rig.IntercourseGun, toolTip = "Makes you thrust whoever your hand desires, with sounds."},
+                new Module { name = "Intercourse All", aliases = new[] { "Sex All" }, enableMethod = Rig.IntercourseAll, method = Rig.IntercourseNoises, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you thrust everyone in the room, with sounds."},
+                new Module { name = "Head Gun", aliases = new[] { "Blowjob Gun" }, method = Rig.HeadGun, toolTip = "Makes you thrust whoever your hand desires, but lower, with sounds."},
+                new Module { name = "Head All", aliases = new[] { "Blowjob All" }, enableMethod = Rig.HeadAll, method = Rig.IntercourseNoises, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Makes you thrust everyone in the room, but lower, with sounds."}
+            },
+
+
+            ["Gamemode Mods"] = new[]
+            {
+                new Module { name = "Exit Gamemode Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+
+                new Module { name = "Infection & Tag Mods", method =() => CurrentCategoryName = "Infection & Tag Mods", isTogglable = false, toolTip = "Opens the infection and tag mods. These also work in hunt."},
+                new Module { name = "Hunt Mods", method =() => CurrentCategoryName = "Hunt Mods", isTogglable = false, toolTip = "Opens the hunt specific mods."},
+                new Module { name = "Super Infection Mods", method =() => CurrentCategoryName = "Super Infection Mods", isTogglable = false, toolTip = "Opens the super infection mods."},
+                new Module { name = "Paintbrawl Mods", method =() => CurrentCategoryName = "Paintbrawl Mods", isTogglable = false, toolTip = "Opens the paintbrawl mods."},
+            },
+
+            ["Infection & Tag Mods"] = new[]
+            {
+                new Module { name = "Exit Infection & Tag Mods", method =() => CurrentCategoryName = "Gamemode Mods", isTogglable = false, toolTip = "Returns you back to the gamemode mods."},
+
+
+                new Module { name = "Tag Self", method = Tag.TagSelf, disableMethod = Rig.EnableRig, toolTip = "Attempts to tags yourself."},
+                new Module { name = "Tag Gun", method = Tag.TagGun, toolTip = "Tags whoever your hand desires."},
+                new Module { name = "Tag All", method = Tag.TagAll, disableMethod = Rig.EnableRig, toolTip = "Attempts to tag everyone in the the room."},
+
+                new Module { name = "Tag Aura", aliases = new[] { "Tag Range" }, method = Tag.TagAura, toolTip = "Moves your hand into nearby players when tagged."},
+                new Module { name = $"Grip Tag Aura {Bracket("green", "G")}", aliases = new[] { "Grip Tag Range" }, method = Tag.GripTagAura, toolTip = "Moves your hand into nearby players when tagged and when holding <color=green>grip</color>."},
+
+                new Module { name = "Tag Aura Gun", method = Tag.TagAuraGun, toolTip = "Gives a player tag aura."},
+                new Module { name = "Tag Random", method = Tag.TagRandom, isTogglable = false, toolTip = "Tags a random untagged player in the room."},
+                new Module { name = "Tag Nearest", method = Tag.TagNearest, isTogglable = false, toolTip = "Tags the nearest untagged player to you."},
+                new Module { name = "Tag Farthest", method = Tag.TagFarthest, isTogglable = false, toolTip = "Tags the farthest untagged player from you."},
+                new Module { name = "Tag Aura All", method = Tag.TagAuraAll, toolTip = "Gives all players tag aura."},
+
+                new Module { name = "Tag Reach", method = Tag.TagReach, disableMethod =() => References.Tagger.maxTagDistance = 1.2f, toolTip = "Makes your hand tag hitbox larger."},
+
+                new Module { name = "Flick Tag Gun", method = Tag.FlickTagGun, toolTip = "Moves your hand to wherever your hand desires in an attempt to tag whoever your hand desires."},
+
+                new Module { name = "Tag Bot", method = Tag.TagBot, disableMethod = Rig.EnableRig, toolTip = "Automatically tags yourself and everyone else on a loop, use <color=green>B</color> to turn it off."},
+
+                new Module { name = "No Tag on Join", method = Tag.NoTagOnJoin, disableMethod = Tag.TagOnJoin, toolTip = "When you join a the room, you won't be tagged when you join."},
+                new Module { name = "Untag Self", method = Tag.UntagSelf, isTogglable = false, toolTip = "Removes you from the list of tagged players."},
+
+                new Module { name = "Anti Tag", method = Tag.AntiTag, disableMethod = Tag.DisableAntiTag, toolTip = "Removes you from the list of tagged players when tagged."},
+                new Module { name = "Report Anti Tag", enableMethod = Tag.ReportAntiTag, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Prevents you from getting tagged, and whoever tries to tag you will just get reported."},
+
+                new Module { name = "No Tag Limit", aliases = new[] { "Tagmax" }, method =() => References.Tagger.maxTagDistance = float.MaxValue, disableMethod =() => References.Tagger.maxTagDistance = 1.2f, toolTip = "Removes the distance check when tagging players."},
+                new Module { name = "Tag Lag Detector", method = Tag.TagLagDetector, toolTip = "Detects when the master client is not currently allowing tag requests."},
+
+                new Module { name = "Fake Lag", method = Tag.FakeLag, disableMethod =() => { ViewSerialization.OverrideSerialization = null; RigSerialization.delay = null; }, toolTip = "Forces your ping to be high."},
+                new Module { name = "Lag Range", method = Tag.LagRange, toolTip = "Dynamically changes how much your rig updates depending on how close you are to others."},
+                new Module { name = "Blink", method = Tag.Blink, disableMethod = Tag.DisableBlink, toolTip = "Stops your client from sending and receiving player update packets."},
+                new Module { name = "Lava Distance Ping", disableMethod =() => Notifications.information.Remove("Lava"), method = Tag.LavaDistancePing, toolTip = "Notifies you of the distance to the nearest tagged player."},
+
+                new Module { name = "Slingshot Helper", method = Paintbrawl.SlingshotHelper, toolTip = "Helps you grab the small paintball on your slingshot."},
+                new Module { name = "Slingshot Trigger Bot", method = Paintbrawl.SlingshotTriggerBot, toolTip = "Releases the small paintball on your slingshot when hovering over another player."},
 
             },
 
-            ["Advantage Mods"] = new[]
+            ["Hunt Mods"] = new[]
             {
-                new Module { name = "Exit Advantage Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+                new Module { name = "Exit Hunt Mods", method =() => CurrentCategoryName = "Gamemode Mods", isTogglable = false, toolTip = "Returns you back to the gamemode mods."},
+            },
 
-                new Module { name = "Tag Self", method = Advantages.TagSelf, disableMethod = Movement.EnableRig, toolTip = "Attempts to tags yourself."},
-                new Module { name = "Tag Gun", method = Advantages.TagGun, toolTip = "Tags whoever your hand desires."},
-                new Module { name = "Tag All", method = Advantages.TagAll, disableMethod = Movement.EnableRig, toolTip = "Attempts to tag everyone in the the room."},
+            ["Super Infection Mods"] = new[]
+            {
+                new Module { name = "Exit Super Infection Mods", method =() => CurrentCategoryName = "Gamemode Mods", isTogglable = false, toolTip = "Returns you back to the gamemode mods."},
 
-                new Module { name = "Tag Aura", aliases = new[] { "Tag Range" }, method = Advantages.TagAura, toolTip = "Moves your hand into nearby players when tagged."},
-                new Module { name = $"Grip Tag Aura {Bracket("green", "G")}", aliases = new[] { "Grip Tag Range" }, method = Advantages.GripTagAura, toolTip = "Moves your hand into nearby players when tagged and when holding <color=green>grip</color>."},
 
-                new Module { name = "Tag Aura Gun", method = Advantages.TagAuraGun, toolTip = "Gives a player tag aura."},
-                new Module { name = "Tag Random", method = Advantages.TagRandom, isTogglable = false, toolTip = "Tags a random untagged player in the room."},
-                new Module { name = "Tag Nearest", method = Advantages.TagNearest, isTogglable = false, toolTip = "Tags the nearest untagged player to you."},
-                new Module { name = "Tag Farthest", method = Advantages.TagFarthest, isTogglable = false, toolTip = "Tags the farthest untagged player from you."},
-                new Module { name = "Tag Aura All", method = Advantages.TagAuraAll, toolTip = "Gives all players tag aura."},
+                new Module { name = "Infinite Jet Fuel", method =() => WristJetFuel.enabled = true, disableMethod =() => WristJetFuel.enabled = false, toolTip = "Gives the jet gadgets in Super Infection infinite fuel."},
+                new Module { name = "Infinite Platforms", method =() => PlatformDeployer.enabled = true, disableMethod =() => PlatformDeployer.enabled = false, toolTip = "Gives the platform spawner gadgets in Super Infection infinite platforms."},
+                new Module { name = "Infinite Resources", method = SIGadgets.InfiniteResources, toolTip = "Gives you infinite resources in the Super Infection gamemode."},
+                new Module { name = "Complete All Quests", method = SIGadgets.CompleteAllQuests, isTogglable = false, toolTip = "Completes every quest in the Super Infection gamemode."},
+                new Module { name = "Claim All Terminals", method = SIGadgets.ClaimAllTerminals, isTogglable = false, toolTip = "Claims every terminal in the Super Infection gamemode."},
+                new Module { name = "Unlock All Gadgets", method = SIGadgets.UnlockAllGadgets, toolTip = "Unlocks every gadget in the Super Infection gamemode."},
+                new Module { name = "No Blaster Cooldown", method =() => ChargeBlasterCooldown.enabled = true, disableMethod =() => ChargeBlasterCooldown.enabled = false, toolTip = "Removes the cooldown on the blaster."},
+                new Module { name = "Blaster Aimbot", enableMethod =() => ChargeBlasterFire.enabled = true, method = SIGadgets.DebugBlasterAimbot, disableMethod =() => ChargeBlasterFire.enabled = false, toolTip = "Automatically aims the blaster towards players."},
+                new Module { name = $"Blaster Laser Spam {Bracket("green", "G")}", method = SIGadgets.BlasterLaserSpam, toolTip = "Spams lasers out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Blaster Float Gun", method =() => SIGadgets.BlasterFlingGun(Vector3.up), toolTip = "Uses the blasters to fling whoever your hand desires vertically."},
+                new Module { name = "Blaster Float All", method =() => SIGadgets.BlasterFlingAll(Vector3.up), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room vertically."},
+                new Module { name = "Blaster Control Gun", method = SIGadgets.BlasterControlGun, toolTip = "Uses the blasters to control whoever your hand desires."},
+                new Module { name = "Blaster Fling Gun", method =() => SIGadgets.BlasterFlingGun(RandomVector3()), toolTip = "Uses the blasters to fling whoever your hand desires."},
+                new Module { name = "Blaster Fling All", method =() => SIGadgets.BlasterFlingAll(RandomVector3()), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room."},
+                new Module { name = "Blaster Fling Towards Gun", displayName = "Blaster Bring Gun", aliases = new[] { "Blaster Fling Towards Gun" }, method = SIGadgets.BlasterFlingTowardsGun, toolTip = "Uses the blasters to fling whoever your hand desires towards you."},
+                new Module { name = "Blaster Fling Towards All", displayName = "Blaster Bring All", aliases = new[] { "Blaster Fling Towards All" }, method = SIGadgets.BlasterFlingTowardsAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room towards you."},
+                new Module { name = "Blaster Fling Away Gun", displayName = "Blaster Push Gun", aliases = new[] { "Blaster Fling Towards Gun" }, method = SIGadgets.BlasterFlingAwayGun, toolTip = "Uses the blasters to fling whoever your hand desires away from you."},
+                new Module { name = "Blaster Fling Away All", displayName = "Blaster Push All", aliases = new[] { "Blaster Fling Towards All" }, method = SIGadgets.BlasterFlingAwayAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room away from you."},
+                new Module { name = "Blaster Kick Gun", method = SIGadgets.BlasterKickGun, toolTip = "Kicks whoever your hand desires using the blasters." },
+                new Module { name = $"Blaster Kick All {Bracket("green", "T")}", method = SIGadgets.BlasterKickAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks everyone in the room when holding <color=green>trigger</color> using the blasters." },
+                new Module { name = "Blaster Crash Gun", method = SIGadgets.BlasterCrashGun, toolTip = "Crashes whoever your hand desires using the blasters." },
+                new Module { name = $"Blaster Crash All {Bracket("green", "T")}", method = SIGadgets.BlasterCrashAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Crashes everyone in the room when holding <color=green>trigger</color> using the blasters." },
+                new Module { name = $"Stilt Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Turkey Stilt Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Motorized Stilt Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Thruster Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Yoyo Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Blaster Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Lobber Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Strider Tentacle Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Crawler Tentacle Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Platform Deployer Spam {Bracket("green", "G")}", method =() => SIGadgets.SpamGadgetGrip(Gadgets.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Gadget Spam {Bracket("green", "G")}", method = SIGadgets.GadgetSpamGrip, toolTip = "Spawns random gadgets out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Resource Spam {Bracket("green", "G")}", method = SIGadgets.ResourceSpamGrip, toolTip = "Spawns random resources out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Stilt Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts at wherever your hand desires."},
+                new Module { name = "Turkey Stilt Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts at wherever your hand desires."},
+                new Module { name = "Motorized Stilt Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts at wherever your hand desires."},
+                new Module { name = "Thruster Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters at wherever your hand desires."},
+                new Module { name = "Yoyo Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos at wherever your hand desires."},
+                new Module { name = "Blaster Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters at wherever your hand desires."},
+                new Module { name = "Lobber Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers at wherever your hand desires."},
+                new Module { name = "Strider Tentacle Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles at wherever your hand desires."},
+                new Module { name = "Crawler Tentacle Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles at wherever your hand desires."},
+                new Module { name = "Platform Deployer Gun", method =() => SIGadgets.SpamGadgetGun(Gadgets.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers at wherever your hand desires."},
+                new Module { name = "Gadget Gun", method = SIGadgets.GadgetSpamGun, toolTip = "Spawns random gadgets at wherever your hand desires."},
+                new Module { name = "Resource Gun", method = SIGadgets.ResourceSpamGun, toolTip = "Spawns random resources at wherever your hand desires."},
+                new Module { name = "Rain Gadgets", method = SIGadgets.RainGadgets, toolTip = "Makes random gadgets fall around you like rain."},
+                new Module { name = "Gadget Aura", method = SIGadgets.GadgetAura, toolTip = "Creates a ball of random gadgets around you."},
+                new Module { name = "Gadget Fountain", method = SIGadgets.GadgetFountain, toolTip = "Spurts random gadgets out of your head like a fountain."},
+                new Module { name = "Super Infection Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = SIGadgets.SuperInfectionTextGun, toolTip = "Spawns entities in the shape of the text you desire in the Super Infection gamemode."},
+                new Module { name = "Super Infection Draw Gun", method = SIGadgets.SuperInfectionDrawGun, toolTip = "Allows you to draw with entities in Super Infection."},
+                new Module { name = "Destroy Gadget Gun", method = SIGadgets.DestroyGadgetGun, toolTip = "Destroys any gadget which your hand desires."},
 
-                new Module { name = "Tag Reach", method = Advantages.TagReach, disableMethod =() => References.Tagger.maxTagDistance = 1.2f, toolTip = "Makes your hand tag hitbox larger."},
+            },
 
-                new Module { name = "Flick Tag Gun", method = Advantages.FlickTagGun, toolTip = "Moves your hand to wherever your hand desires in an attempt to tag whoever your hand desires."},
+            ["Paintbrawl Mods"] = new[]
+            {
+                new Module { name = "Exit Paintbrawl Mods", method =() => CurrentCategoryName = "Gamemode Mods", isTogglable = false, toolTip = "Returns you back to the gamemode mods."},
 
-                new Module { name = "Tag Bot", method = Advantages.TagBot, disableMethod = Movement.EnableRig, toolTip = "Automatically tags yourself and everyone else on a loop, use <color=green>B</color> to turn it off."},
-
-                new Module { name = "No Tag on Join", method = Advantages.NoTagOnJoin, disableMethod = Advantages.TagOnJoin, toolTip = "When you join a the room, you won't be tagged when you join."},
-                new Module { name = "Untag Self", method = Advantages.UntagSelf, isTogglable = false, toolTip = "Removes you from the list of tagged players."},
-
-                new Module { name = "Anti Tag", method = Advantages.AntiTag, disableMethod = Advantages.DisableAntiTag, toolTip = "Removes you from the list of tagged players when tagged."},
-                new Module { name = "Report Anti Tag", enableMethod = Advantages.ReportAntiTag, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Prevents you from getting tagged, and whoever tries to tag you will just get reported."},
-
-                new Module { name = "No Tag Limit", aliases = new[] { "Tagmax" }, method =() => References.Tagger.maxTagDistance = float.MaxValue, disableMethod =() => References.Tagger.maxTagDistance = 1.2f, toolTip = "Removes the distance check when tagging players."},
-                new Module { name = "Tag Lag Detector", method = Advantages.TagLagDetector, toolTip = "Detects when the master client is not currently allowing tag requests."},
-
-                new Module { name = "Fake Lag", method = Advantages.FakeLag, disableMethod =() => { ViewSerialization.OverrideSerialization = null; RigSerialization.delay = null; }, toolTip = "Forces your ping to be high."},
-                new Module { name = "Lag Range", method = Advantages.LagRange, toolTip = "Dynamically changes how much your rig updates depending on how close you are to others."},
-                new Module { name = "Blink", method = Advantages.Blink, disableMethod = Advantages.DisableBlink, toolTip = "Stops your client from sending and receiving player update packets."},
-                new Module { name = "Lava Distance Ping", disableMethod =() => Notifications.information.Remove("Lava"), method = Advantages.LavaDistancePing, toolTip = "Notifies you of the distance to the nearest tagged player."},
-
-                new Module { name = "Paintbrawl Aimbot", displayName = "Slingshot Aimbot", enableMethod =() => SlingshotLaunch.enabled = true, method = Advantages.DebugSlingshotAimbot, disableMethod =() => SlingshotLaunch.enabled = false, toolTip = "Redirects your slingshot to the closest nearby players."},
-                new Module { name = "Slingshot Helper", method = Advantages.SlingshotHelper, toolTip = "Helps you grab the small paintball on your slingshot."},
-                new Module { name = "Slingshot Trigger Bot", method = Advantages.SlingshotTriggerBot, toolTip = "Releases the small paintball on your slingshot when hovering over another player."},
-
-                new Module { name = "Paintbrawl Kill Self", method = Advantages.PaintbrawlKillSelf, toolTip = "Kills yourself in paintbrawl." },
-                new Module { name = "Paintbrawl Kill Gun", method = Advantages.PaintbrawlKillGun, toolTip = "Kills whoever your hand desires in paintbrawl." },
-                new Module { name = "Paintbrawl Kill All", method = Advantages.PaintbrawlKillAll, toolTip = "Kills everyone in the room in paintbrawl." }
+                new Module { name = "Paintbrawl Aimbot", displayName = "Slingshot Aimbot", enableMethod =() => SlingshotLaunch.enabled = true, method = Paintbrawl.DebugSlingshotAimbot, disableMethod =() => SlingshotLaunch.enabled = false, toolTip = "Redirects your slingshot to the closest nearby players."},
+                new Module { name = "Paintbrawl Kill Self", method = Paintbrawl.PaintbrawlKillSelf, toolTip = "Kills yourself in paintbrawl." },
+                new Module { name = "Paintbrawl Kill Gun", method = Paintbrawl.PaintbrawlKillGun, toolTip = "Kills whoever your hand desires in paintbrawl." },
+                new Module { name = "Paintbrawl Kill All", method = Paintbrawl.PaintbrawlKillAll, toolTip = "Kills everyone in the room in paintbrawl." }
             },
 
             ["Visual Mods"] = new[]
@@ -1001,183 +1088,184 @@ namespace Qubit.Modules
                 new Module { name = "Day Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(3), toolTip = "Sets your time of day to daytime."},
                 new Module { name = "Evening Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(7), toolTip = "Sets your time of day to evening."},
                 new Module { name = "Night Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(0), toolTip = "Sets your time of day to night."},
-                new Module { name = "Fullbright", method =() => Visuals.SetFullbrightStatus(true), disableMethod =() => Visuals.SetFullbrightStatus(false), toolTip = "Disables the dynamic lighting in maps that use it."},
-                new Module { name = "Shaders", enableMethod = Visuals.EnableShaders, disableMethod = Visuals.DisableShaders, toolTip = "Adds bloom, motion blur, and slight saturation to the game. Credits to leah / tagmonkevr for the code."},
+                new Module { name = "Fullbright", method =() => Visual.SetFullbrightStatus(true), disableMethod =() => Visual.SetFullbrightStatus(false), toolTip = "Disables the dynamic lighting in maps that use it."},
+                new Module { name = "Shaders", enableMethod = Visual.EnableShaders, disableMethod = Visual.DisableShaders, toolTip = "Adds bloom, motion blur, and slight saturation to the game. Credits to leah / tagmonkevr for the code."},
 
-                new Module { name = "Remove Blindfold", method = Visuals.RemoveBlindfold, toolTip = "Disables the blindfold in the prop hunt map."},
+                new Module { name = "Remove Blindfold", method = Visual.RemoveBlindfold, toolTip = "Disables the blindfold in the prop hunt map."},
 
-                new Module { name = "Core ESP", method = Visuals.CoreESP, toolTip = "Puts dots on your screen at where all of the cores in the ghost reactor map are."},
-                new Module { name = "Critter ESP", method = Visuals.CritterESP, toolTip = "Puts dots on your screen at where all of the critters in the critter map are."},
-                new Module { name = "Creature ESP", method = Visuals.CreatureESP, toolTip = "Puts dots on your screen at where all of the creatures, critters, and balls are in forest and caves."},
-                new Module { name = "Enemy ESP", method = Visuals.EnemyESP, toolTip = "Puts dots on your screen at where all of the cores in the ghost reactor map are."},
-                new Module { name = "Resource ESP", method = Visuals.ResourceESP, toolTip = "Puts dots on your screen at where all of the resources are in the Super Infection gamemode."},
-                new Module { name = "Lucy ESP", method = Visuals.LucyESP, toolTip = "Puts a dot on your screen at where Lucy is, even when she's hiding underground.", legal = true},
-                new Module { name = "Lucy Overlay", method = Visuals.LucyOverlay, disableMethod = Visuals.DisableLucyOverlay, toolTip = "Displays Lucy's current state, speed, and target on your screen.", legal = true},
+                new Module { name = "Core ESP", method = Visual.CoreESP, toolTip = "Puts dots on your screen at where all of the cores in the ghost reactor map are."},
+                new Module { name = "Critter ESP", method = Visual.CritterESP, toolTip = "Puts dots on your screen at where all of the critters in the critter map are."},
+                new Module { name = "Creature ESP", method = Visual.CreatureESP, toolTip = "Puts dots on your screen at where all of the creatures, critters, and balls are in forest and caves."},
+                new Module { name = "Enemy ESP", method = Visual.EnemyESP, toolTip = "Puts dots on your screen at where all of the cores in the ghost reactor map are."},
+                new Module { name = "Crystal Ball Vision", method = Visual.CrystalBallVision, disableMethod = Visual.DisableCrystalBallVision, toolTip = "Allows you to see objects that are normally only visible through the crystal ball."},
+                new Module { name = "Resource ESP", method = Visual.ResourceESP, toolTip = "Puts dots on your screen at where all of the resources are in the Super Infection gamemode."},
+                new Module { name = "Lucy ESP", method = Visual.LucyESP, toolTip = "Puts a dot on your screen at where Lucy is, even when she's hiding underground.", legal = true},
+                new Module { name = "Lucy Overlay", method = Visual.LucyOverlay, disableMethod = Visual.DisableLucyOverlay, toolTip = "Displays Lucy's current state, speed, and target on your screen.", legal = true},
 
-                new Module { name = "Enable Snow", aliases = new[] { "Winter" }, enableMethod =() => Visuals.ToggleSnow(true), disableMethod =() => Visuals.ToggleSnow(false), toolTip = "Forcibly enables the snow."},
-                new Module { name = "Rainy Weather", aliases = new[] { "Enable Rain" }, method =() => Visuals.WeatherChange(true), toolTip = "Forces the weather to rain."},
-                new Module { name = "Clear Weather", aliases = new[] { "Disable Rain" }, method =() => Visuals.WeatherChange(false), toolTip = "Forces the weather to sunny skies all day."},
-                new Module { name = "Disable Fog", method = Visuals.DisableFog, disableMethod = Visuals.ResetFog, toolTip = "Disables the fog."},
-                new Module { name = "Enable Fog", method = Visuals.EnableFog, disableMethod = Visuals.ResetFog, toolTip = "Enables the fog."},
+                new Module { name = "Enable Snow", aliases = new[] { "Winter" }, enableMethod =() => Visual.ToggleSnow(true), disableMethod =() => Visual.ToggleSnow(false), toolTip = "Forcibly enables the snow."},
+                new Module { name = "Rainy Weather", aliases = new[] { "Enable Rain" }, method =() => Visual.WeatherChange(true), toolTip = "Forces the weather to rain."},
+                new Module { name = "Clear Weather", aliases = new[] { "Disable Rain" }, method =() => Visual.WeatherChange(false), toolTip = "Forces the weather to sunny skies all day."},
+                new Module { name = "Disable Fog", method = Visual.DisableFog, disableMethod = Visual.ResetFog, toolTip = "Disables the fog."},
+                new Module { name = "Enable Fog", method = Visual.EnableFog, disableMethod = Visual.ResetFog, toolTip = "Enables the fog."},
 
-                new Module { name = "Disable Ambience", enableMethod = Visuals.DisableAmbience, disableMethod = Visuals.EnableAmbience, toolTip = "Disables all ambient effects.", legal = true},
+                new Module { name = "Disable Ambience", enableMethod = Visual.DisableAmbience, disableMethod = Visual.EnableAmbience, toolTip = "Disables all ambient effects.", legal = true},
 
-                new Module { name = "Custom Skybox Color", aliases = new[] { "Custom Sky Color" }, enableMethod = Visuals.DoCustomSkyboxColor, method = Visuals.CustomSkyboxColor, disableMethod = Visuals.UnCustomSkyboxColor, toolTip = "Changes the skybox color to match the menu.", legal = true},
-                new Module { name = "Draw Gun", method = Visuals.DrawGun, disableMethod = Visuals.DisableDrawGun, toolTip = "Lets you draw on whatever your hand desires.", legal = true},
-                new Module { name = "Gamesense Ring", aliases = new[] { "Fortnite Ring" }, enableMethod =() => HandTaps.OnHandTap += Visuals.OnHandTapGamesenseRing, method = Visuals.GamesenseRing, disableMethod = Visuals.DisableGamesenseRing, toolTip = "Shows the direction of where people walk around you." },
+                new Module { name = "Custom Skybox Color", aliases = new[] { "Custom Sky Color" }, enableMethod = Visual.DoCustomSkyboxColor, method = Visual.CustomSkyboxColor, disableMethod = Visual.UnCustomSkyboxColor, toolTip = "Changes the skybox color to match the menu.", legal = true},
+                new Module { name = "Draw Gun", method = Visual.DrawGun, disableMethod = Visual.DisableDrawGun, toolTip = "Lets you draw on whatever your hand desires.", legal = true},
+                new Module { name = "Gamesense Ring", aliases = new[] { "Fortnite Ring" }, enableMethod =() => HandTaps.OnHandTap += Visual.OnHandTapGamesenseRing, method = Visual.GamesenseRing, disableMethod = Visual.DisableGamesenseRing, toolTip = "Shows the direction of where people walk around you." },
 
-                new Module { name = "Velocity Label", method = Visuals.VelocityLabel, toolTip = "Puts text on your right hand, showing your velocity.", legal = true},
-                new Module { name = "Nearby Label", method = Visuals.NearbyTaggerLabel, toolTip = "Puts text on your left hand, showing you the distance of the nearest tagger."},
-                new Module { name = "Last Label", method = Visuals.LastLabel, toolTip = "Puts text on your left hand, showing you how many untagged people are left.", legal = true},
-                new Module { name = "Time Label", method = Visuals.TimeLabel, toolTip = "Puts text on your right hand, showing how long you've been playing for without getting tagged.", legal = true},
+                new Module { name = "Velocity Label", method = Visual.VelocityLabel, toolTip = "Puts text on your right hand, showing your velocity.", legal = true},
+                new Module { name = "Nearby Label", method = Visual.NearbyTaggerLabel, toolTip = "Puts text on your left hand, showing you the distance of the nearest tagger."},
+                new Module { name = "Last Label", method = Visual.LastLabel, toolTip = "Puts text on your left hand, showing you how many untagged people are left.", legal = true},
+                new Module { name = "Time Label", method = Visual.TimeLabel, toolTip = "Puts text on your right hand, showing how long you've been playing for without getting tagged.", legal = true},
 
                 new Module { name = "FPS Overlay", method =() => Notifications.information["FPS"] = lastDeltaTime.ToString(), disableMethod =() => Notifications.information.Remove("FPS"), toolTip = "Displays your FPS on your screen.", legal = true},
-                new Module { name = "Ping Overlay", method = Visuals.PingOverlay, disableMethod =() => Notifications.information.Remove("Ping"), toolTip = "Displays the server's ping on your screen.", legal = true},
+                new Module { name = "Ping Overlay", method = Visual.PingOverlay, disableMethod =() => Notifications.information.Remove("Ping"), toolTip = "Displays the server's ping on your screen.", legal = true},
                 new Module { name = "Time Overlay", method =() => Notifications.information["Time"] = DateTime.Now.ToString("hh:mm tt"), disableMethod =() => Notifications.information.Remove("Time"), toolTip = "Displays your current time on your screen.", legal = true},
-                new Module { name = "Playtime Overlay", method =() => { Notifications.information["Playtime"] = Visuals.OverallPlaytime; Visuals.UpdatePlaytime(); }, disableMethod =() => Notifications.information.Remove("Playtime"), toolTip = "Displays your play time from when the mod was enabled on your screen.", legal = true},
+                new Module { name = "Playtime Overlay", method =() => { Notifications.information["Playtime"] = Visual.OverallPlaytime; Visual.UpdatePlaytime(); }, disableMethod =() => Notifications.information.Remove("Playtime"), toolTip = "Displays your play time from when the mod was enabled on your screen.", legal = true},
                 new Module { name = "Room Information Overlay", displayName = "Important Room Info Overlay", method =() => { if (Networking.InRoom) { Notifications.information["Room Code"] = PhotonNetwork.CurrentRoom.Name; Notifications.information["Players"] = PhotonNetwork.PlayerList.Length.ToString(); } else { Notifications.information.Remove("Room Code"); Notifications.information.Remove("Players"); } }, disableMethod =() => { Notifications.information.Remove("Room Code"); Notifications.information.Remove("Players"); }, toolTip = "Displays basic information about the room on your screen.", legal = true},
-                new Module { name = "Extra Room Info Overlay", method =() => Visuals.ExtraRoomInfo(), disableMethod =() => Visuals.ExtraRoomInfo(false), toolTip = "Displays extra information about the room on your screen."},
+                new Module { name = "Extra Room Info Overlay", method =() => Visual.ExtraRoomInfo(), disableMethod =() => Visual.ExtraRoomInfo(false), toolTip = "Displays extra information about the room on your screen."},
                 new Module { name = "Networking Overlay", method =() => { Notifications.information["Ping"] = PhotonNetwork.GetPing().ToString(); Notifications.information["Region"] = ManagerRegistry.NetworkSystem.regionNames[ManagerRegistry.NetworkSystem.currentRegionIndex].ToUpper(); }, disableMethod =() => { Notifications.information.Remove("Ping"); Notifications.information.Remove("Region"); }, toolTip = "Displays information about networking on your screen.", legal = true},
                 new Module { name = "Clipboard Overlay", method =() => Notifications.information["Clip"] = GUIUtility.systemCopyBuffer.Length > 20 ? GUIUtility.systemCopyBuffer[..20] : GUIUtility.systemCopyBuffer, disableMethod =() => Notifications.information.Remove("Clip"), toolTip = "Displays your current clipboard on your screen.", legal = true},
                 new Module { name = "Velocity Overlay", method =() => Notifications.information["Velocity"] = $"{References.Rigidbody.linearVelocity.magnitude:F1}m/s", disableMethod =() => Notifications.information.Remove("Velocity"), toolTip = "Displays your velocity on your screen.", legal = true},
-                new Module { name = "Nearby Overlay", method = Visuals.NearbyTaggerOverlay, disableMethod =() => Notifications.information.Remove("Nearby"), toolTip = "Displays the distance to the nearest tagger/target on your screen."},
-                new Module { name = "Info Overlay Gun", method = Visuals.InfoOverlayGun, toolTip = "Displays an overlay, showing the information of whoever your hand desires."},
+                new Module { name = "Nearby Overlay", method = Visual.NearbyTaggerOverlay, disableMethod =() => Notifications.information.Remove("Nearby"), toolTip = "Displays the distance to the nearest tagger/target on your screen."},
+                new Module { name = "Info Overlay Gun", method = Visual.InfoOverlayGun, toolTip = "Displays an overlay, showing the information of whoever your hand desires."},
 
-                new Module { name = "Debug HUD", aliases = new[] { "Developer HUD", "Debug UI", "Developer UI" }, enableMethod = Visuals.EnableDebugHUD, disableMethod = Visuals.DisableDebugHUD, toolTip = "Displays the developer debug HUD."},
+                new Module { name = "Debug HUD", aliases = new[] { "Developer HUD", "Debug UI", "Developer UI" }, enableMethod = Visual.EnableDebugHUD, disableMethod = Visual.DisableDebugHUD, toolTip = "Displays the developer debug HUD."},
 
-                new Module { name = "Info Watch", enableMethod = Visuals.WatchOn, method = Visuals.WatchStep, disableMethod = Visuals.WatchOff, toolTip = "Puts a watch on your hand that tells you the time and your FPS."},
-                new Module { name = "Leaderboard Info", enableMethod =() => ScoreboardLines.enabled = true, method = Visuals.LeaderboardInfo, disableMethod =() => ScoreboardLines.enabled = false, toolTip = "Shows info next to players' names on the leaderboard."},
+                new Module { name = "Info Watch", enableMethod = Visual.WatchOn, method = Visual.WatchStep, disableMethod = Visual.WatchOff, toolTip = "Puts a watch on your hand that tells you the time and your FPS."},
+                new Module { name = "Leaderboard Info", enableMethod =() => ScoreboardLines.enabled = true, method = Visual.LeaderboardInfo, disableMethod =() => ScoreboardLines.enabled = false, toolTip = "Shows info next to players' names on the leaderboard."},
 
                 new Module { name = "FPS Boost", aliases = new[] { "Low Quality" }, enableMethod =() => QualitySettings.globalTextureMipmapLimit = int.MaxValue, disableMethod =() => QualitySettings.globalTextureMipmapLimit = 1, toolTip = "Makes everything low quality in an attempt to boost your FPS.", },
                 new Module { name = "Freeze In Background", enableMethod =() => Application.runInBackground = false, disableMethod =() => Application.runInBackground = true, toolTip = "Freezes the game when the application is not focused.", legal = true},
 
-                new Module { name = "Fake Unban Self", method = Visuals.FakeUnbanSelf, isTogglable = false, toolTip = "Makes it appear as if you're not banned." },
+                new Module { name = "Fake Unban Self", method = Visual.FakeUnbanSelf, isTogglable = false, toolTip = "Makes it appear as if you're not banned." },
 
-                new Module { name = "Jump Predictions", displayName = "Jump Trajectories", method = Visuals.JumpPredictions, disableMethod = Visuals.DisableJumpPredictions, toolTip = "Shows a visualizer of where the other players will jump."},
-                new Module { name = "Hitbox Predictions", method = Visuals.HitboxPredictions, disableMethod = Visuals.DisableHitboxPredictions, toolTip = "Shows capsules where other players' hitboxes are."},
-                new Module { name = "Paintbrawl Trajectories", displayName = "Projectile Trajectories", method = Visuals.PaintbrawlTrajectories, disableMethod = Visuals.DisablePaintbrawlTrajectories, toolTip = "Shows a visualizer of where all projectiles and your slingshot will hit."},
+                new Module { name = "Jump Predictions", displayName = "Jump Trajectories", method = Visual.JumpPredictions, disableMethod = Visual.DisableJumpPredictions, toolTip = "Shows a visualizer of where the other players will jump."},
+                new Module { name = "Hitbox Predictions", method = Visual.HitboxPredictions, disableMethod = Visual.DisableHitboxPredictions, toolTip = "Shows capsules where other players' hitboxes are."},
+                new Module { name = "Paintbrawl Trajectories", displayName = "Projectile Trajectories", method = Visual.PaintbrawlTrajectories, disableMethod = Visual.DisablePaintbrawlTrajectories, toolTip = "Shows a visualizer of where all projectiles and your slingshot will hit."},
 
-                new Module { name = "Audio Visualizer", enableMethod = Visuals.CreateAudioVisualizer, method = Visuals.AudioVisualizer, disableMethod = Visuals.DestroyAudioVisualizer, toolTip = "Shows a visualizer of your microphone loudness below your player.", legal = true},
-                new Module { name = "Show Server Position", method = Visuals.ShowServerPosition, disableMethod = Visuals.DisableShowServerPosition, toolTip = "Shows your current syncronized position on the server.", legal = true},
-                new Module { name = "Show Scheduled Objects", enableMethod = Visuals.ShowScheduledObjects, toolTip = "Shows all scheduled and planned objects before their target date."},
+                new Module { name = "Audio Visualizer", enableMethod = Visual.CreateAudioVisualizer, method = Visual.AudioVisualizer, disableMethod = Visual.DestroyAudioVisualizer, toolTip = "Shows a visualizer of your microphone loudness below your player.", legal = true},
+                new Module { name = "Show Server Position", method = Visual.ShowServerPosition, disableMethod = Visual.DisableShowServerPosition, toolTip = "Shows your current syncronized position on the server.", legal = true},
+                new Module { name = "Show Scheduled Objects", enableMethod = Visual.ShowScheduledObjects, toolTip = "Shows all scheduled and planned objects before their target date."},
 
-                new Module { name = "Visualize Network Triggers", method = Visuals.VisualizeNetworkTriggers, toolTip = "Visualizes the network joining and leaving triggers."},
-                new Module { name = "Visualize Wind Barriers", aliases = new[] { "Visualize Air" }, method = Visuals.VisualizeWindBarriers, toolTip = "Visualizes the wind barriers."},
-                new Module { name = "Visualize Map Triggers", method = Visuals.VisualizeMapTriggers, toolTip = "Visualizes the map loading and unloading triggers."},
+                new Module { name = "Visualize Network Triggers", method = Visual.VisualizeNetworkTriggers, toolTip = "Visualizes the network joining and leaving triggers."},
+                new Module { name = "Visualize Wind Barriers", aliases = new[] { "Visualize Air" }, method = Visual.VisualizeWindBarriers, toolTip = "Visualizes the wind barriers."},
+                new Module { name = "Visualize Map Triggers", method = Visual.VisualizeMapTriggers, toolTip = "Visualizes the map loading and unloading triggers."},
 
-                new Module { name = "Name Tags", method = Visuals.NameTags, disableMethod = Visuals.DisableNameTags, toolTip = "Gives players name tags above their heads that show their nickname.", legal = true},
-                new Module { name = "Velocity Name Tags", method = Visuals.VelocityTags, disableMethod = Visuals.DisableVelocityTags, toolTip = "Gives players name tags above their heads that show their velocity."},
-                new Module { name = "FPS Name Tags", method = Visuals.FPSTags, disableMethod = Visuals.DisableFPSTags, toolTip = "Gives players name tags above their heads that show their FPS."},
-                new Module { name = "Target FPS Name Tags", method = Visuals.TargetFPSTags, disableMethod = Visuals.DisableTargetFPSTags, toolTip = "Gives players name tags above their heads that show their maximum FPS."},
-                new Module { name = "ID Name Tags", method = Visuals.IDTags, disableMethod = Visuals.DisableIDTags, toolTip = "Gives players name tags above their heads that show their ID."},
-                new Module { name = "Platform Name Tags", method = Visuals.PlatformTags, disableMethod = Visuals.DisablePlatformTags, toolTip = "Gives players name tags above their heads that show what platform they're playing on.", legal = true},
-                new Module { name = "k-ID Name Tags", method = Visuals.KIDNameTags, disableMethod = Visuals.DisableKIDNameTags, toolTip = "Gives players name tags above their heads that show if they have k-ID restrictions."},
-                new Module { name = "Subscriber Name Tags", method = Visuals.SubscriberNameTags, disableMethod = Visuals.DisableSubscriberNameTags, toolTip = "Gives players name tags above their heads that show if they're subscribed to the fan club."},
-                new Module { name = "Creation Date Name Tags", method = Visuals.CreationDateTags, disableMethod = Visuals.DisableCreationDateTags, toolTip = "Gives players name tags above their heads that show their creation date."},
-                new Module { name = "Ping Name Tags", method = Visuals.PingTags, disableMethod = Visuals.DisablePingTags, toolTip = "Gives players name tags above their heads that show their ping."},
-                new Module { name = "Turn Name Tags", method = Visuals.TurnTags, disableMethod = Visuals.DisableTurnTags, toolTip = "Gives players name tags above their heads that show their turn settings."},
-                new Module { name = "Tagged Name Tags", method = Visuals.TaggedTags, disableMethod = Visuals.DisableTaggedTags, toolTip = "Gives players name tags above their heads that show who tagged them."},
-                new Module { name = "Mod Name Tags", method = Visuals.ModTags, disableMethod = Visuals.DisableModTags, toolTip = "Gives players name tags above their heads that show what mods they have."},
-                new Module { name = "Capture Vanilla Props", method = Visuals.CaptureVanillaProps, isTogglable = false, toolTip = "Captures the current Photon player custom properties as the vanilla baseline. Run this once on a clean session (no mods/spoofers active) so Mod Name Tags can flag any non-vanilla props on other players."},
-                new Module { name = "Cosmetic Name Tags", method = Visuals.CosmeticTags, disableMethod = Visuals.DisableCosmeticTags, toolTip = "Gives players name tags above their heads that show what special cosmetics they have."},
-                new Module { name = "Verified Name Tags", method = Visuals.VerifiedTags, disableMethod = Visuals.DisableVerifiedTags, toolTip = "Gives players name tags above their heads if they are a verified player."},
-                new Module { name = "Lag Name Tags", method = Visuals.CrashedTags, disableMethod = Visuals.DisableCrashedTags, toolTip = "Gives players name tags above their heads if they are lagging."},
-                new Module { name = "Compact Name Tags", displayName = "VRChat Name Tags", aliases = new[] { "Compact Name Tags" }, method = Visuals.CompactTags, disableMethod = Visuals.DisableCompactTags, toolTip = "Gives players name tags above their heads that show a lot of information compactly. Credits to snake for the mod idea."},
-                new Module { name = "Minecraft Name Tags", method = Visuals.MinecraftTags, disableMethod = Visuals.DisableMinecraftTags, toolTip = "Gives players the same nametags that are shown in Minecraft.", legal = true},
-                new Module { name = "Casting Name Tags", method = Visuals.CastingTags, disableMethod = Visuals.DisableCastingTags, toolTip = "Gives players a very simplistic nametag, only showing platform and name. Inspired by BingusNameTags++.", legal = true},
+                new Module { name = "Name Tags", method = Visual.NameTags, disableMethod = Visual.DisableNameTags, toolTip = "Gives players name tags above their heads that show their nickname.", legal = true},
+                new Module { name = "Velocity Name Tags", method = Visual.VelocityTags, disableMethod = Visual.DisableVelocityTags, toolTip = "Gives players name tags above their heads that show their velocity."},
+                new Module { name = "FPS Name Tags", method = Visual.FPSTags, disableMethod = Visual.DisableFPSTags, toolTip = "Gives players name tags above their heads that show their FPS."},
+                new Module { name = "Target FPS Name Tags", method = Visual.TargetFPSTags, disableMethod = Visual.DisableTargetFPSTags, toolTip = "Gives players name tags above their heads that show their maximum FPS."},
+                new Module { name = "ID Name Tags", method = Visual.IDTags, disableMethod = Visual.DisableIDTags, toolTip = "Gives players name tags above their heads that show their ID."},
+                new Module { name = "Platform Name Tags", method = Visual.PlatformTags, disableMethod = Visual.DisablePlatformTags, toolTip = "Gives players name tags above their heads that show what platform they're playing on.", legal = true},
+                new Module { name = "k-ID Name Tags", method = Visual.KIDNameTags, disableMethod = Visual.DisableKIDNameTags, toolTip = "Gives players name tags above their heads that show if they have k-ID restrictions."},
+                new Module { name = "Subscriber Name Tags", method = Visual.SubscriberNameTags, disableMethod = Visual.DisableSubscriberNameTags, toolTip = "Gives players name tags above their heads that show if they're subscribed to the fan club."},
+                new Module { name = "Creation Date Name Tags", method = Visual.CreationDateTags, disableMethod = Visual.DisableCreationDateTags, toolTip = "Gives players name tags above their heads that show their creation date."},
+                new Module { name = "Ping Name Tags", method = Visual.PingTags, disableMethod = Visual.DisablePingTags, toolTip = "Gives players name tags above their heads that show their ping."},
+                new Module { name = "Turn Name Tags", method = Visual.TurnTags, disableMethod = Visual.DisableTurnTags, toolTip = "Gives players name tags above their heads that show their turn settings."},
+                new Module { name = "Tagged Name Tags", method = Visual.TaggedTags, disableMethod = Visual.DisableTaggedTags, toolTip = "Gives players name tags above their heads that show who tagged them."},
+                new Module { name = "Mod Name Tags", method = Visual.ModTags, disableMethod = Visual.DisableModTags, toolTip = "Gives players name tags above their heads that show what mods they have."},
+                new Module { name = "Capture Vanilla Props", method = Visual.CaptureVanillaProps, isTogglable = false, toolTip = "Captures the current Photon player custom properties as the vanilla baseline. Run this once on a clean session (no mods/spoofers active) so Mod Name Tags can flag any non-vanilla props on other players."},
+                new Module { name = "Cosmetic Name Tags", method = Visual.CosmeticTags, disableMethod = Visual.DisableCosmeticTags, toolTip = "Gives players name tags above their heads that show what special cosmetics they have."},
+                new Module { name = "Verified Name Tags", method = Visual.VerifiedTags, disableMethod = Visual.DisableVerifiedTags, toolTip = "Gives players name tags above their heads if they are a verified player."},
+                new Module { name = "Lag Name Tags", method = Visual.CrashedTags, disableMethod = Visual.DisableCrashedTags, toolTip = "Gives players name tags above their heads if they are lagging."},
+                new Module { name = "Compact Name Tags", displayName = "VRChat Name Tags", aliases = new[] { "Compact Name Tags" }, method = Visual.CompactTags, disableMethod = Visual.DisableCompactTags, toolTip = "Gives players name tags above their heads that show a lot of information compactly. Credits to snake for the mod idea."},
+                new Module { name = "Minecraft Name Tags", method = Visual.MinecraftTags, disableMethod = Visual.DisableMinecraftTags, toolTip = "Gives players the same nametags that are shown in Minecraft.", legal = true},
+                new Module { name = "Casting Name Tags", method = Visual.CastingTags, disableMethod = Visual.DisableCastingTags, toolTip = "Gives players a very simplistic nametag, only showing platform and name. Inspired by BingusNameTags++.", legal = true},
 
-                new Module { name = "Fix Rig Colors", method = Visuals.FixRigColors, toolTip = "Fixes a Steam bug where other players' color would be wrong between servers.", legal = true},
-                new Module { name = "Disable Rig Lerping", displayName = "Disable Rig Smoothing", method = Visuals.NoSmoothRigs, disableMethod = Visuals.ReSmoothRigs, toolTip = "Disable the smoothing on the other player's rigs."},
-                new Module { name = "Better Rig Lerping", displayName = "Better Rig Smoothing", enableMethod =() => RigSerialization.OnPlayerSerialize += Visuals.BetterRigLerping, disableMethod =() => RigSerialization.OnPlayerSerialize -= Visuals.BetterRigLerping, toolTip = "Estimates the inbetween positions using a real velocity emulator on the other player's rigs."},
-                new Module { name = "Remove Leaves", enableMethod = Visuals.EnableRemoveLeaves, disableMethod = Visuals.DisableRemoveLeaves, toolTip = "Removes leaves on trees, good for branching."},
-                new Module { name = "Streamer Remove Leaves", enableMethod = Visuals.EnableStreamerRemoveLeaves, disableMethod = Visuals.DisableStreamerRemoveLeaves, toolTip = "Removes leaves on trees in VR, but not on the camera. Good for streaming."},
-                new Module { name = "Remove Cosmetics", enableMethod = Visuals.DisableCosmetics, disableMethod = Visuals.EnableCosmetics, toolTip = "Locally toggles off your cosmetics, so you can wear sight-blocking cosmetics such as the eyepatch."},
-                new Module { name = $"X-Ray {Bracket("green", "T")}", aliases = new[] { "See Through" }, method = Visuals.Xray, toolTip = "Lets you see through objects when holding <color=green>trigger</color>."},
+                new Module { name = "Fix Rig Colors", method = Visual.FixRigColors, toolTip = "Fixes a Steam bug where other players' color would be wrong between servers.", legal = true},
+                new Module { name = "Disable Rig Lerping", displayName = "Disable Rig Smoothing", method = Visual.NoSmoothRigs, disableMethod = Visual.ReSmoothRigs, toolTip = "Disable the smoothing on the other player's rigs."},
+                new Module { name = "Better Rig Lerping", displayName = "Better Rig Smoothing", enableMethod =() => RigSerialization.OnPlayerSerialize += Visual.BetterRigLerping, disableMethod =() => RigSerialization.OnPlayerSerialize -= Visual.BetterRigLerping, toolTip = "Estimates the inbetween positions using a real velocity emulator on the other player's rigs."},
+                new Module { name = "Remove Leaves", enableMethod = Visual.EnableRemoveLeaves, disableMethod = Visual.DisableRemoveLeaves, toolTip = "Removes leaves on trees, good for branching."},
+                new Module { name = "Streamer Remove Leaves", enableMethod = Visual.EnableStreamerRemoveLeaves, disableMethod = Visual.DisableStreamerRemoveLeaves, toolTip = "Removes leaves on trees in VR, but not on the camera. Good for streaming."},
+                new Module { name = "Remove Cosmetics", enableMethod = Visual.DisableCosmetics, disableMethod = Visual.EnableCosmetics, toolTip = "Locally toggles off your cosmetics, so you can wear sight-blocking cosmetics such as the eyepatch."},
+                new Module { name = $"X-Ray {Bracket("green", "T")}", aliases = new[] { "See Through" }, method = Visual.Xray, toolTip = "Lets you see through objects when holding <color=green>trigger</color>."},
 
-                new Module { name = "Special Cosmetic Indicators", aliases = new[] { "Cosmetic ESP" }, method = Visuals.CosmeticIndicators, disableMethod = Visuals.DisableCosmeticIndicators, toolTip = "Shows icons above people's heads if they are a Finger Painter, Illustrator, Administrator, Stick, Forest Guide, or Another Axiom Creator."},
+                new Module { name = "Special Cosmetic Indicators", aliases = new[] { "Cosmetic ESP" }, method = Visual.CosmeticIndicators, disableMethod = Visual.DisableCosmeticIndicators, toolTip = "Shows icons above people's heads if they are a Finger Painter, Illustrator, Administrator, Stick, Forest Guide, or Another Axiom Creator."},
 
-                new Module { name = "Voice ESP", method = Visuals.VoiceESP, disableMethod = Visuals.DisableVoiceIndicators, toolTip = "Puts voice indicators above people's heads when they're talking.", legal = true},
+                new Module { name = "Voice ESP", method = Visual.VoiceESP, disableMethod = Visual.DisableVoiceIndicators, toolTip = "Puts voice indicators above people's heads when they're talking.", legal = true},
 
-                new Module { name = "Grabbable Indicators", method = Visuals.GripESP, disableMethod = Visuals.DisableGripESP, toolTip = "Puts indicators above people's heads when they can be grabbed."},
+                new Module { name = "Grabbable Indicators", method = Visual.GripESP, disableMethod = Visual.DisableGripESP, toolTip = "Puts indicators above people's heads when they can be grabbed."},
 
-                new Module { name = "Platform Indicators", method = Visuals.PlatformIndicators, disableMethod = Visuals.DisablePlatformIndicators, toolTip = "Puts indicators above people's heads that show what platform they are playing on."},
-                new Module { name = "Platform ESP", method = Visuals.PlatformESP, disableMethod = Visuals.DisablePlatformIndicators, toolTip = "Puts indicators above people's heads that show what platform they are playing on, but now they go through walls."},
+                new Module { name = "Platform Indicators", method = Visual.PlatformIndicators, disableMethod = Visual.DisablePlatformIndicators, toolTip = "Puts indicators above people's heads that show what platform they are playing on."},
+                new Module { name = "Platform ESP", method = Visual.PlatformESP, disableMethod = Visual.DisablePlatformIndicators, toolTip = "Puts indicators above people's heads that show what platform they are playing on, but now they go through walls."},
 
-                new Module { name = "No Limb Mode", enableMethod = Visuals.StartNoLimb, method = Visuals.NoLimbMode, disableMethod = Visuals.EndNoLimb, toolTip = "Makes your regular rig invisible, and puts balls on your hands."},
+                new Module { name = "No Limb Mode", enableMethod = Visual.StartNoLimb, method = Visual.NoLimbMode, disableMethod = Visual.EndNoLimb, toolTip = "Makes your regular rig invisible, and puts balls on your hands."},
 
-                new Module { name = "Casual Tracers", method = Visuals.CasualTracers, disableMethod =() => {Visuals.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows everyone."},
-                new Module { name = "Infection Tracers", method = Visuals.InfectionTracers, disableMethod =() => {Visuals.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Tracers", method = Visuals.HuntTracers, disableMethod =() => {Visuals.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Tracers", method =() => Visuals.AutomaticESP(Visuals.InfectionTracers, Visuals.HuntTracers, Visuals.CasualTracers), disableMethod =() => {Visuals.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows targets for the current gamemode."},
-                new Module { name = "Nearest Tracer", method = Visuals.NearestTracer, disableMethod =() => {Visuals.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows the nearest player."},
+                new Module { name = "Casual Tracers", method = Visual.CasualTracers, disableMethod =() => {Visual.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows everyone."},
+                new Module { name = "Infection Tracers", method = Visual.InfectionTracers, disableMethod =() => {Visual.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Tracers", method = Visual.HuntTracers, disableMethod =() => {Visual.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Tracers", method =() => Visual.AutomaticESP(Visual.InfectionTracers, Visual.HuntTracers, Visual.CasualTracers), disableMethod =() => {Visual.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows targets for the current gamemode."},
+                new Module { name = "Nearest Tracer", method = Visual.NearestTracer, disableMethod =() => {Visual.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand. Shows the nearest player."},
 
-                new Module { name = "Casual Box ESP", method = Visuals.CasualBoxESP, disableMethod = Visuals.DisableBoxESP, toolTip = "Puts boxes over players. Shows everyone."},
-                new Module { name = "Infection Box ESP", method = Visuals.InfectionBoxESP, disableMethod = Visuals.DisableBoxESP, toolTip = "Puts boxes over players. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Box ESP", method = Visuals.HuntBoxESP, disableMethod = Visuals.DisableBoxESP, toolTip = "Puts boxes over players. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Box ESP", method =() => Visuals.AutomaticESP(Visuals.InfectionBoxESP, Visuals.HuntBoxESP, Visuals.CasualBoxESP), disableMethod = Visuals.DisableBoxESP, toolTip = "Puts boxes over players. Shows targets for the current gamemode."},
+                new Module { name = "Casual Box ESP", method = Visual.CasualBoxESP, disableMethod = Visual.DisableBoxESP, toolTip = "Puts boxes over players. Shows everyone."},
+                new Module { name = "Infection Box ESP", method = Visual.InfectionBoxESP, disableMethod = Visual.DisableBoxESP, toolTip = "Puts boxes over players. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Box ESP", method = Visual.HuntBoxESP, disableMethod = Visual.DisableBoxESP, toolTip = "Puts boxes over players. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Box ESP", method =() => Visual.AutomaticESP(Visual.InfectionBoxESP, Visual.HuntBoxESP, Visual.CasualBoxESP), disableMethod = Visual.DisableBoxESP, toolTip = "Puts boxes over players. Shows targets for the current gamemode."},
 
-                new Module { name = "Casual Hollow Box ESP", method = Visuals.CasualHollowBoxESP, disableMethod = Visuals.DisableHollowBoxESP, toolTip = "Puts hollow boxes over players. Shows everyone."},
-                new Module { name = "Infection Hollow Box ESP", method = Visuals.HollowInfectionBoxESP, disableMethod = Visuals.DisableHollowBoxESP, toolTip = "Puts hollow boxes over players. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Hollow Box ESP", method = Visuals.HollowHuntBoxESP, disableMethod = Visuals.DisableHollowBoxESP, toolTip = "Puts hollow boxes over players. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Hollow Box ESP", method =() => Visuals.AutomaticESP(Visuals.HollowInfectionBoxESP, Visuals.HollowHuntBoxESP, Visuals.CasualHollowBoxESP), disableMethod = Visuals.DisableHollowBoxESP, toolTip = "Puts hollow boxes over players. Shows targets for the current gamemode."},
+                new Module { name = "Casual Hollow Box ESP", method = Visual.CasualHollowBoxESP, disableMethod = Visual.DisableHollowBoxESP, toolTip = "Puts hollow boxes over players. Shows everyone."},
+                new Module { name = "Infection Hollow Box ESP", method = Visual.HollowInfectionBoxESP, disableMethod = Visual.DisableHollowBoxESP, toolTip = "Puts hollow boxes over players. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Hollow Box ESP", method = Visual.HollowHuntBoxESP, disableMethod = Visual.DisableHollowBoxESP, toolTip = "Puts hollow boxes over players. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Hollow Box ESP", method =() => Visual.AutomaticESP(Visual.HollowInfectionBoxESP, Visual.HollowHuntBoxESP, Visual.CasualHollowBoxESP), disableMethod = Visual.DisableHollowBoxESP, toolTip = "Puts hollow boxes over players. Shows targets for the current gamemode."},
 
-                new Module { name = "Casual Breadcrumbs", method = Visuals.CasualBreadcrumbs, disableMethod = Visuals.DisableBreadcrumbs, toolTip = "Puts breadcrumb trails over players. Shows everyone."},
-                new Module { name = "Infection Breadcrumbs", method = Visuals.InfectionBreadcrumbs, disableMethod = Visuals.DisableBreadcrumbs, toolTip = "Puts breadcrumb trails over players. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Breadcrumbs", method = Visuals.HuntBreadcrumbs, disableMethod = Visuals.DisableBreadcrumbs, toolTip = "Puts breadcrumb trails over players. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Breadcrumbs", method =() => Visuals.AutomaticESP(Visuals.InfectionBreadcrumbs, Visuals.HuntBreadcrumbs, Visuals.CasualBreadcrumbs), disableMethod = Visuals.DisableBreadcrumbs, toolTip = "Puts breadcrumb trails over players. Shows targets for the current gamemode."},
+                new Module { name = "Casual Breadcrumbs", method = Visual.CasualBreadcrumbs, disableMethod = Visual.DisableBreadcrumbs, toolTip = "Puts breadcrumb trails over players. Shows everyone."},
+                new Module { name = "Infection Breadcrumbs", method = Visual.InfectionBreadcrumbs, disableMethod = Visual.DisableBreadcrumbs, toolTip = "Puts breadcrumb trails over players. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Breadcrumbs", method = Visual.HuntBreadcrumbs, disableMethod = Visual.DisableBreadcrumbs, toolTip = "Puts breadcrumb trails over players. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Breadcrumbs", method =() => Visual.AutomaticESP(Visual.InfectionBreadcrumbs, Visual.HuntBreadcrumbs, Visual.CasualBreadcrumbs), disableMethod = Visual.DisableBreadcrumbs, toolTip = "Puts breadcrumb trails over players. Shows targets for the current gamemode."},
 
-                new Module { name = "Casual Bone ESP", method = Visuals.CasualBoneESP, disableMethod = Visuals.DisableBoneESP, toolTip = "Puts bones over players. Shows everyone."},
-                new Module { name = "Infection Bone ESP", method = Visuals.InfectionBoneESP, disableMethod = Visuals.DisableBoneESP, toolTip = "Puts bones over players. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Bone ESP", method = Visuals.HuntBoneESP, disableMethod = Visuals.DisableBoneESP, toolTip = "Puts bones over players. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Bone ESP", method =() => Visuals.AutomaticESP(Visuals.InfectionBoneESP, Visuals.HuntBoneESP, Visuals.CasualBoneESP), disableMethod = Visuals.DisableBoneESP, toolTip = "Puts bones over players. Shows targets for the current gamemode."},
+                new Module { name = "Casual Bone ESP", method = Visual.CasualBoneESP, disableMethod = Visual.DisableBoneESP, toolTip = "Puts bones over players. Shows everyone."},
+                new Module { name = "Infection Bone ESP", method = Visual.InfectionBoneESP, disableMethod = Visual.DisableBoneESP, toolTip = "Puts bones over players. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Bone ESP", method = Visual.HuntBoneESP, disableMethod = Visual.DisableBoneESP, toolTip = "Puts bones over players. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Bone ESP", method =() => Visual.AutomaticESP(Visual.InfectionBoneESP, Visual.HuntBoneESP, Visual.CasualBoneESP), disableMethod = Visual.DisableBoneESP, toolTip = "Puts bones over players. Shows targets for the current gamemode."},
 
-                new Module { name = "Casual Skeleton ESP", method = Visuals.CasualSkeletonESP, disableMethod = Visuals.DisableSkeletonESP, toolTip = "Lets you see players skeletons through walls. Shows everyone."},
-                new Module { name = "Infection Skeleton ESP", method = Visuals.InfectionSkeletonESP, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players skeletons through walls. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Skeleton ESP", method = Visuals.HuntSkeletonESP, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players skeletons through walls. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Skeleton ESP", method =() => Visuals.AutomaticESP(Visuals.InfectionSkeletonESP, Visuals.HuntSkeletonESP, Visuals.CasualSkeletonESP), disableMethod = Visuals.DisableSkeletonESP, toolTip = "Lets you see players skeletons through walls. Shows targets for the current gamemode."},
+                new Module { name = "Casual Skeleton ESP", method = Visual.CasualSkeletonESP, disableMethod = Visual.DisableSkeletonESP, toolTip = "Lets you see players skeletons through walls. Shows everyone."},
+                new Module { name = "Infection Skeleton ESP", method = Visual.InfectionSkeletonESP, disableMethod = Visual.DisableChams, toolTip = "Lets you see players skeletons through walls. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Skeleton ESP", method = Visual.HuntSkeletonESP, disableMethod = Visual.DisableChams, toolTip = "Lets you see players skeletons through walls. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Skeleton ESP", method =() => Visual.AutomaticESP(Visual.InfectionSkeletonESP, Visual.HuntSkeletonESP, Visual.CasualSkeletonESP), disableMethod = Visual.DisableSkeletonESP, toolTip = "Lets you see players skeletons through walls. Shows targets for the current gamemode."},
 
-                new Module { name = "Casual Wireframe ESP", method = Visuals.CasualWireframeESP, disableMethod = Visuals.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows everyone."},
-                new Module { name = "Infection Wireframe ESP", method = Visuals.InfectionWireframeESP, disableMethod = Visuals.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Wireframe ESP", method = Visuals.HuntWireframeESP, disableMethod = Visuals.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Wireframe ESP", method =() => Visuals.AutomaticESP(Visuals.InfectionWireframeESP, Visuals.HuntWireframeESP, Visuals.CasualWireframeESP), disableMethod = Visuals.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows targets for the current gamemode."},
+                new Module { name = "Casual Wireframe ESP", method = Visual.CasualWireframeESP, disableMethod = Visual.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows everyone."},
+                new Module { name = "Infection Wireframe ESP", method = Visual.InfectionWireframeESP, disableMethod = Visual.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Wireframe ESP", method = Visual.HuntWireframeESP, disableMethod = Visual.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Wireframe ESP", method =() => Visual.AutomaticESP(Visual.InfectionWireframeESP, Visual.HuntWireframeESP, Visual.CasualWireframeESP), disableMethod = Visual.DisableWireframeESP, toolTip = "Puts wireframes over players. Shows targets for the current gamemode."},
 
-                new Module { name = "Chams", method = Visuals.Chams, disableMethod = Visuals.DisableShaderChams, toolTip = "Lets you see players through walls."},
-                new Module { name = "Cosmetic Chams", method = Visuals.CosmeticEsp, disableMethod = Visuals.DisableCosmeticEsp, toolTip = "Lets you see most cosmetics on people through walls."},
-                new Module { name = "Rare Cosmetic Chams", method = Visuals.RareCosmeticEsp, disableMethod = Visuals.DisableRareCosmeticEsp, toolTip = "Lets you see rare, hard to obtain cosmetics on people through walls."},
-                new Module { name = "30 FOV", method =() => Visuals.SetFOV(30f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 30."},
-                new Module { name = "40 FOV", method =() => Visuals.SetFOV(40f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 40."},
-                new Module { name = "50 FOV", method =() => Visuals.SetFOV(50f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 50."},
-                new Module { name = "60 FOV", method =() => Visuals.SetFOV(60f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 60."},
-                new Module { name = "70 FOV", method =() => Visuals.SetFOV(70f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 70."},
-                new Module { name = "80 FOV", method =() => Visuals.SetFOV(80f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 80."},
-                new Module { name = "90 FOV", method =() => Visuals.SetFOV(90f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 90."},
-                new Module { name = "100 FOV", method =() => Visuals.SetFOV(100f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 100."},
-                new Module { name = "110 FOV", method =() => Visuals.SetFOV(110f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 110."},
-                new Module { name = "120 FOV", method =() => Visuals.SetFOV(120f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 120."},
-                new Module { name = "Reset FOV", method = Visuals.ResetFOV, isTogglable = false, toolTip = "Resets your camera's field of view back to default."},
+                new Module { name = "Chams", method = Visual.Chams, disableMethod = Visual.DisableShaderChams, toolTip = "Lets you see players through walls."},
+                new Module { name = "Cosmetic Chams", method = Visual.CosmeticEsp, disableMethod = Visual.DisableCosmeticEsp, toolTip = "Lets you see most cosmetics on people through walls."},
+                new Module { name = "Rare Cosmetic Chams", method = Visual.RareCosmeticEsp, disableMethod = Visual.DisableRareCosmeticEsp, toolTip = "Lets you see rare, hard to obtain cosmetics on people through walls."},
+                new Module { name = "30 FOV", method =() => Visual.SetFOV(30f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 30."},
+                new Module { name = "40 FOV", method =() => Visual.SetFOV(40f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 40."},
+                new Module { name = "50 FOV", method =() => Visual.SetFOV(50f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 50."},
+                new Module { name = "60 FOV", method =() => Visual.SetFOV(60f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 60."},
+                new Module { name = "70 FOV", method =() => Visual.SetFOV(70f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 70."},
+                new Module { name = "80 FOV", method =() => Visual.SetFOV(80f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 80."},
+                new Module { name = "90 FOV", method =() => Visual.SetFOV(90f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 90."},
+                new Module { name = "100 FOV", method =() => Visual.SetFOV(100f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 100."},
+                new Module { name = "110 FOV", method =() => Visual.SetFOV(110f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 110."},
+                new Module { name = "120 FOV", method =() => Visual.SetFOV(120f), disableMethod = Visual.ResetFOV, toolTip = "Sets your camera's field of view to 120."},
+                new Module { name = "Reset FOV", method = Visual.ResetFOV, isTogglable = false, toolTip = "Resets your camera's field of view back to default."},
 
-                new Module { name = "Casual Chams", method = Visuals.CasualChams, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows everyone."},
-                new Module { name = "Infection Chams", method = Visuals.InfectionChams, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Chams", method = Visuals.HuntChams, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Chams", method =() => Visuals.AutomaticESP(Visuals.InfectionChams, Visuals.HuntChams, Visuals.CasualChams), disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows targets for the current gamemode."},
+                new Module { name = "Casual Chams", method = Visual.CasualChams, disableMethod = Visual.DisableChams, toolTip = "Lets you see players fur through walls. Shows everyone."},
+                new Module { name = "Infection Chams", method = Visual.InfectionChams, disableMethod = Visual.DisableChams, toolTip = "Lets you see players fur through walls. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Chams", method = Visual.HuntChams, disableMethod = Visual.DisableChams, toolTip = "Lets you see players fur through walls. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Chams", method =() => Visual.AutomaticESP(Visual.InfectionChams, Visual.HuntChams, Visual.CasualChams), disableMethod = Visual.DisableChams, toolTip = "Lets you see players fur through walls. Shows targets for the current gamemode."},
 
-                new Module { name = "Casual Beacons", method = Visuals.CasualBeacons, disableMethod =() => Visuals.isLineRenderQueued = true, toolTip = "Puts a beacon above players. Shows everyone."},
-                new Module { name = "Infection Beacons", method = Visuals.InfectionBeacons, disableMethod =() => Visuals.isLineRenderQueued = true, toolTip = "Puts a beacon above players. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Beacons", method = Visuals.HuntBeacons, disableMethod =() => Visuals.isLineRenderQueued = true, toolTip = "Puts a beacon above players. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Beacons", method =() => Visuals.AutomaticESP(Visuals.InfectionBeacons, Visuals.HuntBeacons, Visuals.CasualBeacons), disableMethod =() => Visuals.isLineRenderQueued = true, toolTip = "Puts a beacon above players. Shows targets for the current gamemode."},
+                new Module { name = "Casual Beacons", method = Visual.CasualBeacons, disableMethod =() => Visual.isLineRenderQueued = true, toolTip = "Puts a beacon above players. Shows everyone."},
+                new Module { name = "Infection Beacons", method = Visual.InfectionBeacons, disableMethod =() => Visual.isLineRenderQueued = true, toolTip = "Puts a beacon above players. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Beacons", method = Visual.HuntBeacons, disableMethod =() => Visual.isLineRenderQueued = true, toolTip = "Puts a beacon above players. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Beacons", method =() => Visual.AutomaticESP(Visual.InfectionBeacons, Visual.HuntBeacons, Visual.CasualBeacons), disableMethod =() => Visual.isLineRenderQueued = true, toolTip = "Puts a beacon above players. Shows targets for the current gamemode."},
 
-                new Module { name = "Casual Distance ESP", method = Visuals.CasualDistanceESP, disableMethod =() => Visuals.isNameTagQueued = true, toolTip = "Shows your distance from players. Shows everyone."},
-                new Module { name = "Infection Distance ESP", method = Visuals.InfectionDistanceESP, disableMethod =() => Visuals.isNameTagQueued = true, toolTip = "Shows your distance from players. Shows untagged when tagged, vice versa."},
-                new Module { name = "Hunt Distance ESP", method = Visuals.HuntDistanceESP, disableMethod =() => Visuals.isNameTagQueued = true, toolTip = "Shows your distance from players. Shows your target and who is hunting you."},
-                new Module { name = "Automatic Distance ESP", method =() => Visuals.AutomaticESP(Visuals.InfectionDistanceESP, Visuals.HuntDistanceESP, Visuals.CasualDistanceESP), disableMethod =() => Visuals.isNameTagQueued = true, toolTip = "Shows your distance from players. Shows targets for the current gamemode."},
+                new Module { name = "Casual Distance ESP", method = Visual.CasualDistanceESP, disableMethod =() => Visual.isNameTagQueued = true, toolTip = "Shows your distance from players. Shows everyone."},
+                new Module { name = "Infection Distance ESP", method = Visual.InfectionDistanceESP, disableMethod =() => Visual.isNameTagQueued = true, toolTip = "Shows your distance from players. Shows untagged when tagged, vice versa."},
+                new Module { name = "Hunt Distance ESP", method = Visual.HuntDistanceESP, disableMethod =() => Visual.isNameTagQueued = true, toolTip = "Shows your distance from players. Shows your target and who is hunting you."},
+                new Module { name = "Automatic Distance ESP", method =() => Visual.AutomaticESP(Visual.InfectionDistanceESP, Visual.HuntDistanceESP, Visual.CasualDistanceESP), disableMethod =() => Visual.isNameTagQueued = true, toolTip = "Shows your distance from players. Shows targets for the current gamemode."},
 
-                new Module { name = "Show Pointers", method = Visuals.ShowButtonColliders, disableMethod = Visuals.HideButtonColliders, toolTip = "Shows dots near your hands, such as when you open the menu."},
+                new Module { name = "Show Pointers", method = Visual.ShowButtonColliders, disableMethod = Visual.HideButtonColliders, toolTip = "Shows dots near your hands, such as when you open the menu."},
 
-                new Module { name = "Info Watch Menu Name", enableMethod =() => Visuals.infoWatchMenuName = true, disableMethod =() => Visuals.infoWatchMenuName = false, toolTip = "Shows the menu name on the Info Watch mod."},
-                new Module { name = "Info Watch FPS", enableMethod =() => Visuals.infoWatchFPS = true, disableMethod =() => Visuals.infoWatchFPS = false, toolTip = "Shows your framerate on the Info Watch mod."},
-                new Module { name = "Info Watch Time", enableMethod =() => Visuals.infoWatchTime = true, disableMethod =() => Visuals.infoWatchTime = false, toolTip = "Shows the current time on the Info Watch mod."},
-                new Module { name = "Info Watch Clipboard", enableMethod =() => Visuals.infoWatchClip = true, disableMethod =() => Visuals.infoWatchClip = false, toolTip = "Shows your clipboard on the Info Watch mod."},
-                new Module { name = "Info Watch Code", enableMethod =() => Visuals.infoWatchCode = true, disableMethod =() => Visuals.infoWatchCode = false, toolTip = "Shows the lobby code on the Info Watch mod."},
+                new Module { name = "Info Watch Menu Name", enableMethod =() => Visual.infoWatchMenuName = true, disableMethod =() => Visual.infoWatchMenuName = false, toolTip = "Shows the menu name on the Info Watch mod."},
+                new Module { name = "Info Watch FPS", enableMethod =() => Visual.infoWatchFPS = true, disableMethod =() => Visual.infoWatchFPS = false, toolTip = "Shows your framerate on the Info Watch mod."},
+                new Module { name = "Info Watch Time", enableMethod =() => Visual.infoWatchTime = true, disableMethod =() => Visual.infoWatchTime = false, toolTip = "Shows the current time on the Info Watch mod."},
+                new Module { name = "Info Watch Clipboard", enableMethod =() => Visual.infoWatchClip = true, disableMethod =() => Visual.infoWatchClip = false, toolTip = "Shows your clipboard on the Info Watch mod."},
+                new Module { name = "Info Watch Code", enableMethod =() => Visual.infoWatchCode = true, disableMethod =() => Visual.infoWatchCode = false, toolTip = "Shows the lobby code on the Info Watch mod."},
             },
 
             ["Fun Mods"] = new[]
@@ -1186,13 +1274,13 @@ namespace Qubit.Modules
 
                 new Module { name = "Custom Map Mods", aliases = new[] { "Virtual Stump Mods" }, method =() => CurrentCategoryName = "Custom Map Mods", isTogglable = false, toolTip = "Opens the custom map mods tab."},
 
-                new Module { name = "Upside Down Head", method = Fun.UpsideDownHead, disableMethod = Fun.FixHead, toolTip = "Flips your head upside down on the Z axis."},
-                new Module { name = "Backwards Head", method = Fun.BackwardsHead, disableMethod = Fun.FixHead, toolTip = "Rotates your head 180 degrees on the Y axis."},
-                new Module { name = "Sideways Head", method = Fun.SidewaysHead, disableMethod = Fun.FixHead, toolTip = "Rotates your head 90 degrees on the Y axis."},
+                new Module { name = "Upside Down Head", method = Fun.UpsideDownHead, disableMethod = Rig.FixHead, toolTip = "Flips your head upside down on the Z axis."},
+                new Module { name = "Backwards Head", method = Fun.BackwardsHead, disableMethod = Rig.FixHead, toolTip = "Rotates your head 180 degrees on the Y axis."},
+                new Module { name = "Sideways Head", method = Fun.SidewaysHead, disableMethod = Rig.FixHead, toolTip = "Rotates your head 90 degrees on the Y axis."},
 
-                new Module { name = "Broken Neck", method = Fun.BrokenNeck, disableMethod = Fun.FixHead, toolTip = "Rotates your head 90 degrees on the Z axis."},
+                new Module { name = "Broken Neck", method = Fun.BrokenNeck, disableMethod = Rig.FixHead, toolTip = "Rotates your head 90 degrees on the Z axis."},
 
-                new Module { name = "Head Bang", method = Fun.HeadBang, disableMethod = Fun.FixHead, toolTip = "Bangs your head at the BPM of Paint it Black (159)."},
+                new Module { name = "Head Bang", method = Fun.HeadBang, disableMethod = Rig.FixHead, toolTip = "Bangs your head at the BPM of Paint it Black (159)."},
 
                 new Module { name = "Flip Hands", aliases = new[] { "Fish Arms" }, method = Fun.FlipHands, toolTip = "Swaps your hands, left is right and right is left."},
                 new Module { name = "Loud Hand Taps", method = Fun.LoudHandTaps, disableMethod = Fun.FixHandTaps, toolTip = "Makes your hand taps really loud."},
@@ -1226,9 +1314,6 @@ namespace Qubit.Modules
                 new Module { name = "Schizophrenic Gun", method = Fun.SchizophrenicGun, toolTip = "Makes you disappear for whoever your hand desires."},
                 new Module { name = "Reverse Schizophrenic Gun", method = Fun.ReverseSchizophrenicGun, toolTip = "Makes you only appear for whoever your hand desires."},
 
-                new Module { name = "Boop", method =() => Fun.Boop(), toolTip = "Makes a pop sound when you touch someone's nose."},
-                new Module { name = "Gong", method =() => Fun.Boop(248), toolTip = "Makes a gong sound when you hit someone's face."},
-                new Module { name = "Slap", method =() => Fun.Boop(338), toolTip = "Makes a slap sound when you hit someone's face."},
 
                 new Module { name = $"Auto Clicker {Bracket("green", "T")}", method = Fun.AutoClicker, toolTip = "Automatically presses  trigger for you when holding <color=green>trigger</color>."},
 
@@ -1269,34 +1354,10 @@ namespace Qubit.Modules
                 new Module { name = "Mute DJ Sets", method = Fun.MuteDJSets, disableMethod = Fun.UnmuteDJSets, toolTip = "Mutes every DJ set so you don't have to hear the worst music known to man."},
                 new Module { name = "Infinite Dreidel", method =() => Dreidels.enabled = true, disableMethod =() => Dreidels.enabled = false, toolTip = "Makes the dreidel cosmetic spin forever."},
 
-                new Module { name = "Barrel Gun", method = Fun.BarrelGun, toolTip = "Spawns a barrel at wherever your hand desires." },
-
-                new Module { name = "Legacy Microphone", enableMethod =() => { VoiceRecorder.enabled = false; Fun.ReloadMicrophone();  }, disableMethod =() => { VoiceRecorder.enabled = true; Fun.ReloadMicrophone(); }, toolTip = "Reverts the microphone system into using the legacy input switcher. This is generally not recommended unless you know what you are doing.", legal = true },
-                new Module { name = "Low Quality Microphone", enableMethod =() => Fun.SetMicrophoneQuality(6000, 4000), disableMethod =() => Fun.SetMicrophoneQuality(20000, 16000), toolTip = "Makes your microphone have really bad quality."},
-                new Module { name = "High Quality Microphone", enableMethod =() => Fun.SetMicrophoneQuality(30000, 24000), disableMethod =() => Fun.SetMicrophoneQuality(20000, 16000), toolTip = "Makes your microphone have really high quality."},
-                new Module { name = "Loud Microphone", method =() => Fun.SetMicrophoneAmplification(VoiceRecorder.enabled ? 5f : 16f), disableMethod =() => Fun.SetMicrophoneAmplification(1), toolTip = "Makes your microphone really loud."},
-
-                new Module { name = "Mute Microphone", method =() => Fun.MuteMicrophone(true), disableMethod =() => Fun.MuteMicrophone(false), toolTip = "Disables your microphone.", legal = true},
-                new Module { name = "Reload Microphone", aliases = new[] { "Restart Microphone" }, method = Fun.ReloadMicrophone, isTogglable = false,  toolTip = "Restarts / fixes your microphone.", legal = true},
-
-                new Module { name = "Voice Changers", method =() => CurrentCategoryName = "Voice Changers", isTogglable = false, toolTip = "Brings you into a category with voice changers."},
-
-                new Module { name = "Microphone Feedback", aliases = new[] { "Hear Self" }, method =() => Fun.SetDebugEchoMode(true), disableMethod =() => Fun.SetDebugEchoMode(false), toolTip = "Plays sound coming through your microphone back to your speakers.", legal = true},
-                new Module { name = "Voice Hijack Gun", method = Sound.VoiceHijackGun, disableMethod = Sound.DisableVoiceHijack, toolTip = "Makes your voice play through whoever your hand desires' voice slot."},
-                new Module { name = "Self Mute", enableMethod = Sound.SelfMute, disableMethod = Sound.DisableSelfMute, toolTip = "Mutes your own rig's voice audio for yourself."},
-                new Module { name = "Copy Voice Gun", method = Fun.CopyVoiceGun, disableMethod = Fun.DisableCopyVoice, toolTip = "Copies the voice of whoever your hand desires."},
-
-                new Module { name = "Narrate Text", aliases = new[] { "Text to Speech", "Speech Text" }, method =() => PromptText("What would you like to be narrated?", () => SpeakText(keyboardInput), null, "Done", "Cancel"), isTogglable = false, toolTip = "Narrates the text of your desire."},
-                new Module { name = "Save Narration", method =() => PromptText("What would you like the narration to say?", () => Fun.SaveNarration(keyboardInput)), isTogglable = false, toolTip = "Saves whatever you want to narrate to your soundboard."},
-                new Module { name = "Mask Voice", enableMethod = Fun.MaskVoice, disableMethod = Fun.DisableMaskVoice, toolTip = "Masks your voice with a TTS voice."},
 
                 new Module { name = "Disable Pitch Scaling", method = Fun.DisablePitchScaling, disableMethod = Fun.EnablePitchScaling, toolTip = "Disables the pitch effects on players' voices when they are a different scale."},
                 new Module { name = "Disable Mouth Movement", method = Fun.DisableMouthMovement, disableMethod = Fun.EnableMouthMovement, toolTip = "Disables your mouth from moving."},
 
-                new Module { name = $"Activate All Doors {Bracket("green", "G")}", method = Fun.ActivateAllDoors, toolTip = "Activates all doors when holding <color=green>grip</color>."},
-                new Module { name = $"Tap All Crystals {Bracket("green", "G")}", method = Fun.TapAllClass<GorillaCaveCrystal>, toolTip = "Taps all crystals when holding <color=green>grip</color>."},
-                new Module { name = $"Tap All Bells {Bracket("green", "G")}", method = Fun.TapAllClass<TappableBell>, toolTip = "Taps all bells when holding <color=green>grip</color>."},
-                new Module { name = "Trigger Leaf Pile Gun", method = Fun.TriggerLeafPileGun, toolTip = "Shows the effects on whatever leaf pile you desire."},
 
                 new Module { name = $"Get Bracelet {Bracket("green", "G")}", method =() => Fun.GetBracelet(true), toolTip = "Gives you a party bracelet without needing to be in a party."},
                 new Module { name = $"Spam Bracelet {Bracket("green", "G")}", method = Fun.BraceletSpam, toolTip = "Spams the party bracelet on and off."},
@@ -1314,27 +1375,7 @@ namespace Qubit.Modules
                 new Module { name = "Badge Tier Spoof", method = Fun.SpoofBadge, disableMethod =() => RankedProgression.enabled = false, toolTip = "Spoofs your competitive badge, showing that you have a higher rank than you really do."},
                 new Module { name = "Ignore Friend Privacy", method =() => FriendCards.enabled = true, disableMethod =() => FriendCards.enabled = false, toolTip = "Allows you to join friends that have their privacy setting set to private."},
 
-                new Module { name = "Arcade Teleporter Effect Spam", method = Fun.ArcadeTeleporterEffectSpam, toolTip = "Spams the effects on the virtual stump teleporters in the arcade when holding <color=green>trigger</color>."},
-                new Module { name = "Stump Teleporter Effect Spam", method = Fun.StumpTeleporterEffectSpam, toolTip = "Spams the effects on the virtual stump teleporter in forest when holding <color=green>trigger</color>."},
 
-                new Module { name = "Open Basement Door", method =() => Fun.SetBasementDoorState(true), isTogglable = false, toolTip = "Opens the basement door."},
-                new Module { name = "Open Elevator Door", method =() => Fun.SetElevatorDoorState(true), isTogglable = false, toolTip = "Opens the elevator door."},
-
-                new Module { name = "Close Basement Door", method =() => Fun.SetBasementDoorState(false), isTogglable = false, toolTip = "Closes the basement door."},
-                new Module { name = "Close Elevator Door", method =() => Fun.SetElevatorDoorState(false), isTogglable = false, toolTip = "Closes the elevator door."},
-
-                new Module { name = "Spam Open Basement Door", method =() => Fun.SetBasementDoorState(true), toolTip = "Repeatedly opens the basement door."},
-                new Module { name = "Spam Open Elevator Door", method =() => Fun.SetElevatorDoorState(true), toolTip = "Repeatedly opens the elevator door."},
-
-                new Module { name = "Spam Close Basement Door", method =() => Fun.SetBasementDoorState(false), toolTip = "Repeatedly closes the basement door."},
-                new Module { name = "Spam Close Elevator Door", method =() => Fun.SetElevatorDoorState(false), toolTip = "Repeatedly closes the elevator door."},
-
-                new Module { name = "Basement Door Spam", method = Fun.BasementDoorSpam, toolTip = "Repeatedly opens and closes the basement door."},
-                new Module { name = "Elevator Door Spam", method = Fun.ElevatorDoorSpam, toolTip = "Repeatedly opens and closes the elevator door."},
-                new Module { name = "Elevator Proximity Sensor", disableMethod =() => Fun.elevatorSensorOpen = false, method = Fun.ElevatorProximitySensor, toolTip = "Automatically opens and closes the elevator door as you get close to and move away from it."},
-
-                new Module { name = $"Draw Line {Bracket("green", "G")}", method = Fun.DrawLine, disableMethod = Movement.EnableRig, toolTip = "Draws a line with your rig's trail while holding <color=green>grip</color>."},
-                new Module { name = $"Draw Circle {Bracket("green", "G")}", method = Fun.DrawCircle, disableMethod = Movement.EnableRig, toolTip = "Draws a circle with your rig's trail while holding <color=green>grip</color>."},
 
                 new Module { name = "Flood Developer Messages", method = Fun.EnableFloodDeveloperMessages, disableMethod = Fun.DisableFloodDeveloperMessages, toolTip = "Repeatedly submits developer messages to flood the report queue."},
                 new Module { name = "Flood Logs All", method = Fun.FloodLogsAll, toolTip = "Floods everyone in the room's client logs."},
@@ -1342,61 +1383,18 @@ namespace Qubit.Modules
 
                 new Module { name = "Custom Virtual Stump Video", enableMethod = Fun.CustomVirtualStumpVideo, disableMethod = Fun.DisableCustomVirtualStumpVideo, toolTip = "Plays a video by the virtual stump VR headset in stump."},
 
-                new Module { name = "Get Builder Watch", method = Blocks.GiveBuilderWatch, isTogglable = false, toolTip = "Gives you the builder watch without needing to be in attic."},
-                new Module { name = "Remove Builder Watch", method = Blocks.RemoveBuilderWatch, isTogglable = false, toolTip = "Disables the builder watch."},
 
                 new Module { name = "Slingshot Self", enableMethod =() => Fun.SlingshotSelf(), disableMethod =() => Fun.SlingshotSelf(false), toolTip = "Gives you a client sided slingshot."},
                 new Module { name = "Angry Birds", enableMethod =() => ProjectileLaunch.enabled = true, method = Fun.AngryBirdsSounds, disableMethod =() => ProjectileLaunch.enabled = false, toolTip = "Flings you in whatever direction your slingshot's projectiles are heading."},
 
-                new Module { name = "Large Snowballs", enableMethod =() => SnowballGrowth.enabled = true, disableMethod =() => SnowballGrowth.enabled = false, toolTip = "Makes snowballs by default the largest size."},
-
-                new Module { name = "Fast Snowballs", displayName = "Fast Projectiles", method = Projectiles.FastSnowballs, disableMethod = Projectiles.FixSnowballs, toolTip = "Makes projectiles go really fast when thrown."},
-                new Module { name = "Slow Snowballs", displayName = "Slow Projectiles", method = Projectiles.SlowSnowballs, disableMethod = Projectiles.FixSnowballs, toolTip = "Makes projectiles go really slow when thrown."},
 
                 new Module { name = "Projectile Range", method = Fun.ProjectileRange, toolTip = "Increases the hitbox scale of your projectiles."},
 
-                new Module { name = "Rainbow Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { name = "Flash Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = Time.time % 0.2f > 0.1f ? Color.white : Color.black, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { name = "Strobe Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = RandomColor(), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
-                new Module { name = "Custom Held Projectiles", enableMethod = Projectiles.HookProjectileColors, method =() => Fun.projHookColor = new Color(Fun.red / 10f, Fun.green / 10f, Fun.blue / 10f), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be whatever your custom projectile color is set to in the projectile settings."},
+                new Module { name = "Rainbow Held Projectile", enableMethod = Projectile.HookProjectileColors, method =() => Fun.projHookColor = Color.HSVToRGB(Time.frameCount / 180f % 1f, 1f, 1f), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { name = "Flash Held Projectile", enableMethod = Projectile.HookProjectileColors, method =() => Fun.projHookColor = Time.time % 0.2f > 0.1f ? Color.white : Color.black, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { name = "Strobe Held Projectile", enableMethod = Projectile.HookProjectileColors, method =() => Fun.projHookColor = RandomColor(), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be rainbow"},
+                new Module { name = "Custom Held Projectile", enableMethod = Projectile.HookProjectileColors, method =() => Fun.projHookColor = new Color(Fun.red / 10f, Fun.green / 10f, Fun.blue / 10f), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Changes your projectile's color to be whatever your custom projectile color is set to in the projectile settings."},
 
-                new Module { name = "Noclip Building", method = Blocks.NoclipBuilding, disableMethod = Blocks.DisableNoclipBuilding, toolTip = "Disables the colliders of every block in the block map."},
-                new Module { name = "Overlap Building", enableMethod =() => PieceOverlap.enabled = true, disableMethod =() => PieceOverlap.enabled = false, toolTip = "Lets you place pieces inside of each other in the attic."},
-                new Module { name = "Small Building", enableMethod =() => PieceInteraction.enabled = true, disableMethod =() => PieceInteraction.enabled = false, toolTip = "Lets you build in the block map while small."},
-                new Module { name = "Multi Grab", method = Blocks.MultiGrab, toolTip = "Lets you grab multiple objects."},
-
-                new Module { name = "Block Size Toggle", method = Fun.AtticSizeToggle, toolTip = "Toggles your scale when pressing <color=green>grip</color> or <color=green>trigger</color>."},
-                new Module { name = $"Grab All Nearby Blocks {Bracket("green", "G")}", method = Blocks.GrabAllBlocksNearby, toolTip = "Grabs every nearby building block when holding <color=green>G</color>."},
-                new Module { name = $"Grab All Selected Blocks {Bracket("green", "G")}", method = Blocks.GrabAllSelectedNearby, toolTip = "Grabs every nearby building block that matches your selection when holding <color=green>G</color>."},
-
-                new Module { name = $"Massive Block {Bracket("green", "G")}", method = Blocks.MassiveBlock, toolTip = "Spawns you a massive block when you press <color=green>grip</color>."},
-                new Module { name = "Select Block Gun", method = Blocks.SelectBlockGun, toolTip = "Selects whatever building block your hand desires to be used for the building mods." },
-                new Module { name = "Copy Block Info Gun", method = Blocks.CopyBlockInfoGun, toolTip = "Copies whatever building block your hand desires to be used for the building mods to your clipboard." },
-                new Module { name = "Building Block Browser", method = Blocks.BlockBrowser, isTogglable = false, toolTip = "Browse through every block that you can spawn and select it." },
-
-                new Module { name = $"Grab Building Blocks {Bracket("green", "G")}", method = Blocks.SpamGrabBlocks, toolTip = "Forces the building block into your hand when holding <color=green>grip</color>." },
-                new Module { name = $"Building Block Minigun {Bracket("green", "G")}", method = Blocks.BuildingBlockMinigun, toolTip = "Spams building blocks out of your hand when holding <color=green>grip</color>." },
-                new Module { name = "Building Block Gun", method = Blocks.BlocksGun, toolTip = "Moves the building blocks to wherever your hand desires." },
-
-                new Module { name = "Orbit Building Blocks", method = Blocks.OrbitBlocks, toolTip = "Orbits the building blocks around you." },
-                new Module { name = "Rain Building Blocks", method = Blocks.RainBuildingBlocks, toolTip = "Makes the building blocks fall around you like rain." },
-                new Module { name = "Building Block Fountain", method = Blocks.BuildingBlockFountain, toolTip = "Spurts building blocks out of your head like a fountain." },
-                new Module { name = "Building Block Aura", method = Blocks.BuildingBlockAura, toolTip = "Moves the building blocks around you at random positions." },
-                new Module { name = "Building Block Trail", enableMethod =() => Blocks.trailLastPosition = References.LocalRig.transform.position, method = Blocks.BuildingBlockTrail, toolTip = "Leaves a trail of building blocks behind you as you move." },
-                new Module { name = "Building Block Firework", method = Blocks.BuildingBlockFirework, isTogglable = false, toolTip = "Launches a spiral burst of building blocks out of your hand." },
-
-                new Module { name = "Building Block Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = Blocks.BuildingBlockTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
-
-                new Module { name = "Place Building Block Gun", method = Blocks.PlaceBlockGun, toolTip = "Places whatever building block your hand desires on the last grid space you have placed blocks on." },
-
-                new Module { name = "Destroy Building Block Gun", method = Blocks.DestroyBlockGun, toolTip = "Shreds whatever building block your hand desires." },
-                new Module { name = "Destroy Building Blocks", displayName = "Destroy All Building Blocks", method = Blocks.DestroyBlocks, toolTip = "Shreds every building block." },
-
-                new Module { name = "Save Builder Table Data", method = Blocks.SaveBuilderTableData, isTogglable = false, toolTip = "Dumps the data of your current build to a JSON file." },
-                new Module { name = "Load Builder Table Data", method = Blocks.LoadBuilderTableData, isTogglable = false, toolTip = "Loads the data of the dumped JSON files in your game directory and saves it to your current slot." },
-
-                new Module { name = "Disable Critters Dome", enableMethod =() => GetObject("Critters/Critters_Environment/Landscape/Critters_Landscape_Dome").SetActive(false), disableMethod =() => GetObject("Critters/Critters_Environment/Landscape/Critters_Landscape_Dome").SetActive(true), toolTip = "Disables the critters dome." },
-                new Module { name = "Enable Forest Dome", enableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/Forest/Super Infection Zone - Forest Variant/ForestDome_Prefab").SetActive(true), disableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/Forest/Super Infection Zone - Forest Variant/ForestDome_Prefab").SetActive(false), toolTip = "Enables the dome in forest." },
 
                 new Module { name = $"Grab ID Card {Bracket("green", "G")}", method = Fun.GrabIDCard, toolTip = "Puts the ID card in your hand." },
                 new Module { name = "Entity Reach", method =() => EntityGrabbing.enabled = true, disableMethod =() => EntityGrabbing.enabled = false, toolTip = "Gives you the ability to grab entities from farther away in the horror map." },
@@ -1407,31 +1405,6 @@ namespace Qubit.Modules
                 new Module { name = "Spaz Tool Stations", method = Fun.SpazToolStations, toolTip = "Spazzes out the tool purchase stations in the horror map." },
                 new Module { name = "Purchase All Tool Stations", method = Fun.PurchaseAllToolStations, toolTip = "Makes every tool purchase station force purchase in the horror map." },
 
-                new Module { name = $"Fire Sound Spam {Bracket("green", "T")}", enableMethod =() => Cosmetics.CheckOwnedCosmetic("LBALH."), method = Fun.FireSoundSpam, toolTip = "Spams fire sounds when holding <color=green>trigger</color>."},
-
-                new Module { name = "Bubble Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(33), method =() => Fun.BubblerGun(33, Quaternion.identity, 0.1f), toolTip = "Uses the bubbler to spawn bubbles at wherever your hand desires."},
-                new Module { name = "Fire Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(175), method =() => Fun.BubblerGun(175, Quaternion.Euler(180f, 0f, 0f)), toolTip = "Uses the bubbler to spawn bubbles at wherever your hand desires."},
-
-                new Module { name = "White Color Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(629), method = Fun.WhiteColorGun, toolTip = "Sprays whoever your hand desires with the sunblock spray cosmetic."},
-                new Module { name = "White Color All", enableMethod =() => Projectiles.CheckOwnedThrowable(629), method =() => Fun.WhiteColorTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Sprays everyone in the room with the sunblock spray cosmetic."},
-
-                new Module { name = "Black Color Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method = Fun.BlackColorGun, toolTip = "Uses the smoke bomb to make whoever your hand desires black."},
-                new Module { name = "Black Color All", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method =() => Fun.BlackColorTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Uses the smoke bomb to make everyone in the room black."},
-
-                new Module { name = "Chicken Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(651), method = Fun.ChickenGun, toolTip = "Uses the smoke bomb to make whoever your hand desires black."},
-                new Module { name = "Chicken All", enableMethod =() => Projectiles.CheckOwnedThrowable(651), method =() => Fun.ChickenTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Uses the smoke bomb to make everyone in the room black."},
-
-                new Module { name = $"Whoopee Cushion Spam {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(626), method =() => Projectiles.ThrowableProjectileSpam(626), toolTip = "Spawns whoopee cushions on your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Whoopee Cushion Minigun {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(626), method =() => Projectiles.ThrowableProjectileMinigun(626), toolTip = "Shoots whoopee cushions out of your hand when holding <color=green>grip</color>."},
-                new Module { name = "Whoopee Cushion Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(626), method =() => Projectiles.ThrowableProjectileGun(626), toolTip = "Spawns whoopee cushions at wherever your hand desires."},
-
-                new Module { name = $"Smoke Bomb Spam {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method =() => Projectiles.ThrowableProjectileSpam(600), toolTip = "Spawns smoke bombs on your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Smoke Bomb Minigun {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method =() => Projectiles.ThrowableProjectileMinigun(600), toolTip = "Shoots smoke bombs out of your hand when holding <color=green>grip</color>."},
-                new Module { name = "Smoke Bomb Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(600), method =() => Projectiles.ThrowableProjectileGun(600), toolTip = "Spawns smoke bombs at wherever your hand desires."},
-
-                new Module { name = $"Firecracker Spam {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(587), method =() => Projectiles.ThrowableProjectileSpam(587), toolTip = "Spawns firecrackers on your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Firecracker Minigun {Bracket("green", "G")}", enableMethod =() => Projectiles.CheckOwnedThrowable(587), method =() => Projectiles.ThrowableProjectileMinigun(587), toolTip = "Shoots firecrackers out of your hand when holding <color=green>grip</color>."},
-                new Module { name = "Firecracker Gun", enableMethod =() => Projectiles.CheckOwnedThrowable(587), method =() => Projectiles.ThrowableProjectileGun(587), toolTip = "Spawns firecrackers at wherever your hand desires."},
 
                 new Module { name = "Spaz All Moles", method = Fun.SpazMoleMachines, toolTip = "Gives the moles a seizure."},
                 new Module { name = "Auto Start Moles", method = Fun.AutoStartMoles, toolTip = "Automatically starts the mole games."},
@@ -1445,6 +1418,9 @@ namespace Qubit.Modules
             ["Legacy Mods"] = new[]
             {
                 new Module { name = "Exit Legacy Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+
+                new Module { name = "Arcade Teleporter Effect Spam", method = Fun.ArcadeTeleporterEffectSpam, toolTip = "Spams the effects on the virtual stump teleporters in the arcade when holding <color=green>trigger</color>."},
+                new Module { name = "Stump Teleporter Effect Spam", method = Fun.StumpTeleporterEffectSpam, toolTip = "Spams the effects on the virtual stump teleporter in forest when holding <color=green>trigger</color>."},
 
                 new Module { name = "Unload Map All", aliases = new[] { "Force Unload Custom Map" }, method = Qubit.Modules.Categories.Legacy.ForceUnloadCustomMap, isTogglable = false, legacy = true, toolTip = "Forcefully unloads the current custom map for everyone." },
                 new Module { name = "Unload Map Gun", method = Qubit.Modules.Categories.Legacy.UnloadMapGun, legacy = true, toolTip = "Forcefully unloads the current custom map when your hand points at someone." },
@@ -1480,6 +1456,8 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Seasonal Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
 
+                new Module { name = "Disable April Fools FX", enableMethod = Important.DisableAprilFoolsFX, disableMethod = Important.EnableAprilFoolsFX, toolTip = "Disables the April Fools effect in Gorilla Tag 2026."},
+
                 // Halloween (Lucy)
                 new Module { name = "Spawn Red Lucy", method = Fun.SpawnRedLucy, isTogglable = false, toolTip = "Summons the red lucy in forest." },
                 new Module { name = "Spawn Blue Lucy", method = Fun.SpawnBlueLucy, isTogglable = false, toolTip = "Summons the blue lucy in forest." },
@@ -1494,7 +1472,7 @@ namespace Qubit.Modules
                 new Module { name = "Spaz Lucy", method = Fun.SpazLucy, toolTip = "Gives lucy a seizure." },
                 new Module { name = "Break Lucy", method =() => { Fun.SpazLucy(); Fun.lucyDelay = 0f; }, toolTip = "Breaks lucy." },
                 new Module { name = "Annoying Lucy", method = Fun.AnnoyingLucy, toolTip = "Makes lucy really annoying, by attacking everyone and making sounds of the bells." },
-                new Module { name = "Become Lucy", method = Fun.BecomeLucy, disableMethod = Movement.EnableRig, toolTip = "Turns you into the bug." },
+                new Module { name = "Become Lucy", method = Fun.BecomeLucy, disableMethod = Rig.EnableRig, toolTip = "Turns you into the bug." },
                 new Module { name = "Fast Lucy", method = Fun.FastLucy, toolTip = "Makes lucy become really fast." },
                 new Module { name = "Slow Lucy", method = Fun.SlowLucy, toolTip = "Makes lucy become really slow." },
                 new Module { name = "Freeze Lucy", method = Fun.FreezeLucy, toolTip = "Makes lucy come to a complete stop." },
@@ -1527,7 +1505,7 @@ namespace Qubit.Modules
                 new Module { name = "Spaz Lurker", method = Overpowered.SpazLurker, toolTip = "Gives the lurker ghost a seizure." },
                 new Module { name = "Break Lurker", method = Overpowered.BreakLurker, toolTip = "Breaks the lurker ghost." },
                 new Module { name = "Annoying Lurker", method = Overpowered.AnnoyingLurker, toolTip = "Makes the lurker ghost really annoying, by attacking everyone." },
-                new Module { name = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Movement.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the lurker ghost." },
+                new Module { name = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Rig.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the lurker ghost." },
                 new Module { name = "Anti Lurker", enableMethod =() => LurkerStates.enabled = true, disableMethod =() => LurkerStates.enabled = false, toolTip = "Prevents the lurker ghost from possessing you." },
 
                 new Module { name = "No Respawn Purple Flower", enableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable", 50f), toolTip = "Doesn't respawn the purple flower if it goes too far outside the bounds of forest."},
@@ -1580,10 +1558,10 @@ namespace Qubit.Modules
                 new Module { name = "Ride Red Flower", method =() => Flowers.RideObject("RedFlowerThrowable"), toolTip = "Repeatedly teleports you on top of the red flower." },
                 new Module { name = "Ride Green Flower", method =() => Flowers.RideObject("GreenFlowerThrowable"), toolTip = "Repeatedly teleports you on top of the green flower." },
 
-                new Module { name = "Become Purple Flower", method =() => Flowers.BecomeObject("PurpleFlowerThrowable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the purple flower." },
-                new Module { name = "Become Yellow Flower", method =() => Flowers.BecomeObject("YellowFlowerThrowable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the yellow flower." },
-                new Module { name = "Become Red Flower", method =() => Flowers.BecomeObject("RedFlowerThrowable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the red flower." },
-                new Module { name = "Become Green Flower", method =() => Flowers.BecomeObject("GreenFlowerThrowable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the green flower." },
+                new Module { name = "Become Purple Flower", method =() => Flowers.BecomeObject("PurpleFlowerThrowable"), disableMethod = Rig.EnableRig, toolTip = "Turns you into the purple flower." },
+                new Module { name = "Become Yellow Flower", method =() => Flowers.BecomeObject("YellowFlowerThrowable"), disableMethod = Rig.EnableRig, toolTip = "Turns you into the yellow flower." },
+                new Module { name = "Become Red Flower", method =() => Flowers.BecomeObject("RedFlowerThrowable"), disableMethod = Rig.EnableRig, toolTip = "Turns you into the red flower." },
+                new Module { name = "Become Green Flower", method =() => Flowers.BecomeObject("GreenFlowerThrowable"), disableMethod = Rig.EnableRig, toolTip = "Turns you into the green flower." },
 
                 new Module { name = "Destroy Purple Flower", method =() => Flowers.DestroyObject("PurpleFlowerThrowable"), toolTip = "Sends the purple flower to hell." },
                 new Module { name = "Destroy Yellow Flower", method =() => Flowers.DestroyObject("YellowFlowerThrowable"), toolTip = "Sends the yellow flower to hell." },
@@ -1595,8 +1573,8 @@ namespace Qubit.Modules
                 new Module { name = "Red Flower Size Changer", method =() => Flowers.ObjectSizeChanger("RedFlowerThrowable"), toolTip = "Changes the red flower's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
                 new Module { name = "Green Flower Size Changer", method =() => Flowers.ObjectSizeChanger("GreenFlowerThrowable"), toolTip = "Changes the green flower's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
 
-                new Module { name = "Lightning Time Overlay", method = Visuals.StrikeTimeOverlay, disableMethod =() => Notifications.information.Remove("Lightning"), toolTip = "Displays the time until lightning strikes again." },
-                new Module { name = "Spawn Lightning", method = Visuals.SpawnLightning, isTogglable = false, toolTip = "Spawns a manual lightning strike client sided." },
+                new Module { name = "Lightning Time Overlay", method = Visual.StrikeTimeOverlay, disableMethod =() => Notifications.information.Remove("Lightning"), toolTip = "Displays the time until lightning strikes again." },
+                new Module { name = "Spawn Lightning", method = Visual.SpawnLightning, isTogglable = false, toolTip = "Spawns a manual lightning strike client sided." },
 
                 new Module { name = "Pumpkin Watcher", enableMethod =() => WatcherEyes.enabled = true, disableMethod =() => WatcherEyes.enabled = false, toolTip = "Makes the pumpkin in stump always look at you." },
                 new Module { name = "Pumpkin Gazer", enableMethod = WatcherEyes.EnableGazer, disableMethod = WatcherEyes.DisableGazer, toolTip = "Makes the pumpkin in stump instantly look at you when you look away." },
@@ -1612,9 +1590,171 @@ namespace Qubit.Modules
                 new Module { name = "Anger Bees All", method = Qubit.Modules.Categories.Legacy.AngerBeesAll, isTogglable = false, toolTip = "Angers the bees on everyone. Only works during a bee swarm event." },
 
             },
-            ["Entity & Gadget Mods"] = new[]
+            ["Regional Mods"] = new[]
             {
-                new Module { name = "Exit Entity & Gadget Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
+                new Module { name = "Exit Regional Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
+
+                new Module { name = "City Mods", method =() => CurrentCategoryName = "City Mods", isTogglable = false, toolTip = "Opens the city mods."},
+                new Module { name = "Block Mods", method =() => CurrentCategoryName = "Block Mods", isTogglable = false, toolTip = "Opens the building block mods."},
+                new Module { name = "Ghost Reactor Mods", method =() => CurrentCategoryName = "Ghost Reactor Mods", isTogglable = false, toolTip = "Opens the ghost reactor mods."},
+                new Module { name = "Critters Mods", method =() => CurrentCategoryName = "Critters Mods", isTogglable = false, toolTip = "Opens the critters mods."},
+                new Module { name = "Misc Map Mods", method =() => CurrentCategoryName = "Misc Map Mods", isTogglable = false, toolTip = "Opens miscellaneous map-specific mods."},
+            },
+
+            ["Misc Map Mods"] = new[]
+            {
+                new Module { name = "Exit Misc Map Mods", method =() => CurrentCategoryName = "Regional Mods", isTogglable = false, toolTip = "Returns you back to the regional mods."},
+
+                new Module { name = "Disable Space Gravity", method =() => MiscMap.ToggleSpaceGravity(false), disableMethod =() => MiscMap.ToggleSpaceGravity(true), toolTip = "Disables the main space map zone. This may fix fly."},
+                new Module { name = "Disable Planet Zones", method =() => MiscMap.TogglePlanetZones(false), disableMethod =() => MiscMap.TogglePlanetZones(true), toolTip = "Disables the planet zones that rotate your character and change the velocity in the space map."},
+
+                new Module { name = "Remove Forest Colliders", enableMethod = MiscMap.RemoveForestColliders, disableMethod = MiscMap.RestoreForestColliders, toolTip = "Removes the colliders on the roof and the entrance to tutorial inside Forest."},
+
+                new Module { name = "Enable Forest Dome", enableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/Forest/Super Infection Zone - Forest Variant/ForestDome_Prefab").SetActive(true), disableMethod =() => GetObject("Environment Objects/LocalObjects_Prefab/Forest/Super Infection Zone - Forest Variant/ForestDome_Prefab").SetActive(false), toolTip = "Enables the dome in forest." },
+
+                new Module { name = $"Activate All Doors {Bracket("green", "G")}", method = MiscMap.ActivateAllDoors, toolTip = "Activates all doors when holding <color=green>grip</color>."},
+                new Module { name = $"Tap All Crystals {Bracket("green", "G")}", method = MiscMap.TapAllClass<GorillaCaveCrystal>, toolTip = "Taps all crystals when holding <color=green>grip</color>."},
+                new Module { name = $"Tap All Bells {Bracket("green", "G")}", method = MiscMap.TapAllClass<TappableBell>, toolTip = "Taps all bells when holding <color=green>grip</color>."},
+                new Module { name = "Trigger Leaf Pile Gun", method = MiscMap.TriggerLeafPileGun, toolTip = "Shows the effects on whatever leaf pile you desire."},
+            },
+
+            ["Microphone Mods"] = new[]
+            {
+                new Module { name = "Exit Microphone Mods", method =() => CurrentCategoryName = "Sound Mods", isTogglable = false, toolTip = "Returns you back to the sound mods."},
+
+                new Module { name = "Soundboard", method =() => Soundboard.LoadSoundboard(), isTogglable = false, toolTip = "A working, customizable soundboard that lets you play audios through your microphone."},
+
+                new Module { name = "Legacy Microphone", enableMethod =() => { VoiceRecorder.enabled = false; Microphone.ReloadMicrophone();  }, disableMethod =() => { VoiceRecorder.enabled = true; Microphone.ReloadMicrophone(); }, toolTip = "Reverts the microphone system into using the legacy input switcher. This is generally not recommended unless you know what you are doing.", legal = true },
+                new Module { name = "Low Quality Microphone", enableMethod =() => Microphone.SetMicrophoneQuality(6000, 4000), disableMethod =() => Microphone.SetMicrophoneQuality(20000, 16000), toolTip = "Makes your microphone have really bad quality."},
+                new Module { name = "High Quality Microphone", enableMethod =() => Microphone.SetMicrophoneQuality(30000, 24000), disableMethod =() => Microphone.SetMicrophoneQuality(20000, 16000), toolTip = "Makes your microphone have really high quality."},
+                new Module { name = "Loud Microphone", method =() => Microphone.SetMicrophoneAmplification(VoiceRecorder.enabled ? 5f : 16f), disableMethod =() => Microphone.SetMicrophoneAmplification(1), toolTip = "Makes your microphone really loud."},
+
+                new Module { name = "Mute Microphone", method =() => Microphone.MuteMicrophone(true), disableMethod =() => Microphone.MuteMicrophone(false), toolTip = "Disables your microphone.", legal = true},
+                new Module { name = "Reload Microphone", aliases = new[] { "Restart Microphone" }, method = Microphone.ReloadMicrophone, isTogglable = false,  toolTip = "Restarts / fixes your microphone.", legal = true},
+
+                new Module { name = "Voice Changers", method =() => CurrentCategoryName = "Voice Changers", isTogglable = false, toolTip = "Brings you into a category with voice changers."},
+
+                new Module { name = "Microphone Feedback", aliases = new[] { "Hear Self" }, method =() => Microphone.SetDebugEchoMode(true), disableMethod =() => Microphone.SetDebugEchoMode(false), toolTip = "Plays sound coming through your microphone back to your speakers.", legal = true},
+                new Module { name = "Self Mute", enableMethod = Microphone.SelfMute, disableMethod = Microphone.DisableSelfMute, toolTip = "Mutes your own rig's voice audio for yourself."},
+                new Module { name = "Copy Voice Gun", method = Microphone.CopyVoiceGun, disableMethod = Microphone.DisableCopyVoice, toolTip = "Copies the voice of whoever your hand desires."},
+
+                new Module { name = "Narrate Text", aliases = new[] { "Text to Speech", "Speech Text" }, method =() => PromptText("What would you like to be narrated?", () => SpeakText(keyboardInput), null, "Done", "Cancel"), isTogglable = false, toolTip = "Narrates the text of your desire."},
+                new Module { name = "Save Narration", method =() => PromptText("What would you like the narration to say?", () => Microphone.SaveNarration(keyboardInput)), isTogglable = false, toolTip = "Saves whatever you want to narrate to your soundboard."},
+                new Module { name = "Mask Voice", enableMethod = Microphone.MaskVoice, disableMethod = Microphone.DisableMaskVoice, toolTip = "Masks your voice with a TTS voice."},
+            },
+
+            ["City Mods"] = new[]
+            {
+                new Module { name = "Exit City Mods", method =() => CurrentCategoryName = "Regional Mods", isTogglable = false, toolTip = "Returns you back to the regional mods."},
+
+                new Module { name = "Barrel Gun", method = City.BarrelGun, toolTip = "Spawns a barrel at wherever your hand desires." },
+
+                new Module { name = "Open Basement Door", method =() => City.SetBasementDoorState(true), isTogglable = false, toolTip = "Opens the basement door."},
+                new Module { name = "Open Elevator Door", method =() => City.SetElevatorDoorState(true), isTogglable = false, toolTip = "Opens the elevator door."},
+
+                new Module { name = "Close Basement Door", method =() => City.SetBasementDoorState(false), isTogglable = false, toolTip = "Closes the basement door."},
+                new Module { name = "Close Elevator Door", method =() => City.SetElevatorDoorState(false), isTogglable = false, toolTip = "Closes the elevator door."},
+
+                new Module { name = "Spam Open Basement Door", method =() => City.SetBasementDoorState(true), toolTip = "Repeatedly opens the basement door."},
+                new Module { name = "Spam Open Elevator Door", method =() => City.SetElevatorDoorState(true), toolTip = "Repeatedly opens the elevator door."},
+
+                new Module { name = "Spam Close Basement Door", method =() => City.SetBasementDoorState(false), toolTip = "Repeatedly closes the basement door."},
+                new Module { name = "Spam Close Elevator Door", method =() => City.SetElevatorDoorState(false), toolTip = "Repeatedly closes the elevator door."},
+
+                new Module { name = "Basement Door Spam", method = City.BasementDoorSpam, toolTip = "Repeatedly opens and closes the basement door."},
+                new Module { name = "Elevator Door Spam", method = City.ElevatorDoorSpam, toolTip = "Repeatedly opens and closes the elevator door."},
+                new Module { name = "Elevator Proximity Sensor", disableMethod =() => Fun.elevatorSensorOpen = false, method = City.ElevatorProximitySensor, toolTip = "Automatically opens and closes the elevator door as you get close to and move away from it."},
+
+                new Module { name = "Cosmetic Spoof", enableMethod = Cosmetics.TryOnAnywhere, disableMethod = Cosmetics.TryOffAnywhere, toolTip = "Lets you try on cosmetics from anywhere. Enable this mod after wearing the cosmetics." },
+            },
+
+            ["Block Mods"] = new[]
+            {
+                new Module { name = "Exit Block Mods", method =() => CurrentCategoryName = "Regional Mods", isTogglable = false, toolTip = "Returns you back to the regional mods."},
+
+                new Module { name = "Get Builder Watch", method = Blocks.GiveBuilderWatch, isTogglable = false, toolTip = "Gives you the builder watch without needing to be in attic."},
+                new Module { name = "Remove Builder Watch", method = Blocks.RemoveBuilderWatch, isTogglable = false, toolTip = "Disables the builder watch."},
+
+                new Module { name = "Noclip Building", method = Blocks.NoclipBuilding, disableMethod = Blocks.DisableNoclipBuilding, toolTip = "Disables the colliders of every block in the block map."},
+                new Module { name = "Overlap Building", enableMethod =() => PieceOverlap.enabled = true, disableMethod =() => PieceOverlap.enabled = false, toolTip = "Lets you place pieces inside of each other in the attic."},
+                new Module { name = "Small Building", enableMethod =() => PieceInteraction.enabled = true, disableMethod =() => PieceInteraction.enabled = false, toolTip = "Lets you build in the block map while small."},
+                new Module { name = "Multi Grab", method = Blocks.MultiGrab, toolTip = "Lets you grab multiple objects."},
+
+                new Module { name = "Block Size Toggle", method = Fun.AtticSizeToggle, toolTip = "Toggles your scale when pressing <color=green>grip</color> or <color=green>trigger</color>."},
+                new Module { name = $"Grab All Nearby Blocks {Bracket("green", "G")}", method = Blocks.GrabAllBlocksNearby, toolTip = "Grabs every nearby building block when holding <color=green>G</color>."},
+                new Module { name = $"Grab All Selected Blocks {Bracket("green", "G")}", method = Blocks.GrabAllSelectedNearby, toolTip = "Grabs every nearby building block that matches your selection when holding <color=green>G</color>."},
+
+                new Module { name = $"Massive Block {Bracket("green", "G")}", method = Blocks.MassiveBlock, toolTip = "Spawns you a massive block when you press <color=green>grip</color>."},
+                new Module { name = "Select Block Gun", method = Blocks.SelectBlockGun, toolTip = "Selects whatever building block your hand desires to be used for the building mods." },
+                new Module { name = "Copy Block Info Gun", method = Blocks.CopyBlockInfoGun, toolTip = "Copies whatever building block your hand desires to be used for the building mods to your clipboard." },
+                new Module { name = "Building Block Browser", method = Blocks.BlockBrowser, isTogglable = false, toolTip = "Browse through every block that you can spawn and select it." },
+
+                new Module { name = $"Grab Building Blocks {Bracket("green", "G")}", method = Blocks.SpamGrabBlocks, toolTip = "Forces the building block into your hand when holding <color=green>grip</color>." },
+                new Module { name = $"Building Block Minigun {Bracket("green", "G")}", method = Blocks.BuildingBlockMinigun, toolTip = "Spams building blocks out of your hand when holding <color=green>grip</color>." },
+                new Module { name = "Building Block Gun", method = Blocks.BlocksGun, toolTip = "Moves the building blocks to wherever your hand desires." },
+
+                new Module { name = "Orbit Building Blocks", method = Blocks.OrbitBlocks, toolTip = "Orbits the building blocks around you." },
+                new Module { name = "Rain Building Blocks", method = Blocks.RainBuildingBlocks, toolTip = "Makes the building blocks fall around you like rain." },
+                new Module { name = "Building Block Fountain", method = Blocks.BuildingBlockFountain, toolTip = "Spurts building blocks out of your head like a fountain." },
+                new Module { name = "Building Block Aura", method = Blocks.BuildingBlockAura, toolTip = "Moves the building blocks around you at random positions." },
+                new Module { name = "Building Block Trail", enableMethod =() => Blocks.trailLastPosition = References.LocalRig.transform.position, method = Blocks.BuildingBlockTrail, toolTip = "Leaves a trail of building blocks behind you as you move." },
+                new Module { name = "Building Block Firework", method = Blocks.BuildingBlockFirework, isTogglable = false, toolTip = "Launches a spiral burst of building blocks out of your hand." },
+
+                new Module { name = "Building Block Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = Blocks.BuildingBlockTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
+
+                new Module { name = "Place Building Block Gun", method = Blocks.PlaceBlockGun, toolTip = "Places whatever building block your hand desires on the last grid space you have placed blocks on." },
+
+                new Module { name = "Destroy Building Block Gun", method = Blocks.DestroyBlockGun, toolTip = "Shreds whatever building block your hand desires." },
+                new Module { name = "Destroy Building Blocks", displayName = "Destroy All Building Blocks", method = Blocks.DestroyBlocks, toolTip = "Shreds every building block." },
+
+                new Module { name = "Save Builder Table Data", method = Blocks.SaveBuilderTableData, isTogglable = false, toolTip = "Dumps the data of your current build to a JSON file." },
+                new Module { name = "Load Builder Table Data", method = Blocks.LoadBuilderTableData, isTogglable = false, toolTip = "Loads the data of the dumped JSON files in your game directory and saves it to your current slot." },
+
+            },
+
+            ["Ghost Reactor Mods"] = new[]
+            {
+                new Module { name = "Exit Ghost Reactor Mods", method =() => CurrentCategoryName = "Regional Mods", isTogglable = false, toolTip = "Returns you back to the regional mods."},
+
+                new Module { name = $"Ghost Reactor Gate Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnergyCostGate"]), toolTip = "Spawns gates out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Core Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleCore"]), toolTip = "Spawns collectible cores out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Slime Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleSentientCore"]), toolTip = "Spawns sentient collectible cores out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Tool Spam {Bracket("green", "G")}", method = GhostReactorMods.ToolSpamGrip, toolTip = "Spawns random tools out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Flower Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleFlower"]), toolTip = "Spawns flowers out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Crate Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorBreakableCrate"]), toolTip = "Spawns barrels out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Barrel Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorBreakableBarrel"]), toolTip = "Spawns barrels out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Bug Enemy Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyPest"]), toolTip = "Spawns the annoying bug enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Large Bug Enemy Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyPestBig"]), toolTip = "Spawns the large annoying bug enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Ranged Enemy Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyRanged"]), toolTip = "Spawns ranged enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Chaser Enemy Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyChaser"]), toolTip = "Spawns chasing enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Armored Ranged Enemy Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyRangedArmored"]), toolTip = "Spawns armored ranged enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Armored Chaser Enemy Spam {Bracket("green", "G")}", method =() => GhostReactorMods.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyChaserArmored"]), toolTip = "Spawns armored chasing enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Ghost Reactor Entity Spam {Bracket("green", "G")}", method = GhostReactorMods.SpamEntityGrip, toolTip = "Spawns a random entity out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Ghost Reactor Gate Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorEnergyCostGate"]), toolTip = "Spawns gates at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Core Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorCollectibleCore"]), toolTip = "Spawns collectible cores at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Slime Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorCollectibleSentientCore"]), toolTip = "Spawns sentient collectible cores at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Tool Gun", method = GhostReactorMods.ToolSpamGun, toolTip = "Spawns random tools at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Flower Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorCollectibleFlower"]), toolTip = "Spawns flowers at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Crate Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorBreakableCrate"]), toolTip = "Spawns barrels at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Barrel Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorBreakableBarrel"]), toolTip = "Spawns barrels at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Bug Enemy Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyPest"]), toolTip = "Spawns the annoying bug enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Large Bug Enemy Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyPestBig"]), toolTip = "Spawns the large annoying bug enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Ranged Enemy Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyRanged"]), toolTip = "Spawns ranged enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Chaser Enemy Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyChaser"]), toolTip = "Spawns chasing enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Armored Ranged Enemy Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyRangedArmored"]), toolTip = "Spawns armored ranged enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Armored Chaser Enemy Gun", method =() => GhostReactorMods.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyChaserArmored"]), toolTip = "Spawns armored chasing enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Entity Gun", method = GhostReactorMods.SpamEntityGun, toolTip = "Spawns a random entity at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Rain Entities", method = GhostReactorMods.RainEntities, toolTip = "Makes random entities fall around you like rain."},
+                new Module { name = "Ghost Reactor Entity Aura", method = GhostReactorMods.EntityAura, toolTip = "Creates a ball of random entities around you."},
+                new Module { name = "Ghost Reactor Entity Fountain", method = GhostReactorMods.EntityFountain, toolTip = "Spurts random entities out of your head like a fountain."},
+                new Module { name = "Ghost Reactor Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = GhostReactorMods.GhostReactorTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
+                new Module { name = "Ghost Reactor Draw Gun", method = GhostReactorMods.GhostReactorDrawGun, toolTip = "Allows you to draw with entities in ghost reactor."},
+                new Module { name = "Destroy Entity Gun", method = GhostReactorMods.DestroyEntityGun, toolTip = "Destroys any entity which your hand desires."},
+            },
+
+            ["Critters Mods"] = new[]
+            {
+                new Module { name = "Exit Critters Mods", method =() => CurrentCategoryName = "Regional Mods", isTogglable = false, toolTip = "Returns you back to the regional mods."},
 
                 new Module { name = $"Critter Spam {Bracket("green", "G")}", method = Critters.CritterSpam, toolTip = "Spawns critters on your hand when holding <color=green>grip</color>"},
                 new Module { name = $"Critter Minigun {Bracket("green", "G")}", method = Critters.CritterMinigun, toolTip = "Shoots critters out of your hand when holding <color=green>grip</color>"},
@@ -1639,110 +1779,34 @@ namespace Qubit.Modules
                 new Module { name = "Critter Eating Effect Gun", method =() => Critters.EffectGun(CrittersManager.CritterEvent.StickyTriggered), toolTip = "Spams the sticky eating particles at wherever your hand desires."},
                 new Module { name = "Critter Noise Effect Gun", method =() => Critters.EffectGun(CrittersManager.CritterEvent.NoiseMakerTriggered), toolTip = "Spams the noise particles at wherever your hand desires."},
                 new Module { name = "Critter Particle Effect Gun", method =() => Critters.EffectGun((CrittersManager.CritterEvent)Random.Range(0, 4)), toolTip = "Spams every particle at wherever your hand desires."},
-                new Module { name = $"Ghost Reactor Gate Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnergyCostGate"]), toolTip = "Spawns gates out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Core Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleCore"]), toolTip = "Spawns collectible cores out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Slime Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleSentientCore"]), toolTip = "Spawns sentient collectible cores out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Tool Spam {Bracket("green", "G")}", method = Fun.ToolSpamGrip, toolTip = "Spawns random tools out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Flower Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorCollectibleFlower"]), toolTip = "Spawns flowers out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Crate Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorBreakableCrate"]), toolTip = "Spawns barrels out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Barrel Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorBreakableBarrel"]), toolTip = "Spawns barrels out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Bug Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyPest"]), toolTip = "Spawns the annoying bug enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Large Bug Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyPestBig"]), toolTip = "Spawns the large annoying bug enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Ranged Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyRanged"]), toolTip = "Spawns ranged enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Chaser Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyChaser"]), toolTip = "Spawns chasing enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Armored Ranged Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyRangedArmored"]), toolTip = "Spawns armored ranged enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Armored Chaser Enemy Spam {Bracket("green", "G")}", method =() => Fun.SpamObjectGrip(Fun.ObjectByName["GhostReactorEnemyChaserArmored"]), toolTip = "Spawns armored chasing enemies out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Ghost Reactor Entity Spam {Bracket("green", "G")}", method = Fun.SpamEntityGrip, toolTip = "Spawns a random entity out of your hand when holding <color=green>grip</color>."},
-                new Module { name = "Ghost Reactor Gate Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorEnergyCostGate"]), toolTip = "Spawns gates at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Core Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorCollectibleCore"]), toolTip = "Spawns collectible cores at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Slime Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorCollectibleSentientCore"]), toolTip = "Spawns sentient collectible cores at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Tool Gun", method = Fun.ToolSpamGun, toolTip = "Spawns random tools at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Flower Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorCollectibleFlower"]), toolTip = "Spawns flowers at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Crate Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorBreakableCrate"]), toolTip = "Spawns barrels at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Barrel Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorBreakableBarrel"]), toolTip = "Spawns barrels at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Bug Enemy Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyPest"]), toolTip = "Spawns the annoying bug enemies at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Large Bug Enemy Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyPestBig"]), toolTip = "Spawns the large annoying bug enemies at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Ranged Enemy Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyRanged"]), toolTip = "Spawns ranged enemies at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Chaser Enemy Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyChaser"]), toolTip = "Spawns chasing enemies at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Armored Ranged Enemy Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyRangedArmored"]), toolTip = "Spawns armored ranged enemies at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Armored Chaser Enemy Gun", method =() => Fun.SpamObjectGun(Fun.ObjectByName["GhostReactorEnemyChaserArmored"]), toolTip = "Spawns armored chasing enemies at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Entity Gun", method = Fun.SpamEntityGun, toolTip = "Spawns a random entity at wherever your hand desires."},
-                new Module { name = "Ghost Reactor Rain Entities", method = Fun.RainEntities, toolTip = "Makes random entities fall around you like rain."},
-                new Module { name = "Ghost Reactor Entity Aura", method = Fun.EntityAura, toolTip = "Creates a ball of random entities around you."},
-                new Module { name = "Ghost Reactor Entity Fountain", method = Fun.EntityFountain, toolTip = "Spurts random entities out of your head like a fountain."},
-                new Module { name = "Ghost Reactor Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = Fun.GhostReactorTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
-                new Module { name = "Ghost Reactor Draw Gun", method = Fun.GhostReactorDrawGun, toolTip = "Allows you to draw with entities in ghost reactor."},
-                new Module { name = "Destroy Entity Gun", method = Fun.DestroyEntityGun, toolTip = "Destroys any entity which your hand desires."},
-                new Module { name = "Infinite Jet Fuel", method =() => WristJetFuel.enabled = true, disableMethod =() => WristJetFuel.enabled = false, toolTip = "Gives the jet gadgets in Super Infection infinite fuel."},
-                new Module { name = "Infinite Platforms", method =() => PlatformDeployer.enabled = true, disableMethod =() => PlatformDeployer.enabled = false, toolTip = "Gives the platform spawner gadgets in Super Infection infinite platforms."},
-                new Module { name = "Infinite Resources", method = Fun.InfiniteResources, toolTip = "Gives you infinite resources in the Super Infection gamemode."},
-                new Module { name = "Complete All Quests", method = Fun.CompleteAllQuests, isTogglable = false, toolTip = "Completes every quest in the Super Infection gamemode."},
-                new Module { name = "Claim All Terminals", method = Fun.ClaimAllTerminals, isTogglable = false, toolTip = "Claims every terminal in the Super Infection gamemode."},
-                new Module { name = "Unlock All Gadgets", method = Fun.UnlockAllGadgets, toolTip = "Unlocks every gadget in the Super Infection gamemode."},
-                new Module { name = "No Blaster Cooldown", method =() => ChargeBlasterCooldown.enabled = true, disableMethod =() => ChargeBlasterCooldown.enabled = false, toolTip = "Removes the cooldown on the blaster."},
-                new Module { name = "Blaster Aimbot", enableMethod =() => ChargeBlasterFire.enabled = true, method = Fun.DebugBlasterAimbot, disableMethod =() => ChargeBlasterFire.enabled = false, toolTip = "Automatically aims the blaster towards players."},
-                new Module { name = $"Blaster Laser Spam {Bracket("green", "G")}", method = Fun.BlasterLaserSpam, toolTip = "Spams lasers out of your hand when holding <color=green>grip</color>."},
-                new Module { name = "Blaster Float Gun", method =() => Fun.BlasterFlingGun(Vector3.up), toolTip = "Uses the blasters to fling whoever your hand desires vertically."},
-                new Module { name = "Blaster Float All", method =() => Fun.BlasterFlingAll(Vector3.up), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room vertically."},
-                new Module { name = "Blaster Control Gun", method = Fun.BlasterControlGun, toolTip = "Uses the blasters to control whoever your hand desires."},
-                new Module { name = "Blaster Fling Gun", method =() => Fun.BlasterFlingGun(RandomVector3()), toolTip = "Uses the blasters to fling whoever your hand desires."},
-                new Module { name = "Blaster Fling All", method =() => Fun.BlasterFlingAll(RandomVector3()), disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room."},
-                new Module { name = "Blaster Fling Towards Gun", displayName = "Blaster Bring Gun", aliases = new[] { "Blaster Fling Towards Gun" }, method = Fun.BlasterFlingTowardsGun, toolTip = "Uses the blasters to fling whoever your hand desires towards you."},
-                new Module { name = "Blaster Fling Towards All", displayName = "Blaster Bring All", aliases = new[] { "Blaster Fling Towards All" }, method = Fun.BlasterFlingTowardsAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room towards you."},
-                new Module { name = "Blaster Fling Away Gun", displayName = "Blaster Push Gun", aliases = new[] { "Blaster Fling Towards Gun" }, method = Fun.BlasterFlingAwayGun, toolTip = "Uses the blasters to fling whoever your hand desires away from you."},
-                new Module { name = "Blaster Fling Away All", displayName = "Blaster Push All", aliases = new[] { "Blaster Fling Towards All" }, method = Fun.BlasterFlingAwayAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Uses the blasters to fling everyone in the room away from you."},
-                new Module { name = "Blaster Kick Gun", method = Fun.BlasterKickGun, toolTip = "Kicks whoever your hand desires using the blasters." },
-                new Module { name = $"Blaster Kick All {Bracket("green", "T")}", method = Fun.BlasterKickAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Kicks everyone in the room when holding <color=green>trigger</color> using the blasters." },
-                new Module { name = "Blaster Crash Gun", method = Fun.BlasterCrashGun, toolTip = "Crashes whoever your hand desires using the blasters." },
-                new Module { name = $"Blaster Crash All {Bracket("green", "T")}", method = Fun.BlasterCrashAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Crashes everyone in the room when holding <color=green>trigger</color> using the blasters." },
-                new Module { name = $"Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Turkey Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Motorized Stilt Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Thruster Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Yoyo Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Blaster Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Lobber Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Strider Tentacle Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Crawler Tentacle Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Platform Deployer Spam {Bracket("green", "G")}", method =() => Fun.SpamGadgetGrip(Gadgets.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Gadget Spam {Bracket("green", "G")}", method = Fun.GadgetSpamGrip, toolTip = "Spawns random gadgets out of your hand when holding <color=green>grip</color>."},
-                new Module { name = $"Resource Spam {Bracket("green", "G")}", method = Fun.ResourceSpamGrip, toolTip = "Spawns random resources out of your hand when holding <color=green>grip</color>."},
-                new Module { name = "Stilt Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget FixedScaledLong"]), toolTip = "Spawns stilts at wherever your hand desires."},
-                new Module { name = "Turkey Stilt Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget Turkey"]), toolTip = "Spawns stilts at wherever your hand desires."},
-                new Module { name = "Motorized Stilt Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["StiltGadget Motorized3"]), toolTip = "Spawns motorized stilts at wherever your hand desires."},
-                new Module { name = "Thruster Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["WristJetGadgetPropellor"]), toolTip = "Spawns thrusters at wherever your hand desires."},
-                new Module { name = "Yoyo Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["SIGadgetDashYoyo"]), toolTip = "Spawns yoyos at wherever your hand desires."},
-                new Module { name = "Blaster Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["MegaChargeBlasterGadget"]), toolTip = "Spawns blasters at wherever your hand desires."},
-                new Module { name = "Lobber Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["BlastLobberGadget"]), toolTip = "Spawns lobbers at wherever your hand desires."},
-                new Module { name = "Strider Tentacle Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["TentacleArmGadget_Strider"]), toolTip = "Spawns tentacles at wherever your hand desires."},
-                new Module { name = "Crawler Tentacle Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["TentacleArmGadget_Crawler"]), toolTip = "Spawns tentacles at wherever your hand desires."},
-                new Module { name = "Platform Deployer Gun", method =() => Fun.SpamGadgetGun(Gadgets.GadgetByName["PlatformDeployerGadget"]), toolTip = "Spawns platform deployers at wherever your hand desires."},
-                new Module { name = "Gadget Gun", method = Fun.GadgetSpamGun, toolTip = "Spawns random gadgets at wherever your hand desires."},
-                new Module { name = "Resource Gun", method = Fun.ResourceSpamGun, toolTip = "Spawns random resources at wherever your hand desires."},
-                new Module { name = "Rain Gadgets", method = Fun.RainGadgets, toolTip = "Makes random gadgets fall around you like rain."},
-                new Module { name = "Gadget Aura", method = Fun.GadgetAura, toolTip = "Creates a ball of random gadgets around you."},
-                new Module { name = "Gadget Fountain", method = Fun.GadgetFountain, toolTip = "Spurts random gadgets out of your head like a fountain."},
-                new Module { name = "Super Infection Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = Fun.SuperInfectionTextGun, toolTip = "Spawns entities in the shape of the text you desire in the Super Infection gamemode."},
-                new Module { name = "Super Infection Draw Gun", method = Fun.SuperInfectionDrawGun, toolTip = "Allows you to draw with entities in Super Infection."},
-                new Module { name = "Destroy Gadget Gun", method = Fun.DestroyGadgetGun, toolTip = "Destroys any gadget which your hand desires."},
 
+                new Module { name = "Disable Critters Dome", enableMethod =() => GetObject("Critters/Critters_Environment/Landscape/Critters_Landscape_Dome").SetActive(false), disableMethod =() => GetObject("Critters/Critters_Environment/Landscape/Critters_Landscape_Dome").SetActive(true), toolTip = "Disables the critters dome." },
             },
+
+            ["Rope Mods"] = new[]
+            {
+                new Module { name = "Exit Rope Mods", method =() => CurrentCategoryName = "Holdable Mods", isTogglable = false, toolTip = "Returns you back to the holdable mods."},
+
+                new Module { name = "Fast Ropes", enableMethod =() => RopeAttach.enabled = true, disableMethod =() => RopeAttach.enabled = false, toolTip = "Makes ropes go five times faster when jumping on them."},
+                new Module { name = "Joystick Rope Control", method = Rope.JoystickRopeControl, isTogglable = false, toolTip = "Controls the nearest rope with your joystick." },
+                new Module { name = "Spaz Rope Gun", method = Rope.SpazRopeGun, toolTip = "Spazzes out whatever rope your hand desires." },
+                new Module { name = "Spaz All Ropes", method = Rope.SpazAllRopes, isTogglable = false, toolTip = "Spazzes out a random rope while holding <color=green>trigger</color>." },
+                new Module { name = "Spaz Grabbed Ropes", method = Rope.SpazGrabbedRopes, isTogglable = false, toolTip = "Spazzes out a random rope someone's currently holding." },
+                new Module { name = "Fling Rope Gun", method = Rope.FlingRopeGun, toolTip = "Flings whatever rope your hand desires." },
+                new Module { name = "Fling All Ropes Gun", method = Rope.FlingAllRopesGun, toolTip = "Flings a random rope towards wherever your hand desires." },
+                new Module { name = "Rope Grab Reach", method = Rope.RopeGrabReach, disableMethod =() => Climbing.enabled = false, toolTip = "Allows you to grab ropes from farther away."},
+            },
+
             ["Holdable Mods"] = new[]
             {
                 new Module { name = "Exit Holdable Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page."},
+
+                new Module { name = "Rope Mods", method =() => CurrentCategoryName = "Rope Mods", isTogglable = false, toolTip = "Opens the rope mods."},
 
                 new Module { name = "Fast Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.5f, 0.5f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders fast."},
                 new Module { name = "Slow Gliders", enableMethod =() => Gliders.ModifyGliderSpeed(0.05f, 0.05f), disableMethod =() => Gliders.ModifyGliderSpeed(0.1f, 0.2f), toolTip = "Makes the gliders slow."},
                 new Module { name = "Glider Blind Gun", method = Gliders.GliderBlindGun, toolTip = "Moves all of the gliders to whoever your hand desires' faces." },
                 new Module { name = "Glider Blind All", method = Gliders.GliderBlindAll, toolTip = "Moves all of the gliders to everyone's faces." },
-                new Module { name = "Fast Ropes", enableMethod =() => RopeAttach.enabled = true, disableMethod =() => RopeAttach.enabled = false, toolTip = "Makes ropes go five times faster when jumping on them."},
-                new Module { name = "Joystick Rope Control", method = Overpowered.JoystickRopeControl, isTogglable = false, toolTip = "Controls the nearest rope with your joystick." },
-                new Module { name = "Spaz Rope Gun", method = Overpowered.SpazRopeGun, toolTip = "Spazzes out whatever rope your hand desires." },
-                new Module { name = "Spaz All Ropes", method = Overpowered.SpazAllRopes, isTogglable = false, toolTip = "Spazzes out a random rope while holding <color=green>trigger</color>." },
-                new Module { name = "Spaz Grabbed Ropes", method = Overpowered.SpazGrabbedRopes, isTogglable = false, toolTip = "Spazzes out a random rope someone's currently holding." },
-                new Module { name = "Fling Rope Gun", method = Overpowered.FlingRopeGun, toolTip = "Flings whatever rope your hand desires." },
-                new Module { name = "Fling All Ropes Gun", method = Overpowered.FlingAllRopesGun, toolTip = "Flings a random rope towards wherever your hand desires." },
-                new Module { name = "Rope Grab Reach", method = Fun.RopeGrabReach, disableMethod =() => Climbing.enabled = false, toolTip = "Allows you to grab ropes from farther away."},
                 new Module { name = "No Respawn Gliders", enableMethod =() => GliderRespawn.enabled = true, disableMethod =() => GliderRespawn.enabled = false, toolTip = "Doesn't respawn gliders that go too far outside the bounds of clouds."},
                 new Module { name = "Anti Grab", enableMethod =() => GuardianGrabs.enabled = true, disableMethod =() => GuardianGrabs.enabled = false, toolTip = "Prevents players from picking you up in guardian."},
                 new Module { name = "Anti Knockback", enableMethod =() => KnockbackOverride.enabled = true, disableMethod =() => KnockbackOverride.enabled = false, toolTip = "Prevents any force from knocking you back."},
@@ -1845,13 +1909,13 @@ namespace Qubit.Modules
                 new Module { name = "Ride Bug", method =() => Bugs.RideObject("Floating Bug Holdable"), toolTip = "Repeatedly teleports you on top of the bug." },
                 new Module { name = "Ride Bat", method =() => Bugs.RideObject("Cave Bat Holdable"), toolTip = "Repeatedly teleports you on top of the bat." },
                 new Module { name = "Ride Firefly", method =() => Bugs.RideObject("Firefly"), toolTip = "Repeatedly teleports you on top of the firefly." },
-                new Module { name = "Become Bug", method =() => Bugs.BecomeObject("Floating Bug Holdable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the bug." },
-                new Module { name = "Become Bat", method =() => Bugs.BecomeObject("Cave Bat Holdable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the bat." },
-                new Module { name = "Become Firefly", method =() => Bugs.BecomeObject("Firefly"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the firefly." },
-                new Module { name = "Become Camera", method = LckCamera.BecomeCamera, disableMethod = Movement.EnableRig, toolTip = "Turns you into the camera." },
-                new Module { name = "Become Tablet", method = LckCamera.BecomeTablet, disableMethod = Movement.EnableRig, toolTip = "Turns you into the tablet." },
-                new Module { name = "Become Balloon", method = Balloons.BecomeBalloon, disableMethod = Movement.EnableRig, toolTip = "Turns you into a balloon when holding <color=green>trigger</color>." },
-                new Module { name = "Become Hoverboard", method = Hoverboards.BecomeHoverboard, disableMethod = Movement.EnableRig, toolTip = "Turns you into a hoverboard when holding <color=green>trigger</color>." },
+                new Module { name = "Become Bug", method =() => Bugs.BecomeObject("Floating Bug Holdable"), disableMethod = Rig.EnableRig, toolTip = "Turns you into the bug." },
+                new Module { name = "Become Bat", method =() => Bugs.BecomeObject("Cave Bat Holdable"), disableMethod = Rig.EnableRig, toolTip = "Turns you into the bat." },
+                new Module { name = "Become Firefly", method =() => Bugs.BecomeObject("Firefly"), disableMethod = Rig.EnableRig, toolTip = "Turns you into the firefly." },
+                new Module { name = "Become Camera", method = LckCamera.BecomeCamera, disableMethod = Rig.EnableRig, toolTip = "Turns you into the camera." },
+                new Module { name = "Become Tablet", method = LckCamera.BecomeTablet, disableMethod = Rig.EnableRig, toolTip = "Turns you into the tablet." },
+                new Module { name = "Become Balloon", method = Balloons.BecomeBalloon, disableMethod = Rig.EnableRig, toolTip = "Turns you into a balloon when holding <color=green>trigger</color>." },
+                new Module { name = "Become Hoverboard", method = Hoverboards.BecomeHoverboard, disableMethod = Rig.EnableRig, toolTip = "Turns you into a hoverboard when holding <color=green>trigger</color>." },
                 new Module { name = "Destroy Bug", method =() => Bugs.DestroyObject("Floating Bug Holdable"), toolTip = "Sends the bug to hell." },
                 new Module { name = "Destroy Firefly", method =() => Bugs.DestroyObject("Firefly"), toolTip = "Sends the bug to hell." },
                 new Module { name = "Destroy Bat", method =() => Bugs.DestroyObject("Cave Bat Holdable"), toolTip = "Sends the bat to hell." },
@@ -1875,7 +1939,7 @@ namespace Qubit.Modules
                 new Module { name = "Orbit Shark", method =() => Bugs.OrbitObject("Swimming Shark prefab", 180f), toolTip = "Orbits the shark around you." },
                 new Module { name = "Shark Aura", method =() => Bugs.ObjectAura("Swimming Shark prefab"), toolTip = "Teleports the shark around you in random positions." },
                 new Module { name = "Ride Shark", method =() => Bugs.RideObject("Swimming Shark prefab"), toolTip = "Repeatedly teleports you on top of the shark." },
-                new Module { name = "Become Shark", method =() => Bugs.BecomeObject("Swimming Shark prefab"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the shark." },
+                new Module { name = "Become Shark", method =() => Bugs.BecomeObject("Swimming Shark prefab"), disableMethod = Rig.EnableRig, toolTip = "Turns you into the shark." },
                 new Module { name = "Freeze Shark", method =() => Bugs.FreezeObject("Swimming Shark prefab"), toolTip = "Freezes the shark in place." },
                 new Module { name = "Fast Shark", method =() => Bugs.SetObjectSpeed("Swimming Shark prefab", 5f), disableMethod =() => Bugs.SetObjectSpeed("Swimming Shark prefab"), toolTip = "Speeds up the shark." },
                 new Module { name = "Slow Shark", method =() => Bugs.SetObjectSpeed("Swimming Shark prefab", 0.1f), disableMethod =() => Bugs.SetObjectSpeed("Swimming Shark prefab"), toolTip = "Slows down the shark." },
@@ -1888,7 +1952,7 @@ namespace Qubit.Modules
                 new Module { name = "Orbit Ball", method = Balls.OrbitBalls, toolTip = "Orbits the ball around you." },
                 new Module { name = "Ball Aura", method = Balls.BallAura, toolTip = "Teleports the ball around you in random positions." },
                 new Module { name = "Ball Size Changer", method = Balls.BallSizeChanger, toolTip = "Changes the ball's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = "Become Ball", method = Balls.BecomeBall, disableMethod = Movement.EnableRig, toolTip = "Turns you into the ball." },
+                new Module { name = "Become Ball", method = Balls.BecomeBall, disableMethod = Rig.EnableRig, toolTip = "Turns you into the ball." },
                 new Module { name = "Destroy Ball", method = Balls.DestroyBalls, isTogglable = false, toolTip = "Sends the ball to hell." },
                 new Module { name = "Destroy Balloons", method = Balloons.DestroyBalloons, isTogglable = false, toolTip = "Sends every single balloon cosmetic to hell." },
                 new Module { name = "Destroy Gliders", method = Gliders.DestroyGliders, isTogglable = false, toolTip = "Sends every single glider to hell." },
@@ -1935,12 +1999,37 @@ namespace Qubit.Modules
                 new Module { name = "Spaz Accessories", displayName = $"Spaz Cosmetics {Bracket("green", "All")}", method = Cosmetics.SpazAccessories, toolTip = "Spazzes your hats out for everyone when holding <color=green>trigger</color>." },
                 new Module { name = $"Spaz Cosmetics {Bracket("green", "Others")}", method = Cosmetics.SpazAccessoriesOthers, toolTip = "Spazzes your hats out for everyone except you when holding <color=green>trigger</color>." },
                 new Module { name = $"Spaz Balloon Cosmetics {Bracket("green", "T")}", method = Cosmetics.SpazAccessoriesBalloon, toolTip = "Spazzes your balloons out for everyone when holding <color=green>trigger</color>." },
-                new Module { name = "Cosmetic Spoof", enableMethod = Cosmetics.TryOnAnywhere, disableMethod = Cosmetics.TryOffAnywhere, toolTip = "Lets you try on cosmetics from anywhere. Enable this mod after wearing the cosmetics." },
                 new Module { name = "Cosmetic Browser", method = Cosmetics.CosmeticBrowser, isTogglable = false, toolTip = "Browse through every cosmetic that you can try on and add it to your cart." },
                 new Module { name = "Auto Spoof Cosmetics", enableMethod = Fun.AutoLoadCosmetics, disableMethod = Fun.NoAutoLoadCosmetics, toolTip = "Automatically spoofs your cosmetics, making you appear with anything you're able to try-on." },
                 new Module { name = "Auto Purchase Cosmetics", displayName = "Auto Purchase Free Cosmetics", method = Cosmetics.AutoPurchaseCosmetics, toolTip = "Automatically purchases any free cosmetics." },
                 new Module { name = "Auto Purchase Current Cosmetics", method = Cosmetics.AutoPurchasePaidCosmetics, toolTip = "Automatically purchases all cosmetics on your outfit until you own everything. This does use shiny rocks." },
                 new Module { name = "Disable Cosmetics on Tag", method = Cosmetics.DisableCosmeticsOnTag, toolTip = "Disables your cosmetics when you get tagged, good for ambush." },
+
+                new Module { name = $"Fire Sound Spam {Bracket("green", "T")}", enableMethod =() => Cosmetics.CheckOwnedCosmetic("LBALH."), method = Fun.FireSoundSpam, toolTip = "Spams fire sounds when holding <color=green>trigger</color>."},
+
+                new Module { name = "Bubble Gun", enableMethod =() => Projectile.CheckOwnedThrowable(33), method =() => Fun.BubblerGun(33, Quaternion.identity, 0.1f), toolTip = "Uses the bubbler to spawn bubbles at wherever your hand desires."},
+                new Module { name = "Fire Gun", enableMethod =() => Projectile.CheckOwnedThrowable(175), method =() => Fun.BubblerGun(175, Quaternion.Euler(180f, 0f, 0f)), toolTip = "Uses the bubbler to spawn bubbles at wherever your hand desires."},
+
+                new Module { name = "White Color Gun", enableMethod =() => Projectile.CheckOwnedThrowable(629), method = Fun.WhiteColorGun, toolTip = "Sprays whoever your hand desires with the sunblock spray cosmetic."},
+                new Module { name = "White Color All", enableMethod =() => Projectile.CheckOwnedThrowable(629), method =() => Fun.WhiteColorTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Sprays everyone in the room with the sunblock spray cosmetic."},
+
+                new Module { name = "Black Color Gun", enableMethod =() => Projectile.CheckOwnedThrowable(600), method = Fun.BlackColorGun, toolTip = "Uses the smoke bomb to make whoever your hand desires black."},
+                new Module { name = "Black Color All", enableMethod =() => Projectile.CheckOwnedThrowable(600), method =() => Fun.BlackColorTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Uses the smoke bomb to make everyone in the room black."},
+
+                new Module { name = "Chicken Gun", enableMethod =() => Projectile.CheckOwnedThrowable(651), method = Fun.ChickenGun, toolTip = "Uses the smoke bomb to make whoever your hand desires black."},
+                new Module { name = "Chicken All", enableMethod =() => Projectile.CheckOwnedThrowable(651), method =() => Fun.ChickenTarget(GetTargetPlayer()), disableMethod =() => References.LocalRig.enabled = false, toolTip = "Uses the smoke bomb to make everyone in the room black."},
+
+                new Module { name = $"Whoopee Cushion Spam {Bracket("green", "G")}", enableMethod =() => Projectile.CheckOwnedThrowable(626), method =() => Projectile.ThrowableProjectileSpam(626), toolTip = "Spawns whoopee cushions on your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Whoopee Cushion Minigun {Bracket("green", "G")}", enableMethod =() => Projectile.CheckOwnedThrowable(626), method =() => Projectile.ThrowableProjectileMinigun(626), toolTip = "Shoots whoopee cushions out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Whoopee Cushion Gun", enableMethod =() => Projectile.CheckOwnedThrowable(626), method =() => Projectile.ThrowableProjectileGun(626), toolTip = "Spawns whoopee cushions at wherever your hand desires."},
+
+                new Module { name = $"Smoke Bomb Spam {Bracket("green", "G")}", enableMethod =() => Projectile.CheckOwnedThrowable(600), method =() => Projectile.ThrowableProjectileSpam(600), toolTip = "Spawns smoke bombs on your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Smoke Bomb Minigun {Bracket("green", "G")}", enableMethod =() => Projectile.CheckOwnedThrowable(600), method =() => Projectile.ThrowableProjectileMinigun(600), toolTip = "Shoots smoke bombs out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Smoke Bomb Gun", enableMethod =() => Projectile.CheckOwnedThrowable(600), method =() => Projectile.ThrowableProjectileGun(600), toolTip = "Spawns smoke bombs at wherever your hand desires."},
+
+                new Module { name = $"Firecracker Spam {Bracket("green", "G")}", enableMethod =() => Projectile.CheckOwnedThrowable(587), method =() => Projectile.ThrowableProjectileSpam(587), toolTip = "Spawns firecrackers on your hand when holding <color=green>grip</color>."},
+                new Module { name = $"Firecracker Minigun {Bracket("green", "G")}", enableMethod =() => Projectile.CheckOwnedThrowable(587), method =() => Projectile.ThrowableProjectileMinigun(587), toolTip = "Shoots firecrackers out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Firecracker Gun", enableMethod =() => Projectile.CheckOwnedThrowable(587), method =() => Projectile.ThrowableProjectileGun(587), toolTip = "Spawns firecrackers at wherever your hand desires."},
                 new Module { name = "Unlock Fan Club Subscription", aliases = new[] { "Unlock VIM", "Unlock Very Cool Monke", "Free VIM" }, enableMethod =() => SubscriptionStatus.enabled = true, disableMethod =() => SubscriptionStatus.enabled = false, toolTip = "Unlocks the Gorilla Tag fan club subscription." },
                 new Module { name = "Unlock All Cosmetics", method = Cosmetics.UnlockAllCosmetics, toolTip = "Unlocks every cosmetic in the game. This mod is client-sided." },
                 new Module { name = "Unlimited Shiny Rocks", enableMethod =() => Purchasing.enabled = true, method =() => ManagerRegistry.CosmeticsController.currencyBalance = int.MaxValue, disableMethod =() => Purchasing.enabled = false, toolTip = "Gives you 2 billion shiny rocks. This mod is client sided." },
@@ -1999,116 +2088,125 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Sound Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { name = "Soundboard", method =() => Sound.LoadSoundboard(), isTogglable = false, toolTip = "A working, customizable soundboard that lets you play audios through your microphone."},
+                new Module { name = "Microphone Mods", method =() => CurrentCategoryName = "Microphone Mods", isTogglable = false, toolTip = "Opens the microphone mods."},
 
-                new Module { name = $"Bass Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(68), toolTip = "Plays the loud drum sound when holding <color=green>grip</color>." },
-                new Module { name = $"Metal Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(18), toolTip = "Plays the metal sound when holding <color=green>grip</color>." },
-                new Module { name = $"Wolf Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(195), toolTip = "Plays the wolf howl when holding <color=green>grip</color>." },
-                new Module { name = $"Cat Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(236), toolTip = "Plays the cat meow when holding <color=green>grip</color>." },
-                new Module { name = $"Turkey Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(83), toolTip = "Plays the turkey sound when holding <color=green>grip</color>." },
-                new Module { name = $"Frog Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(91), toolTip = "Plays the frog creak when holding <color=green>grip</color>." },
-                new Module { name = $"Bee Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(191), toolTip = "Plays the bee buzz when holding <color=green>grip</color>." },
-                new Module { name = $"Squeak Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(215), toolTip = "Plays the squeak sound when holding <color=green>grip</color>." },
-                new Module { name = $"Okay Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(336), toolTip = "Plays the sound of jmancurly saying \"okay\" with autotune when holding <color=green>grip</color>." },
-                new Module { name = $"Scream Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(337), toolTip = "Plays the sound of jmancurly screaming when holding <color=green>grip</color>." },
-                new Module { name = $"Slap Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(338), toolTip = "Plays the slap sound when holding <color=green>grip</color>." },
-                new Module { name = $"Jmancurly Sound Spam {Bracket("green", "G")}", method = Sound.JmancurlySoundSpam, toolTip = "Plays the sounds from the jmancurly statue when holding <color=green>grip</color>." },
-                new Module { name = $"Random Sound Spam {Bracket("green", "G")}", method = Sound.RandomSoundSpam, toolTip = "Plays random sounds when holding <color=green>grip</color>." },
-                new Module { name = $"Earrape Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(215), toolTip = "Plays a high-pitched sound when holding <color=green>grip</color>." },
-                new Module { name = $"Ding Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(244), toolTip = "Plays a ding sound when holding <color=green>grip</color>." },
-                new Module { name = $"Crystal Sound Spam {Bracket("green", "G")}", method = Sound.CrystalSoundSpam, toolTip = "Plays some crystal noises when holding <color=green>grip</color>." },
-                new Module { name = $"Piano Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(Random.Range(295, 307)), toolTip = "Plays some terrible piano when holding <color=green>grip</color>." },
-                new Module { name = $"Big Crystal Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(213), toolTip = "Plays a long crystal sound when holding <color=green>grip</color>." },
-                new Module { name = $"Pan Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(248), toolTip = "Plays a pan sound when holding <color=green>grip</color>." },
-                new Module { name = $"AK-47 Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(203), toolTip = "Plays a sound that sounds like an AK-47 when holding <color=green>grip</color>." },
-                new Module { name = $"Siren Sound Spam {Bracket("green", "G")}", method = Sound.SirenSoundSpam, toolTip = "Plays a siren sound when holding <color=green>grip</color>." },
-                new Module { name = $"Tick Sound Spam {Bracket("green", "G")}", method =() => Sound.SoundSpam(148), toolTip = "Plays a tick sound when holding <color=green>grip</color>." },
+                new Module { name = $"Bass Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(68), toolTip = "Plays the loud drum sound when holding <color=green>grip</color>." },
+                new Module { name = $"Metal Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(18), toolTip = "Plays the metal sound when holding <color=green>grip</color>." },
+                new Module { name = $"Wolf Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(195), toolTip = "Plays the wolf howl when holding <color=green>grip</color>." },
+                new Module { name = $"Cat Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(236), toolTip = "Plays the cat meow when holding <color=green>grip</color>." },
+                new Module { name = $"Turkey Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(83), toolTip = "Plays the turkey sound when holding <color=green>grip</color>." },
+                new Module { name = $"Frog Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(91), toolTip = "Plays the frog creak when holding <color=green>grip</color>." },
+                new Module { name = $"Bee Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(191), toolTip = "Plays the bee buzz when holding <color=green>grip</color>." },
+                new Module { name = $"Squeak Sound Spam {Bracket("green", "G")}", method = Audio.SqueakSoundSpam, toolTip = "Plays the squeak sound when holding <color=green>grip</color>." },
+                new Module { name = $"Okay Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(336), toolTip = "Plays the sound of jmancurly saying \"okay\" with autotune when holding <color=green>grip</color>." },
+                new Module { name = $"Scream Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(337), toolTip = "Plays the sound of jmancurly screaming when holding <color=green>grip</color>." },
+                new Module { name = $"Slap Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(338), toolTip = "Plays the slap sound when holding <color=green>grip</color>." },
+                new Module { name = $"Jmancurly Sound Spam {Bracket("green", "G")}", method = Audio.JmancurlySoundSpam, toolTip = "Plays the sounds from the jmancurly statue when holding <color=green>grip</color>." },
+                new Module { name = $"Random Sound Spam {Bracket("green", "G")}", method = Audio.RandomSoundSpam, toolTip = "Plays random sounds when holding <color=green>grip</color>." },
+                new Module { name = $"Earrape Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(215), toolTip = "Plays a high-pitched sound when holding <color=green>grip</color>." },
+                new Module { name = $"Ding Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(244), toolTip = "Plays a ding sound when holding <color=green>grip</color>." },
+                new Module { name = $"Crystal Sound Spam {Bracket("green", "G")}", method = Audio.CrystalSoundSpam, toolTip = "Plays some crystal noises when holding <color=green>grip</color>." },
+                new Module { name = $"Piano Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(Random.Range(295, 307)), toolTip = "Plays some terrible piano when holding <color=green>grip</color>." },
+                new Module { name = $"Big Crystal Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(213), toolTip = "Plays a long crystal sound when holding <color=green>grip</color>." },
+                new Module { name = $"Pan Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(248), toolTip = "Plays a pan sound when holding <color=green>grip</color>." },
+                new Module { name = $"AK-47 Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(203), toolTip = "Plays a sound that sounds like an AK-47 when holding <color=green>grip</color>." },
+                new Module { name = $"Siren Sound Spam {Bracket("green", "G")}", method = Audio.SirenSoundSpam, toolTip = "Plays a siren sound when holding <color=green>grip</color>." },
+                new Module { name = $"Tick Sound Spam {Bracket("green", "G")}", method =() => Audio.SoundSpam(148), toolTip = "Plays a tick sound when holding <color=green>grip</color>." },
+
+                new Module { name = "Boop", method =() => Fun.Boop(), toolTip = "Makes a pop sound when you touch someone's nose."},
+                new Module { name = "Gong", method =() => Fun.Boop(248), toolTip = "Makes a gong sound when you hit someone's face."},
+                new Module { name = "Slap", method =() => Fun.Boop(338), toolTip = "Makes a slap sound when you hit someone's face."},
 
                 ButtonHelper.Create("Custom Sound ID",
                     () => Enumerable.Range(0, References.Player?.materialData?.Count ?? 0).Select(i => i.ToString()).ToArray(),
-                    Sound.soundId,
-                    v => Sound.soundId = v,
+                    Audio.soundId,
+                    v => Audio.soundId = v,
                     toolTip: "Changes the Sound ID of the Custom Sound Spam."
                 ),
-                new Module { name = "Custom Sound Spam", displayName = $"Custom Sound Spam {Bracket("green", "0")}", method = Sound.CustomSoundSpam, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
+                new Module { name = "Custom Sound Spam", displayName = $"Custom Sound Spam {Bracket("green", "0")}", method = Audio.CustomSoundSpam, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
 
-                new Module { name = "Override Tap Sound", method =() => { HandEffects.enabled = true; HandEffects.material = Sound.soundId; }, disableMethod =() => {  HandEffects.enabled = false;  HandEffects.material = -1; }, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
+                new Module { name = "Override Tap Sound", method =() => { HandEffects.enabled = true; HandEffects.material = Audio.soundId; }, disableMethod =() => {  HandEffects.enabled = false;  HandEffects.material = -1; }, toolTip = "Plays the selected sound when holding <color=green>grip</color>." },
             },
 
             ["Projectile Mods"] = new[]
             {
                 new Module { name = "Exit Projectile Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { name = $"Grab Projectile {Bracket("green", "G")}", method = Projectiles.GrabProjectile, disableMethod = () => Projectiles.previousGripHeld.Clear(), toolTip = "Grabs your selected projectile holding <color=green>grip</color>." },
-                new Module { name = $"Projectile Spam {Bracket("green", "G")}", method = Projectiles.ProjectileSpam, toolTip = "Spams your selected projectile when holding <color=green>grip</color>." },
-                new Module { name = "Projectile Gun", method = Projectiles.ProjectileGun, toolTip = "Spams your selected projectile at wherever your hand desires." },
-                new Module { name = $"Laser Spam {Bracket("green", "G")}", method = Projectiles.LazerSpam, toolTip = "Spams your selected projectile out of your eyes like lasers when holding <color=green>grip</color>." },
-                new Module { name = "Give Projectile Spam Gun", method = Projectiles.GiveProjectileSpamGun, toolTip = "Acts like the projectile spam, but you can give it to whoever your hand desires when they hold <color=green>grip</color>." },
-                new Module { name = $"Impact Spam {Bracket("green", "G")}", method = Projectiles.ImpactSpam, toolTip = "Orbits impact effects around you" },
-                new Module { name = $"Impact Orbit {Bracket("green", "G")}", method = Projectiles.ImpactSpam, toolTip = "Acts like the projectile spam, but uses the impacts instead." },
-                new Module { name = $"Laser Eyes {Bracket("green", "G")}", method = Projectiles.LazerEyes, toolTip = "Makes you shoot lasers out of your eyes when holding <color=green>grip</color>." },
-                new Module { name = $"Urine {Bracket("green", "G")}", aliases = new[] { "Pee", "Piss" }, method = Projectiles.Urine, toolTip = "Makes you pee when holding <color=green>grip</color>." },
-                new Module { name = $"Feces {Bracket("green", "G")}", aliases = new[] { "Poop", "Shit" }, method = Projectiles.Feces, toolTip = "Makes you poo when holding <color=green>grip</color>." },
-                new Module { name = $"Period {Bracket("green", "G")}", method = Projectiles.Period, toolTip = "Makes you have your period when holding <color=green>grip</color>." },
-                new Module { name = $"Semen {Bracket("green", "G")}", aliases = new[] { "Cum", "Ejaculate" }, method = Projectiles.Semen, toolTip = "Makes you ejaculate when holding <color=green>grip</color>." },
-                new Module { name = $"Vomit {Bracket("green", "G")}", method = Projectiles.Vomit, toolTip = "Makes you throw up when holding <color=green>grip</color>." },
-                new Module { name = $"Spit {Bracket("green", "G")}", method = Projectiles.Spit, toolTip = "Makes you spit when holding <color=green>grip</color>." },
+                new Module { name = $"Grab Projectile {Bracket("green", "G")}", method = Projectile.GrabProjectile, disableMethod = () => Projectile.previousGripHeld.Clear(), toolTip = "Grabs your selected projectile holding <color=green>grip</color>." },
+                new Module { name = $"Projectile Spam {Bracket("green", "G")}", method = Projectile.ProjectileSpam, toolTip = "Spams your selected projectile when holding <color=green>grip</color>." },
+                new Module { name = "Projectile Gun", method = Projectile.ProjectileGun, toolTip = "Spams your selected projectile at wherever your hand desires." },
+                new Module { name = $"Laser Spam {Bracket("green", "G")}", method = Projectile.LazerSpam, toolTip = "Spams your selected projectile out of your eyes like lasers when holding <color=green>grip</color>." },
+                new Module { name = "Give Projectile Spam Gun", method = Projectile.GiveProjectileSpamGun, toolTip = "Acts like the projectile spam, but you can give it to whoever your hand desires when they hold <color=green>grip</color>." },
+                new Module { name = $"Impact Spam {Bracket("green", "G")}", method = Projectile.ImpactSpam, toolTip = "Acts like the projectile spam, but uses the impacts instead." },
+                new Module { name = $"Impact Orbit {Bracket("green", "G")}", method = Projectile.ImpactOrbit, toolTip = "Orbits impact effects around you" },
+                new Module { name = $"Laser Eyes {Bracket("green", "G")}", method = Projectile.LazerEyes, toolTip = "Makes you shoot lasers out of your eyes when holding <color=green>grip</color>." },
+                new Module { name = $"Urine {Bracket("green", "G")}", aliases = new[] { "Pee", "Piss" }, method = Projectile.Urine, toolTip = "Makes you pee when holding <color=green>grip</color>." },
+                new Module { name = $"Feces {Bracket("green", "G")}", aliases = new[] { "Poop", "Shit" }, method = Projectile.Feces, toolTip = "Makes you poo when holding <color=green>grip</color>." },
+                new Module { name = $"Period {Bracket("green", "G")}", method = Projectile.Period, toolTip = "Makes you have your period when holding <color=green>grip</color>." },
+                new Module { name = $"Semen {Bracket("green", "G")}", aliases = new[] { "Cum", "Ejaculate" }, method = Projectile.Semen, toolTip = "Makes you ejaculate when holding <color=green>grip</color>." },
+                new Module { name = $"Vomit {Bracket("green", "G")}", method = Projectile.Vomit, toolTip = "Makes you throw up when holding <color=green>grip</color>." },
+                new Module { name = $"Spit {Bracket("green", "G")}", method = Projectile.Spit, toolTip = "Makes you spit when holding <color=green>grip</color>." },
 
-                new Module { name = "Laser Eyes Gun", method = Projectiles.LazerEyesGun, toolTip = "Makes whoever your hand desires shoot lasers out of their eyes." },
-                new Module { name = "Urine Gun", aliases = new[] { "Pee Gun", "Piss Gun" }, method = Projectiles.UrineGun, toolTip = "Makes whoever your hand desires pee." },
-                new Module { name = "Feces Gun", aliases = new[] { "Poop Gun", "Shit Gun" }, method = Projectiles.FecesGun, toolTip = "Makes whoever your hand desires poo." },
-                new Module { name = "Period Gun", method = Projectiles.PeriodGun, toolTip = "Makes whoever your hand desires have their period." },
-                new Module { name = "Semen Gun", aliases = new[] { "Cum Gun", "Ejaculate Gun" }, method = Projectiles.SemenGun, toolTip = "Makes whoever your hand desires ejaculate." },
-                new Module { name = "Vomit Gun", method = Projectiles.VomitGun, toolTip = "Makes whoever your hand desires throw up." },
-                new Module { name = "Spit Gun", method = Projectiles.SpitGun, toolTip = "Makes whoever your hand desires spit." },
+                new Module { name = "Laser Eyes Gun", method = Projectile.LazerEyesGun, toolTip = "Makes whoever your hand desires shoot lasers out of their eyes." },
+                new Module { name = "Urine Gun", aliases = new[] { "Pee Gun", "Piss Gun" }, method = Projectile.UrineGun, toolTip = "Makes whoever your hand desires pee." },
+                new Module { name = "Feces Gun", aliases = new[] { "Poop Gun", "Shit Gun" }, method = Projectile.FecesGun, toolTip = "Makes whoever your hand desires poo." },
+                new Module { name = "Period Gun", method = Projectile.PeriodGun, toolTip = "Makes whoever your hand desires have their period." },
+                new Module { name = "Semen Gun", aliases = new[] { "Cum Gun", "Ejaculate Gun" }, method = Projectile.SemenGun, toolTip = "Makes whoever your hand desires ejaculate." },
+                new Module { name = "Vomit Gun", method = Projectile.VomitGun, toolTip = "Makes whoever your hand desires throw up." },
+                new Module { name = "Spit Gun", method = Projectile.SpitGun, toolTip = "Makes whoever your hand desires spit." },
 
-                new Module { name = "Projectile Blind Gun", method = Projectiles.ProjectileBlindGun, toolTip = "Blinds whoever your hand desires using the egg projectiles."},
-                new Module { name = "Projectile Blind All", enableMethod = Projectiles.ProjectileBlindAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Blinds everybody in the room using the egg projectiles."},
+                new Module { name = "Projectile Blind Gun", method = Projectile.ProjectileBlindGun, toolTip = "Blinds whoever your hand desires using the egg projectiles."},
+                new Module { name = "Projectile Blind All", enableMethod = Projectile.ProjectileBlindAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Blinds everybody in the room using the egg projectiles."},
 
-                new Module { name = "Projectile Lag Gun", method = Projectiles.ProjectileLagGun, toolTip = "Lags whoever your hand desires using the firework projectiles."},
-                new Module { name = "Projectile Lag All", enableMethod = Projectiles.ProjectileLagAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Lags everybody in the room using the firework projectiles."},
+                new Module { name = "Projectile Lag Gun", method = Projectile.ProjectileLagGun, toolTip = "Lags whoever your hand desires using the firework projectiles."},
+                new Module { name = "Projectile Lag All", enableMethod = Projectile.ProjectileLagAll, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Lags everybody in the room using the firework projectiles."},
 
-                new Module { name = "Projectile Nuke Gun", method = Projectiles.ProjectileNukeGun, toolTip = "Spawns a lot of projectiles airstriking from the sky at wherever your hand desires."},
+                new Module { name = "Projectile Nuke Gun", method = Projectile.ProjectileNukeGun, toolTip = "Spawns a lot of projectiles airstriking from the sky at wherever your hand desires."},
 
-                new Module { name = $"Projectile Rain {Bracket("green", "T")}", method = Projectiles.ProjectileRain, toolTip = "Rains projectiles around you when holding <color=green>trigger</color>."},
-                new Module { name = $"Projectile Hail {Bracket("green", "T")}", method = Projectiles.ProjectileHail, toolTip = "Hails projectiles around you when holding <color=green>trigger</color>."},
-                new Module { name = $"Projectile Fountain {Bracket("green", "T")}", method = Projectiles.ProjectileFountain, toolTip = "Fountains projectiles above you when holding <color=green>trigger</color>."},
-                new Module { name = $"Projectile Positional Fountain {Bracket("green", "G")}", method = Projectiles.ProjectilePositionalFountain, disableMethod = Projectiles.DisableProjectilePositionalFountain, toolTip = "Place a fountain <color=green>grip</color> and use it with <color=green>trigger</color>. It will fountain projectiles at wherever the fountain is."},
+                new Module { name = $"Projectile Rain {Bracket("green", "T")}", method = Projectile.ProjectileRain, toolTip = "Rains projectiles around you when holding <color=green>trigger</color>."},
+                new Module { name = $"Projectile Hail {Bracket("green", "T")}", method = Projectile.ProjectileHail, toolTip = "Hails projectiles around you when holding <color=green>trigger</color>."},
+                new Module { name = $"Projectile Fountain {Bracket("green", "T")}", method = Projectile.ProjectileFountain, toolTip = "Fountains projectiles above you when holding <color=green>trigger</color>."},
+                new Module { name = $"Projectile Positional Fountain {Bracket("green", "G")}", method = Projectile.ProjectilePositionalFountain, disableMethod = Projectile.DisableProjectilePositionalFountain, toolTip = "Place a fountain <color=green>grip</color> and use it with <color=green>trigger</color>. It will fountain projectiles at wherever the fountain is."},
 
-                new Module { name = $"Projectile Orbit {Bracket("green", "T")}", method = Projectiles.ProjectileOrbit, toolTip = "Orbits projectiles around you when holding <color=green>trigger</color>."},
-                new Module { name = $"Projectile Aura {Bracket("green", "T")}", method = Projectiles.ProjectileAura, toolTip = "Randomly spawns projectiles around you when holding <color=green>trigger</color>."},
+                new Module { name = $"Projectile Orbit {Bracket("green", "T")}", method = Projectile.ProjectileOrbit, toolTip = "Orbits projectiles around you when holding <color=green>trigger</color>."},
+                new Module { name = $"Projectile Aura {Bracket("green", "T")}", method = Projectile.ProjectileAura, toolTip = "Randomly spawns projectiles around you when holding <color=green>trigger</color>."},
 
-                new Module { name = "Snowball Punch Mod", method = Projectiles.SnowballPunchMod, toolTip = "Flings people when you punch them."},
-                new Module { name = "Snowball Boxing", method = Projectiles.SnowballBoxing, toolTip = "Gives everyone the punch mod by using snowballs."},
-                new Module { name = $"Snowball Dash {Bracket("green", "A")}", method = Projectiles.SnowballDash, toolTip = "Allows other players to dash themself into the air with the snowballs."},
-                new Module { name = "Snowball High Jump", method = Projectiles.SnowballHighJump, toolTip = "Allow everyone to jump higher using snowballs."},
-                new Module { name = "Snowball Particle Gun", method = Projectiles.SnowballParticleGun, toolTip = "Spawns snowball particles wherever your hand desires."},
-                new Module { name = "Snowball Impact Effect Gun", method = Projectiles.SnowballImpactEffectGun, toolTip = "Spawns snowball impact events on whoever your hand desires."},
+                new Module { name = "Large Snowballs", enableMethod =() => SnowballGrowth.enabled = true, disableMethod =() => SnowballGrowth.enabled = false, toolTip = "Makes snowballs by default the largest size."},
 
-                new Module { name = $"Snowball Fling Zone {Bracket("green", "G")}", method = Projectiles.SnowballFlingZone, disableMethod = Projectiles.DisableSnowballFlingZone, toolTip = "Spawn and move fling zones with your <color=green>right grip</color>. Press <color=green>trigger</color> to remove fling zones."},
+                new Module { name = "Fast Snowballs", displayName = "Fast Projectile", method = Projectile.FastSnowballs, disableMethod = Projectile.FixSnowballs, toolTip = "Makes projectiles go really fast when thrown."},
+                new Module { name = "Slow Snowballs", displayName = "Slow Projectile", method = Projectile.SlowSnowballs, disableMethod = Projectile.FixSnowballs, toolTip = "Makes projectiles go really slow when thrown."},
 
-                new Module { name = "Snowball Fling Gun", method = Projectiles.SnowballFlingGun, toolTip = "Flings whoever your hand desires."},
-                new Module { name = $"Snowball Fling All {Bracket("green", "T")}", method = Projectiles.SnowballFlingAll, toolTip = "Flings everybody when holding <color=green>trigger</color>."},
-                new Module { name = "Snowball Safety Bubble", aliases = new[] { "Snowball Fling Aura" }, method = Projectiles.SnowballSafetyBubble, toolTip = "Anyone who gets too close to you will be launched away."},
+                new Module { name = "Snowball Punch Mod", method = Projectile.SnowballPunchMod, toolTip = "Flings people when you punch them."},
+                new Module { name = "Snowball Boxing", method = Projectile.SnowballBoxing, toolTip = "Gives everyone the punch mod by using snowballs."},
+                new Module { name = $"Snowball Dash {Bracket("green", "A")}", method = Projectile.SnowballDash, toolTip = "Allows other players to dash themself into the air with the snowballs."},
+                new Module { name = "Snowball High Jump", method = Projectile.SnowballHighJump, toolTip = "Allow everyone to jump higher using snowballs."},
+                new Module { name = "Snowball Particle Gun", method = Projectile.SnowballParticleGun, toolTip = "Spawns snowball particles wherever your hand desires."},
+                new Module { name = "Snowball Impact Effect Gun", method = Projectile.SnowballImpactEffectGun, toolTip = "Spawns snowball impact events on whoever your hand desires."},
 
-                new Module { name = "Snowball Protect Gun", method = Projectiles.SnowballProtectGun, toolTip = "Protects whoever your hand desires by flinging anyone who gets too close. "},
-                new Module { name = "Snowball Protect All", method = Projectiles.SnowballProtectAll, toolTip = "Protects everyone by flinging anyone who gets too close. "},
+                new Module { name = $"Snowball Fling Zone {Bracket("green", "G")}", method = Projectile.SnowballFlingZone, disableMethod = Projectile.DisableSnowballFlingZone, toolTip = "Spawn and move fling zones with your <color=green>right grip</color>. Press <color=green>trigger</color> to remove fling zones."},
 
-                new Module { name = "Snowball Fling Vertical Gun", method = Projectiles.SnowballFlingVerticalGun, toolTip = "Flings whoever your hand desires vertically."},
-                new Module { name = $"Snowball Fling Vertical All {Bracket("green", "T")}", method = Projectiles.SnowballFlingVerticalAll, toolTip = "Flings everybody vertically when holding <color=green>trigger</color>."},
-                new Module { name = "Snowball Bring Gun", method = Projectiles.SnowballBringGun, toolTip = "Flings everybody towards wherever your hand desires."},
-                new Module { name = "Snowball Push Gun", method = Projectiles.SnowballPushGun, aliases = new[] { "Snowball Fling Away Gun" }, toolTip = "Flings everybody away from wherever your hand desires."},
+                new Module { name = "Snowball Fling Gun", method = Projectile.SnowballFlingGun, toolTip = "Flings whoever your hand desires."},
+                new Module { name = $"Snowball Fling All {Bracket("green", "T")}", method = Projectile.SnowballFlingAll, toolTip = "Flings everybody when holding <color=green>trigger</color>."},
+                new Module { name = "Snowball Safety Bubble", aliases = new[] { "Snowball Fling Aura" }, method = Projectile.SnowballSafetyBubble, toolTip = "Anyone who gets too close to you will be launched away."},
 
-                new Module { name = "Snowball Bring Player Gun", method = Projectiles.SnowballBringPlayerGun, toolTip = "Flings whoever your hand desires towards you."},
-                new Module { name = "Snowball Bring All Players", method = Projectiles.SnowballBringAllPlayers, toolTip = "Flings everyone towards you."},
+                new Module { name = "Snowball Protect Gun", method = Projectile.SnowballProtectGun, toolTip = "Protects whoever your hand desires by flinging anyone who gets too close. "},
+                new Module { name = "Snowball Protect All", method = Projectile.SnowballProtectAll, toolTip = "Protects everyone by flinging anyone who gets too close. "},
 
-                new Module { name = "Snowball Push Player Gun", method = Projectiles.SnowballPushPlayerGun, toolTip = "Flings whoever your hand desires away from you."},
-                new Module { name = "Snowball Push All Players", method = Projectiles.SnowballPushAllPlayers, toolTip = "Flings everyone away from you."},
+                new Module { name = "Snowball Fling Vertical Gun", method = Projectile.SnowballFlingVerticalGun, toolTip = "Flings whoever your hand desires vertically."},
+                new Module { name = $"Snowball Fling Vertical All {Bracket("green", "T")}", method = Projectile.SnowballFlingVerticalAll, toolTip = "Flings everybody vertically when holding <color=green>trigger</color>."},
+                new Module { name = "Snowball Bring Gun", method = Projectile.SnowballBringGun, toolTip = "Flings everybody towards wherever your hand desires."},
+                new Module { name = "Snowball Push Gun", method = Projectile.SnowballPushGun, aliases = new[] { "Snowball Fling Away Gun" }, toolTip = "Flings everybody away from wherever your hand desires."},
 
-                new Module { name = "Snowball Buttocks", method = Projectiles.SnowballButtocks, disableMethod = Projectiles.DisableSnowballGenitals, toolTip = "Gives you fake buttocks using the snowballs." },
-                new Module { name = "Snowball Breasts", method = Projectiles.SnowballBreasts, disableMethod = Projectiles.DisableSnowballGenitals, toolTip = "Gives you fake breasts using the snowballs." },
+                new Module { name = "Snowball Bring Player Gun", method = Projectile.SnowballBringPlayerGun, toolTip = "Flings whoever your hand desires towards you."},
+                new Module { name = "Snowball Bring All Players", method = Projectile.SnowballBringAllPlayers, toolTip = "Flings everyone towards you."},
 
-                new Module { name = $"Anti Report {Bracket("green", "Snowball Fling")}", method = Projectiles.AntiReportSnowballFling, toolTip = "Flings whoever tries to report you with the snowballs."}
+                new Module { name = "Snowball Push Player Gun", method = Projectile.SnowballPushPlayerGun, toolTip = "Flings whoever your hand desires away from you."},
+                new Module { name = "Snowball Push All Players", method = Projectile.SnowballPushAllPlayers, toolTip = "Flings everyone away from you."},
+
+                new Module { name = "Snowball Buttocks", method = Projectile.SnowballButtocks, disableMethod = Projectile.DisableSnowballGenitals, toolTip = "Gives you fake buttocks using the snowballs." },
+                new Module { name = "Snowball Breasts", method = Projectile.SnowballBreasts, disableMethod = Projectile.DisableSnowballGenitals, toolTip = "Gives you fake breasts using the snowballs." },
+
+                new Module { name = $"Anti Report {Bracket("green", "Snowball Fling")}", method = Projectile.AntiReportSnowballFling, toolTip = "Flings whoever tries to report you with the snowballs."}
             },
 
             ["Master Mods"] = new[]
@@ -2126,7 +2224,6 @@ namespace Qubit.Modules
                 new Module { name = "VIM Mute Gun", method = Master.VIMMuteGun, toolTip = "Mutes whoever your hand desires if you created the room as a fan club subscriber." },
                 new Module { name = "VIM Mute All", enableMethod = Master.VIMMuteAll, disableMethod = Master.VIMUnmuteAll, toolTip = "Mutes everyone if you created the room as a fan club subscriber." },
 
-                new Module { name = "Give Tag Lag Gun", method = Master.GiveTagLagGun, toolTip = "Makes whoever your hand desires immune to being tagged. Requires master client." },
 
                 new Module { name = "Gray Zone", enableMethod = Master.ActivateGrayZone, disableMethod = Master.DeactivateGrayZone, toolTip = "Forces the gray zone event to stay active permanently. Requires master client." },
                 new Module { name = "Spam Gray Zone", enableMethod = Master.EnableSpamGrayZone, method = Master.SpamGrayZone, disableMethod = Master.DisableSpamGrayZone, toolTip = "Rapidly toggles the gray zone event on and off. Requires master client." },
@@ -2267,8 +2364,8 @@ namespace Qubit.Modules
                 new Module { name = "Rock Aura", method = Master.RockAura, toolTip = "Sets players nearby you to rock."},
                 new Module { name = "Rock On Touch", method = Master.RockOnTouch, toolTip = "Sets whoever you touch to rock."},
 
-                new Module { name = "Give Tag Lag Gun", method = Master.TagLagGun, toolTip = "Forces tag lag on whoever your hand desires, making them untaggable."},
                 new Module { name = "Tag Lag Gun", method = Master.TagLagGun, toolTip = "Forces tag lag on whoever your hand desires, letting them not be able to tag anyone."},
+                new Module { name = "Give Tag Lag Gun", method = Master.GiveTagLagGun, toolTip = "Makes whoever your hand desires immune to being tagged. Requires master client." },
                 new Module { name = "Tag Lag", displayName = "Tag Lag All", method =() => Master.SetTagCooldown(float.MaxValue), disableMethod =() => Master.SetTagCooldown(5f), toolTip = "Forces tag lag in the everyone in the room, letting no one get tagged."},
 
                 new Module { name = "Unlock Driver", method =() => Master.DriverStatus(false), isTogglable = false, toolTip = "Unlocks the driver in the virtual stump."},
@@ -2320,10 +2417,12 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Overpowered Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
+                new Module { name = "Voice Hijack Gun", method = Overpowered.VoiceHijackGun, disableMethod = Overpowered.DisableVoiceHijack, toolTip = "Makes your voice play through whoever your hand desires' voice slot."},
+
                 new Module { name = "Open All Elevators", method = Fun.OpenAllElevators, isTogglable = false, toolTip = "Opens every elevator door on the map."},
                 new Module { name = "Close All Elevators", method = Fun.CloseAllElevators, isTogglable = false, toolTip = "Closes every elevator door on the map."},
 
-                new Module { name = "Always Guardian", method = Overpowered.AlwaysGuardian, disableMethod = Movement.EnableRig, toolTip = "Makes you always the guardian."},
+                new Module { name = "Always Guardian", method = Overpowered.AlwaysGuardian, disableMethod = Rig.EnableRig, toolTip = "Makes you always the guardian."},
                 new Module { name = "Guardian Protector", method = Overpowered.GuardianProtector, toolTip = "Pushes people away from the guardian moon if they try to approach it."},
 
                 new Module { name = "Guardian Grab Gun", method = Overpowered.GuardianGrabGun, toolTip = "Grabs whoever your hand desires if you're the guardian."},
@@ -2503,14 +2602,14 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Advantage Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true},
 
-                new Module { name = "Disable Instant Tag", enableMethod =() => Advantages.instantTag = false, disableMethod =() => Advantages.instantTag = true, toolTip = "Makes the tag mods visibly teleport to the player instead of instantly tagging them."},
+                new Module { name = "Disable Instant Tag", enableMethod =() => Tag.instantTag = false, disableMethod =() => Tag.instantTag = true, toolTip = "Makes the tag mods visibly teleport to the player instead of instantly tagging them."},
                 new Module { name = "Obnoxious Tag", toolTip = "Makes the tag mods more obnoxious. Instead of hiding in the ground, you teleport around the player like crazy."},
                 new Module { name = "Prettier Visualize", toolTip = "Makes the visualizers look prettier."},
                 new Module { name = "Visualize Tag Aura", toolTip = "Visualizes the distance threshold for the tag aura."},
                 new Module { name = "Visualize Tag Reach", toolTip = "Visualizes the distance threshold for the tag reach."},
 
-                ButtonHelper.Create("ctaRange", () => Advantages.TagAuraRangeNames, Advantages.tagAuraIndex, Advantages.ApplyTagAuraRange, "Changes the range of the tag aura mods.", overlapText: "Change Tag Aura Range"),
-                ButtonHelper.Create("ctrRange", () => Advantages.TagReachDistanceNames, Advantages.tagRangeIndex, Advantages.ApplyTagReachDistance, "Changes the range of the tag reach mods.", overlapText: "Change Tag Reach Distance"),
+                ButtonHelper.Create("ctaRange", () => Tag.TagAuraRangeNames, Tag.tagAuraIndex, Tag.ApplyTagAuraRange, "Changes the range of the tag aura mods.", overlapText: "Change Tag Aura Range"),
+                ButtonHelper.Create("ctrRange", () => Tag.TagReachDistanceNames, Tag.tagRangeIndex, Tag.ApplyTagReachDistance, "Changes the range of the tag reach mods.", overlapText: "Change Tag Reach Distance"),
 
                 new Module { name = "Fake Lag Others", toolTip = "Makes fake lag affect other players' rigs."},
                 new Module { name = "Disable Fake Lag Self", toolTip = "Excludes yourself from fake lag." },
@@ -2521,16 +2620,16 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Visual Settings", method =() => CurrentCategoryName = "Settings", isTogglable = false, toolTip = "Returns you back to the settings menu.", legal = true},
 
-                ButtonHelper.CreateNumeric("Change Performance Visuals Step", 0, 10, Visuals.PerformanceModeStepIndex, Visuals.ApplyPerformanceModeVisualStep, v => (v / 10f).ToString(), "Changes the time between rendering visual mods.", legal: true),
-                new Module { name = "Performance Visuals", enableMethod =() => Visuals.PerformanceVisuals = true, disableMethod =() => Visuals.PerformanceVisuals = false, toolTip = "Makes visual mods render less often, to increase performange and decrease memory usage.", legal = true},
+                ButtonHelper.CreateNumeric("Change Performance Visual Step", 0, 10, Visual.PerformanceModeStepIndex, Visual.ApplyPerformanceModeVisualStep, v => (v / 10f).ToString(), "Changes the time between rendering visual mods.", legal: true),
+                new Module { name = "Performance Visual", enableMethod =() => Visual.PerformanceVisuals = true, disableMethod =() => Visual.PerformanceVisuals = false, toolTip = "Makes visual mods render less often, to increase performange and decrease memory usage.", legal = true},
                 new Module { name = "Short Breadcrumbs", toolTip = "Shortens the length of the breadcrumbs.", legal = true},
                 new Module { name = "Follow Menu Theme", toolTip = "Makes visual mods match the theme of the menu, rather than the color of the player.", legal = true},
                 new Module { name = "Follow Player Colors", toolTip = "Makes the infection tracers appear their normal color instead of orange for tagged players.", legal = true},
-                new Module { name = "Transparent Theme", displayName = "Transparent Visuals", toolTip = "Makes visual mods transparent.", legal = true},
-                new Module { name = "Nametag Chams", enableMethod =() => Visuals.nameTagChams = true, disableMethod =() => Visuals.nameTagChams = false, toolTip = "Make name tags show through objects."},
-                new Module { name = "Anchor Name Tags", enableMethod =() => Visuals.anchorNameTag = true, disableMethod =() => Visuals.anchorNameTag = false, toolTip = "Anchors nametags to the player's rig instead of the head.", legal = true},
-                new Module { name = "Show Self Nametag", enableMethod =() => Visuals.selfNameTag = true, disableMethod =() => Visuals.selfNameTag = false, toolTip = "Makes all the name tag mods render for you as well.", legal = true},
-                new Module { name = "Hidden on Camera", displayName = "Streamer Mode Visuals", toolTip = "Makes visual mods only render on VR."},
+                new Module { name = "Transparent Theme", displayName = "Transparent Visual", toolTip = "Makes visual mods transparent.", legal = true},
+                new Module { name = "Nametag Chams", enableMethod =() => Visual.nameTagChams = true, disableMethod =() => Visual.nameTagChams = false, toolTip = "Make name tags show through objects."},
+                new Module { name = "Anchor Name Tags", enableMethod =() => Visual.anchorNameTag = true, disableMethod =() => Visual.anchorNameTag = false, toolTip = "Anchors nametags to the player's rig instead of the head.", legal = true},
+                new Module { name = "Show Self Nametag", enableMethod =() => Visual.selfNameTag = true, disableMethod =() => Visual.selfNameTag = false, toolTip = "Makes all the name tag mods render for you as well.", legal = true},
+                new Module { name = "Hidden on Camera", displayName = "Streamer Mode Visual", toolTip = "Makes visual mods only render on VR."},
                 new Module { name = "Hidden Labels", displayName = "Streamer Mode Labels", toolTip = "Makes label mods only render on VR."},
                 new Module { name = "Thin Tracers", toolTip = "Makes the tracers thinner.", legal = true},
                 new Module { name = "Smooth Lines", enableMethod =() => smoothLines = true, disableMethod =() => smoothLines = false, toolTip = "Makes every line generated by the menu have smooth ends.", legal = true},
@@ -2547,7 +2646,7 @@ namespace Qubit.Modules
                 new Module { name = "Auto Get Menu Users", enableMethod =() => ManagerRegistry.NetworkSystem.OnJoinedRoomEvent += Admin.GetMenuUsers, disableMethod =() => ManagerRegistry.NetworkSystem.OnJoinedRoomEvent -= Admin.GetMenuUsers, isTogglable = true, toolTip = "Detects who is using the menu on room join.", legal = true},
                 new Module { name = "Menu User Name Tags", enableMethod = Admin.EnableAdminMenuUserTags, method = Admin.AdminMenuUserTags, disableMethod = Admin.DisableAdminMenuUserTags, toolTip = "Puts nametags on menu users.", legal = true},
                 new Module { name = "Conduct Menu Users", enableMethod =() => { Admin.EnableAdminMenuUserTags(); GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText").GetComponent<TextMeshPro>().text = "CONSOLE USER LIST"; GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData").GetComponent<TextMeshPro>().richText = true; }, method = Admin.ConsoleOnConduct, toolTip = "Shows menu users on the code of conduct.", legal = true},
-                new Module { name = "Menu User Tracers", enableMethod = Admin.EnableAdminMenuUserTracers, method = Admin.MenuUserTracers, disableMethod =() => {Visuals.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand to menu users.", legal = true},
+                new Module { name = "Menu User Tracers", enableMethod = Admin.EnableAdminMenuUserTracers, method = Admin.MenuUserTracers, disableMethod =() => {Visual.isLineRenderQueued = true;}, toolTip = "Puts tracers on your right hand to menu users.", legal = true},
 
                 new Module { name = "Admin Kick Gun", method = Admin.AdminKickGun, toolTip = "Kicks whoever your hand desires if they're using the menu.", legal = true},
                 new Module { name = "Admin Kick All", method = Admin.AdminKickAll, isTogglable = false, toolTip = "Kicks everyone using the menu.", legal = true},
@@ -2770,7 +2869,7 @@ namespace Qubit.Modules
 
             ["Sound Library"] = new[]
             {
-                new Module { name = "Exit Sound Library", method =() => Sound.LoadSoundboard(), isTogglable = false, toolTip = "Returns you back to the soundboard.", legal = true}
+                new Module { name = "Exit Sound Library", method =() => Soundboard.LoadSoundboard(), isTogglable = false, toolTip = "Returns you back to the soundboard.", legal = true}
             },
 
             ["Experimental Mods"] = new[]
@@ -2819,7 +2918,7 @@ namespace Qubit.Modules
                 new Module { name = "Legacy Soundboard", enableMethod =() => { Soundboard.LegacySoundboard = true; Soundboard.CachedButtons.Clear(); } , disableMethod =() => { Soundboard.LegacySoundboard = false; Soundboard.CachedButtons.Clear(); }, toolTip = "Enables the legacy soundboard system."},
                 new Module { name = "Loop Sounds", enableMethod =() => Soundboard.LoopAudio = true, disableMethod =() => Soundboard.LoopAudio = false, toolTip = "Makes sounds loop forever until stopped."},
                 new Module { name = "Overlap Sounds", enableMethod =() => Soundboard.OverlapAudio = true, disableMethod =() => Soundboard.OverlapAudio = false, toolTip = "Makes it so you can play sounds over and over again, making them overlap eachother."},
-                ButtonHelper.Create("Sound Bindings", () => Sound.BindModeNames, Sound.BindMode, Sound.ApplySoundBindings, "Changes the button used to play sounds on the soundboard."),
+                ButtonHelper.Create("Sound Bindings", () => Soundboard.BindModeNames, Soundboard.BindMode, Soundboard.ApplySoundBindings, "Changes the button used to play sounds on the soundboard."),
                 ButtonHelper.CreateNumeric("Change Soundboard Volume", 0, 100, Mathf.RoundToInt(Fun.soundboardVolumeIndex / 0.05f), Fun.ApplySoundboardVolume, v => (v * 0.05f).ToString(), "Changes the volume of your sounds.", overlapText: "Change Default Soundboard Volume"),
 
                 ButtonHelper.CreateNumeric("Change Soundboard Speed", 0, 100, Mathf.RoundToInt(Fun.soundboardSpeedIndex / 0.05f), Fun.ApplySoundboardSpeed, v => (v * 0.05f).ToString(), "Changes the speed of your sounds.", overlapText: "Change Default Soundboard Speed"),
@@ -2962,7 +3061,6 @@ namespace Qubit.Modules
                 new Module { name = "Twig", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twig is the current owner of Qubit, previously a developer of Qubit." },
                 new Module { name = "Kingofnetflix", isTogglable = false, toolTip = "Kingofnetflix is the creator of <b>Qubit (Menu)</b>, and was a developer for ii's <b>Stupid</b> Menu. Quit modding and the modding community August 2026." },
                 new Module { name = "iiDk", method =() => Files.Start("https://tianjo.cc/iidk"), isTogglable = false, toolTip = "iiDk is the creator of ii's <b>Stupid</b> Menu (which this menu is forked from), and was working on it since 2023. He was also the owner of ii's Stupid Mods. Both have shut down ever since 2/24/2026.", legal = true},
-                new Module { name = "Twigcore", method =() => Files.Start("https://github.com/Twigcore"), isTogglable = false, toolTip = "Twigcore is one of the main owners of Console, the admin system in the menu. He helps with asset ideas, moderate users, contributed to the menu, and much more."},
 
                 new Module { name = "Cha554", method =() => Files.Start("https://github.com/Cha554"), isTogglable = false, toolTip = "Cha554 helped me make the menu work, and develop it."},
                 new Module { name = "Ghydric", method =() => Files.Start("https://github.com/klintevej"), isTogglable = false, toolTip = "Klintevej is the administrator of the Discord bot and admin server."},
@@ -3145,7 +3243,7 @@ namespace Qubit.Modules
 
             ["Voice Changers"] = new[]
             {
-                new Module { name = "Exit Voice Changers", method =() => CurrentCategoryName = "Fun Mods", isTogglable = false, toolTip = "Returns you back to the fun mods.", legal = true},
+                new Module { name = "Exit Voice Changers", method =() => CurrentCategoryName = "Microphone Mods", isTogglable = false, toolTip = "Returns you back to the microphone mods.", legal = true},
                 new Module { name = "Echo Microphone", enableMethod =() => Fun.EchoMicrophone(true), disableMethod =() => Fun.EchoMicrophone(false), toolTip = "Makes your microphone echo."},
                 new Module { name = "Glitchy Microphone", enableMethod =() => Fun.GlitchyMicrophone(true), disableMethod =() => Fun.GlitchyMicrophone(false), toolTip = "Makes your microphone glitchy."},
                 new Module { name = "Laggy Microphone", enableMethod =() => Fun.LaggyMicrophone(true), disableMethod =() => Fun.LaggyMicrophone(false), toolTip = "Makes your microphone laggy."},
@@ -3204,6 +3302,15 @@ namespace Qubit.Modules
                     });
             }
             else CurrentCategoryName = "Legacy Mods";
+        }
+
+        private static HashSet<Module> masterMods;
+        public static bool IsMasterMod(Module button)
+        {
+            if (masterMods == null)
+                masterMods = modules.TryGetValue("Master Mods", out Module[] masterArray) ? new HashSet<Module>(masterArray) : new HashSet<Module>();
+
+            return masterMods.Contains(button);
         }
 
         public static Module GetIndex(string buttonText)
@@ -4093,6 +4200,9 @@ public class UpdateButtonText : MonoBehaviour
         if (favorites.Contains(button.name))
             targetButtonText = $"    {targetButtonText}    <sprite name=\"Favorite\">";
 
+        if ((isSearching || Manager.CurrentCategoryName != "Master Mods") && Manager.IsMasterMod(button))
+            targetButtonText += $" {Bracket("red", "Master")}";
+
         return targetButtonText;
     }
 }
@@ -4129,7 +4239,7 @@ new ButtonInfo { name = "Virtual Stump Kick All <color=grey>[</color><color=gree
 
 new ButtonInfo { name = "Crash All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method =() => Overpowered.CrashAll(), toolTip = "Crashes everybody in the room when holding <color=green>trigger</color>."},
 
-new ButtonInfo { name = "Rec Room Body", method =() => Movement.RecRoomBody(), disableMethod =() => Movement.FixBody(), toolTip = "Makes your body rotate like a Rec Room character."},
+new ButtonInfo { name = "Rec Room Body", method =() => Rig.RecRoomBody(), disableMethod =() => Movement.FixBody(), toolTip = "Makes your body rotate like a Rec Room character."},
 new ButtonInfo { name = "Glasses on Grip <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Fun.GlassesOnGrip(), toolTip = "Equips glasses when you put your hand up to your face and press <color=green>grip</color>."},
 
 new ButtonInfo { name = "Master Crash Gun", method =() => Overpowered.MasterCrashGun(), toolTip = "Crashes whoever your hand desires if you're master client."},
@@ -4200,16 +4310,16 @@ new ButtonInfo { name = "Crash All <color=grey>[</color><color=green>T</color><c
 new ButtonInfo { name = "Instant Crash Gun", method =() => Overpowered.InstantCrashGun(), toolTip = "Crashes whoever your hand desires instantly." },
 new ButtonInfo { name = "Instant Crash All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method =() => Overpowered.InstantCrashAll(), toolTip = "Crashes everyone in the room instantly when holding <color=green>grip</color>." },
 
-new ButtonInfo { name = "Instant Crank Elves", method =() => Projectiles.InstantCrankElf(), disableMethod =() => Projectiles.DisableInstantCrankElf(), toolTip = "Makes the elf launcher instantly spawn elves when barely moving the handle." },
-new ButtonInfo { name = "Elf Launcher Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Projectiles.ElfLauncherSpam(), toolTip = "Spams the elf launcher cosmetic when holding <color=green>grip</color>." },
-new ButtonInfo { name = "Elf Gun", method =() => Projectiles.ElfGun(), toolTip = "Spams elves wherever your hand desires." },
-new ButtonInfo { name = "Elf Annoy Gun", method =() => Projectiles.ElfAnnoyGun(), toolTip = "Spams the elf launcher cosmetic around and towards whoever your hand desires." },
-new ButtonInfo { name = "Elf Airstrike Gun", method =() => Projectiles.ElfAirstrikeGun(), toolTip = "Spams the elf launcher cosmetic above and down towards whoever your hand desires." },
+new ButtonInfo { name = "Instant Crank Elves", method =() => Projectile.InstantCrankElf(), disableMethod =() => Projectile.DisableInstantCrankElf(), toolTip = "Makes the elf launcher instantly spawn elves when barely moving the handle." },
+new ButtonInfo { name = "Elf Launcher Spam <color=grey>[</color><color=green>G</color><color=grey>]</color>", method =() => Projectile.ElfLauncherSpam(), toolTip = "Spams the elf launcher cosmetic when holding <color=green>grip</color>." },
+new ButtonInfo { name = "Elf Gun", method =() => Projectile.ElfGun(), toolTip = "Spams elves wherever your hand desires." },
+new ButtonInfo { name = "Elf Annoy Gun", method =() => Projectile.ElfAnnoyGun(), toolTip = "Spams the elf launcher cosmetic around and towards whoever your hand desires." },
+new ButtonInfo { name = "Elf Airstrike Gun", method =() => Projectile.ElfAirstrikeGun(), toolTip = "Spams the elf launcher cosmetic above and down towards whoever your hand desires." },
 
 new ButtonInfo { name = "Piece Name Helper", method =() => Fun.PieceNameHelper(), toolTip = "Remove me later."},
 
 new ButtonInfo { name = "Crash Amount", displayName = "Crash Amount <color=grey>[</color><color=green>2</color><color=grey>]</color>", method =() => Settings.CrashAmount(), isTogglable = false, toolTip = "Changes the amount of projectiles the crash mods send."},
-new ButtonInfo { name = "Projectile Gun", method =() => Projectiles.ProjectileGun(), toolTip = "Acts like the projectile spam, but the projectiles only show up for you and whoever your hand desires." },
+new ButtonInfo { name = "Projectile Gun", method =() => Projectile.ProjectileGun(), toolTip = "Acts like the projectile spam, but the projectiles only show up for you and whoever your hand desires." },
 
 new ButtonInfo { name = "Anti Ban", displayName = "Anti Ban <color=grey>[</color><color=red>Risky</color><color=grey>]</color>", method =() => Overpowered.AntiBan(), isTogglable = false, toolTip = "Prevents you from getting banned. This mod is very experimental, if you get banned, I take ZERO responsibility."},
 new ButtonInfo { name = "Anti Ban Check", method =() => Overpowered.AntiBanCheck(), isTogglable = false, toolTip = "Tests if the the room is modded or not."},
@@ -4260,8 +4370,8 @@ new ButtonInfo { name = "Anti Report <color=grey>[</color><color=green>Crash</co
 
 new ButtonInfo { name = "Crash Gun", method =() => Overpowered.CrashGun(), toolTip = "Crashes or lags whoever your hand desires." },
 new ButtonInfo { name = "Crash All <color=grey>[</color><color=green>T</color><color=grey>]</color>", method =() => Overpowered.CrashAll(), toolTip = "Crashes every quest player, and lags/crashes every steam player when holding <color=green>trigger</color>" },
-new ButtonInfo { name = "Random Color Snowballs", enableMethod =() => Projectiles.RandomColorSnowballs(), disableMethod =() => Projectiles.NoRandomColorSnowballs(), toolTip = "Makes your snowballs random colors." },
-new ButtonInfo { name = "Black Snowballs", enableMethod =() => Projectiles.BlackSnowballs(), disableMethod =() => Projectiles.FixBlackSnowballs(), toolTip = "Makes your snowballs black." },
+new ButtonInfo { name = "Random Color Snowballs", enableMethod =() => Projectile.RandomColorSnowballs(), disableMethod =() => Projectile.NoRandomColorSnowballs(), toolTip = "Makes your snowballs random colors." },
+new ButtonInfo { name = "Black Snowballs", enableMethod =() => Projectile.BlackSnowballs(), disableMethod =() => Projectile.FixBlackSnowballs(), toolTip = "Makes your snowballs black." },
 
 new ButtonInfo { name = "Lag Gun", method =() => Overpowered.BubbleGun(), toolTip = "Spawns a massive bubble which lags whoever your hand desires." },
 new ButtonInfo { name = "Lag All", method =() => Overpowered.BubbleAll(), toolTip = "Spawns a massive bubble which lags everyone." },
@@ -4287,9 +4397,9 @@ new ButtonInfo { name = "Sting Self", method =() => Fun.StingSelf(), isTogglable
 new ButtonInfo { name = "Sting Gun", method =() => Fun.StingGun(), toolTip = "Makes the bees attack whoever your hand desires."},
 new ButtonInfo { name = "Sting All", method =() => Fun.StingAll(), toolTip = "Makes the bees attack everyone."},
 
-new ButtonInfo { name = "Remove Christmas Lights", enableMethod =() => Advantages.EnableRemoveChristmasLights(), disableMethod =() => Advantages.DisableRemoveChristmasLights(), toolTip = "Removes lights, good for walls."},
-new ButtonInfo { name = "Remove Winter Decorations", enableMethod =() => Advantages.EnableRemoveChristmasDecorations(), disableMethod =() => Advantages.DisableRemoveChristmasDecorations(), toolTip = "Removes snowmen and such, good for anyone but very obvious."},
-new ButtonInfo { name = "Projectile Bomb <color=grey>[</color><color=green>A</color><color=grey>]</color>", method =() => Projectiles.ProjectileBomb(), disableMethod =() => Projectiles.DisableProjectileBomb(), toolTip = "Acts like C4, but instead of launching you, it spawns 5 projectiles in random directions." },
+new ButtonInfo { name = "Remove Christmas Lights", enableMethod =() => Tag.EnableRemoveChristmasLights(), disableMethod =() => Tag.DisableRemoveChristmasLights(), toolTip = "Removes lights, good for walls."},
+new ButtonInfo { name = "Remove Winter Decorations", enableMethod =() => Tag.EnableRemoveChristmasDecorations(), disableMethod =() => Tag.DisableRemoveChristmasDecorations(), toolTip = "Removes snowmen and such, good for anyone but very obvious."},
+new ButtonInfo { name = "Projectile Bomb <color=grey>[</color><color=green>A</color><color=grey>]</color>", method =() => Projectile.ProjectileBomb(), disableMethod =() => Projectile.DisableProjectileBomb(), toolTip = "Acts like C4, but instead of launching you, it spawns 5 projectiles in random directions." },
 
 new ButtonInfo { name = "Gorilla Voice <color=grey>[</color><color=green>A</color><color=grey>]</color>", method =() => Fun.GorillaVoice(), toolTip = "Turns your voice into the gorilla voice when holding <color=green>A</color>."},
 new ButtonInfo { name = "Spam Eat Honey Comb", method =() => Fun.HoneycombSpam(), toolTip = "Spam eats the honey comb when holding <color=green>grip</color>."},

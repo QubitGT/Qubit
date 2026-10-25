@@ -25,7 +25,6 @@ using Qubit.Patches.Netcode;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.LocalPlayer;
@@ -38,10 +37,7 @@ namespace Qubit.Libraries.Holdables
         public static ThrowableSetDressing GetFlowerObject(string objectName)
         {
             GameObject flowerObject = GameObject.Find(objectName);
-            if (flowerObject == null)
-                return null;
-
-            return flowerObject.GetComponent<ThrowableSetDressing>();
+            return flowerObject == null ? null : flowerObject.GetComponent<ThrowableSetDressing>();
         }
 
         public static ThrowableSetDressing GetFlower(string objectName)

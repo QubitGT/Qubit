@@ -1,5 +1,5 @@
 /*
- * Qubit Menu  Modules/Categories/Advantages.cs
+ * Qubit Menu  Modules/Categories/Gamemode/Tag.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
  * Copyright (C) 2026  Qubit Software  /Derivative work of Seralyth Software, Goldentrophy Software
@@ -29,11 +29,9 @@ using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Tagging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Qubit.Core.Security;
-using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
 using static Qubit.Frontend.Core;
@@ -43,12 +41,11 @@ using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Classes.GunLibrary;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
-using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 
-namespace Qubit.Modules.Categories
+namespace Qubit.Modules.Categories.Gamemode
 {
-    public static class Advantages
+    public static class Tag
     {
         #region Settings
         public static bool instantTag = true;
@@ -68,8 +65,6 @@ namespace Qubit.Modules.Categories
         private static float reportTagDelay;
 
         private static float tagGunDelay;
-
-        public static float paintbrawlSpamDelay;
         #endregion
 
         #region Methods
@@ -205,7 +200,7 @@ namespace Qubit.Modules.Categories
                 ReportTag(vrrig);
             }
             if (Manager.GetIndex("Visualize Tag Aura").enabled)
-                Visuals.Visualize(PrimitiveType.Cylinder, References.LocalRig.bodyTransform.position, Quaternion.identity, new Vector3(tagAuraDistance, 0.01f, tagAuraDistance), Manager.GetIndex("Prettier Visualize").enabled ? color : backgroundColor.GetCurrentColor(), -20170121181, 0.1f);
+                Visual.Visualize(PrimitiveType.Cylinder, References.LocalRig.bodyTransform.position, Quaternion.identity, new Vector3(tagAuraDistance, 0.01f, tagAuraDistance), Manager.GetIndex("Prettier Visualize").enabled ? color : backgroundColor.GetCurrentColor(), -20170121181, 0.1f);
         }
 
         public static void GripTagAura()
@@ -265,8 +260,8 @@ namespace Qubit.Modules.Categories
 
             if (Manager.GetIndex("Visualize Tag Reach").enabled)
             {
-                Visuals.Visualize(PrimitiveType.Sphere, References.LeftHand.position, Quaternion.identity, new Vector3(tagReachDistance, 1, tagReachDistance), backgroundColor.GetCurrentColor(), -149286, 0.1f);
-                Visuals.Visualize(PrimitiveType.Sphere, References.RightHand.position, Quaternion.identity, new Vector3(tagReachDistance, 1, tagReachDistance), backgroundColor.GetCurrentColor(), -149285, 0.1f);
+                Visual.Visualize(PrimitiveType.Sphere, References.LeftHand.position, Quaternion.identity, new Vector3(tagReachDistance, 1, tagReachDistance), backgroundColor.GetCurrentColor(), -149286, 0.1f);
+                Visual.Visualize(PrimitiveType.Sphere, References.RightHand.position, Quaternion.identity, new Vector3(tagReachDistance, 1, tagReachDistance), backgroundColor.GetCurrentColor(), -149285, 0.1f);
             }
         }
 
@@ -716,129 +711,6 @@ namespace Qubit.Modules.Categories
             };
         }
 
-        public static void PaintbrawlKillGun()
-        {
-            GunLibrary.Target(gunTarget =>
-            {
-                NetPlayer owner = GetPlayerFromVRRig(gunTarget);
-                if (!Networking.IsMasterClient)
-                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
-                else
-                    SetPaintbrawlHealth(owner, 0);
-            });
-        }
-
-        public static void PaintbrawlKillSelf()
-        {
-            KillPaintbrawlPlayer(Networking.LocalPlayer);
-        }
-
-        public static void PaintbrawlKillAll()
-        {
-            if (!Networking.IsMasterClient)
-                KillPaintbrawlPlayer(GetRandomPlayer(false));
-            else
-            {
-                foreach (Player player in PhotonNetwork.PlayerList)
-                    SetPaintbrawlHealth(player.ActorNumber, 0);
-            }
-        }
-
-        public static void DebugSlingshotAimbot()
-        {
-            if (References.LocalRig.GetSlingshot() == null)
-                return;
-
-            if (References.LocalRig.GetSlingshot().InLeftHand() ? leftTrigger > 0.5f : rightTrigger > 0.5f)
-                return;
-
-            List<NetPlayer> infected = InfectedList();
-            List<VRRig> rigs = Players.ActiveRigs
-                .Where(rig => !rig.isLocal)
-                .Where(rig => !infected.Contains(rig.GetPlayer()))
-                .ToList();
-
-            Transform head = References.HeadCollider.transform;
-            VRRig targetRig = rigs
-                .Where(rig => rig != null)
-                .Select(rig => new
-                {
-                    Rig = rig,
-                    ToRig = (rig.transform.position - head.position).normalized,
-                    Distance = Vector3.Distance(head.position, rig.transform.position)
-                })
-                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig))
-                .ThenBy(x => x.Distance)
-                .Select(x => x.Rig)
-                .FirstOrDefault();
-
-            if (targetRig == null)
-                return;
-
-            Visuals.Visualize(PrimitiveType.Sphere, targetRig.headMesh.transform.position, Quaternion.identity, new Vector3(0.1f, 0.1f, 0.1f), Color.green, -91752, 0.1f);
-        }
-        public static void SlingshotHelper()
-        {
-            Slingshot slingshot = References.LocalRig.GetSlingshot() as Slingshot;
-            if (slingshot == null)
-                return;
-
-            if (slingshot.ForLeftHandSlingshot() ? rightGrab : leftGrab)
-                slingshot.itemState = slingshot.ForLeftHandSlingshot() ? TransferrableObject.ItemStates.State2 : TransferrableObject.ItemStates.State3;
-        }
-        public static void SlingshotTriggerBot()
-        {
-            if (Fun.paintbrawlTriggerLine != null)
-            {
-                if (!Fun.paintbrawlTriggerLine.gameObject.activeSelf)
-                {
-                    Fun.paintbrawlTriggerLine = null;
-                    Object.Destroy(Fun.paintbrawlTriggerLine.gameObject);
-                }
-                else
-                    Fun.paintbrawlTriggerLine.gameObject.SetActive(false);
-            }
-
-            Slingshot localSlingshot = References.LocalRig.GetSlingshot() as Slingshot;
-            if (localSlingshot == null || !localSlingshot.InDrawingState())
-                return;
-
-            if (Fun.paintbrawlTriggerLine == null)
-            {
-                GameObject lineObject = new GameObject("LineObject");
-                Fun.paintbrawlTriggerLine = lineObject.AddComponent<LineRenderer>();
-                Fun.paintbrawlTriggerLine.positionCount = 25;
-            }
-
-            Fun.paintbrawlTriggerLine.gameObject.SetActive(true);
-
-            Fun.paintbrawlTriggerLine.startColor = Color.black;
-            Fun.paintbrawlTriggerLine.endColor = Color.black;
-
-            Vector3 localPosition = localSlingshot.drawingHand.transform.position + (localSlingshot.centerOrigin.position - localSlingshot.drawingHand.transform.position).normalized * ((ManagerRegistry.EquipmentInteractor.grabRadius - localSlingshot.dummyProjectileColliderRadius) * (localSlingshot.dummyProjectileInitialScale * Mathf.Abs(localSlingshot.transform.lossyScale.x)));
-            Vector3 localVelocity = localSlingshot.GetLaunchVelocity();
-
-            Visuals.DrawTrajectory(localPosition, localVelocity, Fun.paintbrawlTriggerLine, NoInvisLayerMask(), Vector3.down * 10.79f);
-
-            Fun.paintbrawlTriggerLine.enabled = false;
-
-            if (Fun.paintbrawlTriggerLine.startColor == Color.green && Time.time > Fun.triggerBotDelay)
-                Fun.triggerBotDelay = Time.time + 0.5f;
-
-            if (Time.time < Fun.triggerBotDelay)
-            {
-                if (localSlingshot.ForLeftHandSlingshot())
-                {
-                    References.InputPoller.rightControllerGripFloat = 0f;
-                    References.InputPoller.rightGrab = false;
-                }
-                else
-                {
-                    References.InputPoller.leftControllerGripFloat = 0f;
-                    References.InputPoller.leftGrab = false;
-                }
-            }
-        }
         public static void TagLagDetector()
         {
             if (Networking.InRoom && !Networking.IsMasterClient)

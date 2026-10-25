@@ -22,7 +22,6 @@
 using ExitGames.Client.Photon;
 using GorillaExtensions;
 using GorillaGameModes;
-using GorillaLocomotion.Climbing;
 using GorillaLocomotion.Gameplay;
 using GorillaLocomotion.Swimming;
 using GorillaTagScripts;
@@ -30,8 +29,6 @@ using Photon.Pun;
 using Photon.Realtime;
 using Photon.Voice;
 using Photon.Voice.Unity;
-using Photon.Voice.Unity.UtilityScripts;
-using POpusCodec.Enums;
 using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Audio;
@@ -41,7 +38,6 @@ using Qubit.Libraries.Entities;
 using Qubit.Libraries.Holdables;
 using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
-using UnityEngine.Networking;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
 using Qubit.Patches.Rigs;
@@ -53,8 +49,8 @@ using System.IO;
 using System.Linq;
 using Unity.XR.CoreUtils;
 using UnityEngine;
+using UnityEngine.Networking;
 using UnityEngine.Rendering;
-using UnityEngine.Windows.Speech;
 using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
@@ -72,12 +68,15 @@ using static Qubit.Libraries.Holdables.LckCamera;
 using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Libraries.Networking.Serialization;
-using static Qubit.Modules.Categories.Projectiles;
+using static Qubit.Modules.Categories.Projectile;
 using static Qubit.Modules.Classes.GunLibrary;
+using Audio = Qubit.Modules.Categories.Sound.Audio;
 using Hashtable = ExitGames.Client.Photon.Hashtable;
+using Microphone = Qubit.Modules.Categories.Sound.Microphone;
 using Object = UnityEngine.Object;
 using Random = UnityEngine.Random;
 using Security = Qubit.Core.Security;
+using Soundboard = Qubit.Modules.Categories.Sound.Soundboard;
 
 namespace Qubit.Modules.Categories
 {
@@ -132,34 +131,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public class LoopbackFactory : IAudioReader<float>
-        {
-            private readonly Queue<float> buffer = new Queue<float>();
 
-            public void Feed(float[] data)
-            {
-                foreach (var sample in data)
-                    buffer.Enqueue(sample);
-            }
-
-            public bool Read(float[] bufferOut)
-            {
-                if (buffer.Count < bufferOut.Length)
-                    return false;
-
-                for (int i = 0; i < bufferOut.Length; i++)
-                    bufferOut[i] = buffer.Dequeue();
-
-                return true;
-            }
-
-            public int SamplingRate => 16000;
-            public int Channels => 1;
-            public string Error => null;
-
-            public void Dispose() =>
-                buffer.Clear();
-        }
         #endregion
 
         #region Settings
@@ -204,9 +176,7 @@ namespace Qubit.Modules.Categories
 
         public static readonly Dictionary<string, string> modsToSpoof = new Dictionary<string, string>();
 
-        private static float tapDelay;
 
-        private static float buttonDelay;
 
         private static float hitDelay;
 
@@ -223,10 +193,11 @@ namespace Qubit.Modules.Categories
 
         public static int targetQuestScore = 69;
 
-        private static float spamDelay;
-        private static bool returnOrTeleport;
 
-        private static bool openOrClose;
+        private static bool returnOrTeleport;
+        public static float spamDelay;
+
+
 
         private static VirtualStumpAd virtualStumpAd;
 
@@ -234,10 +205,10 @@ namespace Qubit.Modules.Categories
 
         public static float killDelay;
 
-        private static LoopbackFactory factory;
-        private static float copyVoiceGunDelay;
 
-        public static DictationRecognizer drec;
+
+
+
 
         public static Coroutine dropBoard;
 
@@ -360,12 +331,7 @@ namespace Qubit.Modules.Categories
         #endregion
 
         #region Methods
-        public static void FixHead()
-        {
-            References.LocalRig.head.trackingRotationOffset.x = 0f;
-            References.LocalRig.head.trackingRotationOffset.y = 0f;
-            References.LocalRig.head.trackingRotationOffset.z = 0f;
-        }
+
 
         public static void UpsideDownHead() =>
             References.LocalRig.head.trackingRotationOffset.z = 180f;
@@ -404,24 +370,7 @@ namespace Qubit.Modules.Categories
             headSpinSpeed = HeadSpinSpeedAmounts[index];
         }
 
-        public static void SpazHead(string axis)
-        {
-            int offset = Random.Range(0, 360);
-            switch (axis.ToLower())
-            {
-                case "x":
-                    References.LocalRig.head.trackingRotationOffset.x = offset;
-                    break;
-                case "y":
-                    References.LocalRig.head.trackingRotationOffset.y = offset;
-                    break;
-                case "z":
-                    References.LocalRig.head.trackingRotationOffset.z = offset;
-                    break;
-                default:
-                    return;
-            }
-        }
+
 
         public static void FlipHands()
         {
@@ -1272,7 +1221,7 @@ namespace Qubit.Modules.Categories
         public static void BreakModCheckers()
         {
             Hashtable props = new Hashtable();
-            foreach (string mod in Visuals.modDictionary.Keys)
+            foreach (string mod in Visual.modDictionary.Keys)
                 props[mod] = true;
 
             PhotonNetwork.LocalPlayer.SetCustomProperties(props);
@@ -1301,7 +1250,7 @@ namespace Qubit.Modules.Categories
             Prompt("Would you like to choose from a mod list or type the mod property?", () =>
             {
                 List<Module> modList = new List<Module> { new Module { name = "Exit Mod List", method = () => Manager.CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page." } };
-                modList.AddRange(Visuals.modDictionary.Select((t, i) => Visuals.modDictionary.ElementAt(i))
+                modList.AddRange(Visual.modDictionary.Select((t, i) => Visual.modDictionary.ElementAt(i))
                 .Select((mod, i) => new Module
                 {
                     name = $"Mod{i}",
@@ -1324,7 +1273,7 @@ namespace Qubit.Modules.Categories
                     {
                         string foundKey = null;
 
-                        foreach (var kv in Visuals.modDictionary)
+                        foreach (var kv in Visual.modDictionary)
                         {
                             if (string.Equals(kv.Value, mod, StringComparison.OrdinalIgnoreCase))
                             {
@@ -1358,55 +1307,10 @@ namespace Qubit.Modules.Categories
                     djSet.enabled = true;
             }
         }
-        public static void TapAllClass<T>() where T : Tappable
-        {
-            if (rightGrab)
-            {
-                if (Time.time > tapDelay)
-                {
-                    foreach (Tappable TappableObject in GetAllType<T>())
-                        TappableObject.OnTap(1f);
 
-                    Security.RPCProtection();
-                    tapDelay = Time.time + 0.1f;
-                }
-            }
-        }
 
-        public static void TriggerLeafPileGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                GameObject NewPointer = GunData.NewPointer;
 
-                if (GetGunInput(true))
-                {
-                    References.LocalRig.enabled = false;
 
-                    References.LocalRig.transform.position = NewPointer.transform.position + (Vector3.up * (Time.frameCount % 2 == 1 ? 10f : -10f));
-                    SendSerialize(References.LocalRig.GetPhotonView());
-
-                    References.LocalRig.transform.position = NewPointer.transform.position + (Vector3.up * (Time.frameCount % 2 == 1 ? 10f : 0f));
-                }
-                else
-                    References.LocalRig.enabled = true;
-            });
-        }
-        public static void ActivateAllDoors()
-        {
-            if (rightGrab)
-            {
-                if (Time.time > buttonDelay)
-                {
-                    foreach (GhostLabButton button in GetAllType<GhostLabButton>())
-                    {
-                        button.ButtonActivation();
-                        Security.RPCProtection();
-                    }
-                    buttonDelay = Time.time + 0.1f;
-                }
-            }
-        }
         public static void AutoHitMoleType(bool isHazard)
         {
             foreach (Mole mole in GetAllType<Mole>())
@@ -1582,41 +1486,12 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void SetBasementDoorState(bool open)
-        {
-            if (!Networking.InRoom) return;
-            if (Time.time > spamDelay)
-            {
-                spamDelay = Time.time + 0.1f;
 
-                GetObject("Environment Objects/LocalObjects_Prefab/CityToBasement/DungeonEntrance/DungeonDoor_Prefab").GetComponent<PhotonView>().RPC("ChangeDoorState", RpcTarget.AllViaServer, open ? GTDoor.DoorState.Opening : GTDoor.DoorState.Closing);
-                Security.RPCProtection();
-            }
-        }
 
-        public static void SetElevatorDoorState(bool open)
-        {
-            if (!Networking.InRoom) return;
-            if (Time.time > spamDelay)
-            {
-                spamDelay = Time.time + 0.1f;
 
-                GRElevatorManager.ElevatorButtonPressed(open ? GRElevator.ButtonType.Open : GRElevator.ButtonType.Close, ManagerRegistry.GRElevatorManager.currentLocation);
-                Security.RPCProtection();
-            }
-        }
         public static bool elevatorSensorOpen;
 
-        public static void ElevatorProximitySensor()
-        {
-            if (ManagerRegistry.GRElevatorManager == null) return;
 
-            bool inRange = Vector3.Distance(References.LocalRig.transform.position, ManagerRegistry.GRElevatorManager.transform.position) <= 3f;
-            if (inRange == elevatorSensorOpen) return;
-
-            elevatorSensorOpen = inRange;
-            SetElevatorDoorState(inRange);
-        }
 
         public static void OpenAllElevators()
         {
@@ -1693,32 +1568,9 @@ namespace Qubit.Modules.Categories
         public static float SplashSize = 4f;
         public static void ApplySplashSize(int index) => SplashSize = SplashSizeValues[index];
 
-        public static void BasementDoorSpam()
-        {
-            if (!Networking.InRoom) return;
-            if (Time.time > spamDelay)
-            {
-                spamDelay = Time.time + 0.05f;
-                openOrClose = !openOrClose;
-                PhotonView view = GetObject("Environment Objects/LocalObjects_Prefab/CityToBasement/DungeonEntrance/DungeonDoor_Prefab").GetComponent<PhotonView>();
 
-                view.RPC("ChangeDoorState", RpcTarget.AllViaServer, openOrClose ? GTDoor.DoorState.Opening : GTDoor.DoorState.Closing);
-                view.RPC("ChangeDoorState", RpcTarget.AllViaServer, GTDoor.DoorState.HeldOpen);
-                Security.RPCProtection();
-            }
-        }
 
-        public static void ElevatorDoorSpam()
-        {
-            if (Time.time > spamDelay)
-            {
-                delay = Time.time + 0.1f;
-                openOrClose = !openOrClose;
 
-                GRElevatorManager.ElevatorButtonPressed(openOrClose ? GRElevator.ButtonType.Open : GRElevator.ButtonType.Close, ManagerRegistry.GRElevatorManager.currentLocation);
-                Security.RPCProtection();
-            }
-        }
         public static void CustomVirtualStumpVideo() =>
             virtualStumpAd ??= new GameObject("Qubit_VirtualStumpAd").AddComponent<VirtualStumpAd>();
 
@@ -1851,71 +1703,16 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void SetMicrophoneQuality(int bitrate, int samplingRate)
-        {
-            if (!Networking.InRoom)
-                return;
 
-            if (!ManagerRegistry.NetworkSystem.LocalRecorder)
-                return;
 
-            Recorder mic = ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder;
 
-            if (mic.SamplingRate == (SamplingRate)samplingRate && mic.Bitrate == bitrate)
-                return;
-
-            mic.SamplingRate = (SamplingRate)samplingRate;
-            mic.Bitrate = bitrate;
-
-            if (VoiceRecorder.enabled)
-                Voices.Get().SamplingRate = samplingRate;
-
-            Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
-        }
-
-        public static void SetMicrophoneAmplification(float gain)
-        {
-            if (!Networking.InRoom)
-                return;
-
-            if (VoiceRecorder.enabled)
-                Voices.Get().Gain = gain;
-            else
-            {
-                Recorder mic = ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder;
-
-                if (gain > 1)
-                {
-                    if (mic.gameObject.GetComponent<MicAmplifier>() != null)
-                        return;
-
-                    MicAmplifier microphoneAmplifier = mic.gameObject.GetOrAddComponent<MicAmplifier>();
-                    microphoneAmplifier.AmplificationFactor = 16;
-                    microphoneAmplifier.BoostValue = 16;
-                }
-                else
-                {
-                    if (mic.gameObject.GetComponent<MicAmplifier>())
-                    {
-                        if (mic.gameObject.GetComponent<MicAmplifier>() == null)
-                            return;
-
-                        MicAmplifier microphoneAmplifier = mic.gameObject.GetComponent<MicAmplifier>();
-                        microphoneAmplifier.enabled = false;
-                        Object.Destroy(mic.gameObject.GetComponent<MicAmplifier>());
-                    }
-                }
-
-                Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
-            }
-        }
 
         public static void EchoMicrophone(bool status)
         {
             Module button = Manager.GetIndex("Legacy Microphone");
             if (button.enabled)
             {
-                Notifications.SendFormat("red", "ERROR", "You are using Legacy Microphone. This mod does not support using the old microphone system.");
+                Notifications.SendFormat("red", "ERROR", "You are using Legacy UnityEngine.Microphone. This mod does not support using the old microphone system.");
                 Manager.GetIndex("Echo Microphone").SetEnabled(false);
                 return;
             }
@@ -1956,7 +1753,7 @@ namespace Qubit.Modules.Categories
             Module button = Manager.GetIndex("Legacy Microphone");
             if (button.enabled)
             {
-                Notifications.SendFormat("red", "ERROR", "You are using Legacy Microphone. This mod does not support using the old microphone system.");
+                Notifications.SendFormat("red", "ERROR", "You are using Legacy UnityEngine.Microphone. This mod does not support using the old microphone system.");
                 Manager.GetIndex("Glitchy Microphone").SetEnabled(false);
                 return;
             }
@@ -2023,7 +1820,7 @@ namespace Qubit.Modules.Categories
             Module button = Manager.GetIndex("Legacy Microphone");
             if (button.enabled)
             {
-                Notifications.SendFormat("red", "ERROR", "You are using Legacy Microphone. This mod does not support using the old microphone system.");
+                Notifications.SendFormat("red", "ERROR", "You are using Legacy UnityEngine.Microphone. This mod does not support using the old microphone system.");
                 button.enabled = false;
                 return;
             }
@@ -2043,20 +1840,7 @@ namespace Qubit.Modules.Categories
                 Voices.Get().PostProcessors.Remove("Lag");
         }
 
-        public static void MuteMicrophone(bool mute)
-        {
-            if (VoiceRecorder.enabled)
-                Voices.Get().MuteMicrophone = mute;
-            else
-            {
-                if (!Networking.InRoom)
-                    return;
-                Recorder mic = ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder;
-                if (mic.IsRecording != mute)
-                    return;
-                mic.IsRecording = !mute;
-            }
-        }
+
 
         public static void SetMicrophonePitch(float pitch)
         {
@@ -2090,250 +1874,27 @@ namespace Qubit.Modules.Categories
                         return;
                 }
 
-                Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
+                Coroutines.instance.StartCoroutine(Microphone.DelayReloadMicrophone());
             }
         }
 
-        public static void SetDebugEchoMode(bool value)
-        {
-            if (!Networking.InRoom)
-                return;
-            if (ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder != null && ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.IsRecording)
-                ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = value;
-        }
 
-        public static void CopyVoiceGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
 
-                if (gunLocked && lockTarget != null)
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        if (VoiceRecorder.enabled)
-                        {
-                            VoiceSpeaker.enabled = true;
-                            VoiceSpeaker.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
-                            if (!Voices.Get().PostProcessors.ContainsKey("CopyVoice"))
-                            {
-                                float readPos = 0f;
 
-                                Voices.Get().PostProcessors["CopyVoice"] = buffer =>
-                                {
-                                    var vm = Voices.Get();
-                                    int channels = vm.Channels;
 
-                                    float sourceRate = (VoiceSpeaker.targetSpeaker != null && VoiceSpeaker.targetSpeaker.RemoteVoiceLink.Info.SamplingRate > 0)
-                                                       ? VoiceSpeaker.targetSpeaker.RemoteVoiceLink.Info.SamplingRate
-                                                       : 24000;
 
-                                    float ratio = sourceRate / vm.OutputRate;
 
-                                    lock (VoiceSpeaker.locked)
-                                    {
-                                        if (VoiceSpeaker.SampleQueue.Count < (sourceRate * 0.04f))
-                                        {
-                                            Array.Clear(buffer, 0, buffer.Length);
-                                            return;
-                                        }
 
-                                        for (int i = 0; i < buffer.Length; i += channels)
-                                        {
-                                            int idxA = (int)readPos;
-                                            int idxB = idxA + 1;
 
-                                            if (idxB < VoiceSpeaker.SampleQueue.Count)
-                                            {
-                                                float t = readPos - idxA;
-                                                float sample = Mathf.Lerp(VoiceSpeaker.SampleQueue[idxA], VoiceSpeaker.SampleQueue[idxB], t);
 
-                                                for (int c = 0; c < channels; c++)
-                                                {
-                                                    int targetIndex = i + c;
-                                                    if (targetIndex < buffer.Length)
-                                                    {
-                                                        buffer[targetIndex] = sample;
-                                                    }
-                                                }
 
-                                                readPos += ratio;
-                                            }
-                                            else
-                                            {
-                                                for (int c = 0; c < channels; c++)
-                                                {
-                                                    if (i + c < buffer.Length) buffer[i + c] = 0f;
-                                                }
-                                            }
-                                        }
-
-                                        int consumed = (int)readPos;
-                                        if (consumed > 0)
-                                        {
-                                            VoiceSpeaker.SampleQueue.RemoveRange(0, Math.Min(consumed, VoiceSpeaker.SampleQueue.Count));
-                                            readPos -= consumed;
-                                        }
-                                    }
-                                };
-                            }
-                        }
-                        else
-                        {
-                            if (Time.time > copyVoiceGunDelay)
-                            {
-                                copyVoiceGunDelay = Time.time + 0.5f;
-
-                                gunLocked = true;
-                                lockTarget = gunTarget;
-
-                                VoiceSpeaker.enabled = true;
-
-                                VoiceSpeaker.targetSpeaker = lockTarget.gameObject.GetComponent<GorillaSpeakerLoudness>().speaker;
-
-                                VoiceRecorder.enabled = !Manager.GetIndex("Legacy Microphone").enabled;
-
-                                Voices.Get().PostProcessors["CopyVoice"] = null;
-
-                                factory?.Dispose();
-
-                                factory = new LoopbackFactory();
-
-                                ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.SourceType = Recorder.InputSourceType.Factory;
-                                ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.InputFactory = () =>
-                                {
-                                    return factory;
-                                };
-                                Coroutines.instance.StartCoroutine(DelayReloadMicrophone());
-                            }
-                        }
-
-                        ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = true;
-                    }
-                }
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }, new GunLibrary.GunSettings
-            {
-                onIdle = () =>
-                {
-                    if (gunLocked)
-                        gunLocked = false;
-                    if (factory != null || Voices.Get().PostProcessors.ContainsKey("CopyVoice"))
-                        DisableCopyVoice();
-                }
-            });
-        }
-
-        public static void DisableCopyVoice()
-        {
-            factory?.Dispose();
-
-            Voices.Get().PostProcessors.Remove("CopyVoice");
-
-            VoiceSpeaker.enabled = false;
-
-            Sound.FixMicrophone();
-
-            VoiceRecorder.enabled = !Manager.GetIndex("Legacy Microphone").enabled;
-
-            ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder.DebugEchoMode = false;
-        }
-
-        public static void SaveNarration(string text)
-        {
-            string path = $"{PluginInfo.BaseDirectory}/Sounds/Narrations";
-            if (!Directory.Exists(path))
-                Directory.CreateDirectory(path);
-            Coroutines.instance.StartCoroutine(TranscribeText(text, (audio) =>
-            {
-                PromptSingleText("The narration has been saved in your Soundboard!");
-            }, text, path));
-        }
-        public static void MaskVoice()
-        {
-            Module mod = Manager.GetIndex("Mask Voice");
-
-            if (Application.platform == RuntimePlatform.WindowsPlayer && Environment.OSVersion.Version.Major < 10)
-                PromptSingle("Your version of Windows is too old for this mod to run.", () => mod.SetEnabled(false));
-            else if (Application.platform != RuntimePlatform.WindowsPlayer)
-                PromptSingle("You must be on Windows 10 or greater for this mod to run.", () => mod.SetEnabled(false));
-
-            drec = new DictationRecognizer();
-            drec.DictationResult += (text, confidence) =>
-            {
-                if (Settings.debugDictation)
-                    Logs.Log($"Dictation result: {text}");
-                Notifications.SendFormat("green", "VOICE", $"{text}");
-
-                if (ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder != null)
-                {
-                    if (Networking.InRoom)
-                        SpeakText(text, true);
-                    else
-                        NarrateText(text);
-                }
-                else
-                    NarrateText(text);
-            };
-            drec.DictationComplete += (completionCause) =>
-            {
-                drec.Start();
-            };
-            drec.DictationError += (error, hresult) =>
-            {
-                if (Settings.debugDictation)
-                    Logs.LogError($"Dictation error: {error}; HResult = {hresult}.");
-                if (error.Contains("Dictation support is not enabled on this device"))
-                {
-                    DisableMaskVoice();
-                    Notifications.SendFormat("red", "ERROR", $"Online Speech Recognition is not enabled on this device. Either open the menu to enable it, or check your internet connection.", 3000);
-                    Prompt("Online Speech Recognition is not enabled on your device. Would you like to open the Settings page to enable it?", () => { Files.Start("ms-settings:privacy-speech"); PromptSingle("Once you enable Online Speech Recognition, turn this mod back on!", () => mod.SetEnabled(false)); }, () => PromptSingle("You will not be able to use this mod until you enable Online Speech Recognition.", () => mod.SetEnabled(false)));
-                }
-            };
-            drec.DictationHypothesis += (text) =>
-            {
-                if (Settings.debugDictation)
-                    Logs.Log($"Hypothesis: {text}");
-                Notifications.Clear();
-                Notifications.SendFormat("green", "VOICE", $"{text}");
-            };
-            drec.Start();
-        }
-
-        public static void DisableMaskVoice()
-        {
-            drec?.Stop();
-            drec?.Dispose();
-        }
 
         public static void ProcessFrameBuffer(float[] data) =>
-            factory.Feed(data);
+            Microphone.factory.Feed(data);
 
-        public static void ReloadMicrophone()
-        {
-            Recorder recorder = ManagerRegistry.NetworkSystem.VoiceConnection.PrimaryRecorder;
-            if (!VoiceRecorder.enabled && recorder.SourceType != Recorder.InputSourceType.Microphone)
-                recorder.SourceType = Recorder.InputSourceType.Microphone;
-            recorder.RestartRecording(true);
-            if (VoiceRecorder.enabled)
-                Voices.Get().RestartMicrophone();
-        }
 
-        public static IEnumerator DelayReloadMicrophone()
-        {
-            yield return new WaitForSeconds(0.25f);
-            ReloadMicrophone();
-        }
+
+
 
         public static void ProjectileRange()
         {
@@ -2358,11 +1919,7 @@ namespace Qubit.Modules.Categories
             }
         }
 
-        public static void RopeGrabReach()
-        {
-            foreach (GorillaHandClimber climber in new[] { ManagerRegistry.EquipmentInteractor.LeftClimber, ManagerRegistry.EquipmentInteractor.rightClimber })
-                (climber.col as SphereCollider).radius = 0.5f;
-        }
+
         public static void AngryBirdsSounds()
         {
             if (!dynamicSounds) return;
@@ -2576,10 +2133,10 @@ namespace Qubit.Modules.Categories
                         DropBoard(References.RightHand.position, References.RightHand.rotation, GetGunDirection(References.RightHand) * ShootStrength, Vector3.zero, RandomColor());
                         break;
                     case 6:
-                        Projectiles.SendProjectile(ThrowableProjectiles.GetAll()[Random.Range(0, ThrowableProjectiles.GetAll().Count)], References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength, RandomColor());
+                        Projectile.SendProjectile(ThrowableProjectiles.GetAll()[Random.Range(0, ThrowableProjectiles.GetAll().Count)], References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength, RandomColor());
                         break;
                     case 7:
-                        Projectiles.SendProjectile(ThrowableProjectiles.GetGrowingSnowballProjectileEntry(), References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength);
+                        Projectile.SendProjectile(ThrowableProjectiles.GetGrowingSnowballProjectileEntry(), References.RightHand.position, GetGunDirection(References.RightHand) * ShootStrength);
                         break;
                 }
             }
@@ -3716,7 +3273,7 @@ namespace Qubit.Modules.Categories
                     if (gunLocked)
                     {
                         gunLocked = false;
-                        Sound.FixMicrophone();
+                        Microphone.FixMicrophone();
                         ViewSerialization.OverrideSerialization = null;
                     }
                 }
@@ -4031,527 +3588,85 @@ namespace Qubit.Modules.Categories
             });
         }
 
-        public static void SpamObjectGrip(int objectId)
-        {
-            if (rightGrab)
-                GameEntities.CreateItem(RpcTarget.All, objectId, References.RightHand.position, RandomQuaternion(), References.RightHand.forward * ShootStrength, Vector3.zero);
-        }
-
-        public static void SpamEntityGrip()
-        {
-            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
-            SpamObjectGrip(objectIds[Random.Range(0, objectIds.Length)]);
-        }
-
-        public static void ToolSpamGrip()
-        {
-            int[] objectIds = ObjectByName.Where(x => x.Key.Contains("Tool")).Select(x => x.Value).ToArray();
-            SpamObjectGrip(objectIds[Random.Range(0, objectIds.Length)]);
-        }
-
-        public static void ToolSpamGun()
-        {
-            int[] objectIds = ObjectByName.Where(x => x.Key.Contains("Tool")).Select(x => x.Value).ToArray();
-            SpamObjectGun(objectIds[Random.Range(0, objectIds.Length)]);
-        }
-
-        public static void SpamObjectGun(int objectId)
-        {
-            GunLibrary.Point(NewPointer =>
-            {
-                GameEntities.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero);
-            });
-        }
-
-        public static void SpamEntityGun()
-        {
-            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
-            SpamObjectGun(objectIds[Random.Range(0, objectIds.Length)]);
-        }
-
-        public static void RainEntities()
-        {
-            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
-            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, Vector3.down, Vector3.zero);
-        }
-
-        public static void EntityAura()
-        {
-            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
-            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, Vector3.down, Vector3.zero);
-        }
-
-        public static void EntityFountain()
-        {
-            int[] objectIds = ObjectByName.Select(x => x.Value).ToArray();
-            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, RandomVector3(15f), Vector3.zero);
-        }
-
-        public static void GhostReactorTextGun()
-        {
-            TextGun.Render(textToRender, position =>
-                GameEntities.CreateItems(RpcTarget.All, Enumerable.Repeat(ObjectByName["GhostReactorCollectibleFlower"], position.Count).ToArray(), position.ToArray(), Enumerable.Repeat(Quaternion.identity, position.Count).ToArray()));
-        }
-
-        public static void SuperInfectionTextGun()
-        {
-            TextGun.Render(textToRender, position =>
-                GameEntities.CreateItems(RpcTarget.All, Enumerable.Repeat(Gadgets.GadgetByName["SIGadgetDashYoyo"], position.Count).ToArray(), position.ToArray(), Enumerable.Repeat(Quaternion.identity, position.Count).ToArray(), null, ManagerRegistry.SuperInfection.GameEntityManager));
-        }
-
-        public static void GhostReactorDrawGun()
-        {
-            GunLibrary.Point(NewPointer =>
-            {
-                Coroutines.instance.StartCoroutine(GameEntities.DrawSmallDelay(NewPointer.transform.position, ObjectByName["GhostReactorCollectibleCore"], ManagerRegistry.GhostReactor.GameEntityManager));
-            });
-        }
-
-        public static void SuperInfectionDrawGun()
-        {
-            GunLibrary.Point(NewPointer =>
-            {
-                int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
-                Coroutines.instance.StartCoroutine(GameEntities.DrawSmallDelay(NewPointer.transform.position, objectIds[Random.Range(0, objectIds.Length)], ManagerRegistry.SuperInfection.GameEntityManager));
-            });
-        }
-        public static void DestroyEntityGun()
-        {
-            GunLibrary.Point(NewPointer =>
-            {
-                if (Time.time > Overpowered.destroyDelay)
-                {
-                    GameEntity gameEntity = null;
-                    float closestDist = float.MaxValue;
-
-                    foreach (GameEntity entity in ManagerRegistry.GhostReactor.GameEntityManager.entities)
-                    {
-                        if (entity != null)
-                        {
-                            float distance = Vector3.Distance(NewPointer.transform.position, entity.transform.position);
-                            if (distance < 0.75f && distance < closestDist)
-                            {
-                                gameEntity = entity;
-                                closestDist = distance;
-                            }
-                        }
-                    }
-
-                    if (gameEntity != null)
-                    {
-                        Overpowered.destroyDelay = Time.time + 0.02f;
-                        if (Networking.IsMasterClient)
-                        {
-                            ManagerRegistry.GhostReactor.GameEntityManager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new[] { gameEntity.GetNetId() });
-                            Security.RPCProtection();
-                        }
-                        else
-                        {
-                            gameEntity.RequestGrab(true, Vector3.zero, Quaternion.identity);
-                            gameEntity.RequestThrow(true, References.BodyCollider.transform.position - (Vector3.up * 14f), Quaternion.identity, Vector3.zero, Vector3.zero);
-                        }
-                    }
-                }
-            });
-        }
-        public static void InfiniteResources()
-        {
-            var player = SIPlayer.Get(Networking.LocalPlayer.ActorNumber);
-            for (int i = 0; i < player.CurrentProgression.resourceArray.Length; i++)
-                player.CurrentProgression.resourceArray[i] = int.MaxValue;
-
-            if (Time.time > Overpowered.resourceIncrementDelay)
-            {
-                Overpowered.resourceIncrementDelay = Time.time + 1f;
-                for (int i = 0; i < (int)SIResource.ResourceType.Count; i++)
-                {
-                    var resourceType = (SIResource.ResourceType)i;
-                    ManagerRegistry.ProgressionManager.IncrementSIResource(resourceType.ToString(), OnFailure: (error) => Overpowered.resourceIncrementDelay = Time.time + 10f);
-                }
-            }
-        }
-
-        public static void CompleteAllQuests()
-        {
-            for (int i = 0; i < ManagerRegistry.SIProgression.activeQuestIds.Length; i++)
-            {
-                RotatingQuest quest = ManagerRegistry.SIProgression.questSourceList.GetQuestById(ManagerRegistry.SIProgression.activeQuestIds[i]);
-                quest.SetProgress(quest.requiredOccurenceCount);
-            }
-        }
-
-        public static void ClaimAllTerminals()
-        {
-            foreach (var terminal in ManagerRegistry.SuperInfection.ZoneSuperInfection.siTerminals)
-                terminal?.PlayerHandScanned(Networking.LocalPlayer.ActorNumber);
-        }
-
-        public static void UnlockAllGadgets()
-        {
-            foreach (var page in ManagerRegistry.SIProgression.unlockedTechTreeData)
-            {
-                for (int i = 0; i < page.Length; i++)
-                    page[i] = true;
-            }
-        }
-
-        public static void DebugBlasterAimbot()
-        {
-            List<NetPlayer> infected = InfectedList();
-            List<VRRig> rigs = Players.ActiveRigs
-                .Where(rig => !rig.isLocal)
-                .Where(rig => !infected.Contains(rig.GetPlayer()))
-                .ToList();
-
-            Transform head = References.HeadCollider.transform;
-            VRRig targetRig = rigs
-                .Where(rig => rig != null)
-                .Select(rig => new
-                {
-                    Rig = rig,
-                    ToRig = (rig.transform.position - head.position).normalized,
-                    Distance = Vector3.Distance(head.position, rig.transform.position)
-                })
-                .OrderBy(x => Vector3.Angle(head.forward, x.ToRig))
-                .ThenBy(x => x.Distance)
-                .Select(x => x.Rig)
-                .FirstOrDefault();
-
-            if (targetRig == null)
-                return;
-
-            Visuals.Visualize(PrimitiveType.Sphere, targetRig.headMesh.transform.position, Quaternion.identity, new Vector3(0.1f, 0.1f, 0.1f), Color.green, -91752, 0.1f);
-        }
-
-        public static void BlasterLaserSpam()
-        {
-            if (rightGrab)
-                Gadgets.FireBlaster(References.RightHand.position, References.RightHand.forward);
-        }
-
-        public static void BlasterFlingGun(Vector3 direction)
-        {
-            GunLibrary.Target(lockTarget =>
-            {
-                Gadgets.FireBlaster(lockTarget.transform.position, direction.normalized);
-            }, new GunLibrary.GunSettings { locks = true });
-        }
-
-        public static void BlasterFlingAll(Vector3 direction)
-        {
-            if (Gadgets.GetBlaster() == null)
-                ViewSerialization.OverrideSerialization = null;
-            else ViewSerialization.OverrideSerialization ??= () =>
-            {
-                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
-
-                Vector3 archivePos = References.LocalRig.transform.position;
-
-                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-                {
-                    VRRig targetRig = GetVRRigFromPlayer(Player);
-
-                    References.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
-                    SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                }
-
-                Security.RPCProtection();
-
-                References.LocalRig.transform.position = archivePos;
-
-                return false;
-            };
-
-            foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-            {
-                VRRig targetRig = GetVRRigFromPlayer(Player);
-                Gadgets.FireBlaster(targetRig.transform.position, direction, Player, true);
-            }
-        }
-
-        public static void BlasterFlingTowardsGun()
-        {
-            GunLibrary.Target(lockTarget =>
-            {
-                Gadgets.FireBlaster(lockTarget.transform.position, References.BodyCollider.transform.position - lockTarget.transform.position);
-            }, new GunLibrary.GunSettings { locks = true });
-        }
-
-        public static void BlasterFlingTowardsAll()
-        {
-            if (Gadgets.GetBlaster() == null)
-                ViewSerialization.OverrideSerialization = null;
-            else ViewSerialization.OverrideSerialization ??= () =>
-            {
-                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
-
-                Vector3 archivePos = References.LocalRig.transform.position;
-
-                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-                {
-                    VRRig targetRig = GetVRRigFromPlayer(Player);
-
-                    References.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
-                    SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                }
-
-                Security.RPCProtection();
-
-                References.LocalRig.transform.position = archivePos;
-
-                return false;
-            };
-
-            foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-            {
-                VRRig targetRig = GetVRRigFromPlayer(Player);
-                Gadgets.FireBlaster(targetRig.transform.position, References.BodyCollider.transform.position - targetRig.transform.position, Player, true);
-            }
-        }
-
-        public static void BlasterFlingAwayGun()
-        {
-            GunLibrary.Target(lockTarget =>
-            {
-                Gadgets.FireBlaster(lockTarget.transform.position, lockTarget.transform.position - References.BodyCollider.transform.position);
-            }, new GunLibrary.GunSettings { locks = true });
-        }
-
-        public static void BlasterFlingAwayAll()
-        {
-            if (Gadgets.GetBlaster() == null)
-                ViewSerialization.OverrideSerialization = null;
-            else ViewSerialization.OverrideSerialization ??= () =>
-            {
-                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
-
-                Vector3 archivePos = References.LocalRig.transform.position;
-
-                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-                {
-                    VRRig targetRig = GetVRRigFromPlayer(Player);
-
-                    References.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
-                    SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                }
-
-                Security.RPCProtection();
-
-                References.LocalRig.transform.position = archivePos;
-
-                return false;
-            };
-
-            foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-            {
-                VRRig targetRig = GetVRRigFromPlayer(Player);
-                Gadgets.FireBlaster(targetRig.transform.position, targetRig.transform.position - References.BodyCollider.transform.position, Player, true);
-            }
-        }
-
-        public static void BlasterKickGun()
-        {
-            GunLibrary.Target(lockTarget =>
-            {
-                Gadgets.FireBlaster(lockTarget.transform.position, lockTarget.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - lockTarget.transform.position).normalized : lockTarget.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left);
-            }, new GunLibrary.GunSettings { locks = true });
-        }
-
-        public static void BlasterKickAll()
-        {
-            if (Gadgets.GetBlaster() == null)
-                ViewSerialization.OverrideSerialization = null;
-            else ViewSerialization.OverrideSerialization ??= () =>
-            {
-                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
-
-                Vector3 archivePos = References.LocalRig.transform.position;
-
-                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-                {
-                    VRRig targetRig = GetVRRigFromPlayer(Player);
-
-                    References.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
-                    SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                }
-
-                Security.RPCProtection();
-
-                References.LocalRig.transform.position = archivePos;
-
-                return false;
-            };
-
-            foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-            {
-                VRRig targetRig = GetVRRigFromPlayer(Player);
-                Gadgets.FireBlaster(targetRig.transform.position, targetRig.transform.position.z < -28.5f ? (new Vector3(-47.82025f, 6.460508f, -29.04836f) - targetRig.transform.position).normalized : targetRig.transform.position.z < -23f ? new Vector3(-50f, 0f, 50f) : Vector3.left, Player, true);
-            }
-        }
-
-        public static void BlasterCrashGun()
-        {
-            GunLibrary.Target(lockTarget =>
-            {
-                Gadgets.FireBlaster(lockTarget.transform.position, lockTarget.transform.position.y > 55f ? Vector3.right : Vector3.up);
-            }, new GunLibrary.GunSettings { locks = true });
-        }
-
-        public static void BlasterCrashAll()
-        {
-            if (Gadgets.GetBlaster() == null)
-                ViewSerialization.OverrideSerialization = null;
-            else ViewSerialization.OverrideSerialization ??= () =>
-            {
-                MassSerialize(true, new[] { References.LocalRig.GetPhotonView() });
-
-                Vector3 archivePos = References.LocalRig.transform.position;
-
-                foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-                {
-                    VRRig targetRig = GetVRRigFromPlayer(Player);
-
-                    References.LocalRig.transform.position = targetRig.transform.position - Vector3.up;
-                    SendSerialize(References.LocalRig.GetPhotonView(), new RaiseEventOptions { TargetActors = new[] { Player.ActorNumber } });
-                }
-
-                Security.RPCProtection();
-
-                References.LocalRig.transform.position = archivePos;
-
-                return false;
-            };
-
-            foreach (NetPlayer Player in ManagerRegistry.NetworkSystem.PlayerListOthers)
-            {
-                VRRig targetRig = GetVRRigFromPlayer(Player);
-                Gadgets.FireBlaster(targetRig.transform.position, targetRig.transform.position.y > 55f ? Vector3.right : Vector3.up, Player, true);
-            }
-        }
-
-        public static void BlasterControlGun()
-        {
-            GunLibrary.Aim(GunData =>
-            {
-                RaycastHit Ray = GunData.Ray;
-
-                if (gunLocked && lockTarget != null && lockTarget.Distance(References.BodyCollider.transform.position) > 0.5f)
-                    Gadgets.FireBlaster(lockTarget.transform.position, References.BodyCollider.transform.position - lockTarget.transform.position);
-
-                if (GetGunInput(true))
-                {
-                    VRRig gunTarget = Ray.collider.GetComponentInParent<VRRig>();
-                    if (gunTarget && !gunTarget.IsLocal())
-                    {
-                        gunLocked = true;
-                        lockTarget = gunTarget;
-                    }
-                }
-            }, new GunLibrary.GunSettings
-            {
-                onIdle = () =>
-                {
-                    if (gunLocked)
-                        gunLocked = false;
-                }
-            });
-        }
-
-        public static void SpamGadgetGrip(int objectId)
-        {
-            if (rightGrab)
-                GameEntities.CreateItem(RpcTarget.All, objectId, References.RightHand.position, RandomQuaternion(), References.RightHand.forward * ShootStrength, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
-        }
-
-        public static void SpamGadgetGun(int objectId)
-        {
-            GunLibrary.Point(NewPointer =>
-            {
-                GameEntities.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
-            });
-        }
-
-        public static void GadgetSpamGrip()
-        {
-            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
-            SpamGadgetGrip(objectIds[Random.Range(0, objectIds.Length)]);
-        }
-
-        public static void GadgetSpamGun()
-        {
-            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
-            SpamGadgetGun(objectIds[Random.Range(0, objectIds.Length)]);
-        }
-
-        public static void RainGadgets()
-        {
-            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
-            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + new Vector3(Random.Range(-3f, 3f), 4f, Random.Range(-3f, 3f)), Quaternion.identity, Vector3.down, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
-        }
-
-        public static void GadgetAura()
-        {
-            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
-            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + RandomVector3().normalized * 2f, Quaternion.identity, Vector3.down, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
-        }
-
-        public static void GadgetFountain()
-        {
-            int[] objectIds = Gadgets.GadgetByName.Select(element => element.Value).ToArray();
-            GameEntities.CreateItem(RpcTarget.All, objectIds[Random.Range(0, objectIds.Length)], References.LocalRig.transform.position + Vector3.up * 3f, Quaternion.identity, RandomVector3(15f), Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
-        }
-
-        public static void ResourceSpamGrip()
-        {
-            int[] objectIds = Gadgets.GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
-            SpamGadgetGrip(objectIds[Random.Range(0, objectIds.Length)]);
-        }
-
-        public static void ResourceSpamGun()
-        {
-            int[] objectIds = Gadgets.GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
-            SpamGadgetGun(objectIds[Random.Range(0, objectIds.Length)]);
-        }
-
-        public static void DestroyGadgetGun()
-        {
-            GunLibrary.Point(NewPointer =>
-            {
-                if (Time.time > Overpowered.destroyDelay)
-                {
-                    GameEntity gameEntity = null;
-                    float closestDist = float.MaxValue;
-
-                    foreach (GameEntity entity in ManagerRegistry.SuperInfection.GameEntityManager.entities)
-                    {
-                        if (entity != null)
-                        {
-                            float distance = Vector3.Distance(NewPointer.transform.position, entity.transform.position);
-                            if (distance < 0.75f && distance < closestDist)
-                            {
-                                gameEntity = entity;
-                                closestDist = distance;
-                            }
-                        }
-                    }
-
-                    if (gameEntity != null)
-                    {
-                        Overpowered.destroyDelay = Time.time + 0.02f;
-                        if (Networking.IsMasterClient)
-                        {
-                            ManagerRegistry.SuperInfection.GameEntityManager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new[] { gameEntity.GetNetId() });
-                            Security.RPCProtection();
-                        }
-                        else
-                        {
-                            gameEntity.RequestGrab(true, Vector3.zero, Quaternion.identity, ManagerRegistry.SuperInfection.GameEntityManager);
-                            gameEntity.RequestThrow(true, References.BodyCollider.transform.position - (Vector3.up * 14f), Quaternion.identity, Vector3.zero, Vector3.zero, ManagerRegistry.SuperInfection.GameEntityManager);
-                        }
-                    }
-                }
-            });
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         public static void SpawnBlueLucy()
         {
@@ -4855,28 +3970,7 @@ namespace Qubit.Modules.Categories
                 if (broomstick != null) broomstick.duration = 30f;
         }
 
-        public static void BarrelGun()
-        {
-            if (Manager.GetIndex("Weak Barrel Fling").enabled)
-            {
-                GunLibrary.Target(lockTarget =>
-                {
-                    if (!GetGunInput(true)) return;
 
-                    Vector3 targetPosition = lockTarget.transform.position;
-                    Vector3 spawnPosition = targetPosition + Vector3.down * 3.47f;
-                    Vector3 velocity = (targetPosition - spawnPosition).normalized * 1200f;
-                    ThrowableProjectiles.SendBarrelProjectile(spawnPosition, velocity, Quaternion.identity);
-                }, new GunLibrary.GunSettings { locks = true });
-                return;
-            }
-
-            GunLibrary.Aim(GunData =>
-            {
-                if (GetGunInput(true))
-                    ThrowableProjectiles.SendBarrelProjectile(GunData.NewPointer.transform.position + Vector3.up, Vector3.zero, Quaternion.identity);
-            });
-        }
 
         public static void SpoofRank(bool enabled, string tier = null)
         {
@@ -4904,21 +3998,21 @@ namespace Qubit.Modules.Categories
             }
             if (!Networking.InRoom)
             {
-                if (Sound.soundboardAudioManager == null)
+                if (Audio.soundboardAudioManager == null)
                 {
-                    Sound.soundboardAudioManager = new GameObject("2DAudioMgr");
-                    AudioSource temp = Sound.soundboardAudioManager.AddComponent<AudioSource>();
+                    Audio.soundboardAudioManager = new GameObject("2DAudioMgr");
+                    AudioSource temp = Audio.soundboardAudioManager.AddComponent<AudioSource>();
                     temp.spatialBlend = 0f;
                 }
 
-                AudioSource ausrc = Sound.soundboardAudioManager.GetComponent<AudioSource>();
+                AudioSource ausrc = Audio.soundboardAudioManager.GetComponent<AudioSource>();
                 ausrc.volume = 1f;
                 ausrc.clip = sound;
                 ausrc.loop = false;
                 ausrc.Play();
 
-                Sound.AudioIsPlaying = true;
-                Sound.RecoverTime = Time.time + sound.length;
+                Audio.AudioIsPlaying = true;
+                Audio.RecoverTime = Time.time + sound.length;
 
                 return;
             }
@@ -4938,8 +4032,8 @@ namespace Qubit.Modules.Categories
 
             if (!Soundboard.LoopAudio)
             {
-                Sound.AudioIsPlaying = true;
-                Sound.RecoverTime = Time.time + sound.length + 0.4f;
+                Audio.AudioIsPlaying = true;
+                Audio.RecoverTime = Time.time + sound.length + 0.4f;
             }
         }
 

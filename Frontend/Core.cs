@@ -59,8 +59,10 @@ using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Categories.Overpowered;
 using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Modules.Manager;
+using Audio = Qubit.Modules.Categories.Sound.Audio;
 using Console = Qubit.Backend.Console;
 using Random = UnityEngine.Random;
+using Soundboard = Qubit.Modules.Categories.Sound.Soundboard;
 
 namespace Qubit.Frontend
 {
@@ -442,11 +444,11 @@ namespace Qubit.Frontend
                 {
                     if (!VoiceRecorder.enabled)
                     {
-                        if (Sound.AudioIsPlaying)
+                        if (Audio.AudioIsPlaying)
                         {
-                            if (Time.time > Sound.RecoverTime)
+                            if (Time.time > Audio.RecoverTime)
                             {
-                                Sound.StopAllSounds();
+                                Audio.StopAllSounds();
                             }
                         }
                     }
@@ -572,7 +574,7 @@ namespace Qubit.Frontend
                         GhostRig.transform.Find("rig/body_pivot/SlideAudio").gameObject.SetActive(false);
                         GhostRig.GetComponent<OwnershipGaurd>().enabled = false;
 
-                        Visuals.FixRigMaterialESPColors(GhostRig);
+                        Visual.FixRigMaterialESPColors(GhostRig);
 
                         GhostRig.transform.position = Vector3.one * float.MaxValue;
                     }
@@ -706,8 +708,8 @@ namespace Qubit.Frontend
                 #region Visual Clean Up
                 try
                 {
-                    Visuals.ClearLinePool();
-                    Visuals.ClearNameTagPool();
+                    Visual.ClearLinePool();
+                    Visual.ClearNameTagPool();
 
                     if (GunPointer != null)
                     {
@@ -729,7 +731,7 @@ namespace Qubit.Frontend
                     }
 
                     List<(long, float, PrimitiveType)> toRemoveVisualize = new List<(long, float, PrimitiveType)>();
-                    foreach (KeyValuePair<(long, float, PrimitiveType), GameObject> key in Visuals.visualizePool)
+                    foreach (KeyValuePair<(long, float, PrimitiveType), GameObject> key in Visual.visualizePool)
                     {
                         if (!key.Value.activeSelf)
                         {
@@ -740,10 +742,10 @@ namespace Qubit.Frontend
                             key.Value.SetActive(false);
                     }
                     foreach (var item in toRemoveVisualize)
-                        Visuals.visualizePool.Remove(item);
+                        Visual.visualizePool.Remove(item);
 
                     List<string> toRemoveLabel = new List<string>();
-                    foreach (KeyValuePair<string, GameObject> label in Visuals.labelDictionary)
+                    foreach (KeyValuePair<string, GameObject> label in Visual.labelDictionary)
                     {
                         if (!label.Value.activeSelf)
                         {
@@ -755,7 +757,7 @@ namespace Qubit.Frontend
                     }
 
                     foreach (string item in toRemoveLabel)
-                        Visuals.labelDictionary.Remove(item);
+                        Visual.labelDictionary.Remove(item);
                 }
                 catch { }
                 #endregion
