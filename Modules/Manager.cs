@@ -1585,10 +1585,10 @@ namespace Qubit.Modules
                 new Module { name = "Destroy Red Flower", method =() => Flowers.DestroyObject("RedFlowerThrowable"), toolTip = "Sends the red flower to hell." },
                 new Module { name = "Destroy Green Flower", method =() => Flowers.DestroyObject("GreenFlowerThrowable"), toolTip = "Sends the green flower to hell." },
 
-                new Module { name = "Purple Flower Size Changer", method =() => Flowers.ObjectSizeChanger("PurpleFlowerThrowable"), toolTip = "Changes the purple flower's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = "Yellow Flower Size Changer", method =() => Flowers.ObjectSizeChanger("YellowFlowerThrowable"), toolTip = "Changes the yellow flower's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = "Red Flower Size Changer", method =() => Flowers.ObjectSizeChanger("RedFlowerThrowable"), toolTip = "Changes the red flower's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = "Green Flower Size Changer", method =() => Flowers.ObjectSizeChanger("GreenFlowerThrowable"), toolTip = "Changes the green flower's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Purple Flower Size Changer", method =() => Flowers.ObjectSizeChanger("PurpleFlowerThrowable"), toolTip = "Changes the purple flower's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
+                new Module { name = "Yellow Flower Size Changer", method =() => Flowers.ObjectSizeChanger("YellowFlowerThrowable"), toolTip = "Changes the yellow flower's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
+                new Module { name = "Red Flower Size Changer", method =() => Flowers.ObjectSizeChanger("RedFlowerThrowable"), toolTip = "Changes the red flower's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
+                new Module { name = "Green Flower Size Changer", method =() => Flowers.ObjectSizeChanger("GreenFlowerThrowable"), toolTip = "Changes the green flower's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
 
                 new Module { name = "Lightning Time Overlay", method = Visuals.StrikeTimeOverlay, disableMethod =() => Notifications.information.Remove("Lightning"), toolTip = "Displays the time until lightning strikes again." },
                 new Module { name = "Spawn Lightning", method = Visuals.SpawnLightning, isTogglable = false, toolTip = "Spawns a manual lightning strike client sided." },
@@ -1859,9 +1859,9 @@ namespace Qubit.Modules
                 new Module { name = "Steal Firefly", method =() => Bugs.StealObject("Firefly"), isTogglable = false, toolTip = "Forcefully takes ownership of the firefly from whoever has it." },
                 new Module { name = "Steal Shark", method =() => Bugs.StealObject("Swimming Shark prefab"), isTogglable = false, toolTip = "Forcefully takes ownership of the shark from whoever has it." },
 
-                new Module { name = "Bug Size Changer", method =() => Bugs.ObjectSizeChanger("Floating Bug Holdable"), toolTip = "Changes the bug's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = "Bat Size Changer", method =() => Bugs.ObjectSizeChanger("Cave Bat Holdable"), toolTip = "Changes the bat's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = "Firefly Size Changer", method =() => Bugs.ObjectSizeChanger("Firefly"), toolTip = "Changes the firefly's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Bug Size Changer", method =() => Bugs.ObjectSizeChanger("Floating Bug Holdable"), toolTip = "Changes the bug's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
+                new Module { name = "Bat Size Changer", method =() => Bugs.ObjectSizeChanger("Cave Bat Holdable"), toolTip = "Changes the bat's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
+                new Module { name = "Firefly Size Changer", method =() => Bugs.ObjectSizeChanger("Firefly"), toolTip = "Changes the firefly's size with <color=green>trigger</color> and <color=green>grip</color>. This mod is client sided." },
                 new Module { name = "Shark Size Changer", method =() => Bugs.ObjectSizeChanger("Swimming Shark prefab"), toolTip = "Changes the shark's size with <color=green>trigger</color> and <color=green>grip</color>." },
 
                 new Module { name = "Grab Shark", method =() => Bugs.ObjectToHand("Swimming Shark prefab"), toolTip = "Forces the shark into your hand when holding <color=green>grip</color>." },
