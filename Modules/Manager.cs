@@ -770,6 +770,8 @@ namespace Qubit.Modules
                 new Module { name = "Zero Gravity", aliases = new[] { "No Gravity" }, postMethod = Movement.ZeroGravity, toolTip = "Disables gravity on your character."},
                 new Module { name = "High Gravity", aliases = new[] { "Mars Gravity" }, postMethod = Movement.HighGravity, toolTip = "Makes gravity higher on your character."},
                 new Module { name = "Reverse Gravity", aliases = new[] { "Flip Gravity" }, enableMethod = Movement.ReverseGravity, disableMethod = Movement.UnflipCharacter, toolTip = "Reverses gravity on your character."},
+                new Module { name = "Disable Space Gravity", method =() => Movement.ToggleSpaceGravity(false), disableMethod =() => Movement.ToggleSpaceGravity(true), toolTip = "Disables the main space map zone. This may fix fly."},
+                new Module { name = "Disable Planet Zones", method =() => Movement.TogglePlanetZones(false), disableMethod =() => Movement.TogglePlanetZones(true), toolTip = "Disables the planet zones that rotate your character and change the velocity in the space map."},
 
                 new Module { name = $"Rewind {Bracket("green", "T")}", aliases = new[] { "Reverse" }, method = Movement.Rewind, disableMethod = Movement.ClearRewind, toolTip = "Brings you back in time when holding <color=green>trigger</color>."},
                 new Module { name = "Macros", method =() => CurrentCategoryName = "Macros", isTogglable = false, toolTip = "Opens a category to manage your macros."},

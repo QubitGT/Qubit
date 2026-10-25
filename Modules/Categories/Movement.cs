@@ -25,6 +25,7 @@ using GorillaLocomotion;
 using GorillaLocomotion.Climbing;
 using GorillaLocomotion.Swimming;
 using GorillaNetworking;
+using GorillaTag.Gravity;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Core;
@@ -2069,6 +2070,16 @@ namespace Qubit.Modules.Categories
             References.Player.UnsetGravityOverride(References.Player);
             GTPlayerTransform.ApplyRotationOverride(Quaternion.identity, Time.frameCount);
         }
+
+        public static void ToggleSpaceGravity(bool on) =>
+            GetObject("SpaceMap/Space_Landing_V3/GravityZone_Spherical").SetActive(on);
+
+        public static void TogglePlanetZones(bool on)
+        {
+            foreach (var zone in GetAllType<PlanetZone>())
+                zone.enabled = on;
+        }
+
         public static void Rewind()
         {
             if (rightTrigger > 0.5f)
