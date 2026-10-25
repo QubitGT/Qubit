@@ -85,6 +85,13 @@ namespace Qubit.Frontend.Colors
         public void SetColorAt(int index, Color color) =>
             colors[index].color = color;
 
+        public void Flip()
+        {
+            Array.Reverse(colors);
+            for (int i = 0; i < colors.Length; i++)
+                colors[i] = new GradientColorKey(colors[i].color, colors.Length == 1 ? 0f : (float)i / (colors.Length - 1));
+        }
+
         public void AddColorPoint()
         {
             var points = colors.ToList();

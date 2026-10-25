@@ -19,12 +19,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using GorillaExtensions;
 using Qubit.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Categories;
 using Qubit.Patches.Events;
 using UnityEngine;
 using static Qubit.Extensions.Players;
+using static Qubit.Extensions.Random;
+using static Qubit.Libraries.Networking.LocalPlayer;
 using static Qubit.Modules.Classes.GunLibrary;
 
 namespace Qubit.Libraries.Entities
@@ -349,6 +352,63 @@ namespace Qubit.Libraries.Entities
             chaser.currentState = HalloweenGhostChaser.ChaseState.Grabbing;
             chaser.grabTime = Time.time;
             chaser.targetPlayer = GetRandomPlayer();
+        }
+
+        public static void RideLucy()
+        {
+            HalloweenGhostChaser chaser = Overpowered.Lucy;
+            if (chaser == null)
+                return;
+
+            TeleportPlayer(chaser.transform.position + Vector3.up * 2f);
+            References.Rigidbody.linearVelocity = Vector3.zero;
+        }
+
+        private static Rigidbody lucyRigidbody;
+
+        public static void Enable_LucyPhysics()
+        {
+            HalloweenGhostChaser chaser = Overpowered.Lucy;
+            if (chaser == null)
+                return;
+
+            lucyRigidbody = chaser.gameObject.GetOrAddComponent<Rigidbody>();
+            lucyRigidbody.useGravity = true;
+        }
+
+        public static void Disable_LucyPhysics()
+        {
+            if (lucyRigidbody == null)
+                return;
+
+            UnityEngine.Object.Destroy(lucyRigidbody);
+            lucyRigidbody = null;
+        }
+
+        public static void LucyPhysToggle()
+        {
+            if (lucyRigidbody != null)
+                lucyRigidbody.AddTorque(RandomVector3(5f), ForceMode.Impulse);
+        }
+
+        public static void BouncyLucy()
+        {
+            HalloweenGhostChaser chaser = Overpowered.Lucy;
+            if (chaser == null)
+                return;
+
+            Rigidbody rigidbody = chaser.gameObject.GetOrAddComponent<Rigidbody>();
+            rigidbody.useGravity = true;
+            rigidbody.AddForce(Vector3.up * 10f, ForceMode.VelocityChange);
+        }
+
+        public static void LucyFollowMe()
+        {
+            HalloweenGhostChaser chaser = GetControlledChaser();
+            if (chaser == null)
+                return;
+
+            FollowLocally(chaser, References.LocalRig.transform);
         }
     }
 }

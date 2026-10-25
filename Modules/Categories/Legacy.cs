@@ -46,6 +46,36 @@ namespace Qubit.Modules.Categories
             RPCProtection();
         }
 
+        private static float unloadMapDelay;
+
+        public static void UnloadMapGun()
+        {
+            GunLibrary.Target(_ =>
+            {
+                if (Time.time < unloadMapDelay)
+                    return;
+
+                unloadMapDelay = Time.time + 1f;
+                ForceUnloadCustomMap();
+            });
+        }
+
+        public static void UnloadMapAura()
+        {
+            if (!Networking.InRoom || Time.time < unloadMapDelay)
+                return;
+
+            foreach (VRRig rig in Players.ActiveRigs)
+            {
+                if (rig.IsLocal() || Vector3.Distance(rig.transform.position, References.LocalRig.transform.position) >= 4f)
+                    continue;
+
+                unloadMapDelay = Time.time + 1f;
+                ForceUnloadCustomMap();
+                break;
+            }
+        }
+
         private static float scDelay;
 
         public static void SizeChanger()

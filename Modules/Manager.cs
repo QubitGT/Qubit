@@ -214,6 +214,7 @@ namespace Qubit.Modules
                 new Module { name = "Horizontal Gradients", enableMethod =() => { horizontalGradients = true; cacheGradients.Clear(); }, disableMethod =() => { horizontalGradients = false; cacheGradients.Clear(); }, toolTip = "Rotates the dynamic gradients by 90 degrees.", legal = true},
                 new Module { name = "Scrolling Gradients", enableMethod =() => scrollingGradients = true, disableMethod =() => scrollingGradients = false, toolTip = "Scrolls the dynamic gradients over time.", legal = true},
                 new Module { name = "Legacy Gradients", enableMethod =() => { legacyGradients = true; cacheGradients.Clear(); }, disableMethod =() => { legacyGradients = false; cacheGradients.Clear(); }, toolTip = "Makes dynamic gradients drop the final color point, so cyclic themes (e.g. red to blue to red) only show the first half instead of looping back.", legal = true},
+                new Module { name = "Flip Gradients", method = Modules.Categories.Settings.FlipGradients, isTogglable = false, toolTip = "Flips every dynamic gradient's color points in reverse order.", legal = true},
                 new Module { name = "Dynamic Sounds", enableMethod =() => dynamicSounds = true, disableMethod =() => dynamicSounds = false, toolTip = "Adds more sounds to the menu, giving you a better sense of control.", legal = true},
                 new Module { name = "Disable Adaptive Buttons", enableMethod =() => adaptiveButtons = false, disableMethod =() => adaptiveButtons = true, toolTip = "Disables the rebinding of buttons to make your experience better based on what controllers you're using.", legal = true},
                 new Module { name = "Incremental Boost", enableMethod =() => incrementalBoost = true, disableMethod =() => incrementalBoost = false, toolTip = "Allows you to increment faster by holding down your <color=green>grip</color>.", legal = true},
@@ -636,6 +637,12 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Safety Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
+                new Module { name = "Panic Button", method = Safety.PanicButton, isTogglable = false, toolTip = "Disables every mod, closes the menu, resets your identity and flushes RPCs. Press again to restore the mods you had on." },
+                new Module { name = "Watchdog Auto-Leave", method = Safety.WatchdogAutoLeave, toolTip = "Automatically leaves the room whenever a player on your watchlist joins or is already in it." },
+                new Module { name = "Watchdog Mark All", aliases = new[] { "Mark All Players" }, method = Safety.WatchdogMarkAll, isTogglable = false, toolTip = "Adds everyone currently in the room to your watchlist." },
+                new Module { name = "Watchdog Clear", method = Safety.WatchdogClear, isTogglable = false, toolTip = "Clears your watchlist." },
+                new Module { name = "Mic Safety Gate", method = Safety.MicSafetyGate, disableMethod = Safety.DisableMicSafetyGate, toolTip = "Mutes your microphone whenever someone can reach your report button, unmutes once they can't." },
+
                 new Module { name = "No Finger Movement", aliases = new[] { "Disable Fingers" }, postMethod = Safety.NoFinger, toolTip = "Makes your fingers not move, so you can use wall walk without getting called out." },
 
                 new Module { name = $"Fake Oculus Menu {Bracket("green", "X")}", method = Safety.FakeOculusMenu, toolTip = "Imitates opening your Oculus menu when holding <color=green>X</color>."},
@@ -703,7 +710,7 @@ namespace Qubit.Modules
                 new Module { name = "Color Spoof", method = Safety.ColorSpoof, toolTip = "Makes your color appear different to every player."},
 
                 new Module { name = "Unload Menu", method = () => Prompt("Are you sure you want unload the menu?", UnloadMenu), isTogglable = false, toolTip = "Unloads the menu from your game."},
-                new Module { name = "Disable Anti Telemetry", enableMethod =() => TelemetryPatches.enabled = false, disableMethod =() => TelemetryPatches.enabled = true, toolTip = "Allows the game to send log data to Gorilla Tag's servers." }
+                new Module { name = "Disable Anti Telemetry", aliases = new[] { "Mothership Anti-Ban" }, enableMethod =() => TelemetryPatches.enabled = false, disableMethod =() => TelemetryPatches.enabled = true, toolTip = "Allows the game to send log data to Gorilla Tag's servers." }
             },
 
             ["Movement Mods"] = new[]
@@ -883,7 +890,7 @@ namespace Qubit.Modules
                 new Module { name = "Fake Full Body Tracking", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_FakeFBT, disableMethod =() => Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_FakeFBT, toolTip = "Fakes full body tracking by making your rig follow your camera orientation."},
                 new Module { name = "Control Rig Rotation", enableMethod =() => Torso.VRRigLateUpdate += Movement.VRRigLateUpdate_Control, disableMethod =() => Torso.VRRigLateUpdate -= Movement.VRRigLateUpdate_Control, toolTip = "Control your rig rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
                 new Module { name = "Control Body Rotation", postMethod = Movement.ControlBodyRotation, toolTip = "Control your body rotation with your joysticks or arrow keys. Click either joystick or enter to reset rotation."},
-                new Module { name = $"Flip {Bracket("green", "A")} {Bracket("green", "B")}", enableMethod =() => Torso.VRRigLateUpdate += Movement.Flip, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
+                new Module { name = "Flip", enableMethod =() => Torso.VRRigLateUpdate += Movement.Flip, disableMethod =() => { Torso.VRRigLateUpdate -= Movement.Flip; Movement.UnflipCharacter(); }, toolTip = "Makes you flip back when you click your A button, flip forwards when you click your B button."},
                 new Module { name = "Spider Crawl", aliases = new[] { "Crawl" }, postMethod = Movement.SpiderCrawl, toolTip = "Makes you look like a spider."},
                 new Module { name = "Butt Head", postMethod =() => Movement.ButtHead(), toolTip = "Flips your rig so your head is where your butt should be."},
                 new Module { name = "Flat On Back", postMethod =() => Movement.FlatOnBack(), toolTip = "Lays your rig flat on its back."},
@@ -1132,10 +1139,16 @@ namespace Qubit.Modules
                 new Module { name = "Chams", method = Visuals.Chams, disableMethod = Visuals.DisableShaderChams, toolTip = "Lets you see players through walls."},
                 new Module { name = "Cosmetic Chams", method = Visuals.CosmeticEsp, disableMethod = Visuals.DisableCosmeticEsp, toolTip = "Lets you see most cosmetics on people through walls."},
                 new Module { name = "Rare Cosmetic Chams", method = Visuals.RareCosmeticEsp, disableMethod = Visuals.DisableRareCosmeticEsp, toolTip = "Lets you see rare, hard to obtain cosmetics on people through walls."},
-                new Module { name = "130 FOV", method =() => Visuals.SetFOV(130f), isTogglable = false, toolTip = "Sets your camera's field of view to 130."},
-                new Module { name = "120 FOV", method =() => Visuals.SetFOV(120f), isTogglable = false, toolTip = "Sets your camera's field of view to 120."},
-                new Module { name = "110 FOV", method =() => Visuals.SetFOV(110f), isTogglable = false, toolTip = "Sets your camera's field of view to 110."},
-                new Module { name = "100 FOV", method =() => Visuals.SetFOV(100f), isTogglable = false, toolTip = "Sets your camera's field of view to 100."},
+                new Module { name = "30 FOV", method =() => Visuals.SetFOV(30f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 30."},
+                new Module { name = "40 FOV", method =() => Visuals.SetFOV(40f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 40."},
+                new Module { name = "50 FOV", method =() => Visuals.SetFOV(50f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 50."},
+                new Module { name = "60 FOV", method =() => Visuals.SetFOV(60f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 60."},
+                new Module { name = "70 FOV", method =() => Visuals.SetFOV(70f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 70."},
+                new Module { name = "80 FOV", method =() => Visuals.SetFOV(80f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 80."},
+                new Module { name = "90 FOV", method =() => Visuals.SetFOV(90f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 90."},
+                new Module { name = "100 FOV", method =() => Visuals.SetFOV(100f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 100."},
+                new Module { name = "110 FOV", method =() => Visuals.SetFOV(110f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 110."},
+                new Module { name = "120 FOV", method =() => Visuals.SetFOV(120f), disableMethod = Visuals.ResetFOV, toolTip = "Sets your camera's field of view to 120."},
                 new Module { name = "Reset FOV", method = Visuals.ResetFOV, isTogglable = false, toolTip = "Resets your camera's field of view back to default."},
 
                 new Module { name = "Casual Chams", method = Visuals.CasualChams, disableMethod = Visuals.DisableChams, toolTip = "Lets you see players fur through walls. Shows everyone."},
@@ -1190,6 +1203,7 @@ namespace Qubit.Modules
                 new Module { name = "Water Splash Aura", method = Fun.WaterSplashAura, toolTip = "Splashes water around you at random positions."},
                 new Module { name = "Orbit Water Splash", method = Fun.OrbitWaterSplash, toolTip = "Splashes water orbitally around you."},
                 new Module { name = "Water Splash Gun", method = Fun.WaterSplashGun, toolTip = "Splashes water wherever your hand desires."},
+                new Module { name = "Water Splash All", method = Fun.WaterSplashAll, isTogglable = false, toolTip = "Splashes water on everyone in the room."},
                 new Module { name = "Water Splash On Touch", method = Fun.WaterSplashOnTouch, toolTip = "Splashes water whoever your hand touches."},
 
                 new Module { name = "Confuse Player Gun", method = Fun.ConfusePlayerGun, toolTip = "Makes whoever your hand desires look like they're going crazy by splashing water on their screen."},
@@ -1427,7 +1441,9 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Legacy Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
-                new Module { name = "Force Unload Custom Map", method = Qubit.Modules.Categories.Legacy.ForceUnloadCustomMap, isTogglable = false, legacy = true, toolTip = "Forcefully unloads the current custom map." },
+                new Module { name = "Unload Map All", aliases = new[] { "Force Unload Custom Map" }, method = Qubit.Modules.Categories.Legacy.ForceUnloadCustomMap, isTogglable = false, legacy = true, toolTip = "Forcefully unloads the current custom map for everyone." },
+                new Module { name = "Unload Map Gun", method = Qubit.Modules.Categories.Legacy.UnloadMapGun, legacy = true, toolTip = "Forcefully unloads the current custom map when your hand points at someone." },
+                new Module { name = "Unload Map Aura", method = Qubit.Modules.Categories.Legacy.UnloadMapAura, legacy = true, toolTip = "Forcefully unloads the current custom map whenever someone gets near you." },
                 new Module { name = "Serversided Size Changer", method = Qubit.Modules.Categories.Legacy.SizeChanger, enableMethod = Qubit.Modules.Categories.Legacy.SizeChanger, disableMethod = Qubit.Modules.Categories.Legacy.DisableSizeChanger, legacy = true, toolTip = "Increase your size by holding <color=green>trigger</color>, and decrease your size by holding <color=green>grip</color>. Everyone can see you grow or shrink." },
                 new Module { name = "Long Name", method = Qubit.Modules.Categories.Legacy.LongName, isTogglable = false, legacy = true, toolTip = "Makes your name really long." },
 
@@ -1444,6 +1460,11 @@ namespace Qubit.Modules
                 new Module { name = "Guardian Crash On Touch", method = Overpowered.GuardianCrashOnTouch, isTogglable = false, legacy = true, toolTip = "Crashes players that touch you if you're the guardian." },
                 new Module { name = "Guardian Obliterate Gun", method = Overpowered.GuardianObliterateGun, legacy = true, toolTip = "Obliterates whoever your hand desires if you're the guardian." },
                 new Module { name = "Guardian Obliterate All", method = Overpowered.GuardianObliterateAll, isTogglable = false, legacy = true, toolTip = "Obliterates everyone in the room if you're the guardian, while holding <color=green>trigger</color>." },
+
+                new Module { name = "Team Color Self", method = Overpowered.TeamColorSelf, isTogglable = false, legacy = true, toolTip = "Sets your monke ball team color." },
+                new Module { name = "Team Color Gun", method = Overpowered.TeamColorGun, legacy = true, toolTip = "Sets the monke ball team color of whoever your hand desires." },
+                new Module { name = "Team Color All", method = Overpowered.TeamColorAll, isTogglable = false, legacy = true, toolTip = "Sets everyone's monke ball team color in the room." },
+                ButtonHelper.Create("ctcColor", () => Overpowered.TeamColorNames, Overpowered.teamColorIndex, Overpowered.ApplyTeamColor, "Changes the team color used by the team color mods.", overlapText: "Change Team Color"),
 
                 new Module { name = "Strobe Color Self", method = Overpowered.StrobeColorSelf, isTogglable = false, legacy = true, toolTip = "Strobes your color." },
                 new Module { name = "Strobe Color Gun", method = Overpowered.StrobeColorGun, legacy = true, toolTip = "Strobes the color of whoever your hand desires." },
@@ -1487,6 +1508,11 @@ namespace Qubit.Modules
                 new Module { name = "Slow Broomsticks", enableMethod = Fun.SlowBroomsticks, disableMethod = Fun.ResetBroomsticks, toolTip = "Makes the Halloween broomsticks slow. Requires master client."},
                 new Module { name = "Carry Lucy", enableMethod = Lucy.EnableCarry, method = Lucy.Carry, disableMethod = Lucy.DisableCarry, toolTip = "Picks Lucy up and lets everyone watch you carry the ghost around in your hand. Requires master client." },
                 new Module { name = "Lucy Flight", enableMethod = Lucy.EnableFlight, method = Lucy.Flight, disableMethod = Lucy.DisableFlight, toolTip = "Makes Lucy carry you up into the sky. Everyone sees you levitating, and she grabs you on your screen." },
+                new Module { name = "Ride Lucy", method = Lucy.RideLucy, toolTip = "Repeatedly teleports you on top of Lucy's head." },
+                new Module { name = "Lucy Physics", enableMethod = Lucy.Enable_LucyPhysics, method = Lucy.LucyPhysToggle, disableMethod = Lucy.Disable_LucyPhysics, toolTip = "Gives Lucy a rigidbody, letting her tumble and ragdoll around under real physics." },
+                new Module { name = "Bouncy Lucy", method = Lucy.BouncyLucy, isTogglable = false, toolTip = "Launches Lucy straight up into the air." },
+                new Module { name = "Lucy Follow Me", method = Lucy.LucyFollowMe, isTogglable = false, toolTip = "Makes Lucy start chasing you. Requires master client." },
+                new Module { name = "Anti Lucy", enableMethod =() => LucyRise.enabled = true, disableMethod =() => LucyRise.enabled = false, toolTip = "Prevents Lucy from rising and carrying you off when she grabs you." },
 
                 new Module { name = "Lurker Attack Self", method =() => Overpowered.LurkerAttack(Networking.LocalPlayer), isTogglable = false, toolTip = "Makes the lurker ghost attack you." },
                 new Module { name = "Lurker Attack Gun", method = Overpowered.LurkerAttackGun, toolTip = "Makes the lurker ghost attack whoever your hand desires." },
@@ -1498,6 +1524,71 @@ namespace Qubit.Modules
                 new Module { name = "Annoying Lurker", method = Overpowered.AnnoyingLurker, toolTip = "Makes the lurker ghost really annoying, by attacking everyone." },
                 new Module { name = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Movement.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the lurker ghost." },
                 new Module { name = "Anti Lurker", enableMethod =() => LurkerStates.enabled = true, disableMethod =() => LurkerStates.enabled = false, toolTip = "Prevents the lurker ghost from possessing you." },
+
+                new Module { name = "No Respawn Purple Flower", enableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable", 50f), toolTip = "Doesn't respawn the purple flower if it goes too far outside the bounds of forest."},
+                new Module { name = "No Respawn Yellow Flower", enableMethod =() => Flowers.SetRespawnDistance("YellowFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("YellowFlowerThrowable", 50f), toolTip = "Doesn't respawn the yellow flower if it goes too far outside the bounds of forest."},
+                new Module { name = "No Respawn Red Flower", enableMethod =() => Flowers.SetRespawnDistance("RedFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("RedFlowerThrowable", 50f), toolTip = "Doesn't respawn the red flower if it goes too far outside the bounds of forest."},
+                new Module { name = "No Respawn Green Flower", enableMethod =() => Flowers.SetRespawnDistance("GreenFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("GreenFlowerThrowable", 50f), toolTip = "Doesn't respawn the green flower if it goes too far outside the bounds of forest."},
+
+                new Module { name = "Permanent Purple Flower", method =() => Flowers.PermanentOwnership("PurpleFlowerThrowable"), disableMethod =() => Ownership.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the purple flower."},
+                new Module { name = "Permanent Yellow Flower", method =() => Flowers.PermanentOwnership("YellowFlowerThrowable"), disableMethod =() => Ownership.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the yellow flower."},
+                new Module { name = "Permanent Red Flower", method =() => Flowers.PermanentOwnership("RedFlowerThrowable"), disableMethod =() => Ownership.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the red flower."},
+                new Module { name = "Permanent Green Flower", method =() => Flowers.PermanentOwnership("GreenFlowerThrowable"), disableMethod =() => Ownership.blacklistedGuards.Clear(), toolTip = "Disables other players from grabbing the green flower."},
+
+                new Module { name = "Steal Purple Flower", method =() => Flowers.StealObject("PurpleFlowerThrowable"), isTogglable = false, toolTip = "Forcefully takes ownership of the purple flower from whoever has it."},
+                new Module { name = "Steal Yellow Flower", method =() => Flowers.StealObject("YellowFlowerThrowable"), isTogglable = false, toolTip = "Forcefully takes ownership of the yellow flower from whoever has it."},
+                new Module { name = "Steal Red Flower", method =() => Flowers.StealObject("RedFlowerThrowable"), isTogglable = false, toolTip = "Forcefully takes ownership of the red flower from whoever has it."},
+                new Module { name = "Steal Green Flower", method =() => Flowers.StealObject("GreenFlowerThrowable"), isTogglable = false, toolTip = "Forcefully takes ownership of the green flower from whoever has it."},
+
+                new Module { name = "Holster Purple Flower", method =() => Flowers.HolsterObject("PurpleFlowerThrowable", TransferrableObject.PositionState.OnRightArm), toolTip = "Holsters the purple flower on your right arm." },
+                new Module { name = "Holster Yellow Flower", method =() => Flowers.HolsterObject("YellowFlowerThrowable", TransferrableObject.PositionState.OnRightArm), toolTip = "Holsters the yellow flower on your right arm." },
+                new Module { name = "Holster Red Flower", method =() => Flowers.HolsterObject("RedFlowerThrowable", TransferrableObject.PositionState.OnRightArm), toolTip = "Holsters the red flower on your right arm." },
+                new Module { name = "Holster Green Flower", method =() => Flowers.HolsterObject("GreenFlowerThrowable", TransferrableObject.PositionState.OnRightArm), toolTip = "Holsters the green flower on your right arm." },
+
+                new Module { name = $"Grab Purple Flower {Bracket("green", "G")}", method =() => Flowers.ObjectToHand("PurpleFlowerThrowable"), toolTip = "Forces the purple flower into your hand when holding <color=green>grip</color>." },
+                new Module { name = $"Grab Yellow Flower {Bracket("green", "G")}", method =() => Flowers.ObjectToHand("YellowFlowerThrowable"), toolTip = "Forces the yellow flower into your hand when holding <color=green>grip</color>." },
+                new Module { name = $"Grab Red Flower {Bracket("green", "G")}", method =() => Flowers.ObjectToHand("RedFlowerThrowable"), toolTip = "Forces the red flower into your hand when holding <color=green>grip</color>." },
+                new Module { name = $"Grab Green Flower {Bracket("green", "G")}", method =() => Flowers.ObjectToHand("GreenFlowerThrowable"), toolTip = "Forces the green flower into your hand when holding <color=green>grip</color>." },
+
+                new Module { name = "Purple Flower Gun", method =() => Flowers.ObjectToPointGun("PurpleFlowerThrowable"), toolTip = "Moves the purple flower to wherever your hand desires." },
+                new Module { name = "Yellow Flower Gun", method =() => Flowers.ObjectToPointGun("YellowFlowerThrowable"), toolTip = "Moves the yellow flower to wherever your hand desires." },
+                new Module { name = "Red Flower Gun", method =() => Flowers.ObjectToPointGun("RedFlowerThrowable"), toolTip = "Moves the red flower to wherever your hand desires." },
+                new Module { name = "Green Flower Gun", method =() => Flowers.ObjectToPointGun("GreenFlowerThrowable"), toolTip = "Moves the green flower to wherever your hand desires." },
+
+                new Module { name = "Spaz Purple Flower", method =() => Flowers.SpazObject("PurpleFlowerThrowable"), toolTip = "Gives the purple flower a seizure." },
+                new Module { name = "Spaz Yellow Flower", method =() => Flowers.SpazObject("YellowFlowerThrowable"), toolTip = "Gives the yellow flower a seizure." },
+                new Module { name = "Spaz Red Flower", method =() => Flowers.SpazObject("RedFlowerThrowable"), toolTip = "Gives the red flower a seizure." },
+                new Module { name = "Spaz Green Flower", method =() => Flowers.SpazObject("GreenFlowerThrowable"), toolTip = "Gives the green flower a seizure." },
+
+                new Module { name = "Orbit Purple Flower", method =() => Flowers.OrbitObject("PurpleFlowerThrowable"), toolTip = "Orbits the purple flower around you." },
+                new Module { name = "Orbit Yellow Flower", method =() => Flowers.OrbitObject("YellowFlowerThrowable", 90f), toolTip = "Orbits the yellow flower around you." },
+                new Module { name = "Orbit Red Flower", method =() => Flowers.OrbitObject("RedFlowerThrowable", 180f), toolTip = "Orbits the red flower around you." },
+                new Module { name = "Orbit Green Flower", method =() => Flowers.OrbitObject("GreenFlowerThrowable", 270f), toolTip = "Orbits the green flower around you." },
+
+                new Module { name = "Purple Flower Aura", method =() => Flowers.ObjectAura("PurpleFlowerThrowable"), toolTip = "Teleports the purple flower around you in random positions." },
+                new Module { name = "Yellow Flower Aura", method =() => Flowers.ObjectAura("YellowFlowerThrowable"), toolTip = "Teleports the yellow flower around you in random positions." },
+                new Module { name = "Red Flower Aura", method =() => Flowers.ObjectAura("RedFlowerThrowable"), toolTip = "Teleports the red flower around you in random positions." },
+                new Module { name = "Green Flower Aura", method =() => Flowers.ObjectAura("GreenFlowerThrowable"), toolTip = "Teleports the green flower around you in random positions." },
+
+                new Module { name = "Ride Purple Flower", method =() => Flowers.RideObject("PurpleFlowerThrowable"), toolTip = "Repeatedly teleports you on top of the purple flower." },
+                new Module { name = "Ride Yellow Flower", method =() => Flowers.RideObject("YellowFlowerThrowable"), toolTip = "Repeatedly teleports you on top of the yellow flower." },
+                new Module { name = "Ride Red Flower", method =() => Flowers.RideObject("RedFlowerThrowable"), toolTip = "Repeatedly teleports you on top of the red flower." },
+                new Module { name = "Ride Green Flower", method =() => Flowers.RideObject("GreenFlowerThrowable"), toolTip = "Repeatedly teleports you on top of the green flower." },
+
+                new Module { name = "Become Purple Flower", method =() => Flowers.BecomeObject("PurpleFlowerThrowable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the purple flower." },
+                new Module { name = "Become Yellow Flower", method =() => Flowers.BecomeObject("YellowFlowerThrowable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the yellow flower." },
+                new Module { name = "Become Red Flower", method =() => Flowers.BecomeObject("RedFlowerThrowable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the red flower." },
+                new Module { name = "Become Green Flower", method =() => Flowers.BecomeObject("GreenFlowerThrowable"), disableMethod = Movement.EnableRig, toolTip = "Turns you into the green flower." },
+
+                new Module { name = "Destroy Purple Flower", method =() => Flowers.DestroyObject("PurpleFlowerThrowable"), toolTip = "Sends the purple flower to hell." },
+                new Module { name = "Destroy Yellow Flower", method =() => Flowers.DestroyObject("YellowFlowerThrowable"), toolTip = "Sends the yellow flower to hell." },
+                new Module { name = "Destroy Red Flower", method =() => Flowers.DestroyObject("RedFlowerThrowable"), toolTip = "Sends the red flower to hell." },
+                new Module { name = "Destroy Green Flower", method =() => Flowers.DestroyObject("GreenFlowerThrowable"), toolTip = "Sends the green flower to hell." },
+
+                new Module { name = "Purple Flower Size Changer", method =() => Flowers.ObjectSizeChanger("PurpleFlowerThrowable"), toolTip = "Changes the purple flower's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Yellow Flower Size Changer", method =() => Flowers.ObjectSizeChanger("YellowFlowerThrowable"), toolTip = "Changes the yellow flower's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Red Flower Size Changer", method =() => Flowers.ObjectSizeChanger("RedFlowerThrowable"), toolTip = "Changes the red flower's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Green Flower Size Changer", method =() => Flowers.ObjectSizeChanger("GreenFlowerThrowable"), toolTip = "Changes the green flower's size with <color=green>trigger</color> and <color=green>grip</color>." },
 
                 new Module { name = "Lightning Time Overlay", method = Visuals.StrikeTimeOverlay, disableMethod =() => Notifications.information.Remove("Lightning"), toolTip = "Displays the time until lightning strikes again." },
                 new Module { name = "Spawn Lightning", method = Visuals.SpawnLightning, isTogglable = false, toolTip = "Spawns a manual lightning strike client sided." },
@@ -1768,10 +1859,10 @@ namespace Qubit.Modules
                 new Module { name = "Steal Firefly", method =() => Bugs.StealObject("Firefly"), isTogglable = false, toolTip = "Forcefully takes ownership of the firefly from whoever has it." },
                 new Module { name = "Steal Shark", method =() => Bugs.StealObject("Swimming Shark prefab"), isTogglable = false, toolTip = "Forcefully takes ownership of the shark from whoever has it." },
 
-                new Module { name = $"Bug Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method =() => Bugs.ObjectSizeChanger("Floating Bug Holdable"), toolTip = "Changes the bug's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = $"Bat Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method =() => Bugs.ObjectSizeChanger("Cave Bat Holdable"), toolTip = "Changes the bat's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = $"Firefly Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method =() => Bugs.ObjectSizeChanger("Firefly"), toolTip = "Changes the firefly's size with <color=green>trigger</color> and <color=green>grip</color>." },
-                new Module { name = $"Shark Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method =() => Bugs.ObjectSizeChanger("Swimming Shark prefab"), toolTip = "Changes the shark's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Bug Size Changer", method =() => Bugs.ObjectSizeChanger("Floating Bug Holdable"), toolTip = "Changes the bug's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Bat Size Changer", method =() => Bugs.ObjectSizeChanger("Cave Bat Holdable"), toolTip = "Changes the bat's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Firefly Size Changer", method =() => Bugs.ObjectSizeChanger("Firefly"), toolTip = "Changes the firefly's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Shark Size Changer", method =() => Bugs.ObjectSizeChanger("Swimming Shark prefab"), toolTip = "Changes the shark's size with <color=green>trigger</color> and <color=green>grip</color>." },
 
                 new Module { name = "Grab Shark", method =() => Bugs.ObjectToHand("Swimming Shark prefab"), toolTip = "Forces the shark into your hand when holding <color=green>grip</color>." },
                 new Module { name = "Shark Gun", method =() => Bugs.ObjectToPointGun("Swimming Shark prefab"), toolTip = "Moves the shark to wherever your hand desires." },
@@ -1791,7 +1882,7 @@ namespace Qubit.Modules
                 new Module { name = "Spaz Ball", method = Balls.SpazBalls, toolTip = "Gives the ball a seizure." },
                 new Module { name = "Orbit Ball", method = Balls.OrbitBalls, toolTip = "Orbits the ball around you." },
                 new Module { name = "Ball Aura", method = Balls.BallAura, toolTip = "Teleports the ball around you in random positions." },
-                new Module { name = $"Ball Size Changer {Bracket("green", "Trigger")}/{Bracket("green", "Grip")}", method = Balls.BallSizeChanger, toolTip = "Changes the ball's size with <color=green>trigger</color> and <color=green>grip</color>." },
+                new Module { name = "Ball Size Changer", method = Balls.BallSizeChanger, toolTip = "Changes the ball's size with <color=green>trigger</color> and <color=green>grip</color>." },
                 new Module { name = "Become Ball", method = Balls.BecomeBall, disableMethod = Movement.EnableRig, toolTip = "Turns you into the ball." },
                 new Module { name = "Destroy Ball", method = Balls.DestroyBalls, isTogglable = false, toolTip = "Sends the ball to hell." },
                 new Module { name = "Destroy Balloons", method = Balloons.DestroyBalloons, isTogglable = false, toolTip = "Sends every single balloon cosmetic to hell." },
@@ -1848,6 +1939,7 @@ namespace Qubit.Modules
                 new Module { name = "Unlock Fan Club Subscription", aliases = new[] { "Unlock VIM", "Unlock Very Cool Monke", "Free VIM" }, enableMethod =() => SubscriptionStatus.enabled = true, disableMethod =() => SubscriptionStatus.enabled = false, toolTip = "Unlocks the Gorilla Tag fan club subscription." },
                 new Module { name = "Unlock All Cosmetics", method = Cosmetics.UnlockAllCosmetics, toolTip = "Unlocks every cosmetic in the game. This mod is client-sided." },
                 new Module { name = "Unlimited Shiny Rocks", enableMethod =() => Purchasing.enabled = true, method =() => ManagerRegistry.CosmeticsController.currencyBalance = int.MaxValue, disableMethod =() => Purchasing.enabled = false, toolTip = "Gives you 2 billion shiny rocks. This mod is client sided." },
+                new Module { name = "Redeem Shiny Rocks", method = Important.RedeemAllShinyRocks, isTogglable = false, toolTip = "Redeems your real-world shiny rocks reward from the server." },
                 new Module { name = "Sticky Holdables", method = Fun.StickyHoldables, toolTip = "Makes your holdables sticky.", legal = true},
                 new Module { name = "Spaz Holdables", method = Fun.SpazHoldables, toolTip = "Spazzes out the positions of your holdables." },
                 new Module { name = "Get ID Self", method = Fun.CopySelfID, isTogglable = false, toolTip = "Gets your player ID and copies it to the clipboard.", legal = true},
@@ -2028,6 +2120,8 @@ namespace Qubit.Modules
 
                 new Module { name = "VIM Mute Gun", method = Master.VIMMuteGun, toolTip = "Mutes whoever your hand desires if you created the room as a fan club subscriber." },
                 new Module { name = "VIM Mute All", enableMethod = Master.VIMMuteAll, disableMethod = Master.VIMUnmuteAll, toolTip = "Mutes everyone if you created the room as a fan club subscriber." },
+
+                new Module { name = "Give Tag Lag Gun", method = Master.GiveTagLagGun, toolTip = "Makes whoever your hand desires immune to being tagged. Requires master client." },
 
                 new Module { name = "Gray Zone", enableMethod = Master.ActivateGrayZone, disableMethod = Master.DeactivateGrayZone, toolTip = "Forces the gray zone event to stay active permanently. Requires master client." },
                 new Module { name = "Spam Gray Zone", enableMethod = Master.EnableSpamGrayZone, method = Master.SpamGrayZone, disableMethod = Master.DisableSpamGrayZone, toolTip = "Rapidly toggles the gray zone event on and off. Requires master client." },
@@ -2344,6 +2438,8 @@ namespace Qubit.Modules
 
                 new Module { name = "Break Audio Gun", method = Overpowered.BreakAudioGun, toolTip = "Attempts to break the audio of whoever your hand desires." },
                 new Module { name = $"Break Audio All {Bracket("green", "T")}", method = Overpowered.BreakAudioAll, toolTip = "Attempts to break everyone's audio when holding trigger." },
+
+                new Module { name = "Snowball Overload", aliases = new[] { "Effect Overload" }, enableMethod =() => Notifications.SendFormat("green", "SNOWBALL SPAM", "Enabled."), method = Overpowered.EffectOverload, disableMethod =() => { Overpowered.SnowballSpamOff(); Notifications.SendFormat("red", "SNOWBALL SPAM", "Disabled."); }, toolTip = "Rapidly spams snowballs around you for a chaotic, hard to moderate effect." },
             },
 
             ["Soundboard"] = new[]
@@ -2966,7 +3062,7 @@ namespace Qubit.Modules
                 new Module { name = "Detected Change Name On Touch", displayName = "Change Name On Touch", enableMethod = Detected.PromptNameChange, method = Detected.ChangeNameOnTouch, detected = true, toolTip = "Changes the name of players that you touch."},
 
                 new Module { name = "Detected Ban Gun", displayName = "Ban Gun", method = Detected.BanGun, detected = true, toolTip = "Changes the name of whoever your hand desires to a banned name."},
-                new Module { name = "Detected Ban All", displayName = "Ban All", method = Detected.BanGun, detected = true, toolTip = "Changes the name of everyone in the room to a banned name."},
+                new Module { name = "Detected Ban All", displayName = "Ban All", method = Detected.BanAll, detected = true, isTogglable = false, toolTip = "Changes the name of everyone in the room to a banned name."},
 
                 new Module { name = "Bypass Mod Checkers Gun", method = Detected.BypassModCheckersGun, detected = true, toolTip = "Tells players using mod checkers that whoever your hand desires has no mods."},
                 new Module { name = "Bypass Mod Checkers All", method = Detected.BypassModCheckersAll, isTogglable = false, detected = true, toolTip = "Tells players using mod checkers that no one has no mods."},

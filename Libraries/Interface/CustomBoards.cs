@@ -235,7 +235,7 @@ namespace Qubit.Libraries.Interface
                             if (stumpMaterial == null)
                                 stumpMaterial = stumpBoard.GetComponent<Renderer>().material;
 
-                            stumpBoard.GetComponent<Renderer>().material = BoardMaterial;
+                            stumpBoard.GetComponent<Renderer>().sharedMaterial = BoardMaterial;
                         }
                     }
 
@@ -251,7 +251,7 @@ namespace Qubit.Libraries.Interface
                             if (forestMaterial == null)
                                 forestMaterial = forestBoard.GetComponent<Renderer>().material;
 
-                            forestBoard.GetComponent<Renderer>().material = BoardMaterial;
+                            forestBoard.GetComponent<Renderer>().sharedMaterial = BoardMaterial;
                         }
                     }
 
@@ -283,7 +283,9 @@ namespace Qubit.Libraries.Interface
                             "Environment Objects/LocalObjects_Prefab/TreeRoom/CodeOfConductHeadingText",
                             "Environment Objects/LocalObjects_Prefab/TreeRoom/COCBodyText_TitleData",
                             "Environment Objects/LocalObjects_Prefab/TreeRoom/Data",
-                            "Environment Objects/LocalObjects_Prefab/TreeRoom/FunctionSelect"
+                            "Environment Objects/LocalObjects_Prefab/TreeRoom/FunctionSelect",
+                            "Environment Objects/LocalObjects_Prefab/TreeRoom/HeadOutside",
+                            "Environment Objects/LocalObjects_Prefab/TreeRoom/WelcomeToGorilllaTagHeadingText"
                         };
                     foreach (string objectName in objectsWithTMPro)
                     {
@@ -302,7 +304,7 @@ namespace Qubit.Libraries.Interface
                     for (int i = 0; i < forestTransform.transform.childCount; i++)
                     {
                         GameObject v = forestTransform.GetChild(i).gameObject;
-                        if ((!v.name.Contains("Board Text") && !v.name.Contains("Scoreboard_OfflineText")) ||
+                        if ((!v.name.Contains("Board Text") && !v.name.Contains("Scoreboard_OfflineText")) || !v.name.Contains("Weather Controls Status") ||
                             !v.activeSelf) continue;
                         TextMeshPro text = v.GetComponent<TextMeshPro>();
                         if (!textMeshPro.Contains(text))
@@ -322,7 +324,7 @@ namespace Qubit.Libraries.Interface
                 computerMonitor = GetObject("Environment Objects/LocalObjects_Prefab/TreeRoom/TreeRoomInteractables/GorillaComputerObject/ComputerUI/monitor/monitorScreen");
 
             if (computerMonitor != null)
-                computerMonitor.GetComponent<Renderer>().material = BoardMaterial;
+                computerMonitor.GetComponent<Renderer>().sharedMaterial = BoardMaterial;
 
             try
             {
@@ -441,7 +443,7 @@ namespace Qubit.Libraries.Interface
                 board.transform.localScale = scale ?? new Vector3(21.6f, 2.4f, 22f);
 
                 Destroy(board.GetComponent<Collider>());
-                board.GetComponent<Renderer>().material = BoardMaterial;
+                board.GetComponent<Renderer>().sharedMaterial = BoardMaterial;
 
                 objectBoards.Add(scene, board);
             }

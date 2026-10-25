@@ -3738,6 +3738,14 @@ exit 0";
         public static void FixTheme() =>
             ApplyMenuTheme(themeType);
 
+        public static void FlipGradients()
+        {
+            backgroundColor.Flip();
+            menuBackgroundColor.Flip();
+            buttonColors[0].Flip();
+            buttonColors[1].Flip();
+        }
+
         public static void CustomMenuBackground()
         {
             if (!File.Exists($"{PluginInfo.BaseDirectory}/CustomBackground.png"))

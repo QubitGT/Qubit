@@ -421,6 +421,9 @@ exit";
         internal static extern void keybd_event(uint bVk, uint bScan, uint dwFlags, uint dwExtraInfo);
         internal static void SendKey(VirtualKeyCodes virtualKeyCode) => keybd_event((uint)virtualKeyCode, 0, 0, 0);
 
+        public static void RedeemAllShinyRocks() =>
+            Coroutines.instance.StartCoroutine(RedeemShinyRocks());
+
         public static void PreviousTrack()
         {
             Coroutines.instance.StartCoroutine(UpdateDataCoroutine(0.1f));

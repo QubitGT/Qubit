@@ -528,7 +528,7 @@ namespace Qubit.Backend
 
                 try
                 {
-                    if (data.customTheme != null)
+                    if (data.customTheme != null && Manager.GetIndex("Custom Menu Theme")?.enabled == true)
                         Modules.Categories.Settings.ApplyTheme(data.customTheme);
                 }
                 catch (Exception e) { Logs.Log("Error applying custom theme: " + e.Message); }

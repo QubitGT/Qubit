@@ -815,6 +815,121 @@ namespace Qubit.Modules.Categories
 
             Important.lastSteam = playerOnSteam;
         }
+
+        private static List<string> panicRestoreList;
+
+        public static void PanicButton()
+        {
+            if (panicRestoreList != null)
+            {
+                foreach (string name in panicRestoreList)
+                    Manager.GetIndex(name)?.SetEnabled(true);
+
+                panicRestoreList = null;
+                Notifications.SendFormat("green", "PANIC", "Restored your previous mods.");
+                return;
+            }
+
+            panicRestoreList = Manager.modules.Values.SelectMany(list => list)
+                .Where(module => module.isTogglable && module.enabled)
+                .Select(module => module.name)
+                .ToList();
+
+            Settings.Panic();
+            ChangeIdentityRegular();
+            FlushRPCs();
+            Qubit.Frontend.Core.CloseMenu();
+        }
+
+        private static readonly string watchlistPath = $"{PluginInfo.BaseDirectory}/Qubit_Watchlist.txt";
+        private static HashSet<string> watchlist;
+        private static float watchdogDelay;
+
+        private static HashSet<string> LoadWatchlist()
+        {
+            if (watchlist != null) return watchlist;
+            watchlist = File.Exists(watchlistPath)
+                ? new HashSet<string>(File.ReadAllLines(watchlistPath).Where(line => !string.IsNullOrWhiteSpace(line)))
+                : new HashSet<string>();
+            return watchlist;
+        }
+
+        public static void WatchdogMarkAll()
+        {
+            HashSet<string> list = LoadWatchlist();
+            foreach (Player player in PhotonNetwork.PlayerListOthers)
+                list.Add(player.UserId);
+
+            File.WriteAllLines(watchlistPath, list);
+            Notifications.SendFormat("green", "WATCHDOG", $"Added {PhotonNetwork.PlayerListOthers.Length} players to the watchlist.");
+        }
+
+        public static void WatchdogClear()
+        {
+            watchlist = new HashSet<string>();
+            if (File.Exists(watchlistPath))
+                File.Delete(watchlistPath);
+
+            Notifications.SendFormat("green", "WATCHDOG", "Cleared the watchlist.");
+        }
+
+        public static void WatchdogAutoLeave()
+        {
+            if (!Networking.InRoom || Time.time < watchdogDelay)
+                return;
+
+            HashSet<string> list = LoadWatchlist();
+            if (list.Count == 0)
+                return;
+
+            foreach (Player player in PhotonNetwork.PlayerListOthers)
+            {
+                if (!list.Contains(player.UserId))
+                    continue;
+
+                watchdogDelay = Time.time + 5f;
+                Notifications.SendFormat("red", "WATCHDOG", "A watched player is here. Leaving.");
+                Qubit.Libraries.Networking.Rooms.JoinRandom();
+                break;
+            }
+        }
+
+        private static bool micGateMuted;
+
+        public static void MicSafetyGate()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            bool reachable = false;
+            foreach (GorillaPlayerScoreboardLine line in GorillaScoreboardTotalUpdater.allScoreboardLines)
+            {
+                if (line.linePlayer != Networking.LocalPlayer) continue;
+                Vector3 reportPos = line.reportButton.gameObject.transform.position;
+                if (Players.ActiveRigs.Any(vrrig => !vrrig.IsLocal() && OverlappingButton(vrrig, reportPos)))
+                    reachable = true;
+            }
+
+            if (reachable && !micGateMuted)
+            {
+                micGateMuted = true;
+                Fun.MuteMicrophone(true);
+            }
+            else if (!reachable && micGateMuted)
+            {
+                micGateMuted = false;
+                Fun.MuteMicrophone(false);
+            }
+        }
+
+        public static void DisableMicSafetyGate()
+        {
+            if (micGateMuted)
+            {
+                micGateMuted = false;
+                Fun.MuteMicrophone(false);
+            }
+        }
         #endregion
     }
 }

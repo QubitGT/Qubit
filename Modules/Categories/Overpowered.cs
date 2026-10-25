@@ -68,6 +68,9 @@ namespace Qubit.Modules.Categories
 
         private static float playerColorDelay;
 
+        public static int teamColorIndex;
+        public static readonly string[] TeamColorNames = { "Blue", "Red" };
+
         public static readonly Dictionary<VRRig, int> materialState = new Dictionary<VRRig, int>();
 
         public static float guardianSpazDelay;
@@ -469,6 +472,12 @@ namespace Qubit.Modules.Categories
             else
                 Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
+
+        public static void ApplyTeamColor(int index) => teamColorIndex = index;
+
+        public static void TeamColorSelf() => SetColorSelf(teamColorIndex);
+        public static void TeamColorGun() => SetColorGun(teamColorIndex);
+        public static void TeamColorAll() => SetColorAll(teamColorIndex);
 
         public static void StrobeColorSelf()
         {
@@ -2497,6 +2506,25 @@ namespace Qubit.Modules.Categories
                 References.MyRigView.SendRPC("RPC_PlayHandTap", RpcTarget.Others, 111, false, 999999f);
             }
         }
+
+        private static float snowballOverloadDelay;
+
+        public static void EffectOverload()
+        {
+            if (Time.time < snowballOverloadDelay)
+                return;
+
+            snowballOverloadDelay = Time.time + 0.05f;
+
+            Projectiles.SendProjectile(
+                ThrowableProjectiles.GetPreferredProjectileEntry(),
+                References.LocalRig.transform.position + Vector3.up,
+                new Vector3(UnityEngine.Random.Range(-15f, 15f), UnityEngine.Random.Range(10f, 20f), UnityEngine.Random.Range(-15f, 15f))
+            );
+        }
+
+        public static void SnowballSpamOff() =>
+            snowballOverloadDelay = 0f;
         public static IEnumerator RopeEnableRig()
         {
             yield return new WaitForSeconds(0.3f);

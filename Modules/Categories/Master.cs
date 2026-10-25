@@ -170,6 +170,35 @@ namespace Qubit.Modules.Categories
             });
         }
 
+        public static void GiveTagLagGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (PhotonNetwork.IsMasterClient)
+                {
+                    if (lockTarget != null)
+                        TagReports.invinciblePlayers.Remove(lockTarget.GetPlayer());
+
+                    gunLocked = true;
+                    lockTarget = gunTarget;
+
+                    TagReports.invinciblePlayers.Add(GetPlayerFromVRRig(gunTarget));
+                }
+                else
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
+                {
+                    if (gunLocked)
+                    {
+                        gunLocked = false;
+                        TagReports.invinciblePlayers.Remove(lockTarget.GetPlayer());
+                    }
+                }
+            });
+        }
+
         public static void SetTagCooldown(float value)
         {
             if (!Networking.InRoom)
