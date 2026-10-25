@@ -426,6 +426,17 @@ namespace Qubit.Modules.Categories
 
         private static bool ghostMonke;
 
+        public static int weepingAngelMode;
+        public static readonly string[] WeepingAngelModeNames = { "Specific Player", "Anyone" };
+        public static void ApplyWeepingAngelMode(int index)
+        {
+            weepingAngelMode = index;
+            weepingAngelPlayer = null;
+        }
+
+        private static NetPlayer weepingAngelPlayer;
+        private static bool weepingAngelFrozen;
+
         public static Vector3 offsetLH = Vector3.zero;
         public static Vector3 offsetRH = Vector3.zero;
         public static Vector3 offsetH = Vector3.zero;
@@ -2932,6 +2943,85 @@ namespace Qubit.Modules.Categories
         {
             References.LocalRig.enabled = true;
             ghostException = false;
+        }
+
+        public static void WeepingAngel()
+        {
+            if (weepingAngelMode == 0)
+            {
+                GunLibrary.Aim(GunData =>
+                {
+                    if (GetGunInput(true))
+                    {
+                        VRRig gunTarget = GunData.Ray.collider.GetComponentInParent<VRRig>();
+                        NetPlayer gunPlayer = gunTarget && !gunTarget.IsLocal() ? GetPlayerFromVRRig(gunTarget) : null;
+                        if (gunPlayer != null && gunPlayer != weepingAngelPlayer)
+                        {
+                            weepingAngelPlayer = gunPlayer;
+                            Notifications.SendFormat("green", "WEEPING ANGEL", $"Only {gunPlayer.NickName} can freeze you now.");
+                        }
+                    }
+                });
+            }
+
+            VRRig target = weepingAngelPlayer == null ? null : GetVRRigFromPlayer(weepingAngelPlayer);
+            if (weepingAngelMode == 0 && target == null)
+                weepingAngelPlayer = null;
+
+            bool observed = weepingAngelMode == 0
+                ? target != null && IsWatching(target)
+                : Players.ActiveRigs.Any(rig => !rig.IsLocal() && IsWatching(rig));
+
+            VRRig prey = !observed && Manager.GetIndex("Weeping Angel Chase").enabled
+                ? (weepingAngelMode == 0 ? target : References.LocalRig.GetClosest())
+                : null;
+
+            bool detached = observed || prey != null;
+            if (detached != weepingAngelFrozen)
+            {
+                weepingAngelFrozen = detached;
+                References.LocalRig.enabled = !detached;
+            }
+
+            if (prey != null) ChaseWeepingAngelPrey(prey);
+        }
+
+        private static void ChaseWeepingAngelPrey(VRRig prey)
+        {
+            Transform rig = References.LocalRig.transform;
+            Vector3 goal = prey.transform.position;
+            float distance = Vector3.Distance(rig.position, goal);
+            if (distance > 1f)
+                rig.position = Vector3.MoveTowards(rig.position, goal, Mathf.Min(FlySpeed / 2f * Time.deltaTime, distance - 1f));
+
+            Vector3 facing = goal - rig.position;
+            facing.y = 0f;
+            if (facing.sqrMagnitude > 0.0001f) rig.rotation = Quaternion.LookRotation(facing);
+
+            References.LocalRig.head.rigTarget.transform.rotation = rig.rotation;
+            References.LocalRig.leftHand.rigTarget.transform.position = rig.position + rig.forward * 0.5f - rig.right * 0.3f + rig.up * 0.2f;
+            References.LocalRig.rightHand.rigTarget.transform.position = rig.position + rig.forward * 0.5f + rig.right * 0.3f + rig.up * 0.2f;
+            References.LocalRig.leftHand.rigTarget.transform.rotation = rig.rotation;
+            References.LocalRig.rightHand.rigTarget.transform.rotation = rig.rotation;
+            FixRigHandRotation();
+        }
+
+        private static bool IsWatching(VRRig rig)
+        {
+            Transform eyes = rig.headMesh.transform;
+            Vector3 head = References.LocalRig.headMesh.transform.position;
+            Vector3 direction = head - eyes.position;
+            if (Vector3.Angle(eyes.forward, direction) > 45f) return false;
+
+            Vector3 offset = direction.normalized * Mathf.Min(0.25f, direction.magnitude * 0.25f);
+            return !Physics.Linecast(eyes.position + offset, head - offset, GTPlayer.LocomotionEnabledLayers);
+        }
+
+        public static void DisableWeepingAngel()
+        {
+            if (weepingAngelFrozen) EnableRig();
+            weepingAngelFrozen = false;
+            weepingAngelPlayer = null;
         }
 
         public static void RigGun()
