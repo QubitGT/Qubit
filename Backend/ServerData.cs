@@ -621,7 +621,7 @@ namespace Qubit.Backend
                 string responseText = request.downloadHandler.text;
                 JObject json = JObject.Parse(responseText);
 
-                onlineUsers = json["mods"]?["Qubit"]?["users"]?.Value<int>() ?? 0;
+                onlineUsers = json["users"]?.Value<int>() ?? 0;
             }
             catch { }
         }
