@@ -157,8 +157,6 @@ namespace Qubit.Backend
             data.skipButtons = skipButtons.ToList();
             data.modBindings = ModBindings.ToDictionary(kv => kv.Key, kv => kv.Value);
 
-            data.sounds["Button"] = Sounds.DefaultSounds.TryGetValue("Button", out string btn) ? btn : "Default";
-            data.sounds["Notification"] = Sounds.DefaultSounds.TryGetValue("Notification", out string notif) ? notif : "None";
             data.disableLocalSoundboard = Soundboard.disableLocalSoundboard;
             data.customTheme = Modules.Categories.Settings.ExportCustomTheme();
             data.oldId = Important.oldId ?? "";
@@ -490,9 +488,6 @@ namespace Qubit.Backend
 
                 try
                 {
-                    RestoreSound("Change Button Sound", "Button", data.sounds);
-                    RestoreSound("Change Notification Sound", "Notification", data.sounds);
-
                     if (data.disableLocalSoundboard.HasValue)
                         Soundboard.disableLocalSoundboard = data.disableLocalSoundboard.Value;
 
@@ -513,9 +508,6 @@ namespace Qubit.Backend
                 {
                     if (data.misc != null)
                     {
-                        if (data.misc.TryGetValue("pageButtonType", out object pbt)) pageButtonType = SafeInt(pbt, pageButtonType);
-                        if (data.misc.TryGetValue("themeType", out object tt)) themeType = SafeInt(tt, themeType);
-                        if (data.misc.TryGetValue("fontCycle", out object fc)) fontCycle = SafeInt(fc, fontCycle);
                         if (data.misc.TryGetValue("playTime", out object pt)) playTime = SafeInt(pt, (int)playTime);
 
                         if (data.misc.TryGetValue("userId", out object uid) && uid is string uidStr && !string.IsNullOrEmpty(uidStr) && uidStr != "null")
@@ -571,18 +563,6 @@ namespace Qubit.Backend
         {
             try { return Convert.ToInt32(value); }
             catch { return fallback; }
-        }
-
-        private static void RestoreSound(string buttonName, string soundKey, Dictionary<string, string> sounds)
-        {
-            if (sounds == null || !sounds.TryGetValue(soundKey, out string saved) || string.IsNullOrEmpty(saved))
-                return;
-
-            Sounds.DefaultSounds[soundKey] = saved;
-
-            Module button = Manager.GetIndex(buttonName);
-            if (button != null)
-                button.displayName = $"{buttonName} {Qubit.Extensions.Strings.Bracket("green", saved)}";
         }
 
         private static void MigrateLegacy()

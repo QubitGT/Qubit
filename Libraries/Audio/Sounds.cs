@@ -297,7 +297,7 @@ namespace Qubit.Libraries.Audio
                             action ?? (clip =>
                             {
                                 if (shouldBePC || global)
-                                    AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, buttonClickVolume / 10f);
+                                    Play2DAudio(clip, buttonClickVolume / 10f);
                                 else
                                     audioSource.PlayOneShot(clip, buttonClickVolume / 10f);
                             }

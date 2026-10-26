@@ -319,7 +319,7 @@ namespace Qubit.Libraries.Interface
                 }
 
                 if (/*notificationSoundIndex != 0 && */(!soundOnError || notificationText.Contains("<color=red>ERROR</color>")) && Time.time > timeMenuStarted + 5f)
-                    Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, buttonClickVolume / 10f));
+                    Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => Sounds.Play2DAudio(clip, buttonClickVolume / 10f));
 
                 if (inputTextColor != "green")
                     notificationText = notificationText.Replace("<color=green>", "<color=" + inputTextColor + ">");
@@ -375,7 +375,7 @@ namespace Qubit.Libraries.Interface
             Send($"{tag.FormatTag(color)} {message}", clearTime);
 
         public static void PlayNotificationSound() =>
-            Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => AudioSource.PlayClipAtPoint(clip, Camera.main.transform.position, buttonClickVolume / 10f));
+            Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => Sounds.Play2DAudio(clip, buttonClickVolume / 10f));
 
         public static void Clear()
         {
