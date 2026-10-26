@@ -256,7 +256,7 @@ namespace Qubit.Libraries.Audio
 
         public static string DefaultSoundpack = "None";
 
-        public static void Play(string sound, string outputPath = null, Action<AudioClip> action = null, string buttonText = null, bool overlapHand = false, bool leftOverlap = false, bool global = false)
+        public static void Play(string sound, string outputPath = null, Action<AudioClip> action = null, string buttonText = null, bool overlapHand = false, bool leftOverlap = false, bool global = false, bool vibrate = true)
         {
             if (string.IsNullOrEmpty(sound)) return;
 
@@ -266,7 +266,7 @@ namespace Qubit.Libraries.Audio
                 if (overlapHand) rightHand = leftOverlap;
 
                 // Notification sounds (e.g. player join/leave) fire from passive events, not an input, so they shouldn't vibrate like a button press.
-                if (doButtonsVibrate && GetSoundCategory(sound) != "Notifications")
+                if (doButtonsVibrate && vibrate && GetSoundCategory(sound) != "Notifications")
                     References.Tagger.StartVibration(rightHand, References.Tagger.tagHapticStrength / 2f, References.Tagger.tagHapticDuration / 2f);
 
                 object path = ResolveSoundPath(sound);

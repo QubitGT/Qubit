@@ -965,7 +965,7 @@ result = result.Where(b => b.legal || b.label);
             catch { }
 
             if (dynamicSounds)
-                Sounds.Play(Sounds.DefaultSounds["Open"], global: true);
+                Sounds.Play(Sounds.DefaultSounds["Open"], global: true, vibrate: false);
 
             if (CreateMenu() == null) return;
 
@@ -1034,7 +1034,7 @@ result = result.Where(b => b.legal || b.label);
 
             GetObject("Shoulder Camera")?.transform.Find("CM vcam1").gameObject.SetActive(true);
             if (dynamicSounds)
-                Sounds.Play(Sounds.DefaultSounds["Close"], global: true);
+                Sounds.Play(Sounds.DefaultSounds["Close"], global: true, vibrate: false);
 
             try
             {
