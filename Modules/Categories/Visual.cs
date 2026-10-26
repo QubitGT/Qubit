@@ -475,6 +475,7 @@ namespace Qubit.Modules.Categories
         private static readonly Dictionary<VRRig, GameObject> subNameTags = new Dictionary<VRRig, GameObject>();
 
         private static readonly Dictionary<VRRig, GameObject> creationDateTags = new Dictionary<VRRig, GameObject>();
+        private static readonly Dictionary<VRRig, GameObject> cosmeticCreationDateTags = new Dictionary<VRRig, GameObject>();
 
         private static readonly Dictionary<VRRig, GameObject> pingNameTags = new Dictionary<VRRig, GameObject>();
 
@@ -2546,6 +2547,50 @@ namespace Qubit.Modules.Categories
                 }
                 catch { }
             }
+        }
+
+        public static void CosmeticCreationDateTags()
+        {
+            List<KeyValuePair<VRRig, GameObject>> nametagsCopy = cosmeticCreationDateTags.ToList();
+            foreach (var nametag in nametagsCopy.Where(nametag => !Players.ActiveRigs.Contains(nametag.Key)))
+            {
+                Object.Destroy(nametag.Value);
+                cosmeticCreationDateTags.Remove(nametag.Key);
+            }
+
+            foreach (VRRig vrrig in Players.ActiveRigs)
+            {
+                try
+                {
+                    if (!vrrig.isLocal || selfNameTag)
+                    {
+                        if (!cosmeticCreationDateTags.ContainsKey(vrrig))
+                        {
+                            cosmeticCreationDateTags.Add(vrrig, CreateNameTag("Qubit_CosmeticCreationTag"));
+                        }
+
+                        GameObject nameTag = cosmeticCreationDateTags[vrrig];
+                        TextMeshPro tmp = nameTag.GetOrAddComponent<TextMeshPro>();
+
+                        if (NameTagOptimize())
+                        {
+                            string vrrigCosmeticCreationDate = vrrig.GetCosmeticBasedCreationDate();
+                            tmp.SafeSetText(vrrigCosmeticCreationDate == "Error" ? "" : vrrigCosmeticCreationDate);
+                            StyleNameTag(tmp, vrrig);
+                        }
+                        PlaceNameTag(nameTag, tmp, vrrig);
+                    }
+                }
+                catch { }
+            }
+        }
+
+        public static void DisableCosmeticCreationDateTags()
+        {
+            foreach (KeyValuePair<VRRig, GameObject> nametag in cosmeticCreationDateTags)
+                Object.Destroy(nametag.Value);
+
+            cosmeticCreationDateTags.Clear();
         }
 
         public static void DisableCreationDateTags()

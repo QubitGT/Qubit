@@ -258,6 +258,67 @@ namespace Qubit.Extensions
         public static string GetCreationDate(this VRRig rig, Action<string> onTranslated = null, string format = "MMMM dd, yyyy h:mm tt") =>
             Players.GetCreationDate(rig.Creator.UserId, onTranslated, format);
 
+        // Legacy cosmetics are named like "LBAAD." (L + 4 letters + "."); a handful of owned items
+        // (e.g. "Early Access Supporter Pack") don't follow this format and are excluded by the regex.
+        private static readonly System.Text.RegularExpressions.Regex LegacyCosmeticCodeRegex = new System.Text.RegularExpressions.Regex(@"L([A-Z]{4})\.");
+        private static readonly System.Text.RegularExpressions.Regex LegacyCosmeticCodeExactRegex = new System.Text.RegularExpressions.Regex(@"^L([A-Z]{4})\.$");
+
+        public static readonly DateTime CosmeticDateMinValue = new DateTime(2021, 4, 1);
+
+        private static long CosmeticCodeToBase26(string code)
+        {
+            long value = 0;
+            foreach (char c in code)
+                value = value * 26 + (c - 'A');
+            return value;
+        }
+
+        private static long GetSmallestLegacyCosmeticCodeValue()
+        {
+            long min = long.MaxValue;
+            foreach (var item in ManagerRegistry.CosmeticsController.allCosmetics)
+            {
+                var match = LegacyCosmeticCodeExactRegex.Match(item.itemName);
+                if (!match.Success) continue;
+
+                long value = CosmeticCodeToBase26(match.Groups[1].Value);
+                if (value < min) min = value;
+            }
+            return min;
+        }
+
+        private static long GetLargestLegacyCosmeticCodeValue()
+        {
+            long max = long.MinValue;
+            foreach (var item in ManagerRegistry.CosmeticsController.allCosmetics)
+            {
+                var match = LegacyCosmeticCodeExactRegex.Match(item.itemName);
+                if (!match.Success) continue;
+
+                long value = CosmeticCodeToBase26(match.Groups[1].Value);
+                if (value > max) max = value;
+            }
+            return max;
+        }
+
+        public static string GetCosmeticBasedCreationDate(this VRRig rig, string format = "MMMM dd, yyyy")
+        {
+            var match = LegacyCosmeticCodeRegex.Match(rig.Cosmetics());
+            if (!match.Success) return "Error";
+
+            long minValue = GetSmallestLegacyCosmeticCodeValue();
+            long maxValue = GetLargestLegacyCosmeticCodeValue();
+            long value = CosmeticCodeToBase26(match.Groups[1].Value);
+
+            DateTime now = DateTime.Now;
+            DateTime maxDate = new DateTime(now.Year, now.Month, 1);
+
+            double fraction = Math.Clamp((double)(value - minValue) / (maxValue - minValue), 0d, 1d);
+            DateTime estimatedDate = CosmeticDateMinValue + TimeSpan.FromTicks((long)((maxDate - CosmeticDateMinValue).Ticks * fraction));
+
+            return estimatedDate.ToString(format);
+        }
+
         public static Color GetColor(this VRRig rig)
         {
             if (Manager.GetIndex("Follow Player Colors").enabled)
