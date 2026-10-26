@@ -2569,11 +2569,17 @@ namespace Qubit.Modules.Categories
                     VRKeyboard.transform.localScale *= scaleWithPlayer ? References.Player.scale * menuScale : menuScale;
                     menuSpawnPosition.transform.localScale *= scaleWithPlayer ? References.Player.scale * menuScale : menuScale;
 
-                    VRKeyboard.transform.Find("Background").gameObject.GetOrAddComponent<ObjectColors>().colors = menuBackgroundColor;
+                    GameObject keyboardBackground = VRKeyboard.transform.Find("Background").gameObject;
+                    keyboardBackground.GetOrAddComponent<ObjectColors>().colors = menuBackgroundColor;
+                    FollowMenuSettings(keyboardBackground);
 
-                    foreach (GameObject key in VRKeyboard.transform.Find("Seperate").Children()
-                        .Concat(new[] { VRKeyboard.transform.Find("Keys/default").gameObject }))
+                    VRKeyboard.transform.Find("Keys/default").gameObject.GetOrAddComponent<ObjectColors>().colors = buttonColors[0];
+
+                    foreach (GameObject key in VRKeyboard.transform.Find("Seperate").Children())
+                    {
                         key.GetOrAddComponent<ObjectColors>().colors = buttonColors[0];
+                        FollowMenuSettings(key);
+                    }
 
                     IEnumerable<GameObject> keys = new[] { "Numbers", "Letters", "Special", "Seperate" }
                         .Select(name => VRKeyboard.transform.Find(name))
@@ -2584,6 +2590,7 @@ namespace Qubit.Modules.Categories
                     {
                         key.AddComponent<KeyboardKey>().key = key.name;
                         key.layer = 2;
+                        FollowMenuSettings(key);
                     }
                 }
                 else
