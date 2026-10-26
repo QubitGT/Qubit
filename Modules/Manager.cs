@@ -1008,6 +1008,10 @@ namespace Qubit.Modules
             ["Hunt Mods"] = new[]
             {
                 new Module { name = "Exit Hunt Mods", method =() => CurrentCategoryName = "Gamemode Mods", isTogglable = false, toolTip = "Returns you back to the gamemode mods."},
+
+                new Module { name = "Hunt Target Overlay", method = Hunt.HuntTargetOverlay, disableMethod = Hunt.DisableHuntTargetOverlay, toolTip = "Shows an overlay of your current hunt target, and who is targeting you."},
+                new Module { name = "Get Hunt Target Gun", method = Hunt.GetHuntTargetGun, toolTip = "Gets the hunt target of whoever your hand desires, and whoever is targeting them."},
+                new Module { name = "Hunt Target Name Tags", method = Hunt.HuntTargetNameTags, disableMethod = Hunt.DisableHuntTargetNameTags, toolTip = "Shows name tags above the head of your hunt target, and whoever is targeting you."},
             },
 
             ["Super Infection Mods"] = new[]
@@ -2416,6 +2420,13 @@ namespace Qubit.Modules
             ["Overpowered Mods"] = new[]
             {
                 new Module { name = "Exit Overpowered Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+
+                new Module { name = "Fake Kick Gun", method = Overpowered.FakeKickGun, isTogglable = false, toolTip = "Makes whoever your hand desires appear to have left the game. This mod is client sided." },
+                new Module { name = "Fake Kick All", method = Overpowered.FakeKickAll, isTogglable = false, toolTip = "Makes everyone in the room appear to have left the game. This mod is client sided." },
+                new Module { name = "Fake Crash Gun", method = Overpowered.FakeCrashGun, disableMethod = Overpowered.DisableFakeFreeze, isTogglable = false, toolTip = "Makes whoever your hand desires appear to crash, then leave the game. This mod is client sided." },
+                new Module { name = "Fake Crash All", method = Overpowered.FakeCrashAll, disableMethod = Overpowered.DisableFakeFreeze, isTogglable = false, toolTip = "Makes everyone in the room appear to crash, then leave the game. This mod is client sided." },
+                new Module { name = "Fake Freeze Gun", method = Overpowered.FakeFreezeGun, disableMethod = Overpowered.DisableFakeFreeze, isTogglable = false, toolTip = "Makes whoever your hand desires appear frozen in place. This mod is client sided." },
+                new Module { name = "Fake Freeze All", method = Overpowered.FakeFreezeAll, disableMethod = Overpowered.DisableFakeFreeze, isTogglable = false, toolTip = "Makes everyone in the room appear frozen in place. This mod is client sided." },
 
                 new Module { name = "Voice Hijack Gun", method = Overpowered.VoiceHijackGun, disableMethod = Overpowered.DisableVoiceHijack, toolTip = "Makes your voice play through whoever your hand desires' voice slot."},
 

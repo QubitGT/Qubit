@@ -127,7 +127,7 @@ namespace Qubit.Modules.Categories
             line.endColor = color;
         }
 
-        private static GameObject CreateNameTag(string name)
+        public static GameObject CreateNameTag(string name)
         {
             GameObject nameTag = new GameObject(name);
             nameTag.transform.localScale = new Vector3(0.25f, 0.25f, 0.25f);
@@ -146,7 +146,7 @@ namespace Qubit.Modules.Categories
             tmp.SafeSetFont(activeFont);
         }
 
-        private static void PlaceNameTag(GameObject nameTag, TextMeshPro tmp, VRRig vrrig)
+        public static void PlaceNameTag(GameObject nameTag, TextMeshPro tmp, VRRig vrrig)
         {
             if (nameTagChams)
                 tmp.Chams();
@@ -158,7 +158,7 @@ namespace Qubit.Modules.Categories
             nameTag.transform.Rotate(0f, 180f, 0f);
         }
 
-        private static void PruneRigObjects(Dictionary<VRRig, GameObject> pool)
+        public static void PruneRigObjects(Dictionary<VRRig, GameObject> pool)
         {
             List<VRRig> stale = pool.Keys.Where(rig => !Players.ActiveRigs.Contains(rig)).ToList();
             foreach (VRRig rig in stale)

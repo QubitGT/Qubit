@@ -2589,6 +2589,102 @@ namespace Qubit.Modules.Categories
             yield return new WaitForSeconds(0.3f);
             References.LocalRig.enabled = true;
         }
+
+        private static readonly Vector3 oblivionPosition = new Vector3(99999f, 99999f, 99999f);
+        private static readonly HashSet<NetPlayer> fakeLeftPlayers = new HashSet<NetPlayer>();
+
+        private static void MuteLocally(NetPlayer player)
+        {
+            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer == player))
+            {
+                line.muteButton.isOn = true;
+                line.PressButton(true, GorillaPlayerLineButton.ButtonType.Mute);
+            }
+        }
+
+        private static void HideFromLeaderboardLocally(NetPlayer player)
+        {
+            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines.Where(line => line.linePlayer == player))
+                line.playerNameVisible = "";
+        }
+
+        private static IEnumerator FakeLeaveRoutine(VRRig rig, NetPlayer player)
+        {
+            yield return new WaitForSeconds(UnityEngine.Random.Range(0.2f, 0.3f));
+
+            Notifications.SendFormat("red", "LEFT THE GAME", $"{player.NickName} has left the game.");
+            fakeLeftPlayers.Add(player);
+            MuteLocally(player);
+
+            while (Players.ActiveRigs.Contains(rig))
+            {
+                HideFromLeaderboardLocally(player);
+                rig.transform.position = oblivionPosition;
+                yield return null;
+            }
+
+            fakeLeftPlayers.Remove(player);
+        }
+
+        public static void FakeKickGun()
+        {
+            GunLibrary.Target(gunTarget =>
+                Coroutines.instance.StartCoroutine(FakeLeaveRoutine(gunTarget, GetPlayerFromVRRig(gunTarget))));
+        }
+
+        public static void FakeKickAll()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal).ToList())
+                Coroutines.instance.StartCoroutine(FakeLeaveRoutine(rig, GetPlayerFromVRRig(rig)));
+        }
+
+        private static IEnumerator FakeCrashRoutine(VRRig rig, NetPlayer player)
+        {
+            RigSerialization.skippedRigs.Add(rig);
+
+            yield return new WaitForSeconds(0.5f);
+            MuteLocally(player);
+
+            yield return new WaitForSeconds(15f);
+
+            yield return FakeLeaveRoutine(rig, player);
+            RigSerialization.skippedRigs.Remove(rig);
+        }
+
+        public static void FakeCrashGun()
+        {
+            GunLibrary.Target(gunTarget =>
+                Coroutines.instance.StartCoroutine(FakeCrashRoutine(gunTarget, GetPlayerFromVRRig(gunTarget))));
+        }
+
+        public static void FakeCrashAll()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal).ToList())
+                Coroutines.instance.StartCoroutine(FakeCrashRoutine(rig, GetPlayerFromVRRig(rig)));
+        }
+
+        private static IEnumerator FakeFreezeRoutine(VRRig rig, NetPlayer player)
+        {
+            RigSerialization.skippedRigs.Add(rig);
+
+            yield return new WaitForSeconds(0.5f);
+            MuteLocally(player);
+        }
+
+        public static void FakeFreezeGun()
+        {
+            GunLibrary.Target(gunTarget =>
+                Coroutines.instance.StartCoroutine(FakeFreezeRoutine(gunTarget, GetPlayerFromVRRig(gunTarget))));
+        }
+
+        public static void FakeFreezeAll()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal).ToList())
+                Coroutines.instance.StartCoroutine(FakeFreezeRoutine(rig, GetPlayerFromVRRig(rig)));
+        }
+
+        public static void DisableFakeFreeze() =>
+            RigSerialization.skippedRigs.Clear();
         #endregion
     }
 }

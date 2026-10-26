@@ -23,6 +23,7 @@ using HarmonyLib;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Networking;
 using System;
+using System.Collections.Generic;
 
 namespace Qubit.Patches.Netcode
 {
@@ -32,10 +33,15 @@ namespace Qubit.Patches.Netcode
         public static bool stopSerialization;
         public static float? delay;
 
+        public static readonly HashSet<VRRig> skippedRigs = new HashSet<VRRig>();
+
         public static event Action<VRRig> OnPlayerSerialize;
         public static bool Prefix(VRRig __instance, InputStruct data)
         {
             if (stopSerialization)
+                return false;
+
+            if (skippedRigs.Contains(__instance))
                 return false;
 
             if (delay != null)
