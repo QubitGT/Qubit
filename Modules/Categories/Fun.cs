@@ -3032,21 +3032,29 @@ namespace Qubit.Modules.Categories
 
         public static void CopyCreationDate(string date)
         {
+            if (date == "Error") return;
+
             Notifications.SendFormat("green", "SUCCESS", "" + date, 5000);
             GUIUtility.systemCopyBuffer = date;
         }
 
+        public static void SpeakCreationDate(string date)
+        {
+            if (date == "Error") return;
+            SpeakText(date);
+        }
+
         public static void NarrateCreationDateSelf()
         {
-            string date = GetCreationDate(PhotonNetwork.LocalPlayer.UserId, SpeakText);
+            string date = GetCreationDate(PhotonNetwork.LocalPlayer.UserId, SpeakCreationDate);
             if (date != "Loading...")
-                SpeakText(date);
+                SpeakCreationDate(date);
         }
 
         public static void NarrateCreationDateAll()
         {
-            foreach (var date in Players.ActiveRigs.Select(vrrig => GetCreationDate(GetPlayerFromVRRig(vrrig).UserId, SpeakText)).Where(date => date != "Loading..."))
-                SpeakText(date);
+            foreach (var date in Players.ActiveRigs.Select(vrrig => GetCreationDate(GetPlayerFromVRRig(vrrig).UserId, SpeakCreationDate)).Where(date => date != "Loading..."))
+                SpeakCreationDate(date);
         }
 
         public static void NarrateCreationDateAura()
@@ -3065,8 +3073,8 @@ namespace Qubit.Modules.Categories
             if (nearbyPlayers.Count <= 0 || Time.time < allNarrationDelay) return;
             allNarrationDelay = Time.time + 10f;
 
-            foreach (var date in nearbyPlayers.Select(nearbyPlayer => GetCreationDate(GetPlayerFromVRRig(nearbyPlayer).UserId, date => SpeakText(date))).Where(date => date != "Loading..."))
-                SpeakText(date);
+            foreach (var date in nearbyPlayers.Select(nearbyPlayer => GetCreationDate(GetPlayerFromVRRig(nearbyPlayer).UserId, SpeakCreationDate)).Where(date => date != "Loading..."))
+                SpeakCreationDate(date);
         }
 
         public static void NarrateCreationDateOnTouch()
@@ -3078,8 +3086,8 @@ namespace Qubit.Modules.Categories
             if (touchedPlayers.Count <= 0 || Time.time < allNarrationDelay) return;
             allNarrationDelay = Time.time + 10f;
 
-            foreach (var date in touchedPlayers.Select(rig => GetCreationDate(rig.GetPlayer().UserId, date => SpeakText(date))).Where(date => date != "Loading..."))
-                SpeakText(date);
+            foreach (var date in touchedPlayers.Select(rig => GetCreationDate(rig.GetPlayer().UserId, SpeakCreationDate)).Where(date => date != "Loading..."))
+                SpeakCreationDate(date);
         }
 
         public static void NarrateCreationDateGun()
@@ -3088,9 +3096,9 @@ namespace Qubit.Modules.Categories
             {
                 creationDateDelay = Time.time + 0.5f;
 
-                string date = GetCreationDate(GetPlayerFromVRRig(gunTarget).UserId, date => SpeakText(date));
+                string date = GetCreationDate(GetPlayerFromVRRig(gunTarget).UserId, SpeakCreationDate);
                 if (date != "Loading...")
-                    SpeakText(date);
+                    SpeakCreationDate(date);
             }, new GunLibrary.GunSettings { when = () => Time.time > creationDateDelay });
         }
 

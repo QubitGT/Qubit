@@ -3092,7 +3092,11 @@ namespace Qubit.Modules.Categories
                         {
                             name = "Player Creation Date",
                             displayName =
-                                $"Creation Date: {GetCreationDate(player.UserId, creationDate => { Manager.GetIndex("Player Creation Date").displayName = $"Creation Date: {creationDate}"; ReloadMenu(); })}",
+                                FormatCreationDateLabel(GetCreationDate(player.UserId, creationDate =>
+                                {
+                                    Manager.GetIndex("Player Creation Date").displayName = FormatCreationDateLabel(creationDate);
+                                    ReloadMenu();
+                                })),
                             label = true
                         },
                         new Module
@@ -3925,7 +3929,7 @@ exit 0";
             References.LocalRig?.leftHandPlayer?.Stop();
             References.LocalRig?.rightHandPlayer?.Stop();
 
-            Sounds.Play(Sounds.DefaultSounds["Notification"]);
+            Sounds.Play(Sounds.DefaultSounds["Notification"], action: clip => Sounds.Play2DAudio(clip, buttonClickVolume / 10f), vibrate: false);
         }
         public static void ApplyNarrationVoice(int index)
         {
@@ -4000,6 +4004,9 @@ exit 0";
                 Notifications.SendFormat("red", "DISABLE", "Disable Page Buttons can only be used when using Joystick Menu.");
             }
         }
+
+        private static string FormatCreationDateLabel(string date) =>
+            date == "Error" ? "" : $"Creation Date: {date}";
 
         public static void CustomMenuName()
         {

@@ -1528,7 +1528,11 @@ namespace Qubit.Modules.Categories
                     Notifications.information["Platform"] = lockTarget.GetPlatform().ToString();
                     Notifications.information["Ping"] = lockTarget.GetPing().ToString();
                     Notifications.information["FPS"] = lockTarget.fps.ToString();
-                    Notifications.information["Creation Date"] = lockTarget.GetCreationDate();
+                    string lockTargetCreationDate = lockTarget.GetCreationDate();
+                    if (lockTargetCreationDate == "Error")
+                        Notifications.information.Remove("Creation Date");
+                    else
+                        Notifications.information["Creation Date"] = lockTargetCreationDate;
                     Notifications.information["Turn"] = $"{lockTarget.turnType.ToTitleCase()} {lockTarget.turnFactor}";
                 }
 
@@ -2533,7 +2537,8 @@ namespace Qubit.Modules.Categories
 
                         if (NameTagOptimize())
                         {
-                            tmp.SafeSetText(GetCreationDate(GetPlayerFromVRRig(vrrig).UserId));
+                            string vrrigCreationDate = GetCreationDate(GetPlayerFromVRRig(vrrig).UserId);
+                            tmp.SafeSetText(vrrigCreationDate == "Error" ? "" : vrrigCreationDate);
                             StyleNameTag(tmp, vrrig);
                         }
                         PlaceNameTag(nameTag, tmp, vrrig);
@@ -3116,9 +3121,10 @@ namespace Qubit.Modules.Categories
                         Transform infoBgTr = bgCont.transform.Find("infobg");
                         Transform nameBgTr = bgCont.transform.Find("namebg");
 
+                        string compactCreationDate = GetCreationDate(vrrig.GetPlayer().UserId, null, "MMM dd, yyyy");
                         string tagText =
                             $"{(vrrig.GetTruePing() > 2500 && !vrrig.IsLocal() ? "[<color=red>Unresponsive</color>] | " : "")}" +
-                            $"[<color=#00FFFF>{GetCreationDate(vrrig.GetPlayer().UserId, null, "MMM dd, yyyy")}</color>] | " +
+                            $"{(compactCreationDate != "Error" ? $"[<color=#00FFFF>{compactCreationDate}</color>] | " : "")}" +
                             $"[{GetPrettyPlatform(vrrig)}] | " +
                             $"[Ping: {GetPrettyPing(vrrig)}] | " +
                             $"[FPS: {GetPrettyFPS(vrrig)}] | " +
