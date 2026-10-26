@@ -166,7 +166,6 @@ namespace Qubit.Backend
             data.misc["pageButtonType"] = pageButtonType;
             data.misc["themeType"] = themeType;
             data.misc["fontCycle"] = fontCycle;
-            data.misc["pageSize"] = _pageSize;
             data.misc["playTime"] = (int)MathF.Ceiling(playTime);
             data.misc["userId"] = PhotonNetwork.LocalPlayer?.UserId ?? "null";
 
@@ -375,7 +374,6 @@ namespace Qubit.Backend
                     if (data.misc.TryGetValue("pageButtonType", out object pageButtons)) pageButtonType = SafeInt(pageButtons, pageButtonType);
                     if (data.misc.TryGetValue("themeType", out object theme)) themeType = SafeInt(theme, themeType);
                     if (data.misc.TryGetValue("fontCycle", out object font)) fontCycle = SafeInt(font, fontCycle);
-                    if (data.misc.TryGetValue("pageSize", out object size)) _pageSize = SafeInt(size, _pageSize);
                 }
 
                 foreach (KeyValuePair<string, SavedButtonState> saved in data.buttons ?? new Dictionary<string, SavedButtonState>())
@@ -518,7 +516,6 @@ namespace Qubit.Backend
                         if (data.misc.TryGetValue("pageButtonType", out object pbt)) pageButtonType = SafeInt(pbt, pageButtonType);
                         if (data.misc.TryGetValue("themeType", out object tt)) themeType = SafeInt(tt, themeType);
                         if (data.misc.TryGetValue("fontCycle", out object fc)) fontCycle = SafeInt(fc, fontCycle);
-                        if (data.misc.TryGetValue("pageSize", out object ps)) _pageSize = SafeInt(ps, _pageSize);
                         if (data.misc.TryGetValue("playTime", out object pt)) playTime = SafeInt(pt, (int)playTime);
 
                         if (data.misc.TryGetValue("userId", out object uid) && uid is string uidStr && !string.IsNullOrEmpty(uidStr) && uidStr != "null")
