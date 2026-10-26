@@ -137,9 +137,15 @@ namespace Qubit.Extensions
                 return;
             }
 
-            PlayFabClientAPI.GetAccountInfo(new GetAccountInfoRequest { PlayFabId = userId }, delegate (GetAccountInfoResult result)
+            PlayFabClientAPI.GetPlayerProfile(
+                new GetPlayerProfileRequest
+                {
+                    PlayFabId = userId,
+                    ProfileConstraints = new PlayerProfileViewConstraints
+                    { ShowCreated = true }
+                }, delegate (GetPlayerProfileResult result)
             {
-                string creationDate = result.AccountInfo.Created.ToString(format);
+                string creationDate = result.PlayerProfile.Created.Value.ToString(format);
                 creationDateCache[userId] = creationDate;
 
                 onTranslated?.Invoke(creationDate);
