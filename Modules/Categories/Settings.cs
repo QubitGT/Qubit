@@ -4003,6 +4003,8 @@ exit 0";
 
         public static void CustomMenuName()
         {
+            Apply();
+
             if (Time.time > timeMenuStarted + 10f)
             {
                 Prompt("Would you like to set a custom menu name right now?", () =>
@@ -4014,15 +4016,14 @@ exit 0";
                         PromptSingle("You can always change this again by re-enabling the mod or changing it in the Qubit folder! (located in the Gorilla Tag installation folder)");
                     });
                 }, Apply);
+            }
 
-                static void Apply()
-                {
-                    doCustomName = true;
-                    if (!File.Exists($"{PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt"))
-                        File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt", "Your Text Here");
-                    customMenuName = File.ReadAllText($"{PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt");
-                }
-                Apply();
+            static void Apply()
+            {
+                doCustomName = true;
+                if (!File.Exists($"{PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt"))
+                    File.WriteAllText($"{PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt", "Your Text Here");
+                customMenuName = File.ReadAllText($"{PluginInfo.BaseDirectory}/Qubit_CustomMenuName.txt");
             }
         }
         public static void CheckFocus()
