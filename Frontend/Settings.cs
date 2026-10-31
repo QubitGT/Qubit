@@ -327,6 +327,7 @@ namespace Qubit.Frontend
 
             public void Update()
             {
+                if (gameObject == null || shell == null || text == null) return;
                 Renderer renderer = shell.GetComponent<Renderer>();
                 if (text.font != activeFont)
                     text.SafeSetFont(activeFont);
