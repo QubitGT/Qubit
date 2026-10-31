@@ -1116,7 +1116,6 @@ namespace Qubit.Modules.Categories
             Transform anchor = watch.transform.Find("HuntWatch_ScreenLocal/Canvas/Anchor");
             anchor.Find("Hat").gameObject.SetActive(false);
             anchor.Find("Face").gameObject.SetActive(false);
-            anchor.Find("Badge").gameObject.SetActive(false);
             anchor.Find("Material").gameObject.SetActive(false);
             anchor.Find("Right Hand").gameObject.SetActive(false);
             anchor.Find("Left Hand").gameObject.SetActive(false);
