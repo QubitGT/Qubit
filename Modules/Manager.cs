@@ -2422,6 +2422,10 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Overpowered Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
+                new Module { name = "Critters Crash Gun", method = Overpowered.CrashGun, toolTip = "Crashes whoever your hand desires using critter ownership. Requires master client." },
+                new Module { name = "Critters Crash All", method = Overpowered.CrashLobby, isTogglable = false, toolTip = "Crashes everyone in the room using critter ownership. Requires master client." },
+                new Module { name = "Critters Freeze Master", method = Overpowered.CrittersFreeze, isTogglable = false, toolTip = "Repeatedly crashes whoever owns the critters guard until nobody is left. Works without master client." },
+
                 new Module { name = "Fake Kick Gun", method = Overpowered.FakeKickGun, isTogglable = false, toolTip = "Makes whoever your hand desires appear to have left the game. This mod is client sided." },
                 new Module { name = "Fake Kick All", method = Overpowered.FakeKickAll, isTogglable = false, toolTip = "Makes everyone in the room appear to have left the game. This mod is client sided." },
                 new Module { name = "Fake Crash Gun", method = Overpowered.FakeCrashGun, disableMethod = Overpowered.DisableFakeFreeze, isTogglable = false, toolTip = "Makes whoever your hand desires appear to crash, then leave the game. This mod is client sided." },

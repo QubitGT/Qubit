@@ -46,7 +46,7 @@ namespace Qubit.Libraries.Holdables
     {
         public static Coroutine DisableHoverboardCoroutine;
         // ReSharper disable once ParameterHidesMember
-        public static void DropBoard(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 avelocity, Color boardColor)
+        public static void DropBoard(Vector3 position, Quaternion rotation, Vector3 velocity, Vector3 avelocity, Color boardColor, Vector3? globalScale = null)
         {
             if (Vector3.Distance(References.BodyCollider.transform.position, position) > 5f)
             {
@@ -59,7 +59,7 @@ namespace Qubit.Libraries.Holdables
                 dropBoard = Coroutines.instance.StartCoroutine(EnableRig());
             }
 
-            ManagerRegistry.FreeHoverboardManager.SendDropBoardRPC(position, rotation, velocity, avelocity, boardColor);
+            ManagerRegistry.FreeHoverboardManager.SendDropBoardRPC(position, rotation, velocity, avelocity, boardColor, globalScale ?? Vector3.one);
             Security.RPCProtection();
         }
         public static void HoverboardGun()

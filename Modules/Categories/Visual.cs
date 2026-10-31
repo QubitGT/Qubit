@@ -1569,12 +1569,12 @@ namespace Qubit.Modules.Categories
         {
             DebugHudStats debugStats = Camera.main.transform.Find("DebugCanvas").GetComponent<DebugHudStats>();
 
-            debugStats.builder = new StringBuilder();
-            debugStats.drawCallsRecorder = ProfilerRecorder.StartNew(
+            debugStats._builder = new StringBuilder();
+            debugStats._drawCallsRecorder = ProfilerRecorder.StartNew(
                 ProfilerCategory.Render,
                 "Draw Calls Count"
             );
-            debugStats.trisRecorder = ProfilerRecorder.StartNew(
+            debugStats._trisRecorder = ProfilerRecorder.StartNew(
                 ProfilerCategory.Render,
                 "Tris Count"
             );
