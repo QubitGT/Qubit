@@ -143,7 +143,8 @@ namespace Qubit.Extensions
                 1 << LayerMask.NameToLayer("Gorilla Trigger") |
                 1 << LayerMask.NameToLayer("Gorilla Boundary") |
                 1 << LayerMask.NameToLayer("GorillaCosmetics") |
-                1 << LayerMask.NameToLayer("GorillaParticle"));
+                1 << LayerMask.NameToLayer("GorillaParticle") |
+                1 << LayerMask.NameToLayer("GorillaInteractable"));
 
             return noInvisLayerMask ?? References.Player.locomotionEnabledLayers;
         }
