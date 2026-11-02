@@ -201,6 +201,8 @@ namespace Qubit.Backend
 
         public static string CleanString(string input, int maxLength = 12)
         {
+            if (input == null) return "";
+
             input = new string(Array.FindAll(input.ToCharArray(), Utils.IsASCIILetterOrDigit));
 
             if (input.Length > maxLength)
