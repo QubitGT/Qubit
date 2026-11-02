@@ -623,7 +623,12 @@ namespace Qubit.Backend
                 string responseText = request.downloadHandler.text;
                 JObject json = JObject.Parse(responseText);
 
-                onlineUsers = json["users"]?.Value<int>() ?? 0;
+                int newOnlineUsers = json["users"]?.Value<int>() ?? 0;
+                if (newOnlineUsers != onlineUsers)
+                {
+                    onlineUsers = newOnlineUsers;
+                    CustomBoards.motdTextDirty = true;
+                }
             }
             catch { }
         }

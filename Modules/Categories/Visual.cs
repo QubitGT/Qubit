@@ -3054,7 +3054,7 @@ namespace Qubit.Modules.Categories
             return platform switch
             {
                 Players.PlatformType.Rift => "<color=#00FFFF>Rift</color>",
-                Players.PlatformType.Steam => " <color=blue>Steam</color>",
+                Players.PlatformType.Steam => "<color=blue>Steam</color>",
                 Players.PlatformType.Quest => "<color=green>Quest</color>",
                 _ => platform.ToString(),
             };
