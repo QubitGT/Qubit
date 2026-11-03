@@ -2471,6 +2471,8 @@ namespace Qubit.Modules
 
                 new Module { name = "Ghost Reactor Crash Gun", method = Master.GhostReactorCrashGun, toolTip = "Crashes whoever your hand desires in the ghost reactor."},
                 new Module { name = "Ghost Reactor Crash All", method = Master.GhostReactorCrashAll, toolTip = "Crashes everyone in the ghost reactor."},
+                new Module { name = "Zone Table Crash Gun", method = Master.ZoneTableCrashGun, toolTip = "Crashes whoever your hand desires with a poisoned zone table stream."},
+                new Module { name = "Zone Table Crash All", method = Master.ZoneTableCrashAll, isTogglable = false, toolTip = "Crashes everyone with a poisoned zone table stream."},
 
                 new Module { name = "Super Infection Crash Gun", method = Master.SuperInfectionCrashGun, toolTip = "Crashes whoever your hand desires in the Super Infection gamemode."},
                 new Module { name = "Super Infection Crash All", method = Master.SuperInfectionCrashAll, toolTip = "Crashes everyone in the Super Infection gamemode."},
