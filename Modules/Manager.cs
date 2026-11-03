@@ -735,6 +735,10 @@ namespace Qubit.Modules
 
                 new Module { name = $"Fly {Bracket("green", "A")}", aliases = new[] { "Super Monke" }, method = Movement.Fly, toolTip = "Sends your character forwards when holding <color=green>A</color>."},
                 new Module { name = $"Trigger Fly {Bracket("green", "T")}", method = Movement.TriggerFly, toolTip = "Sends your character forwards when holding <color=green>trigger</color>."},
+                new Module { name = "Up & Down Fly", method = Movement.UpDownFly, toolTip = "Right trigger to fly up, left trigger to fly down."},
+                new Module { name = "Right & Left Fly", method = Movement.RightLeftFly, toolTip = "Right trigger to fly right, left trigger to fly left."},
+                new Module { name = "Forward & Backward Fly", method = Movement.ForwardBackwardFly, toolTip = "Right trigger to fly forward, left trigger to fly backward."},
+                new Module { name = "Set Alarm Clock", method = Movement.SetAlarmClock, isTogglable = false, toolTip = "Sets your spawn point with the different alarm clocks."},
                 new Module { name = $"Noclip Fly {Bracket("green", "A")}", method = Movement.NoclipFly, toolTip = "Sends your character forwards and makes you go through objects when holding <color=green>A</color>."},
                 new Module { name = $"Joystick Fly {Bracket("green", "J")}", method = Movement.JoystickFly, toolTip = "Sends your character in whatever direction you are pointing your <color=green>joystick</color> in."},
                 new Module { name = $"Bark Fly {Bracket("green", "J")}", postMethod = Movement.BarkFly, toolTip = "Acts like the fly that Bark has. Credits to KyleTheScientist."},
@@ -831,6 +835,12 @@ namespace Qubit.Modules
 
                 new Module { name = "Tiptoe", method = Movement.Tiptoe, disableMethod = Movement.DisableTiptoe, toolTip = "Moves your head up slightly, letting you peek over walls and ledges."},
                 new Module { name = "Frontflip", method = Movement.Frontflip, toolTip = "Makes you do a frontflip when pressing right primary."},
+                new Module { name = "Backflip", method = Rig.Backflip, toolTip = "Makes your body do a backflip when you click your right joystick."},
+                new Module { name = "Spaz Monke", method = Rig.SpazMonke, toolTip = "Spazzes your rig around your body when holding <color=green>grip</color>."},
+                new Module { name = "Wacky Monke", method = Rig.WackyMonke, toolTip = "Spazzes your rig but weird."},
+                new Module { name = "Chase Player Gun", method =() => Rig.ChasePlayerGun(2.5f), toolTip = "Makes your rig chase whoever your hand desires."},
+                new Module { name = "Fast Chase Player Gun", method =() => Rig.ChasePlayerGun(12f), toolTip = "Makes your rig chase whoever your hand desires fast."},
+                new Module { name = "Fake Grey Screen", method = Rig.FakeGreyScreen, disableMethod = Rig.FixHead, toolTip = "Makes your head flick backwards when you click your right joystick."},
 
                 new Module { name = "Slip Slap", enableMethod = Movement.SlipSlap, disableMethod = Movement.DisableSlipSlap, toolTip = "Allows you to slip slap again."},
                 new Module { name = "Slippery Hands", displayName = "Slippery Surfaces", aliases = new[] { "Slippery Hands" }, enableMethod =() => SlidePercentage.everythingSlippery = true, disableMethod =() => SlidePercentage.everythingSlippery = false, toolTip = "Makes everything ice, as in extremely slippery."},
@@ -1826,6 +1836,13 @@ namespace Qubit.Modules
                 new Module { name = "Building Block Aura", method = Blocks.BuildingBlockAura, toolTip = "Moves the building blocks around you at random positions." },
                 new Module { name = "Building Block Trail", enableMethod =() => Blocks.trailLastPosition = References.LocalRig.transform.position, method = Blocks.BuildingBlockTrail, toolTip = "Leaves a trail of building blocks behind you as you move." },
                 new Module { name = "Building Block Firework", method = Blocks.BuildingBlockFirework, isTogglable = false, toolTip = "Launches a spiral burst of building blocks out of your hand." },
+
+                new Module { name = "Block Sphere", method = Blocks.BlockSphere, toolTip = "Spawns blocks in a sphere around you. Requires master client."},
+                new Module { name = "Block Sphere Gun", method = Blocks.BlockSphereGun, toolTip = "Spawns blocks in a sphere at wherever your hand desires. Requires master client."},
+                new Module { name = "Block Igloo Gun", method = Blocks.IglooGun, toolTip = "Encases whoever your hand desires in an igloo of blocks. Requires master client."},
+                new Module { name = "Block Ellipsoid Gun", method = Blocks.EllipsoidGun, toolTip = "Makes circles of blocks along each axis at wherever your hand desires. Requires master client."},
+                new Module { name = "Suffocate Gun", method = Blocks.SuffocateGun, toolTip = "Suffocates whoever your hand desires with blocks. Requires master client."},
+                new Module { name = "Float Gun", method = Blocks.FloatGun, toolTip = "Floats whoever your hand desires with a block. Requires master client."},
 
                 new Module { name = "Building Block Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = Blocks.BuildingBlockTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
 

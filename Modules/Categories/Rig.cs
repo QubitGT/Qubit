@@ -131,6 +131,83 @@ namespace Qubit.Modules.Categories
             References.LocalRig.enabled = true;
             ghostException = false;
         }
+
+        #region Rig Movement Modes
+
+        /// <summary>
+        /// Spazzes your rig around your body when holding grip.
+        /// </summary>
+        public static void SpazMonke()
+        {
+            if (rightGrab)
+            {
+                References.LocalRig.enabled = false;
+                References.LocalRig.transform.position = References.BodyCollider.transform.position + RandomVector3(0.4f);
+            }
+            else
+                References.LocalRig.enabled = true;
+        }
+
+        /// <summary>
+        /// Spazzes your rig targets with a shared random rotation, making it look weird.
+        /// </summary>
+        public static void WackyMonke()
+        {
+            Vector3 eulerAngles = new Vector3(Random.Range(0f, 360f), Random.Range(0f, 360f), Random.Range(0f, 360f));
+            References.LocalRig.head.rigTarget.eulerAngles = eulerAngles;
+            References.LocalRig.leftHand.rigTarget.eulerAngles = eulerAngles;
+            References.LocalRig.rightHand.rigTarget.eulerAngles = eulerAngles;
+        }
+
+        /// <summary>
+        /// Makes your rig chase whoever your hand desires.
+        /// </summary>
+        public static void ChasePlayerGun(float speed)
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                References.LocalRig.enabled = false;
+                Vector3 direction = gunTarget.transform.position - References.LocalRig.transform.position;
+                References.LocalRig.transform.position += direction.normalized * (speed * Time.deltaTime);
+                References.LocalRig.transform.LookAt(gunTarget.transform.position);
+                References.LocalRig.head.rigTarget.transform.rotation = References.LocalRig.transform.rotation;
+            }, new GunLibrary.GunSettings { locks = true, onIdle = () => References.LocalRig.enabled = true });
+        }
+
+        private static bool greyScreenFlipped;
+
+        /// <summary>
+        /// Makes your head flick backwards when you click your right joystick.
+        /// </summary>
+        public static void FakeGreyScreen()
+        {
+            References.LocalRig.head.trackingRotationOffset.y = greyScreenFlipped ? 180f : 0f;
+
+            if (rightSecondary && !greyScreenLast)
+                greyScreenFlipped = !greyScreenFlipped;
+            greyScreenLast = rightSecondary;
+        }
+
+        private static bool greyScreenLast;
+
+        /// <summary>
+        /// Makes your body do a backflip when you click your right joystick.
+        /// </summary>
+        public static void Backflip()
+        {
+            if (rightSecondary && !backflipLast)
+            {
+                Torso.DoBackflip();
+                Rig.SetBodyPatch(true, Torso.PoseMode.Backflip);
+            }
+            else if (!rightSecondary && backflipLast)
+                Rig.SetBodyPatch(false);
+            backflipLast = rightSecondary;
+        }
+
+        private static bool backflipLast;
+
+        #endregion
         public static void WeepingAngel()
         {
             if (weepingAngelMode == 0)

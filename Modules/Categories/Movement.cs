@@ -25,6 +25,7 @@ using GorillaLocomotion;
 using GorillaLocomotion.Climbing;
 using GorillaLocomotion.Swimming;
 using GorillaNetworking;
+using HarmonyLib;
 using Photon.Pun;
 using Photon.Realtime;
 using Qubit.Core;
@@ -818,6 +819,87 @@ namespace Qubit.Modules.Categories
                 References.Player.transform.position += References.HeadCollider.transform.forward * (Time.deltaTime * FlySpeed);
                 References.Rigidbody.linearVelocity = Vector3.zero;
             }
+        }
+
+        /// <summary>
+        /// Right trigger to fly up, left trigger to fly down.
+        /// </summary>
+        public static void UpDownFly()
+        {
+            if (rightTrigger > 0.5f)
+            {
+                References.Player.transform.position += Vector3.up * (Time.deltaTime * FlySpeed);
+                References.Rigidbody.linearVelocity = Vector3.zero;
+            }
+            if (leftTrigger > 0.5f)
+            {
+                References.Player.transform.position += Vector3.down * (Time.deltaTime * FlySpeed);
+                References.Rigidbody.linearVelocity = Vector3.zero;
+            }
+        }
+
+        /// <summary>
+        /// Right trigger to fly right, left trigger to fly left.
+        /// </summary>
+        public static void RightLeftFly()
+        {
+            if (rightTrigger > 0.5f)
+            {
+                References.Player.transform.position += References.HeadCollider.transform.right * (Time.deltaTime * FlySpeed);
+                References.Rigidbody.linearVelocity = Vector3.zero;
+            }
+            if (leftTrigger > 0.5f)
+            {
+                References.Player.transform.position -= References.HeadCollider.transform.right * (Time.deltaTime * FlySpeed);
+                References.Rigidbody.linearVelocity = Vector3.zero;
+            }
+        }
+
+        /// <summary>
+        /// Right trigger to fly forward, left trigger to fly backward.
+        /// </summary>
+        public static void ForwardBackwardFly()
+        {
+            if (rightTrigger > 0.5f)
+            {
+                References.Player.transform.position += References.HeadCollider.transform.forward * (Time.deltaTime * FlySpeed);
+                References.Rigidbody.linearVelocity = Vector3.zero;
+            }
+            if (leftTrigger > 0.5f)
+            {
+                References.Player.transform.position -= References.HeadCollider.transform.forward * (Time.deltaTime * FlySpeed);
+                References.Rigidbody.linearVelocity = Vector3.zero;
+            }
+        }
+
+        private static int alarmClockIndex;
+
+        /// <summary>
+        /// Cycles your spawn point through the different alarm clocks.
+        /// </summary>
+        public static void SetAlarmClock()
+        {
+            var manager = GorillaTagScripts.Subscription.AlarmClocks.AlarmClockManager.Instance;
+            if (manager == null)
+                return;
+
+            var clockData = Traverse.Create(manager).Field("_clockData").GetValue<GorillaTagScripts.Subscription.AlarmClocks.AlarmClockManager.AlarmClockData[]>();
+            if (clockData == null || clockData.Length == 0)
+                return;
+
+            var valid = clockData.Where(data => data.Key != "gtfc").ToArray();
+            if (valid.Length == 0)
+                return;
+
+            alarmClockIndex++;
+            if (alarmClockIndex > valid.Length - 1)
+                alarmClockIndex = 0;
+
+            string key = valid[alarmClockIndex].Key;
+            Traverse.Create(manager).Field("ActiveKey").SetValue(key);
+            PlayerPrefs.SetString("AlarmClock", key);
+            PlayerPrefs.Save();
+            Notifications.SendFormat("green", "SUCCESS", "Set alarm clock to " + key.ToUpper() + ".");
         }
         public static void NoclipFly()
         {

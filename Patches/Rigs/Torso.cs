@@ -55,7 +55,8 @@ namespace Qubit.Patches.Rigs
             SpinBotX,           // Continuous X spin, no remap (Spin Bot V3)
             SpinBotForwards,    // Continuous Y spin leaned forwards (Spin Bot V4)
             SpinBotCrawling,    // Continuous Y spin leaned backwards (Spin Bot V5)
-            UpsideDownSpinBot   // Upside down continuous Y spin
+            UpsideDownSpinBot,  // Upside down continuous Y spin
+            Backflip           // One-shot X-axis flip on joystick click
         }
 
         public static event Action VRRigLateUpdate;
@@ -64,6 +65,17 @@ namespace Qubit.Patches.Rigs
 
         private static float spinAngle;
         private static float nextSpinTime;
+        private static float backflipAngle;
+        internal static bool backflipActive;
+
+        /// <summary>
+        /// Triggers a one-shot backflip animation.
+        /// </summary>
+        public static void DoBackflip()
+        {
+            backflipAngle = 0f;
+            backflipActive = true;
+        }
 
         public static void Postfix(VRRig __instance)
         {
@@ -132,6 +144,19 @@ namespace Qubit.Patches.Rigs
                                 PoseMode.UpsideDownSpinBot => Quaternion.Euler(0f, spinAngle, 180f),
                                 _ => Quaternion.identity
                             };
+                            remap = false;
+                            break;
+                        case PoseMode.Backflip:
+                            if (backflipActive)
+                            {
+                                backflipAngle += 1440f * Time.deltaTime;
+                                if (backflipAngle >= 360f)
+                                {
+                                    backflipAngle = 0f;
+                                    backflipActive = false;
+                                }
+                            }
+                            rotation = Quaternion.Euler(backflipAngle, headYaw, 0f);
                             remap = false;
                             break;
                         default:

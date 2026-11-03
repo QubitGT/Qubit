@@ -556,6 +556,147 @@ namespace Qubit.Libraries.Entities
             CreatePiece(pieceIdSet, References.HeadCollider.transform.position + new Vector3(MathF.Cos((float)Time.frameCount / 30), 0f, MathF.Sin((float)Time.frameCount / 30)), Quaternion.identity, 0);
             Security.RPCProtection();
         }
+
+        #region Igloo / Ellipsoid / Sphere / Suffocate / Float
+
+        private const int IglooPieceType = 439542361;
+        private const int FlingPieceType = -566818631;
+        private static int iglooRing;
+        private static float iglooAngle;
+        private static float iglooRadius = 0.23f;
+        private static float iglooRingDelay;
+        private static Vector3 iglooCenter = Vector3.zero;
+
+        private static readonly (float radius, float eulerX, float yOffset, float delay)[] IglooRings =
+        {
+            (0.5f, 0f, 0f, 0.8f),      // ring 2: base
+            (0.8f, 0f, 0f, 0.74f),     // ring 3
+            (0.74f, 71f, 0.186f, 0.74f), // ring 4
+            (0.372f, 130f, 0.6f, 0.74f), // ring 5
+            (0.015f, 150f, 0.91f, 0.095f), // ring 6: top
+        };
+
+        /// <summary>
+        /// Shoot someone to encase them in an igloo of blocks, or shoot the ground to build one there.
+        /// </summary>
+        public static void IglooGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (iglooCenter == Vector3.zero)
+                    iglooCenter = new Vector3(gunTarget.transform.position.x, Mathf.Min(gunTarget.transform.position.y - 0.45f, Mathf.Min(gunTarget.leftHandTransform.position.y - 0.061f, gunTarget.rightHandTransform.position.y - 0.061f)), gunTarget.transform.position.z);
+                BuildIglooRing();
+            }, new GunLibrary.GunSettings { locks = true, onIdle = () => { iglooRing = 0; iglooCenter = Vector3.zero; } });
+        }
+
+        private static void BuildIglooRing()
+        {
+            if (Time.time > iglooRingDelay)
+            {
+                int ringIndex = iglooRing >= 2 ? iglooRing - 2 : 0;
+                if (ringIndex < IglooRings.Length)
+                {
+                    var ring = IglooRings[ringIndex];
+                    iglooRadius = ring.radius;
+                    iglooRingDelay = Time.time + ring.delay;
+                    iglooRing++;
+                    if (iglooRing > 6)
+                        iglooRing = 2;
+                }
+            }
+
+            iglooAngle += 13f * Time.deltaTime;
+            Vector3 position = new Vector3(iglooCenter.x + iglooRadius * Mathf.Cos(iglooAngle), iglooCenter.y, iglooCenter.z + iglooRadius * Mathf.Sin(iglooAngle));
+            int ringIdx = iglooRing >= 2 ? iglooRing - 2 : 0;
+            Quaternion rotation = Quaternion.LookRotation(iglooCenter - position);
+            if (ringIdx < IglooRings.Length)
+            {
+                rotation *= Quaternion.Euler(IglooRings[ringIdx].eulerX, 0f, 0f);
+                position.y += IglooRings[ringIdx].yOffset;
+            }
+            CreatePiece(IglooPieceType, position, rotation, 0, overrideFreeze: true);
+            Security.RPCProtection();
+        }
+
+        private static int ellipsoidAxis;
+        private static float ellipsoidDelay;
+
+        /// <summary>
+        /// Shoot and make circles of blocks along each axis at wherever your hand desires.
+        /// </summary>
+        public static void EllipsoidGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                if (Time.time > ellipsoidDelay)
+                {
+                    ellipsoidDelay = Time.time + 0.5f;
+                    ellipsoidAxis++;
+                    if (ellipsoidAxis > 2)
+                        ellipsoidAxis = 0;
+                }
+
+                float angle = Time.frameCount / 20f;
+                Vector3 center = NewPointer.transform.position;
+                Vector3 offset = ellipsoidAxis == 0
+                    ? new Vector3(Mathf.Cos(angle) * 1.2f, Mathf.Sin(angle) * 0.5f, 0f)
+                    : ellipsoidAxis == 1
+                        ? new Vector3(0f, Mathf.Cos(angle) * 1.2f, Mathf.Sin(angle) * 0.5f)
+                        : new Vector3(Mathf.Sin(angle) * 0.5f, 0f, Mathf.Cos(angle) * 1.2f);
+
+                CreatePiece(pieceIdSet, center + offset, Quaternion.LookRotation(center - (center + offset)), 0, overrideFreeze: true);
+                Security.RPCProtection();
+            });
+        }
+
+        /// <summary>
+        /// Spawns blocks in a sphere around you. Requires master client.
+        /// </summary>
+        public static void BlockSphere()
+        {
+            Vector3 position = References.LocalRig.transform.position + Random.onUnitSphere;
+            CreatePiece(pieceIdSet, position, Quaternion.LookRotation(References.LocalRig.transform.position - position), 0, overrideFreeze: true);
+            Security.RPCProtection();
+        }
+
+        /// <summary>
+        /// Shoot and make blocks spawn in a sphere at wherever your hand desires. Requires master client.
+        /// </summary>
+        public static void BlockSphereGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                Vector3 position = NewPointer.transform.position + new Vector3(0f, 1f, 0f) + Random.onUnitSphere * 0.55f;
+                CreatePiece(pieceIdSet, position, Quaternion.LookRotation(NewPointer.transform.position + new Vector3(0f, 1f, 0f) - position), 0, overrideFreeze: true);
+                Security.RPCProtection();
+            });
+        }
+
+        /// <summary>
+        /// Shoot someone and suffocate them with a frozen fling block at their body. Requires master client.
+        /// </summary>
+        public static void SuffocateGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                CreatePiece(FlingPieceType, gunTarget.transform.position, Quaternion.Euler(Random.Range(0f, 360f), Random.Range(0f, 360f), Random.Range(0f, 360f)), 0, gunTarget.GetPlayer(), overrideFreeze: true);
+                Security.RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Shoot someone and float them with a fling block under their feet. Requires master client.
+        /// </summary>
+        public static void FloatGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                CreatePiece(FlingPieceType, gunTarget.transform.position + Vector3.down * 0.345f, Quaternion.Euler(0f, Random.Range(0f, 359f), 0f), 0, velocity: Vector3.up * 10f);
+                Security.RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        #endregion
         public static void NoclipBuilding()
         {
             if (Time.time > noclipBuildingDelay)
