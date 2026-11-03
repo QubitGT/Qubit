@@ -31,6 +31,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using static Qubit.Extensions.GameObj;
+using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Extensions.Players;
 using static Qubit.Libraries.Controls.Controllers;
 using static Qubit.Libraries.Networking.GameModes;
@@ -344,5 +345,67 @@ namespace Qubit.Modules.Categories.Gamemode
                 }
             }
         }
+
+        #region Projectile AimBots / UnGodMode
+
+        /// <summary>
+        /// Paintbrawl hard aimbot: teleports your slingshot projectile to the nearest enemy, through walls, anywhere.
+        /// </summary>
+        public static void HardAimbot()
+        {
+            foreach (SlingshotProjectile projectile in UnityEngine.Object.FindObjectsOfType<SlingshotProjectile>())
+            {
+                if (projectile == null)
+                    continue;
+
+                VRRig nearest = Players.ActiveRigs
+                    .Where(rig => !rig.isLocal && rig != null)
+                    .OrderBy(rig => Vector3.Distance(rig.transform.position, projectile.transform.position))
+                    .FirstOrDefault();
+
+                if (nearest != null)
+                {
+                    projectile.transform.position = nearest.headMesh.transform.position;
+                    projectile.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Paintbrawl soft aimbot: when your projectile gets within 2 meters of an enemy, teleports the ball to them.
+        /// </summary>
+        public static void SoftAimbot()
+        {
+            foreach (SlingshotProjectile projectile in UnityEngine.Object.FindObjectsOfType<SlingshotProjectile>())
+            {
+                if (projectile == null)
+                    continue;
+
+                VRRig nearest = Players.ActiveRigs
+                    .Where(rig => !rig.isLocal && rig != null)
+                    .OrderBy(rig => Vector3.Distance(rig.transform.position, projectile.transform.position))
+                    .FirstOrDefault();
+
+                if (nearest != null && Vector3.Distance(nearest.transform.position, projectile.transform.position) < 1.9f)
+                {
+                    projectile.transform.position = nearest.headMesh.transform.position;
+                    projectile.GetComponent<Rigidbody>().linearVelocity = Vector3.zero;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Undoes god mode for everyone in paintbrawl.
+        /// </summary>
+        public static void UnGodModeAll() => IterateLocalPlayers(player => SetPaintbrawlHealth(player, 1));
+
+        public static void UnGodModeGun()
+        {
+            GunLibrary.Target(gunTarget => SetPaintbrawlHealth(gunTarget.GetPlayer(), 1), new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void UnGodModeSelf() => SetPaintbrawlHealth(Networking.LocalPlayer, 1);
+
+        #endregion
     }
 }

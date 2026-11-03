@@ -39,6 +39,7 @@ using static Qubit.Libraries.Networking.GameModes;
 using static Qubit.Libraries.Networking.Serialization;
 using static Qubit.Modules.Categories.Projectile;
 using static Qubit.Modules.Classes.GunLibrary;
+using static Qubit.Extensions.GameObj;
 using Random = UnityEngine.Random;
 using Security = Qubit.Core.Security;
 
@@ -547,5 +548,63 @@ namespace Qubit.Modules.Categories.Gamemode
                 }
             });
         }
+
+        #region SuperGameMode / Barriers / Bonus
+
+        /// <summary>
+        /// Breaks the super infection gamemode by destroying its entity manager.
+        /// Makes terminals unusable, items wont spawn, and resources cant be claimed.
+        /// </summary>
+        public static void BreakSuperGameMode()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            GameEntityManager manager = GameEntityManager.GetManagerForZone(References.LocalRig.zoneEntity.currentZone);
+            if (manager != null)
+                PhotonNetwork.Destroy(manager.photonView);
+        }
+
+        private static bool barriersDisabled;
+
+        /// <summary>
+        /// Removes the map barriers in super infection.
+        /// </summary>
+        public static void DisableMapBarriers()
+        {
+            barriersDisabled = !barriersDisabled;
+
+            string[] barriers =
+            {
+                "Environment Objects/LocalObjects_Prefab/Forest/Super Infection Zone - Forest Variant/ForestDome_Prefab",
+                "Environment Objects/LocalObjects_Prefab/Mountain/Super Infection Zone - Mountain Variant/MountainDome_Prefab",
+                "Environment Objects/LocalObjects_Prefab/MetroMain/Super Infection Zone - Metropolis Variant/MetroDome_Prefab",
+                "Environment Objects/LocalObjects_Prefab/Canyon/Super Infection Zone - Canyon Variant/CanyonDome_Prefab",
+                "Environment Objects/LocalObjects_Prefab/Canyon/Canyon/Canyon_ForceVolumes/CanyonDome_CollisionOnly",
+                "Environment Objects/LocalObjects_Prefab/Beach/Super Infection Zone - Beach Variant/BeachDome_Prefab",
+                "Environment Objects/LocalObjects_Prefab/Beach/ForceVolumesOcean_Combo_V2/MapDome_Beach_Collision (1)"
+            };
+
+            foreach (string barrier in barriers)
+            {
+                GameObject obj = GetObject(barrier);
+                if (obj != null)
+                    obj.SetActive(!barriersDisabled);
+            }
+        }
+
+        /// <summary>
+        /// Instantly completes your bonus points progress.
+        /// </summary>
+        public static void CompleteBonusPoints()
+        {
+            for (int i = 0; i < 10; i++)
+                SIPlayer.LocalPlayer.GetBonusProgress(SuperInfectionManager.activeSuperInfectionManager);
+        }
+
+        #endregion
     }
 }

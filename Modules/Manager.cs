@@ -1135,6 +1135,10 @@ namespace Qubit.Modules
                 new Module { name = "No AirGrab Decay", enableMethod =() => Qubit.Patches.GadgetPatches.noAirGrabDecay = true, disableMethod =() => Qubit.Patches.GadgetPatches.noAirGrabDecay = false, toolTip = "Gives you unlimited time to be in the air with AirGrab."},
                 new Module { name = "Infinite AirJuke Uses", enableMethod =() => Qubit.Patches.GadgetPatches.infiniteAirJukeUses = true, disableMethod =() => Qubit.Patches.GadgetPatches.infiniteAirJukeUses = false, toolTip = "Gives you infinite uses on the AirJuke gadget."},
                 new Module { name = "Stronger AirJuke", enableMethod =() => Qubit.Patches.GadgetPatches.strongerAirJuke = true, disableMethod =() => Qubit.Patches.GadgetPatches.strongerAirJuke = false, toolTip = "Makes the AirJuke gadget a lot stronger."},
+
+                new Module { name = "Break SuperGameMode", method = SIGadgets.BreakSuperGameMode, isTogglable = false, toolTip = "Makes the terminals unusable, items wont spawn, and cant claim resources. Requires master client."},
+                new Module { name = "Disable Map Barriers", method = SIGadgets.DisableMapBarriers, isTogglable = false, toolTip = "Removes the map barriers in super infection."},
+                new Module { name = "Complete Bonus Points", method = SIGadgets.CompleteBonusPoints, isTogglable = false, toolTip = "Instantly completes your bonus points progress."},
                 new Module { name = "Destroy Gadget Gun", method = SIGadgets.DestroyGadgetGun, toolTip = "Destroys any gadget which your hand desires."},
 
             },
@@ -1436,6 +1440,19 @@ namespace Qubit.Modules
                 new Module { name = "Mute All", method = Fun.MuteAll, disableMethod = Fun.UnmuteAll, toolTip = "Mutes everyone in the room.", legal = true},
                 new Module { name = "Mute All TVs", method = Fun.MuteAllTVs, disableMethod = Fun.UnmuteAllTVs, toolTip = "Mutes every TV screen in the map."},
                 new Module { name = "Hide Weather Text", method = Fun.HideWeatherText, disableMethod = Fun.ShowWeatherText, toolTip = "Hides the weather controls text on the scoreboard."},
+
+                new Module { name = "Get All IDS", method = MiscMap.GetAllIds, isTogglable = false, toolTip = "Saves everyone's player id to a txt file on your computer."},
+                new Module { name = "Join Ghost Code", method = MiscMap.JoinGhostCode, isTogglable = false, toolTip = "Joins a random ghost code room."},
+                new Module { name = "Complete Scavenger Hunt", method = MiscMap.CompleteScavengerHunt, isTogglable = false, toolTip = "Completes the current active scavenger hunt."},
+                new Module { name = "Complete MonkeBiz Quests", method = MiscMap.CompleteMonkeBizQuests, isTogglable = false, toolTip = "Completes all of the MonkeBiz quests for you."},
+                new Module { name = "Normal Voxel Dig Gun", method = MiscMap.NormalVoxelDigGun, isTogglable = false, toolTip = "Digs voxels wherever your hand desires in a normal radius."},
+                new Module { name = "Big Voxel Dig Gun", method = MiscMap.BigVoxelDigGun, isTogglable = false, toolTip = "Digs voxels wherever your hand desires in a big radius."},
+                new Module { name = "Big Mining Radius", enableMethod = MiscMap.BigMiningRadius, disableMethod = MiscMap.DisableBigMiningRadius, toolTip = "Makes the mining pickaxe dig voxels in a big radius."},
+                new Module { name = "Auto Big Snowballs", method = MiscMap.AutoBigSnowballs, toolTip = "Pick up a snowball and instantly make it big."},
+                new Module { name = "Snowball Forest Ground", enableMethod = MiscMap.SnowballForestGround, disableMethod = MiscMap.DisableSnowballForestGround, toolTip = "Be able to pick up snowballs from the forest ground."},
+                new Module { name = "Kill All GhostReactor Enemies", method = MiscMap.KillAllGhostReactorEnemies, isTogglable = false, toolTip = "Kills all the enemies in ghost reactor, only for you."},
+                new Module { name = "Grab GhostReactor Cores", method = MiscMap.GrabGhostReactorCores, toolTip = "Grabs cores for the ghost reactor when holding <color=green>grip</color>."},
+                new Module { name = "Grab GhostReactor Seeds", method = MiscMap.GrabGhostReactorSeeds, toolTip = "Grabs seeds for the ghost reactor when holding <color=green>grip</color>."},
 
                 new Module { name = "Report Gun", method = Fun.ReportGun, toolTip = "Reports whoever your hand desires for cheating."},
                 new Module { name = "Report All", method = Fun.ReportAll, isTogglable = false, toolTip = "Reports everyone in the room for cheating."},
@@ -2562,6 +2579,11 @@ namespace Qubit.Modules
                 new Module { name = "Break Movement Gun", method = Master.BreakMovementGun, toolTip = "Breaks the movement of whoever your hand desires. The target must be in ghost reactor. Requires master client."},
                 new Module { name = "Break Movement All", method = Master.BreakMovementAll, isTogglable = false, toolTip = "Breaks the movement of everyone in ghost reactor. Requires master client."},
                 new Module { name = "Break Movement All Except Gun", method = Master.BreakMovementAllExceptGun, toolTip = "Breaks the movement of everyone except whoever your hand desires. Targets must be in ghost reactor. Requires master client."},
+                new Module { name = "Break Movement Touch", method = Master.BreakMovementTouch, toolTip = "Breaks the movement of whoever you touch. They must be in ghost reactor. Requires master client."},
+                new Module { name = "Break Movement On Touch", method = Master.BreakMovementOnTouch, toolTip = "Breaks the movement of whoever touches you. They must be in ghost reactor. Requires master client."},
+                new Module { name = "Give Break Movement Touch", method = Master.GiveBreakMovementTouchGun, toolTip = "Breaks the movement of anyone the selected player touches. Requires master client."},
+                new Module { name = "Give Break Movement On Touch", method = Master.GiveBreakMovementOnTouchGun, toolTip = "Breaks the movement of anyone who touches the selected player. Requires master client."},
+                new Module { name = "Fix Movement All", method = Master.FixMovementAll, isTogglable = false, toolTip = "Fixes everyone's movement. Requires master client."},
 
                 new Module { name = "Hit Target Gun", method = Master.HitTargetGun, isTogglable = false, toolTip = "Hits the target your hand desires. Requires master client."},
                 new Module { name = "Hit All Targets", method = Master.HitAllTargets, isTogglable = false, toolTip = "Hits all the targets. Requires master client."},
@@ -2583,6 +2605,12 @@ namespace Qubit.Modules
 
                 new Module { name = "Untag Gun", method = Master.UntagGun, toolTip = "Untags whoever your hand desires."},
                 new Module { name = "Untag All", method = Master.UntagAll, isTogglable = false, toolTip = "Removes everyone from the list of tagged players."},
+                new Module { name = "Untag Others", method = Master.UntagOthers, isTogglable = false, toolTip = "Untags everyone besides you. Requires master client."},
+                new Module { name = "Untag Aura", method = Master.UntagAura, toolTip = "Untags whoever gets near you when holding <color=green>grip</color>. Requires master client."},
+                new Module { name = "Tag Others", method = Master.TagOthers, isTogglable = false, toolTip = "Tags everyone besides you. Requires master client."},
+                new Module { name = "Tag All Except Gun", method = Master.TagAllExceptGun, toolTip = "Tags everyone besides whoever your hand desires. Requires master client."},
+                new Module { name = "Mat Gun", method = Master.MatGun, toolTip = "Spams tag and untag on whoever your hand desires. Requires master client."},
+                new Module { name = "Mat Aura", method = Master.MatAura, toolTip = "Hold <color=green>grip</color> and spam tag and untag everyone nearby. Requires master client."},
 
                 new Module { name = "Break Tag", method = Master.UntagAll, toolTip = "Constantly removes everyone from the list of tagged players."},
 
@@ -2645,6 +2673,11 @@ namespace Qubit.Modules
                 new Module { name = "Paintbrawl God Mode", method = Master.PaintbrawlGodMode, toolTip = "Gives you god mode in paintbrawl." },
                 new Module { name = "Paintbrawl God Mode Gun", method = Master.PaintbrawlGodModeGun, toolTip = "Gives whoever your hand desires god mode in paintbrawl." },
                 new Module { name = "Paintbrawl God Mode All", method = Master.PaintbrawlGodModeAll, isTogglable = false, toolTip = "Gives everyone god mode in paintbrawl." },
+                new Module { name = "UnGodMode All", method = Paintbrawl.UnGodModeAll, isTogglable = false, toolTip = "Undoes god mode for everyone in paintbrawl."},
+                new Module { name = "UnGodMode Gun", method = Paintbrawl.UnGodModeGun, toolTip = "Undoes god mode for whoever your hand desires in paintbrawl."},
+                new Module { name = "UnGodMode Self", method = Paintbrawl.UnGodModeSelf, isTogglable = false, toolTip = "Undoes god mode for yourself in paintbrawl."},
+                new Module { name = "Paintbrawl Hard AimBot", method = Paintbrawl.HardAimbot, toolTip = "Shoot people through walls anywhere."},
+                new Module { name = "Paintbrawl Soft AimBot", method = Paintbrawl.SoftAimbot, toolTip = "When the projectile gets near someone in a 2 meter radius, itll teleport the ball to the player and hit them."},
                 new Module { name = "Paintbrawl Hit Gun", method = Master.PaintbrawlHitGun, toolTip = "Reports a slingshot hit on whoever your hand desires in paintbrawl." },
                 new Module { name = "Paintbrawl Hit All", method = Master.PaintbrawlHitAll, isTogglable = false, toolTip = "Reports a slingshot hit on everyone else in paintbrawl." },
 

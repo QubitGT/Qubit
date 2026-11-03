@@ -71,6 +71,109 @@ namespace Qubit.Modules.Categories
                     RemoveInfected(v);
             }
         }
+
+        /// <summary>
+        /// Untags everyone besides you.
+        /// </summary>
+        public static void UntagOthers()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            foreach (NetPlayer v in ManagerRegistry.NetworkSystem.PlayerListOthers)
+                RemoveInfected(v);
+        }
+
+        /// <summary>
+        /// Untags whoever gets near you when holding grip.
+        /// </summary>
+        public static void UntagAura()
+        {
+            if (!Networking.IsMasterClient || !rightGrab)
+                return;
+
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal && rig.IsTagged() && Vector3.Distance(rig.transform.position, References.LocalRig.transform.position) < 3f))
+                RemoveInfected(GetPlayerFromVRRig(rig));
+        }
+
+        /// <summary>
+        /// Tags everyone besides you.
+        /// </summary>
+        public static void TagOthers()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+                foreach (NetPlayer v in ManagerRegistry.NetworkSystem.PlayerListOthers.Where(v => !InfectedList().Contains(v)))
+                    AddInfected(v);
+        }
+
+        /// <summary>
+        /// Tags everyone besides whoever your hand desires.
+        /// </summary>
+        public static void TagAllExceptGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!Networking.IsMasterClient)
+                {
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                    return;
+                }
+
+                NetPlayer except = GetPlayerFromVRRig(gunTarget);
+                foreach (NetPlayer v in ManagerRegistry.NetworkSystem.PlayerListOthers.Where(v => v != except && !InfectedList().Contains(v)))
+                    AddInfected(v);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Spams tag and untag on whoever your hand desires.
+        /// </summary>
+        public static void MatGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!Networking.IsMasterClient)
+                    return;
+
+                if (!(Time.time > Tag.spamTagDelay)) return;
+                Tag.spamTagDelay = Time.time + 0.1f;
+
+                NetPlayer target = GetPlayerFromVRRig(gunTarget);
+                if (InfectedList().Contains(target))
+                    RemoveInfected(target);
+                else
+                    AddInfected(target);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Hold grip and spam tag and untag everyone nearby.
+        /// </summary>
+        public static void MatAura()
+        {
+            if (!Networking.IsMasterClient || !rightGrab)
+                return;
+
+            if (!(Time.time > Tag.spamTagDelay)) return;
+            Tag.spamTagDelay = Time.time + 0.1f;
+
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal && Vector3.Distance(rig.transform.position, References.LocalRig.transform.position) < 3f))
+            {
+                NetPlayer target = GetPlayerFromVRRig(rig);
+                if (InfectedList().Contains(target))
+                    RemoveInfected(target);
+                else
+                    AddInfected(target);
+            }
+        }
         public static void SpamTagSelf()
         {
             if (!Networking.IsMasterClient)
@@ -1846,6 +1949,90 @@ namespace Qubit.Modules.Categories
                     BreakMovementPlayer(rig);
             }, new GunLibrary.GunSettings { locks = true });
         }
+
+        /// <summary>
+        /// Breaks the movement of whoever you touch.
+        /// </summary>
+        public static void BreakMovementTouch()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal && InGhostReactor(rig)))
+            {
+                if (Vector3.Distance(References.LocalRig.rightHandTransform.position, rig.transform.position) < 0.35f ||
+                    Vector3.Distance(References.LocalRig.leftHandTransform.position, rig.transform.position) < 0.35f)
+                    BreakMovementPlayer(rig);
+            }
+        }
+
+        /// <summary>
+        /// Breaks the movement of whoever touches you.
+        /// </summary>
+        public static void BreakMovementOnTouch()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal && InGhostReactor(rig)))
+            {
+                if (Vector3.Distance(rig.rightHandTransform.position, References.LocalRig.transform.position) < 0.35f ||
+                    Vector3.Distance(rig.leftHandTransform.position, References.LocalRig.transform.position) < 0.35f)
+                    BreakMovementPlayer(rig);
+            }
+        }
+
+        /// <summary>
+        /// Fixes everyone's movement by destroying all float and break movement entities. Requires master client.
+        /// </summary>
+        public static void FixMovementAll()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            GameEntityManager manager = GameEntityManager.GetManagerForZone(References.LocalRig.zoneEntity.currentZone);
+            if (manager == null)
+                return;
+
+            List<int> netIds = new List<int>();
+            foreach (GameEntity entity in manager.entities)
+            {
+                if (entity == null || (entity.typeId != FloatEntityHash && entity.typeId != BreakMovementEntityHash))
+                    continue;
+
+                entity.gameObject.SetActive(true);
+                int netId = entity.GetNetId();
+                if (!netIds.Contains(netId))
+                    netIds.Add(netId);
+            }
+
+            if (netIds.Count > 0)
+            {
+                manager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new object[] { netIds.ToArray() });
+                Qubit.Core.Security.RPCProtection();
+            }
+        }
+
+        private const int FloatEntityHash = 544609760;
+
+        /// <summary>
+        /// Give variants: the selected player triggers break movement on touch / on being touched.
+        /// </summary>
+        public static void GiveBreakMovementTouch(bool onTouch)
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal && rig != gunTarget && InGhostReactor(rig)))
+                {
+                    bool touching = onTouch
+                        ? Vector3.Distance(rig.rightHandTransform.position, gunTarget.transform.position) < 0.31f || Vector3.Distance(rig.leftHandTransform.position, gunTarget.transform.position) < 0.31f
+                        : Vector3.Distance(gunTarget.rightHandTransform.position, rig.transform.position) < 0.31f || Vector3.Distance(gunTarget.leftHandTransform.position, rig.transform.position) < 0.31f;
+
+                    if (touching)
+                        BreakMovementPlayer(rig);
+                }
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void GiveBreakMovementTouchGun() => GiveBreakMovementTouch(false);
+        public static void GiveBreakMovementOnTouchGun() => GiveBreakMovementTouch(true);
 
         #endregion
 

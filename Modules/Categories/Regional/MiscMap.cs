@@ -20,6 +20,10 @@
  */
 
 using GorillaTag.Gravity;
+using GorillaTagScripts.ScavengerHunt;
+using System.Linq;
+using Voxels;
+using Photon.Realtime;
 using Photon.Pun;
 using Qubit.Core;
 using Qubit.Extensions;
@@ -115,5 +119,183 @@ namespace Qubit.Modules.Categories.Regional
                 }
             }
         }
+
+        #region Misc Utilities
+
+        /// <summary>
+        /// Grabs all the ghost reactor collectible cores to your hand when holding grip.
+        /// </summary>
+        public static void GrabGhostReactorCores()
+        {
+            foreach (GameEntity entity in UnityEngine.Object.FindObjectsOfType<GameEntity>())
+            {
+                if (entity == null || !entity.name.Contains("GhostReactorCollectibleCore"))
+                    continue;
+
+                if (rightGrab)
+                    entity.transform.position = References.RightHand.position;
+            }
+        }
+
+        /// <summary>
+        /// Grabs all the ghost reactor sentient seeds to your hand when holding grip.
+        /// </summary>
+        public static void GrabGhostReactorSeeds()
+        {
+            foreach (GameEntity entity in UnityEngine.Object.FindObjectsOfType<GameEntity>())
+            {
+                if (entity == null || !entity.name.Contains("GhostReactorCollectibleSentientCore"))
+                    continue;
+
+                if (rightGrab)
+                    entity.transform.position = References.RightHand.position;
+            }
+        }
+
+        /// <summary>
+        /// Kills all the enemies in ghost reactor, only for you.
+        /// </summary>
+        public static void KillAllGhostReactorEnemies()
+        {
+            foreach (GREnemyMonkeye enemy in GetAllType<GREnemyMonkeye>())
+                enemy.InstantDeath();
+        }
+
+        /// <summary>
+        /// Saves everyone's player ids and info to a txt file in your game folder.
+        /// </summary>
+        public static void GetAllIds()
+        {
+            if (!PhotonNetwork.InRoom)
+                return;
+
+            string output = $"IDS GRABBED WITH QUBIT | ROOM: {PhotonNetwork.CurrentRoom.Name} | MODE: {ManagerRegistry.GorillaGameManager.GameType()}\n\n";
+            foreach (Player player in PhotonNetwork.PlayerList)
+            {
+                VRRig rig = Qubit.Extensions.Players.GetVRRigFromPlayer(player);
+                if (rig == null)
+                    continue;
+
+                Color color = rig.playerColor;
+                output += $"NAME: {player.NickName} | ID: {player.UserId} | COLOR CODE: {Mathf.RoundToInt(color.r * 9f)}{Mathf.RoundToInt(color.g * 9f)}{Mathf.RoundToInt(color.b * 9f)}\n";
+            }
+
+            System.IO.File.WriteAllText(System.IO.Path.Combine(BepInEx.Paths.BepInExRootPath, "Player_IDS.txt"), output);
+            Qubit.Libraries.Interface.Notifications.SendFormat("green", "SUCCESS", "Saved all ids to your BepInEx folder.");
+        }
+
+        private static readonly string[] GhostCodes = { "SREN17", "SREN18", "DAISY09", "PBBV", "J3VU", "ECHO", "STATUE", "BANSHEE", "NULL", "RUN", "TIPTOE" };
+
+        /// <summary>
+        /// Joins a random ghost code room.
+        /// </summary>
+        public static void JoinGhostCode()
+        {
+            string code = GhostCodes[UnityEngine.Random.Range(0, GhostCodes.Length)];
+            PhotonNetwork.JoinRoom(code);
+        }
+
+        /// <summary>
+        /// Completes the current active scavenger hunt.
+        /// </summary>
+        public static void CompleteScavengerHunt()
+        {
+            foreach (ScavengerManager.Hunt hunt in ScavengerManager.Instance.Hunts.Where(h => !h.IsCompleted))
+            {
+                foreach (ScavengerTarget target in hunt.Targets.Where(t => !hunt.IsCollected(t)))
+                    hunt.Collect(target, false);
+            }
+        }
+
+        /// <summary>
+        /// Completes all of the MonkeBiz quests for you.
+        /// </summary>
+        public static void CompleteMonkeBizQuests()
+        {
+            foreach (QuestDisplay display in UnityEngine.Object.FindObjectsOfType<QuestDisplay>())
+            {
+                display.quest.ApplySavedProgress(display.quest.requiredOccurenceCount);
+                display.quest.RemoveEventListener();
+                display.quest.questManager.HandleQuestCompleted(display.quest.questID);
+                display.UpdateDisplay();
+            }
+        }
+
+        /// <summary>
+        /// Digs voxels wherever your hand desires in a normal radius.
+        /// </summary>
+        public static void NormalVoxelDigGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                ChunkComponent chunk = GunData.Ray.collider.GetComponent<ChunkComponent>();
+                if (chunk != null && GetGunInput(true))
+                    VoxelExtensions.Mine(chunk.World, GunData.Ray, new VoxelAction { strength = 1f, radius = 0.5f, operation = (OperationType)0 });
+            });
+        }
+
+        /// <summary>
+        /// Digs voxels wherever your hand desires in a big radius.
+        /// </summary>
+        public static void BigVoxelDigGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                ChunkComponent chunk = GunData.Ray.collider.GetComponent<ChunkComponent>();
+                if (chunk != null && GetGunInput(true) && Time.time > voxelDigDelay)
+                {
+                    voxelDigDelay = Time.time + 0.09f;
+                    VoxelExtensions.Mine(chunk.World, GunData.Ray, new VoxelAction { strength = 1f, radius = 4.67f, operation = (OperationType)0 });
+                }
+            });
+        }
+
+        private static float voxelDigDelay;
+
+        /// <summary>
+        /// Makes the mining pickaxe dig voxels in a big radius.
+        /// </summary>
+        public static void BigMiningRadius()
+        {
+            foreach (Voxel_Pickaxe pickaxe in GetAllType<Voxel_Pickaxe>())
+                pickaxe.mine.radius = 4.67f;
+        }
+
+        public static void DisableBigMiningRadius()
+        {
+            foreach (Voxel_Pickaxe pickaxe in GetAllType<Voxel_Pickaxe>())
+                pickaxe.mine.radius = 0.5f;
+        }
+
+        /// <summary>
+        /// Pick up a snowball and instantly make it big.
+        /// </summary>
+        public static void AutoBigSnowballs()
+        {
+            foreach (GrowingSnowballThrowable snowball in GetAllType<GrowingSnowballThrowable>())
+            {
+                if (snowball.SizeLevel != 5)
+                    typeof(GrowingSnowballThrowable).GetMethod(PhotonNetwork.InRoom ? "GrowSnowballRPC" : "GrowSnowball", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)?.Invoke(snowball, new object[] { 5 });
+            }
+        }
+
+        /// <summary>
+        /// Be able to pick up snowballs from the forest ground.
+        /// </summary>
+        public static void SnowballForestGround()
+        {
+            GorillaSurfaceOverride surface = GetObject("Environment Objects/LocalObjects_Prefab/rooms/pit ground bottom")?.GetComponent<GorillaSurfaceOverride>();
+            if (surface != null)
+                surface.overrideIndex = 60; // growing snowball surface
+        }
+
+        public static void DisableSnowballForestGround()
+        {
+            GorillaSurfaceOverride surface = GetObject("Environment Objects/LocalObjects_Prefab/rooms/pit ground bottom")?.GetComponent<GorillaSurfaceOverride>();
+            if (surface != null)
+                surface.overrideIndex = 0;
+        }
+
+        #endregion
     }
 }
