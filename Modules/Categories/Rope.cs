@@ -125,6 +125,83 @@ namespace Qubit.Modules.Categories
                 SetRopeVelocity(rope, (NewPointer.transform.position - rope.transform.position).normalized * 100f);
             }, new GunLibrary.GunSettings { when = () => Time.time > RopeDelay });
         }
+        public static void FlingRopeUpGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                if (GetGunInput(true) && Time.time > RopeDelay)
+                {
+                    RopeDelay = Time.time + 0.125f;
+                    GorillaRopeSwing gunTarget = GunData.Ray.collider.GetComponentInParent<GorillaRopeSwing>();
+                    if (gunTarget)
+                        SetRopeVelocity(gunTarget, new Vector3(0.001f, 75f, 0.001f));
+                }
+            });
+        }
+        public static void FreezeRopeGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                if (GetGunInput(true) && Time.time > RopeDelay)
+                {
+                    RopeDelay = Time.time + 0.125f;
+                    GorillaRopeSwing gunTarget = GunData.Ray.collider.GetComponentInParent<GorillaRopeSwing>();
+                    if (gunTarget)
+                        SetRopeVelocity(gunTarget, Vector3.zero);
+                }
+            });
+        }
+        public static void ControlRopeGun()
+        {
+            GunLibrary.Aim(GunData =>
+            {
+                if (GetGunInput(true) && Time.time > RopeDelay)
+                {
+                    RopeDelay = Time.time + 0.125f;
+                    GorillaRopeSwing gunTarget = GunData.Ray.collider.GetComponentInParent<GorillaRopeSwing>();
+                    if (gunTarget)
+                        SetRopeVelocity(gunTarget, References.RightHand.rotation * Vector3.forward * -50f);
+                }
+            });
+        }
+        public static void FlingHeldRopeUp()
+        {
+            if (rightTrigger > 0.5f && References.LocalRig.grabbedRopeIndex != -1 && Time.time > RopeDelay)
+            {
+                RopeDelay = Time.time + 0.125f;
+                GorillaRopeSwing held = HeldRope();
+                if (held != null)
+                    SetHeldRopeVelocity(held, new Vector3(0f, 35f, 0f));
+            }
+        }
+        public static void FlingHeldRopeForwards()
+        {
+            if (rightTrigger > 0.5f && References.LocalRig.grabbedRopeIndex != -1 && Time.time > RopeDelay)
+            {
+                RopeDelay = Time.time + 0.125f;
+                GorillaRopeSwing held = HeldRope();
+                if (held != null)
+                    SetHeldRopeVelocity(held, References.HeadCollider.transform.forward.normalized * 30f);
+            }
+        }
+        public static void FreezeHeldRope()
+        {
+            if (rightTrigger > 0.5f && References.LocalRig.grabbedRopeIndex != -1 && Time.time > RopeDelay)
+            {
+                RopeDelay = Time.time + 0.125f;
+                GorillaRopeSwing held = HeldRope();
+                if (held != null)
+                    SetHeldRopeVelocity(held, Vector3.zero);
+            }
+        }
+        private static GorillaRopeSwing HeldRope() =>
+            ManagerRegistry.RopeSwingManager.ropes.Values.FirstOrDefault(rope => rope.ropeId == References.LocalRig.grabbedRopeIndex);
+        private static void SetHeldRopeVelocity(GorillaRopeSwing rope, Vector3 velocity)
+        {
+            velocity = velocity.ClampMagnitudeSafe(15f);
+            ManagerRegistry.RopeSwingManager.SendSetVelocity_RPC(rope.ropeId, References.LocalRig.grabbedRopeBoneIndex, velocity, true);
+            RPCProtection();
+        }
         public static void RopeGrabReach()
         {
             foreach (GorillaHandClimber climber in new[] { ManagerRegistry.EquipmentInteractor.LeftClimber, ManagerRegistry.EquipmentInteractor.rightClimber })

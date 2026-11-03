@@ -1849,6 +1849,196 @@ namespace Qubit.Modules.Categories
 
         #endregion
 
+        #region Shooting Gallery Targets
+
+        private static System.Reflection.FieldInfo targetScoreField;
+        private static System.Reflection.FieldInfo targetCooldownField;
+
+        private static GorillaTag.WatchableIntSO GetTargetScore(HitTargetNetworkState target)
+        {
+            targetScoreField ??= typeof(HitTargetNetworkState).GetField("scoreSO", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            return targetScoreField?.GetValue(target) as GorillaTag.WatchableIntSO;
+        }
+
+        private static float GetTargetCooldown(HitTargetNetworkState target)
+        {
+            targetCooldownField ??= typeof(HitTargetNetworkState).GetField("hitCooldownTime", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+                ?? typeof(HitTargetNetworkState).GetField("nextHitTime", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            return targetCooldownField != null ? (float)targetCooldownField.GetValue(target) : 0f;
+        }
+
+        private static void SetTargetCooldown(HitTargetNetworkState target, float value)
+        {
+            targetCooldownField ??= typeof(HitTargetNetworkState).GetField("hitCooldownTime", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)
+                ?? typeof(HitTargetNetworkState).GetField("nextHitTime", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public);
+            targetCooldownField?.SetValue(target, value);
+        }
+
+        /// <summary>
+        /// Sets a shooting gallery target's score, respecting the hit cooldown. Score of int.MinValue breaks it,
+        /// 0 resets it, 6767 increments it.
+        /// </summary>
+        public static void SetTargetScore(HitTargetNetworkState target, int score, float cooldown = 0.69f, bool audio = true)
+        {
+            if (!Networking.InRoom || Networking.IsMasterClient)
+            {
+                if (Time.time <= GetTargetCooldown(target))
+                    return;
+
+                                GorillaTag.WatchableIntSO scoreSO = GetTargetScore(target);
+                if (scoreSO == null)
+                    return;
+
+                int value = score == 6767 ? scoreSO.Value + 1 : score;
+                if (audio)
+                    target.PlayAudio(scoreSO.Value, value);
+                scoreSO.Value = value;
+                SetTargetCooldown(target, Time.time + cooldown);
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        public static void HitTargetGun() =>
+            GunLibrary.Point(pointer =>
+            {
+                HitTargetNetworkState target = pointer.GetComponentInParent<HitTargetNetworkState>();
+                if (target != null)
+                    SetTargetScore(target, 6767);
+            });
+
+        public static void HitAllTargets()
+        {
+            foreach (HitTargetNetworkState target in GetAllType<HitTargetNetworkState>())
+                SetTargetScore(target, 6767);
+        }
+
+        public static void SpazTargetGun() =>
+            GunLibrary.Point(pointer =>
+            {
+                HitTargetNetworkState target = pointer.GetComponentInParent<HitTargetNetworkState>();
+                if (target != null)
+                    SetTargetScore(target, Random.Range(int.MinValue, int.MaxValue));
+            });
+
+        public static void SpazAllTargets()
+        {
+            foreach (HitTargetNetworkState target in GetAllType<HitTargetNetworkState>())
+                SetTargetScore(target, Random.Range(int.MinValue, int.MaxValue), 0f, false);
+        }
+
+        public static void BreakTargetGun() =>
+            GunLibrary.Point(pointer =>
+            {
+                HitTargetNetworkState target = pointer.GetComponentInParent<HitTargetNetworkState>();
+                if (target != null)
+                    SetTargetScore(target, int.MinValue);
+            });
+
+        public static void BreakAllTargets()
+        {
+            foreach (HitTargetNetworkState target in GetAllType<HitTargetNetworkState>())
+                SetTargetScore(target, int.MinValue, 0f, false);
+        }
+
+        public static void ResetTargetGun() =>
+            GunLibrary.Point(pointer =>
+            {
+                HitTargetNetworkState target = pointer.GetComponentInParent<HitTargetNetworkState>();
+                if (target != null)
+                    SetTargetScore(target, 0);
+            });
+
+        public static void ResetAllTargets()
+        {
+            foreach (HitTargetNetworkState target in GetAllType<HitTargetNetworkState>())
+                SetTargetScore(target, 0, 0f, false);
+        }
+
+        /// <summary>
+        /// Spazzes the ranked match state by repeatedly setting the infected mode threshold.
+        /// </summary>
+        public static void SpazRankedState()
+        {
+            if (Time.time < rankedStateSpazDelay) return;
+            rankedStateSpazDelay = Time.time + 0.149f;
+
+            SetRankedThreshold(0.001f);
+        }
+
+        private static float rankedStateSpazDelay;
+
+        /// <summary>
+        /// Breaks the critters manager, disabling all critters equipment. Requires master client.
+        /// </summary>
+        public static void BreakCritters()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            CrittersManager instance = CrittersManager.instance;
+            if (instance == null)
+                return;
+
+            PhotonNetwork.Destroy(((Component)instance).gameObject.GetPhotonView());
+        }
+
+        #endregion
+
+        #region Player Visibility / Computer Kick
+
+        /// <summary>
+        /// Removes a player's cached instantiation from the room, so new joiners won't see them.
+        /// </summary>
+        public static void DestroyPlayer(VRRig target)
+        {
+            PhotonNetwork.OpRemoveCompleteCacheOfPlayer(Players.GetPlayerFromVRRig(target).ActorNumber);
+        }
+
+        public static void DestroyPlayerGun()
+        {
+            GunLibrary.Target(gunTarget => DestroyPlayer(gunTarget), new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void DestroyAllPlayers()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
+                DestroyPlayer(rig);
+        }
+
+        /// <summary>
+        /// Rejoins the private room, kicking everyone touching the computer join button.
+        /// </summary>
+        public static void KickAllNearComputer()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            if (PhotonNetwork.CurrentRoom.IsVisible)
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in a private lobby.");
+                return;
+            }
+
+            GorillaNetworking.GorillaComputer computer = GorillaNetworking.GorillaComputer.instance;
+            if (!computer.friendJoinCollider.playerIDsCurrentlyTouching.Any(info => info != null && info.UserID != Networking.LocalPlayer.UserId))
+            {
+                Notifications.SendFormat("red", "ERROR", "No one is near a computer.");
+                return;
+            }
+
+            computerRoomName = PhotonNetwork.CurrentRoom.Name;
+            computer.OnGroupJoinButtonPress(0, computer.friendJoinCollider);
+            Notifications.SendFormat("green", "QUBIT", "Kicking players, please wait...");
+        }
+
+        internal static string computerRoomName;
+
+        #endregion
+
         #region Cover (MonkeBlocks griefing)
 
         private const int CoverPieceType = 1858470402;

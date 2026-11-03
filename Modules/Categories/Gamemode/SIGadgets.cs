@@ -25,6 +25,7 @@ using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Core;
 using Qubit.Libraries.Entities;
+using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
@@ -391,6 +392,122 @@ namespace Qubit.Modules.Categories.Gamemode
             int[] objectIds = Gadgets.GadgetByName.Where(x => x.Key.Contains("Resource")).Select(x => x.Value).ToArray();
             SpamGadgetGun(objectIds[Random.Range(0, objectIds.Length)]);
         }
+
+        #region Selected Item Suite
+
+        /// <summary>The currently selected entity/item id used by the item mods. Defaults to a vibrating spring resource.</summary>
+        public static int SelectedItemId { get; set; } =
+            Gadgets.GadgetByName.TryGetValue("SI_Resource_VibratingSpring", out int springId) ? springId : 0;
+
+        private static float itemDelay;
+
+        /// <summary>
+        /// Spawns the selected item out of your hand when holding grip.
+        /// </summary>
+        public static void ItemSpammer()
+        {
+            if (rightGrab && Time.time > itemDelay)
+            {
+                itemDelay = Time.time + 0.1f;
+                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, References.RightHand.position + new Vector3(0f, 0.15f, 0f), Quaternion.identity, Vector3.down * 0.1f, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            }
+        }
+
+        /// <summary>
+        /// Shoots the selected item out of your hand when holding grip.
+        /// </summary>
+        public static void ItemMinigun()
+        {
+            if (rightGrab && Time.time > itemDelay)
+            {
+                itemDelay = Time.time + 0.1f;
+                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, References.RightHand.position, Quaternion.identity, References.RightHand.rotation * Vector3.forward * -15f, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            }
+        }
+
+        /// <summary>
+        /// Spawns the selected item orbiting around you when holding grip.
+        /// </summary>
+        public static void ItemOrbit()
+        {
+            if (rightGrab && Time.time > itemDelay)
+            {
+                itemDelay = Time.time + 0.1f;
+                float angle = Time.frameCount / 30f;
+                Vector3 position = References.LocalRig.transform.position + new Vector3(Mathf.Cos(angle) * 0.9f, 0f, Mathf.Sin(angle) * 0.9f);
+                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, position, Quaternion.LookRotation(Vector3.up, References.LocalRig.transform.position - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            }
+        }
+
+        /// <summary>
+        /// Spawns the selected item at wherever your hand desires.
+        /// </summary>
+        public static void ItemGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, NewPointer.transform.position + new Vector3(0f, 0.14f, 0f), Quaternion.identity, Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            });
+        }
+
+        /// <summary>
+        /// Spawns the selected item in a ball around you.
+        /// </summary>
+        public static void ItemSphere()
+        {
+            Vector3 randomDirection = Random.onUnitSphere;
+            Vector3 position = References.LocalRig.transform.position + randomDirection * 1.2f;
+            GameEntities.CreateItem(RpcTarget.All, SelectedItemId, position, Quaternion.LookRotation(References.LocalRig.transform.position - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+        }
+
+        /// <summary>
+        /// Spawns the selected item in a sphere at wherever your hand desires.
+        /// </summary>
+        public static void ItemSphereGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                Vector3 randomDirection = Random.onUnitSphere;
+                Vector3 position = NewPointer.transform.position + new Vector3(0f, 0.9f, 0f) + randomDirection * 0.85f;
+                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, position, Quaternion.LookRotation(NewPointer.transform.position + new Vector3(0f, 0.9f, 0f) - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            });
+        }
+
+        /// <summary>
+        /// Destroys all the entities in the current super infection zone.
+        /// </summary>
+        public static void DestroyAllItems()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            GameEntityManager manager = ManagerRegistry.SuperInfection.GameEntityManager;
+            if (manager == null)
+                return;
+
+            List<int> netIds = new List<int>();
+            foreach (GameEntity entity in manager.entities)
+            {
+                if (entity == null || entity.IsScenePlaced)
+                    continue;
+
+                entity.gameObject.SetActive(true);
+                int netId = entity.GetNetId();
+                if (!netIds.Contains(netId))
+                    netIds.Add(netId);
+            }
+
+            if (netIds.Count > 0)
+            {
+                manager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new object[] { netIds.ToArray() });
+                Security.RPCProtection();
+            }
+        }
+
+        #endregion
         public static void DestroyGadgetGun()
         {
             GunLibrary.Point(NewPointer =>

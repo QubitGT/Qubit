@@ -51,6 +51,62 @@ namespace Qubit.Libraries.Holdables
             });
         }
 
+        /// <summary>
+        /// Shoot someone and annoy them with gliders, spawning gliders at their face repeatedly.
+        /// </summary>
+        public static void GliderAnnoyGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                foreach (GliderHoldable glider in GetAllType<GliderHoldable>())
+                {
+                    if (glider.GetView.Owner == PhotonNetwork.LocalPlayer)
+                        glider.gameObject.transform.position = gunTarget.transform.position + new Vector3(0f, 1.6f, 0f);
+                    else
+                        glider.OnHover(null, null);
+                }
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Shoot gliders like a minigun from your hand when holding grip.
+        /// </summary>
+        public static void GliderMinigun()
+        {
+            if (!rightGrab)
+                return;
+
+            if (Time.time > gliderMinigunDelay)
+            {
+                gliderMinigunDelay = Time.time + 0.1f;
+
+                GliderHoldable[] gliders = GetAllType<GliderHoldable>();
+                if (gliders.Length == 0)
+                    return;
+
+                gliderMinigunIndex++;
+                if (gliderMinigunIndex >= gliders.Length)
+                    gliderMinigunIndex = 0;
+
+                GliderHoldable glider = gliders[gliderMinigunIndex];
+                if (glider.GetView.Owner == PhotonNetwork.LocalPlayer || glider.GetView.Controller == PhotonNetwork.LocalPlayer)
+                {
+                    glider.gameObject.transform.position = References.RightHand.position + new Vector3(0f, 0.5f, 0f);
+                    glider.gameObject.transform.rotation = References.RightHand.rotation;
+
+                    Rigidbody rigidbody = glider.gameObject.GetComponent<Rigidbody>();
+                    rigidbody.isKinematic = false;
+                    rigidbody.useGravity = true;
+                    rigidbody.linearVelocity = References.RightHand.rotation * Vector3.forward * -35f;
+                }
+                else
+                    glider.OnHover(null, null);
+            }
+        }
+
+        private static int gliderMinigunIndex;
+        private static float gliderMinigunDelay;
+
         public static void ModifyGliderSpeed(float pullUpLiftBonus, float dragVsSpeedDragFactor)
         {
             foreach (GliderHoldable glider in GetAllType<GliderHoldable>())
