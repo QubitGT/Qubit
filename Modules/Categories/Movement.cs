@@ -3943,6 +3943,30 @@ namespace Qubit.Modules.Categories
 
         public static void ApplyMultiplicationAmount(int index) => multiplicationAmount = index;
 
+        #region Tweaks
+        private static bool wasTiptoeing;
+
+        public static void Tiptoe()
+        {
+            References.LocalRig.head.trackingPositionOffset = new Vector3(0f, 0.12f, 0f);
+        }
+
+        public static void DisableTiptoe()
+        {
+            References.LocalRig.head.trackingPositionOffset = Vector3.zero;
+        }
+
+        private static bool previousFrontflip;
+
+        public static void Frontflip()
+        {
+            if (rightPrimary && !previousFrontflip)
+                References.Rigidbody.angularVelocity = References.Player.headCollider.transform.right * -15f;
+
+            previousFrontflip = rightPrimary;
+        }
+        #endregion
+
 
         [RunOnLaunch(LaunchPriority.Macros)]
         public static void Initialize()

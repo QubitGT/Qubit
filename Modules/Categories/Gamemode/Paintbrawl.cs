@@ -21,10 +21,12 @@
 
 using Photon.Pun;
 using Photon.Realtime;
+using Qubit.Backend;
 using Qubit.Core;
 using Qubit.Extensions;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Classes;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -39,6 +41,185 @@ namespace Qubit.Modules.Categories.Gamemode
     public static class Paintbrawl
     {
         public static float paintbrawlSpamDelay;
+
+        public static void SetTeam(NetPlayer player, GorillaPaintbrawlManager.PaintbrawlStatus team)
+        {
+            if (player == null)
+                return;
+
+            GorillaPaintbrawlManager manager = ManagerRegistry.GorillaPaintbrawlManager;
+            if (manager == null || manager.playerStatusDict == null || !manager.playerStatusDict.ContainsKey(player.ActorNumber))
+                return;
+
+            GorillaPaintbrawlManager.PaintbrawlStatus status = manager.playerStatusDict[player.ActorNumber];
+            status &= ~(GorillaPaintbrawlManager.PaintbrawlStatus.RedTeam | GorillaPaintbrawlManager.PaintbrawlStatus.BlueTeam);
+            if (team != GorillaPaintbrawlManager.PaintbrawlStatus.None)
+                status |= team;
+
+            manager.playerStatusDict[player.ActorNumber] = status;
+            manager.teamBattle = true;
+        }
+
+        public static void SetTeamAll(GorillaPaintbrawlManager.PaintbrawlStatus team)
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            GorillaPaintbrawlManager manager = ManagerRegistry.GorillaPaintbrawlManager;
+            if (manager == null || manager.playerStatusDict == null)
+                return;
+
+            foreach (int actorNumber in manager.playerStatusDict.Keys.ToList())
+                SetTeam(GetPlayerFromID(actorNumber.ToString()), team);
+        }
+
+        public static void SetTeamSelf(GorillaPaintbrawlManager.PaintbrawlStatus team) =>
+            SetTeam(Networking.LocalPlayer, team);
+
+        public static void SetTeamGun(GorillaPaintbrawlManager.PaintbrawlStatus team)
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                SetTeam(GetPlayerFromVRRig(gunTarget), team);
+                paintbrawlSpamDelay = Time.time + 0.1f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > paintbrawlSpamDelay });
+        }
+
+        public static void SetBlueTeamAll() => SetTeamAll(GorillaPaintbrawlManager.PaintbrawlStatus.BlueTeam);
+        public static void SetBlueTeamSelf() => SetTeamSelf(GorillaPaintbrawlManager.PaintbrawlStatus.BlueTeam);
+        public static void SetBlueTeamGun() => SetTeamGun(GorillaPaintbrawlManager.PaintbrawlStatus.BlueTeam);
+
+        public static void SetOrangeTeamAll() => SetTeamAll(GorillaPaintbrawlManager.PaintbrawlStatus.RedTeam);
+        public static void SetOrangeTeamSelf() => SetTeamSelf(GorillaPaintbrawlManager.PaintbrawlStatus.RedTeam);
+        public static void SetOrangeTeamGun() => SetTeamGun(GorillaPaintbrawlManager.PaintbrawlStatus.RedTeam);
+
+        public static void SetNoTeamAll() => SetTeamAll(GorillaPaintbrawlManager.PaintbrawlStatus.None);
+        public static void SetNoTeamSelf() => SetTeamSelf(GorillaPaintbrawlManager.PaintbrawlStatus.None);
+        public static void SetNoTeamGun() => SetTeamGun(GorillaPaintbrawlManager.PaintbrawlStatus.None);
+
+        public static void RandomizeTeams()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            ManagerRegistry.GorillaPaintbrawlManager.RandomizeTeams();
+        }
+
+        public static void SetTeamsMode()
+        {
+            GorillaPaintbrawlManager manager = ManagerRegistry.GorillaPaintbrawlManager;
+            if (manager == null)
+                return;
+
+            manager.teamBattle = !manager.teamBattle;
+        }
+
+        public static void SetStunned(NetPlayer player, bool stunned)
+        {
+            if (player == null)
+                return;
+
+            GorillaPaintbrawlManager manager = ManagerRegistry.GorillaPaintbrawlManager;
+            if (manager == null || manager.playerStatusDict == null || !manager.playerStatusDict.ContainsKey(player.ActorNumber))
+                return;
+
+            GorillaPaintbrawlManager.PaintbrawlStatus status = manager.playerStatusDict[player.ActorNumber];
+            if (stunned)
+                status |= GorillaPaintbrawlManager.PaintbrawlStatus.Stunned;
+            else
+                status &= ~GorillaPaintbrawlManager.PaintbrawlStatus.Stunned;
+
+            manager.playerStatusDict[player.ActorNumber] = status;
+        }
+
+        public static void SetStunnedAll() => IterateLocalPlayers(player => SetStunned(player, true));
+        public static void SetStunnedSelf() => SetStunned(Networking.LocalPlayer, true);
+        public static void UnstunAll() => IterateLocalPlayers(player => SetStunned(player, false));
+
+        public static void SetStunGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                SetStunned(GetPlayerFromVRRig(gunTarget), true);
+                paintbrawlSpamDelay = Time.time + 0.1f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > paintbrawlSpamDelay });
+        }
+
+        public static void SetHit(NetPlayer player)
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            if (player == null)
+                return;
+
+            GorillaPaintbrawlManager manager = ManagerRegistry.GorillaPaintbrawlManager;
+            if (manager == null || manager.playerStatusDict == null || !manager.playerStatusDict.ContainsKey(player.ActorNumber))
+                return;
+
+            manager.playerStatusDict[player.ActorNumber] |= GorillaPaintbrawlManager.PaintbrawlStatus.Hit;
+        }
+
+        public static void SetHitAll() => IterateLocalPlayers(SetHit);
+        public static void SetHitSelf() => SetHit(Networking.LocalPlayer);
+
+        private static void IterateLocalPlayers(Action<NetPlayer> action)
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            GorillaPaintbrawlManager manager = ManagerRegistry.GorillaPaintbrawlManager;
+            if (manager == null || manager.playerStatusDict == null)
+                return;
+
+            foreach (int actorNumber in manager.playerStatusDict.Keys.ToList())
+                action(GetPlayerFromID(actorNumber.ToString()));
+        }
+
+        public static void NoPaintbrawlCooldown() =>
+            Qubit.Libraries.Networking.GameModes.SetPaintbrawlCooldowns(0f, 0f, 0f);
+
+        public static void RestorePaintbrawlCooldown() =>
+            Qubit.Libraries.Networking.GameModes.SetPaintbrawlCooldowns(0.5f, 0.2f, 1.5f);
+
+        public static void TeamBattle()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
+            brawlManager.teamBattle = true;
+            brawlManager.RandomizeTeams();
+            brawlManager.StartBattle();
+        }
+
+        public static void UndoTeamBattle()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            GorillaPaintbrawlManager brawlManager = (GorillaPaintbrawlManager)GorillaGameManager.instance;
+            brawlManager.teamBattle = false;
+            brawlManager.ResetGame();
+        }
 
         public static void PaintbrawlKillGun()
         {

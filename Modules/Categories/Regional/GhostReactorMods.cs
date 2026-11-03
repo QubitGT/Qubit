@@ -136,5 +136,39 @@ namespace Qubit.Modules.Categories.Regional
                 }
             });
         }
+
+        public static void DestroyAllEnemies()
+        {
+            GameEntityManager manager = ManagerRegistry.GhostReactor.GameEntityManager;
+            if (manager == null)
+                return;
+
+            int[] enemyIds = manager.entities
+                .Where(entity => entity != null && entity.GetComponent<GREnemy>() != null)
+                .Select(entity => entity.GetNetId())
+                .ToArray();
+
+            if (enemyIds.Length > 0)
+            {
+                manager.photonView.RPC("DestroyItemRPC", RpcTarget.All, enemyIds);
+                Security.RPCProtection();
+            }
+        }
+
+        public static void SpawnEntityGrip(string objectName)
+        {
+            if (!Fun.ObjectByName.TryGetValue(objectName, out int objectId))
+                return;
+
+            GameEntities.CreateItem(RpcTarget.All, objectId, References.RightHand.position, RandomQuaternion(), Vector3.zero, Vector3.zero);
+        }
+
+        public static void SpawnEntityGun(string objectName)
+        {
+            if (!Fun.ObjectByName.TryGetValue(objectName, out int objectId))
+                return;
+
+            GunLibrary.Point(NewPointer => GameEntities.CreateItem(RpcTarget.All, objectId, NewPointer.transform.position, RandomQuaternion(), Vector3.zero, Vector3.zero));
+        }
     }
 }

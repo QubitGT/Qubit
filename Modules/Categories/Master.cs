@@ -1916,6 +1916,149 @@ namespace Qubit.Modules.Categories
                 zone.SetGuardian(null);
         }
 
+        #region Variant Mods
+
+        public static void GuardianFlingGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (GameModes.IsGuardian(Networking.LocalPlayer))
+                {
+                    GetNetworkViewFromVRRig(gunTarget).SendRPC("GuardianLaunchPlayer", RpcTarget.Others, RandomVector3(30f));
+                    RPCProtection();
+                }
+                else
+                    Notifications.SendFormat("red", "ERROR", "You must be guardian.");
+                Overpowered.guardianDelay = Time.time + 0.1f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > Overpowered.guardianDelay });
+        }
+
+        public static void GuardianFlingAll()
+        {
+            if (rightTrigger > 0.5f && Time.time > Overpowered.guardianDelay)
+            {
+                Overpowered.guardianDelay = Time.time + 0.1f;
+                if (GameModes.IsGuardian(Networking.LocalPlayer))
+                {
+                    foreach (VRRig plr in Players.ActiveRigs.Where(plr => !plr.isLocal))
+                    {
+                        GetNetworkViewFromVRRig(plr).SendRPC("GuardianLaunchPlayer", RpcTarget.Others, RandomVector3(30f));
+                        RPCProtection();
+                    }
+                }
+                else
+                    Notifications.SendFormat("red", "ERROR", "You must be guardian.");
+            }
+        }
+
+        public static void GuardianSpazLaunchAll()
+        {
+            if (rightTrigger > 0.5f && Time.time > Overpowered.guardianDelay)
+            {
+                Overpowered.guardianDelay = Time.time + 0.05f;
+                if (GameModes.IsGuardian(Networking.LocalPlayer))
+                {
+                    VRRig target = GetRandomVRRig();
+                    if (target != null)
+                    {
+                        GetNetworkViewFromVRRig(target).SendRPC("GuardianLaunchPlayer", RpcTarget.Others, RandomVector3(60f));
+                        RPCProtection();
+                    }
+                }
+                else
+                    Notifications.SendFormat("red", "ERROR", "You must be guardian.");
+            }
+        }
+
+        public static void PaintbrawlGodModeGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!Networking.IsMasterClient)
+                {
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                    return;
+                }
+
+                GameModes.SetPaintbrawlHealth(GetPlayerFromVRRig(gunTarget), 4);
+                materialDelay = Time.time + 0.1f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > materialDelay });
+        }
+
+        public static void PaintbrawlGodModeAll()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            foreach (Player player in PhotonNetwork.PlayerList)
+                GameModes.SetPaintbrawlHealth(player.ActorNumber, 4);
+        }
+
+        public static void PaintbrawlHitGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                GameModes.ReportPaintbrawlHit(GetPlayerFromVRRig(gunTarget));
+                materialDelay = Time.time + 0.3f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > materialDelay });
+        }
+
+        public static void PaintbrawlHitAll()
+        {
+            foreach (NetPlayer player in ManagerRegistry.NetworkSystem.PlayerListOthers)
+                GameModes.ReportPaintbrawlHit(player);
+        }
+
+        public static void TakeoverAllTerminals()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            foreach (Player player in PhotonNetwork.PlayerListOthers)
+                ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, false, player.ActorNumber);
+
+            ManagerRegistry.VirtualStumpSerializer.SendRPC("SetTerminalControlStatus_RPC", true, true, PhotonNetwork.LocalPlayer.ActorNumber);
+        }
+
+        public static void MovePlayer(VRRig target, Vector3 velocity)
+        {
+            NetworkView view = GetNetworkViewFromVRRig(target);
+            ViewSerialization.OverrideSerialization = () => { view.SendRPC("GuardianLaunchPlayer", RpcTarget.Others, velocity); RPCProtection(); return true; };
+        }
+
+        public static void MovePlayerGun(Vector3 velocity)
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                MovePlayer(gunTarget, velocity);
+                Overpowered.guardianDelay = Time.time + 0.1f;
+            }, new GunLibrary.GunSettings { when = () => Time.time > Overpowered.guardianDelay });
+        }
+
+        public static void MovePlayerForwardsGun() => MovePlayerGun(References.Player.headCollider.transform.forward * 20f);
+        public static void MovePlayerBackwardsGun() => MovePlayerGun(-References.Player.headCollider.transform.forward * 20f);
+        public static void MovePlayerUpwardsGun() => MovePlayerGun(Vector3.up * 20f);
+        public static void MovePlayerRandomGun() => MovePlayerGun(RandomVector3(20f));
+
+        public static void MovePlayerControllable()
+        {
+            if (rightTrigger > 0.5f && Time.time > Overpowered.guardianDelay)
+            {
+                Overpowered.guardianDelay = Time.time + 0.1f;
+                VRRig target = GetClosestVRRig();
+                if (target != null && !target.isLocal)
+                    MovePlayer(target, new Vector3(rightJoystick.x, 0f, rightJoystick.y) * 20f);
+            }
+        }
+
+        #endregion
+
         #endregion
     }
 }

@@ -113,5 +113,29 @@ namespace Qubit.Modules.Categories.Regional
                     ThrowableProjectiles.SendBarrelProjectile(GunData.NewPointer.transform.position + Vector3.up, Vector3.zero, Quaternion.identity);
             });
         }
+
+        public static void SendElevatorTo(GRElevator.ButtonType destination)
+        {
+            if (!Networking.InRoom)
+                return;
+
+            GRElevatorManager manager = ManagerRegistry.GRElevatorManager;
+            if (manager == null)
+                return;
+
+            if (Time.time > Fun.spamDelay)
+            {
+                Fun.spamDelay = Time.time + 0.25f;
+
+                GRElevatorManager.ElevatorButtonPressed(destination, manager.currentLocation);
+                Security.RPCProtection();
+            }
+        }
+
+        public static void SendElevatorToMall() => SendElevatorTo(GRElevator.ButtonType.Mall);
+        public static void SendElevatorToCity() => SendElevatorTo(GRElevator.ButtonType.City);
+        public static void SendElevatorToGhostReactor() => SendElevatorTo(GRElevator.ButtonType.GhostReactor);
+        public static void SendElevatorToMonkeBlocks() => SendElevatorTo(GRElevator.ButtonType.MonkeBlocks);
+        public static void SendElevatorToGhostEntrance() => SendElevatorTo(GRElevator.ButtonType.GhostEntrance);
     }
 }

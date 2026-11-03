@@ -931,6 +931,18 @@ namespace Qubit.Modules.Categories
                 Microphone.MuteMicrophone(false);
             }
         }
+
+        public static void AntiDeafen()
+        {
+            foreach (var line in GorillaScoreboardTotalUpdater.allScoreboardLines)
+            {
+                if (line.linePlayer == Networking.LocalPlayer || line.muteButton.isAutoOn)
+                    continue;
+
+                line.muteButton.isOn = false;
+                line.PressButton(false, GorillaPlayerLineButton.ButtonType.Mute);
+            }
+        }
         #endregion
     }
 }

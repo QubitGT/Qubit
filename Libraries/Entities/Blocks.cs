@@ -985,5 +985,76 @@ namespace Qubit.Libraries.Entities
                 Blocks.CreatePiece(1934114066, new Vector3(-127.6248f, 16.99441f, -217.2094f), Quaternion.identity, 0, RpcTarget.Others, false, true);
             }
         }
+
+        public static void BlockCrashAllExcept()
+        {
+            if (rightTrigger > 0.5f && Time.time > blockCrashExceptDelay)
+            {
+                blockCrashExceptDelay = Time.time + 0.5f;
+                if (!Qubit.Core.Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
+                foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.IsLocal()))
+                    Blocks.CreatePiece(1934114066, new Vector3(-127.6248f, 16.99441f, -217.2094f), Quaternion.identity, 0, NetPlayerToPlayer(rig.GetPlayer()), false, true);
+            }
+        }
+        private static float blockCrashExceptDelay;
+
+        public static void BlockCrashOnTouch()
+        {
+            if (!Qubit.Core.Networking.IsMasterClient) return;
+
+            VRRig closest = GetClosestVRRig();
+            if (closest != null && !closest.IsLocal() && Vector3.Distance(References.LocalRig.transform.position, closest.transform.position) < 1f && Time.time > blockCrashExceptDelay)
+            {
+                blockCrashExceptDelay = Time.time + 0.5f;
+                Blocks.CreatePiece(1934114066, new Vector3(-127.6248f, 16.99441f, -217.2094f), Quaternion.identity, 0, NetPlayerToPlayer(closest.GetPlayer()), false, true);
+            }
+        }
+
+        public static void BlockCrashTouchGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!Qubit.Core.Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
+                if (Time.time > blockCrashExceptDelay)
+                {
+                    blockCrashExceptDelay = Time.time + 0.5f;
+                    Blocks.CreatePiece(1934114066, new Vector3(-127.6248f, 16.99441f, -217.2094f), Quaternion.identity, 0, NetPlayerToPlayer(gunTarget.GetPlayer()), false, true);
+                }
+            }, new GunLibrary.GunSettings { when = () => Time.time > blockCrashExceptDelay });
+        }
+
+        public static void GiveBlockCrashTouch()
+        {
+            if (!Qubit.Core.Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
+            Blocks.CreatePiece(1934114066, References.LocalRig.transform.position, Quaternion.identity, 0, RpcTarget.Others, false, true);
+        }
+
+        public static void BlockTrapGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!Qubit.Core.Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
+                if (Time.time > blockCrashExceptDelay)
+                {
+                    blockCrashExceptDelay = Time.time + 0.3f;
+                    Vector3 basePos = gunTarget.transform.position;
+                    Blocks.CreatePiece(1934114066, basePos + Vector3.up * 2f, Quaternion.identity, 0, NetPlayerToPlayer(gunTarget.GetPlayer()), false, true);
+                    Blocks.CreatePiece(1934114066, basePos + Vector3.down * 2f, Quaternion.identity, 0, NetPlayerToPlayer(gunTarget.GetPlayer()), false, true);
+                    Blocks.CreatePiece(1934114066, basePos + Vector3.left * 2f, Quaternion.identity, 0, NetPlayerToPlayer(gunTarget.GetPlayer()), false, true);
+                    Blocks.CreatePiece(1934114066, basePos + Vector3.right * 2f, Quaternion.identity, 0, NetPlayerToPlayer(gunTarget.GetPlayer()), false, true);
+                }
+            }, new GunLibrary.GunSettings { when = () => Time.time > blockCrashExceptDelay });
+        }
+
+        public static void AppQuitGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!Qubit.Core.Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
+                GameObject quitBox = GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab/QuitBox");
+                if (quitBox != null)
+                    quitBox.transform.position = gunTarget.headMesh.transform.position;
+            }, new GunLibrary.GunSettings { locks = true });
+        }
     }
 }

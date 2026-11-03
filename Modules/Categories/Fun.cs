@@ -4196,5 +4196,99 @@ $@"{largeNewLine}
 
 > {consoleTyped}");
         }*/
+
+        #region Extra Mods
+
+        public static void HideWeatherText()
+        {
+            GorillaScoreBoard scoreboard = Object.FindObjectOfType<GorillaScoreBoard>();
+            if (scoreboard != null && scoreboard.weatherControlsParent != null)
+                scoreboard.weatherControlsParent.SetActive(false);
+        }
+
+        public static void ShowWeatherText()
+        {
+            GorillaScoreBoard scoreboard = Object.FindObjectOfType<GorillaScoreBoard>();
+            if (scoreboard != null && scoreboard.weatherControlsParent != null)
+                scoreboard.weatherControlsParent.SetActive(true);
+        }
+
+        public static void MuteAllTVs()
+        {
+            foreach (TextureSlideshow slideshow in GetAllType<TextureSlideshow>(0.5f))
+            {
+                AudioSource audio = slideshow.GetComponent<AudioSource>();
+                if (audio != null)
+                    audio.mute = true;
+            }
+        }
+
+        public static void UnmuteAllTVs()
+        {
+            foreach (TextureSlideshow slideshow in GetAllType<TextureSlideshow>(0.5f))
+            {
+                AudioSource audio = slideshow.GetComponent<AudioSource>();
+                if (audio != null)
+                    audio.mute = false;
+            }
+        }
+
+        private static float randomSoundDelay;
+
+        public static void RandomSoundSpam()
+        {
+            if (Time.time > randomSoundDelay)
+            {
+                randomSoundDelay = Time.time + 0.5f;
+                string[] soundKeys = Sounds.SoundList.Keys.ToArray();
+                string sound = soundKeys[Random.Range(0, soundKeys.Length)];
+                Sounds.Play(sound);
+            }
+        }
+
+        public static void ItemESP()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            Color itemColor = Color.cyan;
+
+            foreach (GameEntity entity in ManagerRegistry.GhostReactor.GameEntityManager.entities)
+            {
+                if (entity == null)
+                    continue;
+
+                Visual.Visualize(PrimitiveType.Sphere, entity.transform.position, Quaternion.identity, Vector3.one * 0.4f, itemColor, entity.gameObject.GetInstanceID(), itemColor.a);
+            }
+        }
+
+        public static void ItemPointGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                GameEntity closest = null;
+                float closestDist = float.MaxValue;
+
+                foreach (GameEntity entity in ManagerRegistry.GhostReactor.GameEntityManager.entities)
+                {
+                    if (entity == null)
+                        continue;
+
+                    float distance = Vector3.Distance(NewPointer.transform.position, entity.transform.position);
+                    if (distance < 1f && distance < closestDist)
+                    {
+                        closest = entity;
+                        closestDist = distance;
+                    }
+                }
+
+                if (closest != null && Time.time > randomSoundDelay)
+                {
+                    randomSoundDelay = Time.time + 0.2f;
+                    closest.RequestGrab(false, Vector3.zero, Quaternion.identity);
+                }
+            });
+        }
+        #endregion
     }
 }

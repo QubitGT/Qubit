@@ -589,6 +589,7 @@ namespace Qubit.Modules
                 new Module { name = "Clear Notifications", method = Notifications.Clear, isTogglable = false, toolTip = "Clears your notifications.", legal = true},
 
                 new Module { name = "Anti AFK", enableMethod =() => ManagerRegistry.PhotonNetworkController.disableAFKKick = true, disableMethod =() => ManagerRegistry.PhotonNetworkController.disableAFKKick = false, toolTip = "Doesn't let you get kicked for being AFK."},
+                new Module { name = "Anti Deafen", method = Safety.AntiDeafen, toolTip = "Automatically unmutes you whenever someone mutes you."},
                 new Module { name = "Disable Network Triggers", enableMethod =() => JoinTriggers.enabled = true, disableMethod =() => JoinTriggers.enabled = false, toolTip = "Disables the network triggers, so you can change maps without disconnecting."},
                 new Module { name = "Disable Map Triggers", enableMethod =() => GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab").SetActive(false), disableMethod =() => GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab").SetActive(true), toolTip = "Disables the map triggers, so you can change maps without loading them."},
                 new Module { name = "Disable Quit Box", enableMethod =() => QuitBoxes.enabled = false, disableMethod =() => QuitBoxes.enabled = true, toolTip = "Disables the box under the map that closes your game."},
@@ -818,6 +819,9 @@ namespace Qubit.Modules
                 new Module { name = "Disable Velocity Cap", enableMethod = Movement.DisableVelocityCap, disableMethod =() => Movement.playspace.enabled = true, toolTip = "Lets you go as fast as you want without hitting the velocity limit."},
 
                 new Module { name = "Funny Movement", displayName = "Exponential Movement", aliases = new[] { "Funny Movement" }, method = Movement.FunMove, toolTip = "Multiplies your velocity every frame, making you exponential."},
+
+                new Module { name = "Tiptoe", method = Movement.Tiptoe, disableMethod = Movement.DisableTiptoe, toolTip = "Moves your head up slightly, letting you peek over walls and ledges."},
+                new Module { name = "Frontflip", method = Movement.Frontflip, toolTip = "Makes you do a frontflip when pressing right primary."},
 
                 new Module { name = "Slip Slap", enableMethod = Movement.SlipSlap, disableMethod = Movement.DisableSlipSlap, toolTip = "Allows you to slip slap again."},
                 new Module { name = "Slippery Hands", displayName = "Slippery Surfaces", aliases = new[] { "Slippery Hands" }, enableMethod =() => SlidePercentage.everythingSlippery = true, disableMethod =() => SlidePercentage.everythingSlippery = false, toolTip = "Makes everything ice, as in extremely slippery."},
@@ -1081,7 +1085,24 @@ namespace Qubit.Modules
                 new Module { name = "Paintbrawl Aimbot", displayName = "Slingshot Aimbot", enableMethod =() => SlingshotLaunch.enabled = true, method = Paintbrawl.DebugSlingshotAimbot, disableMethod =() => SlingshotLaunch.enabled = false, toolTip = "Redirects your slingshot to the closest nearby players."},
                 new Module { name = "Paintbrawl Kill Self", method = Paintbrawl.PaintbrawlKillSelf, toolTip = "Kills yourself in paintbrawl." },
                 new Module { name = "Paintbrawl Kill Gun", method = Paintbrawl.PaintbrawlKillGun, toolTip = "Kills whoever your hand desires in paintbrawl." },
-                new Module { name = "Paintbrawl Kill All", method = Paintbrawl.PaintbrawlKillAll, toolTip = "Kills everyone in the room in paintbrawl." }
+                new Module { name = "Paintbrawl Kill All", method = Paintbrawl.PaintbrawlKillAll, toolTip = "Kills everyone in the room in paintbrawl." },
+
+                new Module { name = "Paintbrawl Team Battle", method = Paintbrawl.TeamBattle, isTogglable = false, toolTip = "Forces teams on and starts a team battle of paintbrawl." },
+                new Module { name = "Paintbrawl Undo Team Battle", method = Paintbrawl.UndoTeamBattle, isTogglable = false, toolTip = "Turns off team battle and resets the game of paintbrawl." },
+                new Module { name = "Paintbrawl Randomize Teams", method = Paintbrawl.RandomizeTeams, isTogglable = false, toolTip = "Randomizes everyone onto red and blue teams." },
+                new Module { name = "Set Blue Team Self", method = Paintbrawl.SetBlueTeamSelf, isTogglable = false, toolTip = "Puts yourself on the blue team." },
+                new Module { name = "Set Blue Team Gun", method = Paintbrawl.SetBlueTeamGun, toolTip = "Puts whoever your hand desires on the blue team." },
+                new Module { name = "Set Blue Team All", method = Paintbrawl.SetBlueTeamAll, isTogglable = false, toolTip = "Puts everyone on the blue team." },
+                new Module { name = "Set Orange Team Self", method = Paintbrawl.SetOrangeTeamSelf, isTogglable = false, toolTip = "Puts yourself on the orange team." },
+                new Module { name = "Set Orange Team Gun", method = Paintbrawl.SetOrangeTeamGun, toolTip = "Puts whoever your hand desires on the orange team." },
+                new Module { name = "Set Orange Team All", method = Paintbrawl.SetOrangeTeamAll, isTogglable = false, toolTip = "Puts everyone on the orange team." },
+                new Module { name = "Set No Team Self", method = Paintbrawl.SetNoTeamSelf, isTogglable = false, toolTip = "Takes yourself off of any team." },
+                new Module { name = "Set No Team Gun", method = Paintbrawl.SetNoTeamGun, toolTip = "Takes whoever your hand desires off of any team." },
+                new Module { name = "Set No Team All", method = Paintbrawl.SetNoTeamAll, isTogglable = false, toolTip = "Takes everyone off of any team." },
+                new Module { name = "Stun Self", method = Paintbrawl.SetStunnedSelf, isTogglable = false, toolTip = "Stuns yourself in paintbrawl." },
+                new Module { name = "Stun Gun", method = Paintbrawl.SetStunGun, isTogglable = false, toolTip = "Stuns whoever your hand desires in paintbrawl." },
+                new Module { name = "Stun All", method = Paintbrawl.SetStunnedAll, isTogglable = false, toolTip = "Stuns everyone in paintbrawl." },
+                new Module { name = "Unstun All", method = Paintbrawl.UnstunAll, isTogglable = false, toolTip = "Unstuns everyone in paintbrawl." }
             },
 
             ["Visual Mods"] = new[]
@@ -1344,6 +1365,8 @@ namespace Qubit.Modules
 
                 new Module { name = "Mute Gun", method = Fun.MuteGun, toolTip = "Mutes or unmutes whoever your hand desires.", legal = true},
                 new Module { name = "Mute All", method = Fun.MuteAll, disableMethod = Fun.UnmuteAll, toolTip = "Mutes everyone in the room.", legal = true},
+                new Module { name = "Mute All TVs", method = Fun.MuteAllTVs, disableMethod = Fun.UnmuteAllTVs, toolTip = "Mutes every TV screen in the map."},
+                new Module { name = "Hide Weather Text", method = Fun.HideWeatherText, disableMethod = Fun.ShowWeatherText, toolTip = "Hides the weather controls text on the scoreboard."},
 
                 new Module { name = "Report Gun", method = Fun.ReportGun, toolTip = "Reports whoever your hand desires for cheating."},
                 new Module { name = "Report All", method = Fun.ReportAll, isTogglable = false, toolTip = "Reports everyone in the room for cheating."},
@@ -1670,6 +1693,12 @@ namespace Qubit.Modules
                 new Module { name = "Elevator Door Spam", method = City.ElevatorDoorSpam, toolTip = "Repeatedly opens and closes the elevator door."},
                 new Module { name = "Elevator Proximity Sensor", disableMethod =() => Fun.elevatorSensorOpen = false, method = City.ElevatorProximitySensor, toolTip = "Automatically opens and closes the elevator door as you get close to and move away from it."},
 
+                new Module { name = "Send Elevator To Mall", method = City.SendElevatorToMall, isTogglable = false, toolTip = "Sends the city elevator to the mall." },
+                new Module { name = "Send Elevator To City", method = City.SendElevatorToCity, isTogglable = false, toolTip = "Sends the city elevator to the city." },
+                new Module { name = "Send Elevator To Ghost Reactor", method = City.SendElevatorToGhostReactor, isTogglable = false, toolTip = "Sends the city elevator to the ghost reactor." },
+                new Module { name = "Send Elevator To Monke Blocks", method = City.SendElevatorToMonkeBlocks, isTogglable = false, toolTip = "Sends the city elevator to monke blocks." },
+                new Module { name = "Send Elevator To Ghost Entrance", method = City.SendElevatorToGhostEntrance, isTogglable = false, toolTip = "Sends the city elevator to the ghost entrance." },
+
                 new Module { name = "Cosmetic Spoof", enableMethod = Cosmetics.TryOnAnywhere, disableMethod = Cosmetics.TryOffAnywhere, toolTip = "Lets you try on cosmetics from anywhere. Enable this mod after wearing the cosmetics." },
             },
 
@@ -1755,6 +1784,17 @@ namespace Qubit.Modules
                 new Module { name = "Ghost Reactor Text Gun", enableMethod =() => PromptText("What text would you like to show?", () => Fun.textToRender = keyboardInput.ToUpper(), null, "Done", "Cancel"), method = GhostReactorMods.GhostReactorTextGun, toolTip = "Spawns entities in the shape of the text you desire in the ghost reactor."},
                 new Module { name = "Ghost Reactor Draw Gun", method = GhostReactorMods.GhostReactorDrawGun, toolTip = "Allows you to draw with entities in ghost reactor."},
                 new Module { name = "Destroy Entity Gun", method = GhostReactorMods.DestroyEntityGun, toolTip = "Destroys any entity which your hand desires."},
+                new Module { name = "Destroy All Enemies", method = GhostReactorMods.DestroyAllEnemies, isTogglable = false, toolTip = "Destroys every enemy entity in the ghost reactor."},
+                new Module { name = "Ghost Reactor Phantom Spam", method =() => GhostReactorMods.SpawnEntityGrip("GhostReactorEnemyPhantom"), toolTip = "Spawns phantom enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Ghost Reactor Phantom Gun", method =() => GhostReactorMods.SpawnEntityGun("GhostReactorEnemyPhantom"), toolTip = "Spawns phantom enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Summoner Spam", method =() => GhostReactorMods.SpawnEntityGrip("GhostReactorEnemySummoner"), toolTip = "Spawns summoner enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Ghost Reactor Summoner Gun", method =() => GhostReactorMods.SpawnEntityGun("GhostReactorEnemySummoner"), toolTip = "Spawns summoner enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Monkeye Spam", method =() => GhostReactorMods.SpawnEntityGrip("GhostReactorEnemyMonkeye"), toolTip = "Spawns monkeye enemies out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Ghost Reactor Monkeye Gun", method =() => GhostReactorMods.SpawnEntityGun("GhostReactorEnemyMonkeye"), toolTip = "Spawns monkeye enemies at wherever your hand desires."},
+                new Module { name = "Ghost Reactor Boss Spam", method =() => GhostReactorMods.SpawnEntityGrip("GhostReactorEnemyBossMoon"), toolTip = "Spawns the moon boss out of your hand when holding <color=green>grip</color>."},
+                new Module { name = "Ghost Reactor Boss Gun", method =() => GhostReactorMods.SpawnEntityGun("GhostReactorEnemyBossMoon"), toolTip = "Spawns the moon boss at wherever your hand desires."},
+                new Module { name = "Item ESP", method = Fun.ItemESP, toolTip = "Puts dots on your screen at where all of the entities in the ghost reactor are."},
+                new Module { name = "Item Grab Gun", method = Fun.ItemPointGun, toolTip = "Grabs whatever entity your hand desires."},
             },
 
             ["Critters Mods"] = new[]
@@ -2324,6 +2364,12 @@ namespace Qubit.Modules
 
                 new Module { name = "Building Block Crash Gun", method = Blocks.BlockCrashGun, toolTip = "Crashes whoever your hand desires if they are inside of the block map."},
                 new Module { name = $"Building Block Crash All {Bracket("green", "T")}", method = Blocks.BlockCrashAll, toolTip = "Crashes everybody inside of the block map."},
+                new Module { name = $"Building Block Crash All Except You {Bracket("green", "T")}", method = Blocks.BlockCrashAllExcept, toolTip = "Crashes everybody except you inside of the block map, one at a time."},
+                new Module { name = $"Building Block Crash On Touch {Bracket("green", "T")}", method = Blocks.BlockCrashOnTouch, toolTip = "Crashes whoever touches you inside of the block map."},
+                new Module { name = "Building Block Crash Touch Gun", method = Blocks.BlockCrashTouchGun, toolTip = "Crashes whoever your hand desires inside of the block map on contact."},
+                new Module { name = "Building Block Trap Gun", method = Blocks.BlockTrapGun, toolTip = "Traps whoever your hand desires in a box of crash blocks."},
+                new Module { name = "Give Building Block Crash Touch", method = Blocks.GiveBlockCrashTouch, isTogglable = false, toolTip = "Gives everyone a touching crash block at your position."},
+                new Module { name = "App Quit Gun", method = Blocks.AppQuitGun, toolTip = "Moves the quit box to whoever your hand desires, making them quit the game."},
 
                 new Module { name = "Block Anti Report", enableMethod = Master.EnableAtticAntiReport, method = Master.AtticAntiReport, toolTip = "Automatically builds blocks around your report button."},
 
@@ -2381,6 +2427,18 @@ namespace Qubit.Modules
                 new Module { name = "Unlock Driver Gun", method =() => Master.DriverStatusGun(false), isTogglable = true, toolTip = "Unlocks the driver for whoever your hand desires in the virtual stump."},
                 new Module { name = "Spaz Driver Gun", method = Master.SpazDriverStatusGun, isTogglable = true, toolTip = "Spaz makes and unmakes whoever your hand desires the driver in the virtual stump."},
 
+                new Module { name = "Takeover All Terminals", method = Master.TakeoverAllTerminals, isTogglable = false, toolTip = "Unlocks the terminal for everyone and makes you the driver in the virtual stump."},
+
+                new Module { name = "Guardian Fling Gun", method = Master.GuardianFlingGun, toolTip = "Launches whoever your hand desires using the guardian launch. You must be guardian."},
+                new Module { name = $"Guardian Fling All {Bracket("green", "T")}", method = Master.GuardianFlingAll, toolTip = "Launches everyone in the room using the guardian launch when holding <color=green>trigger</color>. You must be guardian."},
+                new Module { name = $"Guardian Spaz Launch All {Bracket("green", "T")}", method = Master.GuardianSpazLaunchAll, toolTip = "Rapidly launches random players using the guardian launch when holding <color=green>trigger</color>. You must be guardian."},
+
+                new Module { name = "Move Player Forwards Gun", method = Master.MovePlayerForwardsGun, toolTip = "Pushes whoever your hand desires forwards using the guardian launch."},
+                new Module { name = "Move Player Backwards Gun", method = Master.MovePlayerBackwardsGun, toolTip = "Pushes whoever your hand desires backwards using the guardian launch."},
+                new Module { name = "Move Player Upwards Gun", method = Master.MovePlayerUpwardsGun, toolTip = "Pushes whoever your hand desires upwards using the guardian launch."},
+                new Module { name = "Move Player Random Gun", method = Master.MovePlayerRandomGun, toolTip = "Pushes whoever your hand desires in a random direction using the guardian launch."},
+                new Module { name = $"Move Player Controllable {Bracket("green", "T")}", method = Master.MovePlayerControllable, toolTip = "Pushes the closest player around with your joystick when holding <color=green>trigger</color>, using the guardian launch."},
+
                 new Module { name = $"Bonk Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(4), toolTip = "Plays the bonk sound when holding <color=green>grip</color>." },
                 new Module { name = $"Count Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(1), toolTip = "Plays the count sound when holding <color=green>grip</color>." },
                 new Module { name = $"Brawl Count Sound Spam {Bracket("green", "G")}", method =() => Master.SoundSpam(6), toolTip = "Plays the brawl count sound when holding <color=green>grip</color>." },
@@ -2404,6 +2462,10 @@ namespace Qubit.Modules
                 new Module { name = "Paintbrawl No Delay", method = Master.PaintbrawlNoDelay, disableMethod = Master.DisablePaintbrawlNoDelay, toolTip = "Revives everyone in paintbrawl." },
 
                 new Module { name = "Paintbrawl God Mode", method = Master.PaintbrawlGodMode, toolTip = "Gives you god mode in paintbrawl." },
+                new Module { name = "Paintbrawl God Mode Gun", method = Master.PaintbrawlGodModeGun, toolTip = "Gives whoever your hand desires god mode in paintbrawl." },
+                new Module { name = "Paintbrawl God Mode All", method = Master.PaintbrawlGodModeAll, isTogglable = false, toolTip = "Gives everyone god mode in paintbrawl." },
+                new Module { name = "Paintbrawl Hit Gun", method = Master.PaintbrawlHitGun, toolTip = "Reports a slingshot hit on whoever your hand desires in paintbrawl." },
+                new Module { name = "Paintbrawl Hit All", method = Master.PaintbrawlHitAll, isTogglable = false, toolTip = "Reports a slingshot hit on everyone else in paintbrawl." },
 
                 new Module { name = "Slow Self", method = Master.SlowSelf, isTogglable = false, toolTip = "Forces tag freeze on yourself." },
                 new Module { name = "Slow Gun", method = Master.SlowGun, toolTip = "Forces tag freeze on whoever your hand desires." },
