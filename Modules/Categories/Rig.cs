@@ -441,7 +441,7 @@ namespace Qubit.Modules.Categories
         }
         public static void DecapitateRigUpdate() =>
             References.LocalRig.head.rigTarget.transform.rotation = References.BodyCollider.transform.rotation * Quaternion.Euler(160f, 90f, 0f);
-        public static void SetBodyPatch(bool enabled, int mode = 0)
+        public static void SetBodyPatch(bool enabled, Torso.PoseMode mode = Torso.PoseMode.Spin)
         {
             Torso.enabled = enabled;
             Torso.mode = mode;
@@ -451,7 +451,7 @@ namespace Qubit.Modules.Categories
         }
         public static void RecRoomBody()
         {
-            SetBodyPatch(true, 3);
+            SetBodyPatch(true, Torso.PoseMode.RecRoomRotary);
 
             if (recBodyRotary == null)
                 recBodyRotary = new GameObject("ii_recBodyRotary");
@@ -460,7 +460,7 @@ namespace Qubit.Modules.Categories
         }
         public static void FreezeBodyRotation()
         {
-            SetBodyPatch(true, 3);
+            SetBodyPatch(true, Torso.PoseMode.RecRoomRotary);
 
             if (recBodyRotary == null)
                 recBodyRotary = new GameObject("ii_recBodyRotary");

@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Qubit Menu  Modules/Categories/Movement.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -393,6 +393,8 @@ namespace Qubit.Modules.Categories
             { "Virtual Stump", GTZone.customMaps },
             { "GTFC", GTZone.GTFC },
             { "Lava Forest", GTZone.VIMExperience1 },
+            { "OG Basement", GTZone.VIMExperience2 },
+            { "Fossil Hunt", GTZone.VIMExperience3 },
             { "Space Map", GTZone.spaceMap },
         };
 
@@ -3982,5 +3984,74 @@ namespace Qubit.Modules.Categories
             }
         }
         #endregion
+
+        /// <summary>
+        /// Velocity based fly,'s Velocity Fly. Instead of teleporting the player,
+        /// it stacks fly velocity onto the rigidbody while holding A, keeping momentum.
+        /// </summary>
+        public static void VelocityFly()
+        {
+            if (rightPrimary)
+                References.Rigidbody.linearVelocity += References.HeadCollider.transform.forward * (Time.deltaTime * 40f);
+        }
+
+        /// <summary>
+        /// Anti Planet Pull, Disables every gravity zone in range so planets in the space map stop pulling you.
+        /// </summary>
+        public static void ToggleAntiPlanetPull()
+        {
+            antiPlanetPull = !antiPlanetPull;
+
+            foreach (GorillaTag.Gravity.BasicGravityZone zone in GetAllType<GorillaTag.Gravity.BasicGravityZone>())
+                zone.enabled = !antiPlanetPull;
+        }
+
+        public static bool antiPlanetPull;
+
+        /// <summary>
+        /// PBBV Walk, Locks your movement speed to zero so you can only turn in place.
+        /// </summary>
+        public static void PBBVWalk()
+        {
+            pbbvWalk = !pbbvWalk;
+            References.Player.maxJumpSpeed = pbbvWalk ? 0f : References.Player.maxJumpSpeed;
+        }
+
+        public static bool pbbvWalk;
+
+        /// <summary>
+        /// No Slippery Walls, Overrides the slippery wall surfaces in the forest pit with normal ones.
+        /// </summary>
+        public static void EnableNoSlipperyWalls()
+        {
+            try
+            {
+                GorillaSurfaceOverride lower = GetObject("Environment Objects/ForestObjects/PersistentObjects/pit lower slippery wall")?.GetComponent<GorillaSurfaceOverride>();
+                GorillaSurfaceOverride upper = GetObject("Environment Objects/ForestObjects/PersistentObjects/pit upper slippery wall")?.GetComponent<GorillaSurfaceOverride>();
+
+                if (upper != null && upper.overrideIndex != 5)
+                {
+                    if (lower != null) lower.overrideIndex = 5;
+                    upper.overrideIndex = 5;
+                }
+            }
+            catch { }
+        }
+
+        public static void DisableNoSlipperyWalls()
+        {
+            try
+            {
+                GorillaSurfaceOverride lower = GetObject("Environment Objects/ForestObjects/PersistentObjects/pit lower slippery wall")?.GetComponent<GorillaSurfaceOverride>();
+                GorillaSurfaceOverride upper = GetObject("Environment Objects/ForestObjects/PersistentObjects/pit upper slippery wall")?.GetComponent<GorillaSurfaceOverride>();
+
+                if (upper != null && upper.overrideIndex != 3)
+                {
+                    if (lower != null) lower.overrideIndex = 2;
+                    upper.overrideIndex = 3;
+                }
+            }
+            catch { }
+        }
     }
 }

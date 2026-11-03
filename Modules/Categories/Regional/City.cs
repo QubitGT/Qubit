@@ -137,5 +137,17 @@ namespace Qubit.Modules.Categories.Regional
         public static void SendElevatorToGhostReactor() => SendElevatorTo(GRElevator.ButtonType.GhostReactor);
         public static void SendElevatorToMonkeBlocks() => SendElevatorTo(GRElevator.ButtonType.MonkeBlocks);
         public static void SendElevatorToGhostEntrance() => SendElevatorTo(GRElevator.ButtonType.GhostEntrance);
+        public static void SendElevatorToFossilHunt() => SendElevatorTo(GRElevator.ButtonType.VIMExperience3);
+        public static void SendElevatorToGravDash() => SendElevatorTo(GRElevator.ButtonType.VIMExperience4);
+        public static void SendElevatorToOGBasement() => SendElevatorTo(GRElevator.ButtonType.VIMExperience2);
+
+        /// <summary>
+        /// Sends the lava map elevator by pressing its call button.
+        /// </summary>
+        public static void SendElevatorToLava()
+        {
+            GameObject button = GetObject("Environment Objects/05Maze_PersistentObjects/GhostReactorElevatorManager/VIMForestLavaElevator/HasVisualComponents/Buttons/Call Elevator Up/CallButton/Button");
+            button?.GetComponent<GorillaPressableButton>().Click(true);
+        }
     }
 }

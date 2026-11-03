@@ -943,6 +943,81 @@ namespace Qubit.Modules.Categories
                 line.PressButton(false, GorillaPlayerLineButton.ButtonType.Mute);
             }
         }
+
+        #region Anti Deep Check
+
+        private static bool antiDeepMenu;
+        private static bool antiDeepPlugins;
+        private static bool antiDeepBepInEx;
+
+        private static System.IO.FileAttributes RemoveHidden(string path)
+        {
+            System.IO.FileAttributes attributes = System.IO.File.GetAttributes(path);
+            attributes &= ~System.IO.FileAttributes.Hidden;
+            return attributes & ~System.IO.FileAttributes.System;
+        }
+
+        /// <summary>
+        /// Hides the menu dll from deep checks by marking it hidden and system.
+        /// </summary>
+        public static void ToggleAntiDeepCheckMenu()
+        {
+            antiDeepMenu = !antiDeepMenu;
+
+            string menu = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            System.IO.File.SetAttributes(menu, antiDeepMenu
+                ? System.IO.File.GetAttributes(menu) | System.IO.FileAttributes.Hidden | System.IO.FileAttributes.System
+                : RemoveHidden(menu));
+        }
+
+        /// <summary>
+        /// Hides every file in the plugins folder from deep checks by marking them hidden and system.
+        /// </summary>
+        public static void ToggleAntiDeepCheckPlugins()
+        {
+            antiDeepPlugins = !antiDeepPlugins;
+
+            string plugins = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            System.IO.FileAttributes hide = System.IO.FileAttributes.Hidden | System.IO.FileAttributes.System;
+
+            foreach (string file in System.IO.Directory.GetFiles(plugins, "*", System.IO.SearchOption.AllDirectories))
+            {
+                try
+                {
+                    System.IO.File.SetAttributes(file, antiDeepPlugins
+                        ? System.IO.File.GetAttributes(file) | hide
+                        : RemoveHidden(plugins));
+                }
+                catch { }
+            }
+
+            foreach (string dir in System.IO.Directory.GetDirectories(plugins, "*", System.IO.SearchOption.AllDirectories))
+            {
+                try
+                {
+                    System.IO.File.SetAttributes(dir, antiDeepPlugins
+                        ? System.IO.File.GetAttributes(dir) | hide
+                        : RemoveHidden(plugins));
+                }
+                catch { }
+            }
+        }
+
+        /// <summary>
+        /// Hides the entire BepInEx folder from deep checks by marking it hidden and system.
+        /// </summary>
+        public static void ToggleAntiDeepCheckBepInEx()
+        {
+            antiDeepBepInEx = !antiDeepBepInEx;
+
+            string plugins = System.IO.Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            string bepInEx = System.IO.Directory.GetParent(plugins).FullName;
+            System.IO.File.SetAttributes(bepInEx, antiDeepBepInEx
+                ? System.IO.File.GetAttributes(bepInEx) | System.IO.FileAttributes.Hidden | System.IO.FileAttributes.System
+                : RemoveHidden(bepInEx));
+        }
+
+        #endregion
         #endregion
     }
 }

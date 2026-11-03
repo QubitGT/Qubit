@@ -37,9 +37,11 @@ using System.Reflection;
 #if DEBUG
 [assembly: AssemblyProduct(PluginInfo.Name + " [Debug]")]
 [assembly: AssemblyTitle(PluginInfo.Name + " [Debug]")]
+[assembly: AssemblyDescription(PluginInfo.Description + " [Debug]")]
 #else
 [assembly: AssemblyProduct(PluginInfo.Name)]
 [assembly: AssemblyTitle(PluginInfo.Name)]
+[assembly: AssemblyDescription(PluginInfo.Description)]
 #endif
 
-[assembly: AssemblyDescription(PluginInfo.Description + " [Debug]")]
+

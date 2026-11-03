@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Qubit Menu  Modules/Categories/Visual.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -6123,6 +6123,44 @@ namespace Qubit.Modules.Categories
         {
             for (int i = 0; i < 2; i++)
                 InstantiateWatch();
+        }
+
+        /// <summary>
+        /// Client-sided rig scaling,'s DoMonke loop.
+        /// Each enabled scale modifier clamps one axis of every rig; Tall and Long win over Short, Flat, Thin and 2D.
+        /// </summary>
+        public static void MonkeScales()
+        {
+            bool wide = Manager.GetIndex("Wide Monkes")?.enabled == true;
+            bool tall = Manager.GetIndex("Tall Monkes")?.enabled == true;
+            bool shortMonke = Manager.GetIndex("Short Monkes")?.enabled == true;
+            bool thin = Manager.GetIndex("Thin Monkes")?.enabled == true;
+            bool longMonke = Manager.GetIndex("Long Monkes")?.enabled == true;
+            bool flat = Manager.GetIndex("Flat Monkes")?.enabled == true;
+            bool twoD = Manager.GetIndex("2D Monkes")?.enabled == true;
+
+            foreach (VRRig rig in Players.ActiveRigs)
+            {
+                Vector3 scale = rig.transform.localScale;
+
+                scale.x = wide ? 2.7f : thin ? 0.34f : 1f;
+                scale.y = tall ? 2.7f : shortMonke ? 0.34f : flat ? 0.001f : 1f;
+                scale.z = longMonke ? 2.7f : twoD ? 0.001f : 1f;
+
+                rig.transform.localScale = scale;
+            }
+        }
+
+        public static void DisableMonkeScales()
+        {
+            if (Manager.GetIndex("Wide Monkes")?.enabled == true || Manager.GetIndex("Tall Monkes")?.enabled == true ||
+                Manager.GetIndex("Short Monkes")?.enabled == true || Manager.GetIndex("Thin Monkes")?.enabled == true ||
+                Manager.GetIndex("Long Monkes")?.enabled == true || Manager.GetIndex("Flat Monkes")?.enabled == true ||
+                Manager.GetIndex("2D Monkes")?.enabled == true)
+                return;
+
+            foreach (VRRig rig in Players.ActiveRigs)
+                rig.transform.localScale = Vector3.one;
         }
         #endregion
     }

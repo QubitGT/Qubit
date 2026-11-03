@@ -824,6 +824,63 @@ namespace Qubit.Modules.Categories
             GunLibrary.Target(lockTarget => GuardianObliteratePlayer(lockTarget.GetPlayer()), new GunLibrary.GunSettings { locks = true });
         }
 
+        /// <summary>
+        /// Undo Guardian, Ejects you from the guardian role in the guardian gamemode.
+        /// </summary>
+        public static void UndoGuardian()
+        {
+            if (Networking.InRoom && ManagerRegistry.GorillaGameManager.GameType() == GameModeType.Guardian)
+            {
+                if (IsGuardian(Networking.LocalPlayer))
+                    ManagerRegistry.GorillaGuardianManager.RequestEjectGuardian(Networking.LocalPlayer);
+                else
+                    Notifications.SendFormat("red", "ERROR", "You are not currently the guardian.");
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You must be in a guardian gamemode.");
+        }
+
+        /// <summary>
+        /// Guardian velocity helpers,'s Guardian Spaz/Orbit/To Point suite.
+        /// Spaz throws everyone in random directions, Orbit throws everyone away from you, To Point throws everyone to your gun pointer.
+        /// </summary>
+        public static void GuardianSpazAll()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
+            {
+                SetVelocityPlayer(rig.GetPlayer(), Random.insideUnitSphere.normalized * 20f);
+                RPCProtection();
+            }
+        }
+
+        public static void GuardianSpazGun()
+        {
+            GunLibrary.Target(gunTarget => { SetVelocityPlayer(gunTarget.GetPlayer(), Random.insideUnitSphere.normalized * 20f); RPCProtection(); }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void GuardianOrbitGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                Vector3 direction = References.LocalRig.transform.position - gunTarget.transform.position;
+                SetVelocityPlayer(gunTarget.GetPlayer(), direction.normalized * 20f);
+                RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void GuardianToPointAll()
+        {
+            GunLibrary.Point(pointer =>
+            {
+                foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal))
+                {
+                    Vector3 direction = pointer.transform.position - rig.transform.position;
+                    SetVelocityPlayer(rig.GetPlayer(), direction.normalized * 20f);
+                    RPCProtection();
+                }
+            });
+        }
+
         public static void GuardianObliterateAll()
         {
             if (rightTrigger > 0.5f)

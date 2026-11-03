@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Qubit Menu  Modules/Categories/Fun.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -24,6 +24,7 @@ using GorillaExtensions;
 using GorillaGameModes;
 using GorillaLocomotion.Gameplay;
 using GorillaLocomotion.Swimming;
+using GorillaNetworking;
 using GorillaTagScripts;
 using Photon.Pun;
 using Photon.Realtime;
@@ -4289,6 +4290,251 @@ $@"{largeNewLine}
                 }
             });
         }
+
+        #region Tryon / VIM / Misc
+
+        private static bool tryonBusy;
+
+        /// <summary>
+        /// Tryon room positions per zone.
+        /// </summary>
+        private static Vector3 GetTryonPosition()
+        {
+            return References.LocalRig.zoneEntity.currentZone switch
+            {
+                GTZone.city => new Vector3(-52.06f, 17.6f, -119.6f),
+                GTZone.mountain => new Vector3(-14.62f, 18.11f, -111.72f),
+                GTZone.GTFC => new Vector3(232.45f, 160f, -788.25f),
+                _ => Vector3.zero
+            };
+        }
+
+        /// <summary>
+        /// Breaks the tryon stand so cosmetics don't get validated, letting you steal them or stack them.
+        /// </summary>
+        public static void BreakTryon()
+        {
+            if (tryonBusy) { Notifications.SendFormat("red", "ERROR", "Something else is running, please wait until it's done."); return; }
+            tryonBusy = true;
+
+            Coroutines.RunCoroutine(TryonCoroutine(0));
+        }
+
+        /// <summary>
+        /// Fixes the tryon stand after breaking it.
+        /// </summary>
+        public static void FixTryon()
+        {
+            if (tryonBusy) { Notifications.SendFormat("red", "ERROR", "Something else is running, please wait until it's done."); return; }
+            tryonBusy = true;
+
+            Coroutines.RunCoroutine(TryonCoroutine(-1));
+        }
+
+        /// <summary>
+        /// Equips every tryon cosmetic, server sided.
+        /// </summary>
+        public static void GetAllTryonCosmetics()
+        {
+            if (tryonBusy) { Notifications.SendFormat("red", "ERROR", "Something else is running, please wait until it's done."); return; }
+            tryonBusy = true;
+
+            Coroutines.RunCoroutine(TryonCoroutine(1));
+        }
+
+        /// <summary>
+        /// Removes all tryon cosmetics.
+        /// </summary>
+        public static void RemoveAllTryonCosmetics()
+        {
+            if (tryonBusy) { Notifications.SendFormat("red", "ERROR", "Something else is running, please wait until it's done."); return; }
+            tryonBusy = true;
+
+            Coroutines.RunCoroutine(TryonCoroutine(2));
+        }
+
+        private static System.Collections.IEnumerator TryonCoroutine(int mode)
+        {
+            Vector3 tryonPosition = GetTryonPosition();
+            if (tryonPosition == Vector3.zero)
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in city, mountains, or the GTFC room.");
+                tryonBusy = false;
+                yield break;
+            }
+
+            VRRig rig = References.LocalRig;
+            if (!rig.inTryOnRoom)
+            {
+                rig.enabled = false;
+                rig.transform.position = tryonPosition;
+            }
+
+            // Break the stand by wearing a nonsense set of 16 invalid slots.
+            CosmeticsController controller = ManagerRegistry.CosmeticsController;
+            string filler = mode == -1 || mode == 2 ? "NOTHING" : "LFAGX.";
+            string[] slots = Enumerable.Repeat(filler, 16).ToArray();
+            var brokenSet = new CosmeticsController.CosmeticSet(slots, controller);
+            controller.currentWornSet = brokenSet;
+            References.LocalRig.cosmeticSet = brokenSet;
+
+            References.MyRigView.SendRPC("RPC_UpdateCosmeticsWithTryonPacked", RpcTarget.All, brokenSet.ToPackedIDArray(), controller.tryOnSet.ToPackedIDArray());
+
+            yield return new WaitForSeconds(0.1f);
+
+            if (mode == -1)
+            {
+                rig.enabled = true;
+                tryonBusy = false;
+                yield break;
+            }
+
+            // Re-enter the room to re-register.
+            rig.enabled = false;
+            rig.transform.position = tryonPosition + new Vector3(0f, 7f, 0f);
+            yield return new WaitForSeconds(0.1f);
+            rig.transform.position = tryonPosition;
+            yield return new WaitForSeconds(0.1f);
+            rig.transform.position = tryonPosition + new Vector3(0f, 7f, 0f);
+            yield return new WaitForSeconds(0.1f);
+            rig.transform.position = tryonPosition;
+
+            if (mode > 0)
+            {
+                var cosmetics = controller.allCosmetics.Where(item =>
+                    item.itemName != "LFAEK." && item.itemName != "LFAAJ." && item.itemName != "LFAAI." &&
+                    item.itemName != "LFAAH." && item.itemName != "LFAAM." &&
+                    item.canTryOn && !item.isHoldable && !item.IsCollectable && !item.isThrowable &&
+                    (int)item.itemCategory != 6 && (int)item.itemCategory != 2 && (int)item.itemCategory != 11).ToList();
+
+                for (int i = 0; i < cosmetics.Count; i++)
+                {
+                    var cosmetic = cosmetics[i];
+                    controller.ApplyCosmeticItemToSet(controller.tryOnSet, cosmetic, false, false);
+                    try { controller.UpdateWornCosmetics(true); } catch { }
+
+                    yield return new WaitForSeconds(Networking.InRoom ? 0.085f : 0f);
+
+                    if (mode != 2)
+                    {
+                        controller.ApplyCosmeticItemToSet(controller.tryOnSet, cosmetic, false, false);
+                        try { controller.UpdateWornCosmetics(true); } catch { }
+                    }
+                }
+
+                if (mode == 2)
+                {
+                    rig.enabled = false;
+                    rig.transform.position = tryonPosition + new Vector3(0f, 7f, 0f);
+                    yield return new WaitForSeconds(0.1f);
+                    rig.enabled = true;
+                }
+
+                Notifications.SendFormat("green", "COSMETICS", "Cosmetics finished.");
+            }
+
+            rig.enabled = true;
+            tryonBusy = false;
+        }
+
+        private static bool loadGtfcForCart;
+
+        /// <summary>
+        /// Adds the VIM store cosmetics to your cart.
+        /// </summary>
+        public static void AddVIMCosmeticsToCart()
+        {
+            if (GameObject.Find("GTFC Scene") == null)
+            {
+                loadGtfcForCart = true;
+                UnityEngine.SceneManagement.SceneManager.LoadScene("GTFC", UnityEngine.SceneManagement.LoadSceneMode.Additive);
+                return;
+            }
+
+            AddVIMCartItems();
+        }
+
+        private static void AddVIMCartItems()
+        {
+            var displays = Resources.FindObjectsOfTypeAll<GorillaNetworking.Store.StoreDisplay>();
+            foreach (string displayName in new[] { "BakeryBox", "GTFC2" })
+            {
+                GorillaNetworking.Store.StoreDisplay display = displays.FirstOrDefault(d => d.displayName == displayName);
+                if (display == null) continue;
+
+                foreach (GorillaNetworking.Store.DynamicCosmeticStand stand in display.Stands)
+                    stand.AddToCartButton.Click(true);
+            }
+
+            if (loadGtfcForCart)
+            {
+                UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync("GTFC");
+                loadGtfcForCart = false;
+            }
+        }
+
+        /// <summary>
+        /// Toggles hearing your own server-processed microphone.
+        /// </summary>
+        public static void HearServerMic()
+        {
+            if (!Networking.InRoom)
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in a room.");
+                return;
+            }
+
+            Recorder recorder = References.LocalRig.GetComponentInChildren<Recorder>(true);
+            if (recorder == null)
+                return;
+
+            recorder.DebugEchoMode = !recorder.DebugEchoMode;
+            Notifications.SendFormat("purple", "MIC", $"Hear server mic: {recorder.DebugEchoMode}.");
+        }
+
+        /// <summary>
+        /// Deafens the master client so they can't hear anyone.
+        /// </summary>
+        public static void DeafenMaster()
+        {
+            if (!Networking.InRoom)
+                return;
+
+            object[] eventData = { (byte)0, (byte)2, new object[] { "QUBIT ON TOP" } };
+            ManagerRegistry.NetworkingClient.OpRaiseEvent(202, eventData,
+                new Photon.Realtime.RaiseEventOptions { Receivers = Photon.Realtime.ReceiverGroup.MasterClient },
+                ExitGames.Client.Photon.SendOptions.SendUnreliable);
+        }
+
+        /// <summary>
+        /// Gives or removes the friendship bracelet on both wrists.
+        /// </summary>
+        public static void SetBracelet(bool enable)
+        {
+            if (!Networking.InRoom)
+            {
+                References.LocalRig.nonCosmeticLeftHandItem.EnableItem(enable);
+                References.LocalRig.nonCosmeticRightHandItem.EnableItem(enable);
+                return;
+            }
+
+            References.MyRigView.SendRPC("RPC_EnableNonCosmeticHandItem", RpcTarget.All, enable, true);
+            References.MyRigView.SendRPC("RPC_EnableNonCosmeticHandItem", RpcTarget.All, enable, false);
+        }
+
+        private static bool braceletSpam;
+        private static float braceletDelay;
+
+        public static void SpamBracelet()
+        {
+            if (Time.time < braceletDelay) return;
+            braceletDelay = Time.time + 0.09f;
+
+            braceletSpam = !braceletSpam;
+            SetBracelet(braceletSpam);
+        }
+
+        #endregion
         #endregion
     }
 }

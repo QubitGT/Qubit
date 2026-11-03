@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Qubit Menu  Modules/Manager.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -696,6 +696,11 @@ namespace Qubit.Modules
                 new Module { name = $"Anti Report {Bracket("green", "Notify")}", method = Safety.AntiReportNotify, toolTip = "Tells you when people come near your report button, but doesn't do anything."},
                 new Module { name = $"Anti Report {Bracket("green", "Overlay")}", method = Safety.AntiReportOverlay, toolTip = "Shows you an overlay when people come near your report button, but doesn't do anything."},
 
+                new Module { name = "Anti Guardian Fling", enableMethod =() => AntiGuardianFling.enabled = true, disableMethod =() => AntiGuardianFling.enabled = false, toolTip = "Prevents guardians from grabbing and flinging you."},
+                new Module { name = "Anti Deep Check (This Menu)", method = Safety.ToggleAntiDeepCheckMenu, toolTip = "Hides the menu file from deep checks."},
+                new Module { name = "Anti Deep Check (All Plugins)", method = Safety.ToggleAntiDeepCheckPlugins, toolTip = "Hides all the files inside your plugins folder from deep checks."},
+                new Module { name = "Anti Deep Check (BepInEx)", method = Safety.ToggleAntiDeepCheckBepInEx, toolTip = "Hides the BepInEx folder from your Gorilla Tag game folder."},
+
                 new Module { name = $"Show Anti Cheat Reports {Bracket("green", "Self")}", enableMethod =() => SendReport.AntiCheatSelf = true, disableMethod =() => SendReport.AntiCheatSelf = false, toolTip = "Gives you a notification every time you have been reported by the anti cheat."},
                 new Module { name = $"Show Anti Cheat Reports {Bracket("green", "All")}", enableMethod =() => SendReport.AntiCheatAll = true, disableMethod =() => SendReport.AntiCheatAll = false, toolTip = "Gives you a notification every time anyone has been reported by the anti cheat."},
 
@@ -814,6 +819,10 @@ namespace Qubit.Modules
                 new Module { name = "Speed Boost", method = Movement.SpeedBoost, toolTip = "Changes your speed to whatever you set it to."},
                 new Module { name = "Grip Speed Boost", method =() => { if (rightGrab) { Movement.SpeedBoost(); } }, toolTip = "Changes your speed to whatever you set it to, if you're holding right grip."},
                 new Module { name = "Dynamic Speed Boost", method = Movement.DynamicSpeedBoost, toolTip = "Dynamically changes your speed to whatever you set it to when tagged players get closer to you."},
+                new Module { name = "Velocity Fly", postMethod = Movement.VelocityFly, toolTip = "Flies you around with lots of velocity while holding <color=green>A</color>, keeping your momentum."},
+                new Module { name = "PBBV Walk", enableMethod = Movement.PBBVWalk, disableMethod = Movement.PBBVWalk, toolTip = "Limits your movement speed so you can only turn in place, like PBBV."},
+                new Module { name = "Anti Planet Pull", method = Movement.ToggleAntiPlanetPull, disableMethod = Movement.ToggleAntiPlanetPull, toolTip = "Stops planets in the space map from pulling you in."},
+                new Module { name = "No Slippery Walls", enableMethod = Movement.EnableNoSlipperyWalls, disableMethod = Movement.DisableNoSlipperyWalls, toolTip = "Makes the slippery walls in the forest pit non slippery."},
                 new Module { name = "Uncap Max Velocity", aliases = new[] { "Velmax" }, method =() => References.Player.maxJumpSpeed = float.MaxValue, toolTip = "Removes the velocity limit of walking."},
                 new Module { name = "Always Max Velocity", method = Movement.AlwaysMaxVelocity, toolTip = "Always makes you go as fast as the velocity limit."},
                 new Module { name = "Disable Velocity Cap", enableMethod = Movement.DisableVelocityCap, disableMethod =() => Movement.playspace.enabled = true, toolTip = "Lets you go as fast as you want without hitting the velocity limit."},
@@ -916,8 +925,22 @@ namespace Qubit.Modules
                 new Module { name = "Lean Back", postMethod =() => Rig.LeanBack(), toolTip = "Leans your rig backward."},
                 new Module { name = "Upwards Body", postMethod = Rig.UpwardsBody, toolTip = "Makes your body point upwards."},
                 new Module { name = "Spin Rig Body", method =() => Rig.SetBodyPatch(true), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Makes your body spin around, but not your head."},
-                new Module { name = "Spaz Rig Body", method =() => Rig.SetBodyPatch(true, 1), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Gives your body a seizure, randomizing its rotation."},
-                new Module { name = "Reverse Rig Body", method =() => Rig.SetBodyPatch(true, 2), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Flips your body around backwards, but not your head."},
+                new Module { name = "Spaz Rig Body", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.Spaz), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Gives your body a seizure, randomizing its rotation."},
+                new Module { name = "Reverse Rig Body", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.BackwardsBody), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Flips your body around backwards, but not your head."},
+                new Module { name = "Backwards Rig", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.BackwardsRig), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Flips your whole rig around backwards, head included."},
+                new Module { name = "Upside Down Body", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.UpsideDownBody), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Flips your body upside down, but not your head."},
+                new Module { name = "Upside Down Rig Full", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.UpsideDownRig), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Flips your whole rig upside down, head included."},
+                new Module { name = "Forwards Body", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.ForwardsBody), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Makes your body point forwards, but not your head."},
+                new Module { name = "Forwards Rig", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.ForwardsRig), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Makes your whole rig point forwards, head included."},
+                new Module { name = "Crawling Body", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.CrawlingBody), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Makes your body point backwards like you're crawling, but not your head."},
+                new Module { name = "Crawling Rig", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.CrawlingRig), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Makes your whole rig point backwards like you're crawling, head included."},
+                new Module { name = "Spaz Rig Full", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.SpazRig), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Gives your whole rig a seizure, head included."},
+                new Module { name = "Spin Bot V1", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.SpinBotY), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Spins your whole rig on the y axis, head included."},
+                new Module { name = "Spin Bot V2", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.SpinBotZ), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Spins your whole rig on the z axis, head included."},
+                new Module { name = "Spin Bot V3", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.SpinBotX), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Spins your whole rig on the x axis, head included."},
+                new Module { name = "Spin Bot V4", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.SpinBotForwards), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Spins your whole rig on the y axis while leaning forwards, head included."},
+                new Module { name = "Spin Bot V5", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.SpinBotCrawling), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Spins your whole rig on the y axis while leaning backwards, head included."},
+                new Module { name = "Upside Down Spin Bot", method =() => Rig.SetBodyPatch(true, Torso.PoseMode.UpsideDownSpinBot), disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Spins your whole upside down rig on the y axis, head included."},
                 new Module { name = "Rec Room Body", method = Rig.RecRoomBody, disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Makes your rig like how the Rec Room bodies are."},
                 new Module { name = "Upside Down Rig", aliases = new[] { "Dinnerbone" }, enableMethod =() => Torso.VRRigLateUpdate += Rig.VRRigLateUpdate_Dinnerbone, method =() => ghostException = true, disableMethod =() => { Torso.VRRigLateUpdate -= Rig.VRRigLateUpdate_Dinnerbone; ghostException = false;  }, toolTip = "Flips you upside down, inspired by the easter egg in Minecraft."},
                 new Module { name = $"Freeze Body Rotation {Bracket("green", "G")}", method = Rig.FreezeBodyRotation, disableMethod =() => Rig.SetBodyPatch(false), toolTip = "Freezes your body rotation in place, but not your head, when holding <color=green>grip</color>."},
@@ -1115,6 +1138,14 @@ namespace Qubit.Modules
                 new Module { name = "Night Time", method =() => ManagerRegistry.BetterDayNightManager.SetTimeOfDay(0), toolTip = "Sets your time of day to night."},
                 new Module { name = "Fullbright", method =() => Visual.SetFullbrightStatus(true), disableMethod =() => Visual.SetFullbrightStatus(false), toolTip = "Disables the dynamic lighting in maps that use it."},
                 new Module { name = "Shaders", enableMethod = Visual.EnableShaders, disableMethod = Visual.DisableShaders, toolTip = "Adds bloom, motion blur, and slight saturation to the game. Credits to leah / tagmonkevr for the code."},
+
+                new Module { name = "Wide Monkes", postMethod = Visual.MonkeScales, disableMethod = Visual.DisableMonkeScales, toolTip = "Makes every rig in the room wide, client sided."},
+                new Module { name = "Tall Monkes", postMethod = Visual.MonkeScales, disableMethod = Visual.DisableMonkeScales, toolTip = "Makes every rig in the room tall, client sided."},
+                new Module { name = "Short Monkes", postMethod = Visual.MonkeScales, disableMethod = Visual.DisableMonkeScales, toolTip = "Makes every rig in the room short, client sided."},
+                new Module { name = "Thin Monkes", postMethod = Visual.MonkeScales, disableMethod = Visual.DisableMonkeScales, toolTip = "Makes every rig in the room thin, client sided."},
+                new Module { name = "Long Monkes", postMethod = Visual.MonkeScales, disableMethod = Visual.DisableMonkeScales, toolTip = "Makes every rig in the room long, client sided."},
+                new Module { name = "Flat Monkes", postMethod = Visual.MonkeScales, disableMethod = Visual.DisableMonkeScales, toolTip = "Flattens every rig in the room, client sided."},
+                new Module { name = "2D Monkes", postMethod = Visual.MonkeScales, disableMethod = Visual.DisableMonkeScales, toolTip = "Turns every rig in the room 2D, client sided."},
 
                 new Module { name = "Remove Blindfold", method = Visual.RemoveBlindfold, toolTip = "Disables the blindfold in the prop hunt map."},
 
@@ -1447,6 +1478,9 @@ namespace Qubit.Modules
             {
                 new Module { name = "Exit Legacy Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
+                new Module { name = "Beach Score Orange", method =() => Master.BeachScore(1), isTogglable = false, legacy = true, toolTip = "Makes the orange team in beach score by 1. Requires master client."},
+                new Module { name = "Beach Score Blue", method =() => Master.BeachScore(0), isTogglable = false, legacy = true, toolTip = "Makes the blue team in beach score by 1. Requires master client."},
+
                 new Module { name = "Arcade Teleporter Effect Spam", method = Fun.ArcadeTeleporterEffectSpam, toolTip = "Spams the effects on the virtual stump teleporters in the arcade when holding <color=green>trigger</color>."},
                 new Module { name = "Stump Teleporter Effect Spam", method = Fun.StumpTeleporterEffectSpam, toolTip = "Spams the effects on the virtual stump teleporter in forest when holding <color=green>trigger</color>."},
 
@@ -1469,6 +1503,11 @@ namespace Qubit.Modules
                 new Module { name = "Guardian Crash On Touch", method = Overpowered.GuardianCrashOnTouch, isTogglable = false, legacy = true, toolTip = "Crashes players that touch you if you're the guardian." },
                 new Module { name = "Guardian Obliterate Gun", method = Overpowered.GuardianObliterateGun, legacy = true, toolTip = "Obliterates whoever your hand desires if you're the guardian." },
                 new Module { name = "Guardian Obliterate All", method = Overpowered.GuardianObliterateAll, isTogglable = false, legacy = true, toolTip = "Obliterates everyone in the room if you're the guardian, while holding <color=green>trigger</color>." },
+                new Module { name = "Undo Guardian", method = Overpowered.UndoGuardian, isTogglable = false, legacy = true, toolTip = "Ejects you from the guardian role."},
+                new Module { name = "Guardian Spaz All", method = Overpowered.GuardianSpazAll, isTogglable = false, legacy = true, toolTip = "Flings everyone in the room in random directions if you're the guardian."},
+                new Module { name = "Guardian Spaz Gun", method = Overpowered.GuardianSpazGun, legacy = true, toolTip = "Flings whoever your hand desires in a random direction if you're the guardian."},
+                new Module { name = "Guardian Orbit Gun", method = Overpowered.GuardianOrbitGun, legacy = true, toolTip = "Flings whoever your hand desires away from you if you're the guardian."},
+                new Module { name = "Guardian To Point All", method = Overpowered.GuardianToPointAll, legacy = true, toolTip = "Flings everyone in the room towards wherever your hand desires if you're the guardian."},
 
                 new Module { name = "Team Color Self", method = Overpowered.TeamColorSelf, isTogglable = false, legacy = true, toolTip = "Sets your monke ball team color." },
                 new Module { name = "Team Color Gun", method = Overpowered.TeamColorGun, legacy = true, toolTip = "Sets the monke ball team color of whoever your hand desires." },
@@ -1523,6 +1562,11 @@ namespace Qubit.Modules
                 new Module { name = "Lucy Physics", enableMethod = Lucy.Enable_LucyPhysics, method = Lucy.LucyPhysToggle, disableMethod = Lucy.Disable_LucyPhysics, toolTip = "Gives Lucy a rigidbody, letting her tumble and ragdoll around under real physics." },
                 new Module { name = "Bouncy Lucy", method = Lucy.BouncyLucy, isTogglable = false, toolTip = "Launches Lucy straight up into the air." },
                 new Module { name = "Lucy Follow Me", method = Lucy.LucyFollowMe, isTogglable = false, toolTip = "Makes Lucy start chasing you. Requires master client." },
+                new Module { name = "Lucy Float On Touch", method = Lucy.FloatOnTouch, toolTip = "Makes Lucy grab whoever touches you. Requires master client." },
+                new Module { name = "Lucy Orbit", method = Lucy.Orbit, toolTip = "Makes Lucy orbit around you. Requires master client." },
+                new Module { name = "Lucy Target Gun", method = Lucy.TargetGun, toolTip = "Makes Lucy chase whoever your hand desires without grabbing them. Requires master client." },
+                new Module { name = "Lucy Target Spaz", method = Lucy.TargetSpaz, toolTip = "Randomizes Lucy's chase target constantly. Requires master client." },
+                new Module { name = "Lucy Gun", method = Lucy.LucyGun, toolTip = "Moves Lucy to wherever your hand desires. Requires master client." },
                 new Module { name = "Anti Lucy", enableMethod =() => LucyRise.enabled = true, disableMethod =() => LucyRise.enabled = false, toolTip = "Prevents Lucy from rising and carrying you off when she grabs you." },
 
                 new Module { name = "Lurker Attack Self", method =() => Overpowered.LurkerAttack(Networking.LocalPlayer), isTogglable = false, toolTip = "Makes the lurker ghost attack you." },
@@ -1535,6 +1579,12 @@ namespace Qubit.Modules
                 new Module { name = "Annoying Lurker", method = Overpowered.AnnoyingLurker, toolTip = "Makes the lurker ghost really annoying, by attacking everyone." },
                 new Module { name = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Rig.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the lurker ghost." },
                 new Module { name = "Anti Lurker", enableMethod =() => LurkerStates.enabled = true, disableMethod =() => LurkerStates.enabled = false, toolTip = "Prevents the lurker ghost from possessing you." },
+
+                new Module { name = "Mines App Quit Gun", method = MinesSkeleton.AppQuitGun, toolTip = "Catches whoever your hand desires with the mines skeleton, force quitting their game if their skeleton urn is opened. Requires master client." },
+                new Module { name = "App Quit Gun", method = Blocks.QuitBoxGun, toolTip = "Moves the quit box to whoever your hand desires, force quitting their game." },
+                new Module { name = "Activate Mines Skeleton", method =() => MinesSkeleton.Catch(true), isTogglable = false, toolTip = "Wakes up the mines skeleton for everyone. Requires master client." },
+                new Module { name = "Reset Mines Skeleton", method =() => MinesSkeleton.Catch(false), isTogglable = false, toolTip = "Puts the mines skeleton back to sleep for everyone. Requires master client." },
+                new Module { name = "Anti App Quit", enableMethod =() => AntiAppQuitFloat.enabled = true, disableMethod =() => AntiAppQuitFloat.enabled = false, toolTip = "Prevents the mines skeleton from force quitting your game." },
 
                 new Module { name = "No Respawn Purple Flower", enableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable", 50f), toolTip = "Doesn't respawn the purple flower if it goes too far outside the bounds of forest."},
                 new Module { name = "No Respawn Yellow Flower", enableMethod =() => Flowers.SetRespawnDistance("YellowFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("YellowFlowerThrowable", 50f), toolTip = "Doesn't respawn the yellow flower if it goes too far outside the bounds of forest."},
@@ -1698,8 +1748,23 @@ namespace Qubit.Modules
                 new Module { name = "Send Elevator To Ghost Reactor", method = City.SendElevatorToGhostReactor, isTogglable = false, toolTip = "Sends the city elevator to the ghost reactor." },
                 new Module { name = "Send Elevator To Monke Blocks", method = City.SendElevatorToMonkeBlocks, isTogglable = false, toolTip = "Sends the city elevator to monke blocks." },
                 new Module { name = "Send Elevator To Ghost Entrance", method = City.SendElevatorToGhostEntrance, isTogglable = false, toolTip = "Sends the city elevator to the ghost entrance." },
+                new Module { name = "Send Elevator To Fossil Hunt", method = City.SendElevatorToFossilHunt, isTogglable = false, toolTip = "Sends the city elevator to the fossil hunt map." },
+                new Module { name = "Send Elevator To GravDash", method = City.SendElevatorToGravDash, isTogglable = false, toolTip = "Sends the city elevator to the gravdash map." },
+                new Module { name = "Send Elevator To OG Basement", method = City.SendElevatorToOGBasement, isTogglable = false, toolTip = "Sends the city elevator to the OG basement." },
+                new Module { name = "Send Elevator To Lava", method = City.SendElevatorToLava, isTogglable = false, toolTip = "Sends the lava map elevator." },
 
                 new Module { name = "Cosmetic Spoof", enableMethod = Cosmetics.TryOnAnywhere, disableMethod = Cosmetics.TryOffAnywhere, toolTip = "Lets you try on cosmetics from anywhere. Enable this mod after wearing the cosmetics." },
+                new Module { name = "Break Tryon", method = Fun.BreakTryon, isTogglable = false, toolTip = "Breaks the tryon stand and allows you to steal cosmetics, or wear multiple at the same time."},
+                new Module { name = "Fix Tryon", method = Fun.FixTryon, isTogglable = false, toolTip = "Fixes the tryon stand."},
+                new Module { name = "Get All Tryon Cosmetics", method = Fun.GetAllTryonCosmetics, isTogglable = false, toolTip = "Equips every tryon cosmetic, all server sided."},
+                new Module { name = "Remove All Tryon Cosmetics", method = Fun.RemoveAllTryonCosmetics, isTogglable = false, toolTip = "Removes all the tryon cosmetics."},
+                new Module { name = "Unlock VIM", enableMethod =() => UnlockVIM.enabled = true, disableMethod =() => UnlockVIM.enabled = false, toolTip = "Unlocks access to VIM."},
+                new Module { name = "Add VIM Cosmetics To Cart", method = Fun.AddVIMCosmeticsToCart, isTogglable = false, toolTip = "Adds the VIM cosmetics to your cart."},
+                new Module { name = "Hear Server Mic", method = Fun.HearServerMic, isTogglable = false, toolTip = "Lets you hear how you sound to others."},
+                new Module { name = "Deafen Master", method = Fun.DeafenMaster, isTogglable = false, toolTip = "Makes the current master client not be able to hear anyone."},
+                new Module { name = "Spawn Bracelet", method =() => Fun.SetBracelet(true), isTogglable = false, toolTip = "Gives you the friendship bracelet."},
+                new Module { name = "Remove Bracelet", method =() => Fun.SetBracelet(false), isTogglable = false, toolTip = "Removes the friendship bracelet."},
+                new Module { name = "Spam Bracelet", method = Fun.SpamBracelet, toolTip = "Toggles the friendship bracelet on and off constantly."},
             },
 
             ["Block Mods"] = new[]
@@ -1999,6 +2064,9 @@ namespace Qubit.Modules
                 new Module { name = "Ball Size Changer", method = Balls.BallSizeChanger, toolTip = "Changes the ball's size with <color=green>trigger</color> and <color=green>grip</color>." },
                 new Module { name = "Become Ball", method = Balls.BecomeBall, disableMethod = Rig.EnableRig, toolTip = "Turns you into the ball." },
                 new Module { name = "Destroy Ball", method = Balls.DestroyBalls, isTogglable = false, toolTip = "Sends the ball to hell." },
+                new Module { name = "ID Card Gun", method = IDCard.IDCardGun, toolTip = "Moves the ID card to wherever your hand desires." },
+                new Module { name = $"Grab ID Card {Bracket("green", "G")}", method = IDCard.GrabIDCard, toolTip = "Forces the ID card into your hand when holding <color=green>grip</color>." },
+                new Module { name = "Orbit ID Card", method = IDCard.OrbitIDCard, toolTip = "Orbits the ID card around you." },
                 new Module { name = "Destroy Balloons", method = Balloons.DestroyBalloons, isTogglable = false, toolTip = "Sends every single balloon cosmetic to hell." },
                 new Module { name = "Destroy Gliders", method = Gliders.DestroyGliders, isTogglable = false, toolTip = "Sends every single glider to hell." },
                 new Module { name = "Respawn Gliders", method = Gliders.RespawnGliders, isTogglable = false, toolTip = "Respawns all the gliders." },
@@ -2369,7 +2437,6 @@ namespace Qubit.Modules
                 new Module { name = "Building Block Crash Touch Gun", method = Blocks.BlockCrashTouchGun, toolTip = "Crashes whoever your hand desires inside of the block map on contact."},
                 new Module { name = "Building Block Trap Gun", method = Blocks.BlockTrapGun, toolTip = "Traps whoever your hand desires in a box of crash blocks."},
                 new Module { name = "Give Building Block Crash Touch", method = Blocks.GiveBlockCrashTouch, isTogglable = false, toolTip = "Gives everyone a touching crash block at your position."},
-                new Module { name = "App Quit Gun", method = Blocks.AppQuitGun, toolTip = "Moves the quit box to whoever your hand desires, making them quit the game."},
 
                 new Module { name = "Block Anti Report", enableMethod = Master.EnableAtticAntiReport, method = Master.AtticAntiReport, toolTip = "Automatically builds blocks around your report button."},
 
@@ -2388,6 +2455,42 @@ namespace Qubit.Modules
 
                 new Module { name = "Spaz Targets", method = Master.TargetSpam, toolTip = "Gives the targets a seizure."},
 
+                new Module { name = "Beach Score Spaz", method = Master.BeachScoreSpaz, toolTip = "Makes the scoreboard in beach spaz out. Requires master client."},
+                new Module { name = "Beach Win Orange", method =() => { for (int i = 0; i < 3; i++) Master.BeachScore(1); }, isTogglable = false, toolTip = "Makes the orange team in beach win. Requires master client."},
+                new Module { name = "Beach Win Blue", method =() => { for (int i = 0; i < 3; i++) Master.BeachScore(0); }, isTogglable = false, toolTip = "Makes the blue team in beach win. Requires master client."},
+                new Module { name = "Beach Reset Score", method =() => Master.BeachScore(2), isTogglable = false, toolTip = "Resets the scores in beach. Requires master client."},
+
+                new Module { name = "Add 1 Fossils Collected", method =() => Master.SetFossils(0, "Add 1"), isTogglable = false, toolTip = "Adds 1 fossil to the fossil hunt deposit. Requires master client."},
+                new Module { name = "Remove 1 Fossils Collected", method =() => Master.SetFossils(0, "Remove 1"), isTogglable = false, toolTip = "Removes 1 fossil from the fossil hunt deposit. Requires master client."},
+                new Module { name = "Max Fossils Collected", method =() => Master.SetFossils(100), isTogglable = false, toolTip = "Sets the fossil hunt deposit to max fossils. Requires master client."},
+                new Module { name = "Reset Fossils Collected", method =() => Master.SetFossils(0), isTogglable = false, toolTip = "Resets the fossil hunt deposit to 0 fossils. Requires master client."},
+                new Module { name = "Spaz Fossils Collected", method = Master.FossilSpaz, toolTip = "Randomizes the fossil hunt deposit count constantly. Requires master client."},
+                new Module { name = "Set Fossils Collected", method =() => PromptText("How many fossils would you like to set the deposit to?", () => Master.SetFossils(int.Parse(keyboardInput))), isTogglable = false, toolTip = "Sets the fossil hunt deposit to your number of choice. Requires master client."},
+                new Module { name = "Break Fossil Hunt", method = Master.BreakFossilHunt, isTogglable = false, toolTip = "Breaks the fossil hunt deposit for everyone. Requires master client."},
+
+                new Module { name = "Start Ranked", method =() => Master.SetRankedThreshold(-67f), isTogglable = false, toolTip = "Starts the ranked match early. Requires master client."},
+                new Module { name = "Break Ranked Countdown", method =() => Master.SetRankedThreshold(1e9f), isTogglable = false, toolTip = "Makes the ranked countdown a huge number that never goes down. Requires master client."},
+                new Module { name = "Fix Ranked Countdown", method =() => Master.SetRankedThreshold(3f), isTogglable = false, toolTip = "Fixes the ranked countdown. Requires master client."},
+                new Module { name = "Spaz Ranked Countdown", method = Master.SpazRankedCountdown, toolTip = "Makes the ranked countdown a bunch of random numbers. Requires master client."},
+                new Module { name = "Change Ranked State", method =() => Master.SetRankedThreshold(0.001f), isTogglable = false, toolTip = "Changes the state of ranked. Requires master client."},
+
+                new Module { name = "Log Spam All", method = Master.LogSpamAll, disableMethod = Master.DisableLogSpamAll, toolTip = "Teleports your rig to random map join triggers, filling everyone's logs with errors."},
+                new Module { name = "Log Spam All V2", method = Master.LogSpamTargets, toolTip = "Cycles the target range scores, filling everyone's logs with errors. Requires master client."},
+                new Module { name = "Log Spam All V3", method = Master.LogSpamVoice, isTogglable = false, toolTip = "Spams the voice chat event with invalid data, filling everyone's logs with errors."},
+                new Module { name = "Log Spam All V4", method = Master.LogSpamBlocks, isTogglable = false, toolTip = "Drops a logging block in monke blocks, filling everyone's logs with errors. Requires master client."},
+                new Module { name = "Log Spam All V5", method =() => Master.LogSpamEntities(46876848), isTogglable = false, toolTip = "Spawns broken entities above you, filling everyone's logs with errors."},
+                new Module { name = "Log Spam All V6", method =() => Master.LogSpamEntities(618507822), isTogglable = false, toolTip = "Spawns broken entities above you, filling everyone's logs with errors."},
+
+                new Module { name = "Cover Entrance", method =() => Master.CoverObject(0), isTogglable = false, toolTip = "Blocks off the monke blocks entrance so no one can leave. Requires master client."},
+                new Module { name = "Cover Board", method =() => Master.CoverObject(1), isTogglable = false, toolTip = "Blocks off the monke blocks board so no one can access it. Requires master client."},
+                new Module { name = "Cover Computer", method =() => Master.CoverObject(2), isTogglable = false, toolTip = "Blocks off the monke blocks computer so no one can access it. Requires master client."},
+                new Module { name = "Cover GameMode", method =() => Master.CoverObject(3), isTogglable = false, toolTip = "Blocks off the monke blocks gamemode changer so no one can access it. Requires master client."},
+                new Module { name = "Cover SizeChangers", method =() => Master.CoverObject(4), isTogglable = false, toolTip = "Blocks off the monke blocks size changers so no one can access them. Requires master client."},
+                new Module { name = "Cover Private Plots", method =() => Master.CoverObject(5), isTogglable = false, toolTip = "Blocks off the monke blocks private plots. Requires master client."},
+                new Module { name = "Cover Elevator", method =() => Master.CoverObject(6), isTogglable = false, toolTip = "Blocks off the monke blocks elevator so no one can access it. Requires master client."},
+                new Module { name = "Cover ShareMyBlocks", method =() => Master.CoverObject(7), isTogglable = false, toolTip = "Blocks off the ShareMyBlocks entrance. Requires master client."},
+                new Module { name = "Cover All", method =() => Master.CoverObject(Random.Range(0, 8)), isTogglable = false, toolTip = "Blocks off a random monke blocks object. Requires master client."},
+
                 new Module { name = "Slow Monsters", enableMethod = Master.SlowMonsters, disableMethod = Master.FixMonsters, toolTip = "Slows down the basement monsters." },
                 new Module { name = "Fast Monsters", enableMethod = Master.FastMonsters, disableMethod = Master.FixMonsters, toolTip = "Speeds up the basement monsters." },
 
@@ -2396,6 +2499,16 @@ namespace Qubit.Modules
                 new Module { name = "Spaz Monsters", method = Master.SpazMonsters, toolTip = "Gives the basement monsters a seizure." },
                 new Module { name = "Orbit Monsters", method = Master.OrbitMonsters, toolTip = "Orbits the basement monsters around you." },
                 new Module { name = "Destroy Monsters", method = Master.DestroyMonsters, isTogglable = false, toolTip = "Sends the basement monsters to hell." },
+                new Module { name = "Monster Stack Gun", method = Master.MonsterStackGun, toolTip = "Stacks the OG basement monsters at wherever your hand desires. Requires master client and the OG basement."},
+                new Module { name = "Monster Float Gun", method = Master.MonsterFloatGun, toolTip = "Floats whoever your hand desires using the OG basement monsters. Requires master client and the OG basement."},
+                new Module { name = "Monster Orbit", method = Master.OrbitMonsters, toolTip = "Orbits the OG basement monsters around you. Requires master client and the OG basement."},
+                new Module { name = "Monster Break Movement Gun", method = Master.MonsterBreakMovementGun, toolTip = "Breaks the movement of whoever your hand desires using the OG basement monsters. The target must be inside the maze. Requires master client and the OG basement."},
+                new Module { name = "Drop Player Gun", method = Master.DropPlayerGun, toolTip = "Instantly drops whoever your hand desires using the OG basement monsters. The target must be inside the maze. Requires master client and the OG basement."},
+                new Module { name = "Reset Monsters", method = Master.ResetMonsters, isTogglable = false, toolTip = "Resets the OG basement monsters to their home positions. Requires master client and the OG basement."},
+
+                new Module { name = "Break Movement Gun", method = Master.BreakMovementGun, toolTip = "Breaks the movement of whoever your hand desires. The target must be in ghost reactor. Requires master client."},
+                new Module { name = "Break Movement All", method = Master.BreakMovementAll, isTogglable = false, toolTip = "Breaks the movement of everyone in ghost reactor. Requires master client."},
+                new Module { name = "Break Movement All Except Gun", method = Master.BreakMovementAllExceptGun, toolTip = "Breaks the movement of everyone except whoever your hand desires. Targets must be in ghost reactor. Requires master client."},
 
                 new Module { name = "Infection to Tag", method = Master.InfectionToTag, disableMethod = Master.FixThreshold, toolTip = "Turns the game into tag instead of infection." },
                 new Module { name = "Tag to Infection", method = Master.TagToInfection, disableMethod = Master.FixThreshold, toolTip = "Turns the game into infection instead of tag." },

@@ -1046,7 +1046,10 @@ namespace Qubit.Libraries.Entities
             }, new GunLibrary.GunSettings { when = () => Time.time > blockCrashExceptDelay });
         }
 
-        public static void AppQuitGun()
+        /// <summary>
+        /// Moves the quit box to a player, force quitting their game.
+        /// </summary>
+        public static void QuitBoxGun()
         {
             GunLibrary.Target(gunTarget =>
             {

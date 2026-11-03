@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Qubit Menu  Modules/Categories/Master.cs
  * A community driven mod menu for Gorilla Tag with over 1000+ mods
  *
@@ -892,6 +892,142 @@ namespace Qubit.Modules.Categories
                 monkeyeAI.gameObject.transform.position = new Vector3(99999f, 99999f, 99999f);
             }
         }
+
+        #region OG Basement Monsters
+
+        private static readonly Vector3 MonsterHome = new Vector3(-375.5306f, -2.886f, 355.0327f);
+
+        private static bool InOGBasement() =>
+            References.LocalRig.zoneEntity.currentZone == GTZone.VIMExperience2;
+
+        /// <summary>
+        /// Moves the four OG basement monsters to the given positions, as long as they stay near their home.
+        /// </summary>
+        public static void MoveMonsters(Vector3[] positions, int index = -1)
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            if (!InOGBasement())
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in the OG basement.");
+                return;
+            }
+
+            if (positions.Any(p => Vector3.Distance(MonsterHome, p) > 4.3f))
+            {
+                Notifications.SendFormat("red", "ERROR", "Monsters can't move that far away.");
+                return;
+            }
+
+            string path = "Environment Objects/05Maze_PersistentObjects/BasementMaze/Monkeye_Prefab_";
+            string[] names = { "Angry", "Tweaky", "Sleepy", "Keen" };
+            for (int i = 0; i < names.Length; i++)
+            {
+                if (index != -1 && index != i) continue;
+
+                GameObject monster = GetObject(path + names[i]);
+                if (monster != null)
+                    monster.transform.position = positions[i];
+            }
+        }
+
+        /// <summary>
+        /// Resets the OG basement monsters to their home position.
+        /// </summary>
+        public static void ResetMonsters()
+        {
+            MoveMonsters(new[] { MonsterHome, MonsterHome, MonsterHome, MonsterHome });
+        }
+
+        /// <summary>
+        /// Stacks the four monsters at the target with small height offsets.
+        /// </summary>
+        public static void MonsterStackGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                Vector3 basePosition = NewPointer.transform.position;
+                MoveMonsters(new[]
+                {
+                    basePosition + new Vector3(0f, 0.05f, 0f),
+                    basePosition + new Vector3(0f, 0.1f, 0f),
+                    basePosition + new Vector3(0f, 0.15f, 0f),
+                    basePosition + new Vector3(0f, 0.2f, 0f)
+                });
+            });
+        }
+
+        /// <summary>
+        /// Floats whoever your hand desires using the four monsters placed under their limbs.
+        /// </summary>
+        public static void MonsterFloatGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                Transform target = gunTarget.transform;
+                MoveMonsters(new[]
+                {
+                    target.position + target.right * 0.07f + target.up * -0.42f,
+                    target.position + target.right * -0.07f + target.up * -0.42f,
+                    target.position + target.forward * 0.07f + target.up * -0.42f,
+                    target.position + target.forward * -0.07f + target.up * -0.42f
+                });
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Sends every monster at whoever your hand desires, freezing or instantly dropping them.
+        /// Uses the monsters' replacement state, which only works on players inside the maze.
+        /// </summary>
+        public static void MonsterReplaceGun(VRRig target, bool freeze)
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            if (!InOGBasement())
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in the OG basement.");
+                return;
+            }
+
+            if (target.scaleFactor != 0.03f)
+            {
+                Notifications.SendFormat("red", "ERROR", "This player must be in the maze.");
+                return;
+            }
+
+            foreach (MonkeyeAI monster in GetAllType<MonkeyeAI>())
+            {
+                Vector3 originalPosition = monster.transform.position;
+                monster.transform.position = target.transform.position;
+                monster.SetState((MonkeyeAI_ReplState.EStates)5);
+                monster.replState.userId = Players.GetPlayerFromVRRig(target).UserId;
+                monster.replState.timer = freeze ? 1f : 0.01f;
+                monster.replState.freezePlayer = freeze;
+                monster.replState.floorEnabled = freeze;
+                monster.replState.attackPos = target.transform.position;
+                typeof(MonkeyeAI).GetField("targetRig", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public)?.SetValue(monster, target);
+
+                if (!freeze)
+                    monster.transform.position = originalPosition;
+            }
+        }
+
+        public static void MonsterBreakMovementGun() =>
+            GunLibrary.Target(gunTarget => MonsterReplaceGun(gunTarget, true), new GunLibrary.GunSettings { locks = true });
+
+        public static void DropPlayerGun() =>
+            GunLibrary.Target(gunTarget => MonsterReplaceGun(gunTarget, false), new GunLibrary.GunSettings { locks = true });
+
+        #endregion
+
         public static void VIMKickGun()
         {
             if (!References.LocalRig.IsVIMSubscriber())
@@ -1513,6 +1649,408 @@ namespace Qubit.Modules.Categories
             }
             else Notifications.SendFormat("red", "ERROR", "You are not master client.");
         }
+
+        #region Beach / Sports Scoreboard
+
+        /// <summary>
+        /// Sports scoreboard control. Team 0 is blue, team 1 is orange, team 2 resets.
+        /// </summary>
+        public static void BeachScore(int team)
+        {
+            if (!Networking.InRoom || Networking.IsMasterClient)
+            {
+                if (References.LocalRig.zoneEntity.currentZone == GTZone.beach)
+                {
+                    if (team == 2)
+                        GorillaTag.Sports.SportScoreboard.Instance.ResetScores();
+                    else
+                        GorillaTag.Sports.SportScoreboard.Instance.TeamScored(team);
+                }
+                else
+                    Notifications.SendFormat("red", "ERROR", "You must be in beach.");
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        private static float beachSpazDelay;
+        public static void BeachScoreSpaz()
+        {
+            if (Time.time < beachSpazDelay) return;
+            beachSpazDelay = Time.time + 0.1f;
+
+            BeachScore(Random.Range(0, 3));
+        }
+
+        #endregion
+
+        #region Fossil Hunt
+
+        /// <summary>
+        /// Fossil hunt deposit control. Sets the fossil count on the deposit in the fossil hunt map.
+        /// </summary>
+        public static void SetFossils(int value, string mode = null)
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            if (References.LocalRig.zoneEntity.currentZone != GTZone.VIMExperience3)
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in the fossil hunt map.");
+                return;
+            }
+
+            Voxels.VoxelSpawnableDeposit deposit = GetAllType<Voxels.VoxelSpawnableDeposit>().FirstOrDefault();
+            if (deposit == null)
+                return;
+
+            GameEntity entity = deposit.GetComponent<GameEntity>();
+            if (entity == null)
+                return;
+
+            long newState = mode switch
+            {
+                "Add 1" => entity.GetState() + 1,
+                "Remove 1" => entity.GetState() - 1,
+                "Spaz" => Random.Range(0, 100),
+                _ => value
+            };
+            entity.RequestState(newState);
+        }
+
+        public static void FossilSpaz() => SetFossils(0, "Spaz");
+
+        public static void BreakFossilHunt()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            foreach (Voxels.VoxelSpawnableDeposit deposit in GetAllType<Voxels.VoxelSpawnableDeposit>())
+            {
+                GameEntity entity = deposit.GetComponent<GameEntity>();
+                entity?.RequestState(int.MinValue);
+            }
+        }
+
+        #endregion
+
+        #region Ranked
+
+        /// <summary>
+        /// Ranked control. Sets the ranked countdown threshold: 0.001e9 to break, 3 to fix, -67 to force start.
+        /// </summary>
+        public static void SetRankedThreshold(float value)
+        {
+            if (!Networking.InRoom || Networking.IsMasterClient)
+            {
+                if (ManagerRegistry.GorillaGameManager.GameType() == GameModeType.InfectionCompetitive || References.LocalRig.zoneEntity.currentZone == GTZone.ranked)
+                {
+                    GorillaTagManager tagManager = ManagerRegistry.GorillaTagManager;
+                    if (value != -67f)
+                        tagManager.infectedModeThreshold = (int)value;
+                    else if (tagManager.isCurrentlyTag)
+                        tagManager.infectedModeThreshold = 0;
+                    else
+                        Notifications.SendFormat("red", "ERROR", "Ranked is already started.");
+                }
+                else
+                    Notifications.SendFormat("red", "ERROR", "You must be in a ranked lobby.");
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        private static float rankedSpazDelay;
+        public static void SpazRankedCountdown()
+        {
+            if (Time.time < rankedSpazDelay) return;
+            rankedSpazDelay = Time.time + 0.149f;
+
+            SetRankedThreshold(Random.Range(3f, 1e9f));
+        }
+
+        #endregion
+
+        #region Break Movement
+
+        private const int BreakMovementEntityHash = 1517967647;
+
+        private static bool InGhostReactor(VRRig rig) =>
+            rig.zoneEntity.currentZone == GTZone.ghostReactor || rig.zoneEntity.currentZone == GTZone.ghostReactorDrill;
+
+        /// <summary>
+        /// Breaks the movement of a player by spawning the break movement entity on them.
+        /// Locked to the ghost reactor map, where the game allows these entities.
+        /// </summary>
+        public static void BreakMovementPlayer(VRRig target)
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            if (!InGhostReactor(target))
+            {
+                Notifications.SendFormat("red", "ERROR", "This player must be in ghost reactor.");
+                return;
+            }
+
+            GameEntityManager manager = GameEntityManager.GetManagerForZone(target.zoneEntity.currentZone);
+            if (manager == null)
+                return;
+
+            Qubit.Libraries.Entities.GameEntities.CreateItem(
+                GetPlayerFromVRRig(target),
+                BreakMovementEntityHash,
+                target.transform.position,
+                Quaternion.Euler(90f, 0f, 0f),
+                Vector3.zero, Vector3.zero, manager: manager);
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        public static void BreakMovementGun()
+        {
+            GunLibrary.Target(gunTarget => BreakMovementPlayer(gunTarget), new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void BreakMovementAll()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal && InGhostReactor(rig)))
+                BreakMovementPlayer(rig);
+        }
+
+        public static void BreakMovementAllExceptGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!Networking.IsMasterClient)
+                {
+                    Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                    return;
+                }
+
+                foreach (VRRig rig in Players.ActiveRigs.Where(rig => !rig.isLocal && rig != gunTarget && InGhostReactor(rig)))
+                    BreakMovementPlayer(rig);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        #endregion
+
+        #region Cover (MonkeBlocks griefing)
+
+        private const int CoverPieceType = 1858470402;
+        private const string MonkeBlocksPath = "Environment Objects/MonkeBlocksRoomPersistent/";
+
+        /// <summary>
+        /// Drops a frozen block over a monke blocks location, blocking it off. 0 entrance, 1 board,
+        /// 2 computer, 3 gamemode changer, 4 size changers, 5 private plots, 6 elevator, 7 ShareMyBlocks.
+        /// </summary>
+        public static void CoverObject(int n)
+        {
+            Vector3 position;
+            Quaternion rotation;
+            switch (n)
+            {
+                case 0:
+                    position = GetObject(MonkeBlocksPath + "DropZones/DropZone_Hallway").transform.position + new Vector3(Random.Range(-1.13f, 1.2f), Random.Range(-0.8f, 1.248f), Random.Range(-0.35f, 0.65f));
+                    rotation = Quaternion.Euler(180f, 120f, 90f);
+                    break;
+                case 1:
+                    position = GetObject(MonkeBlocksPath + "AtticScoreBoard").transform.position + new Vector3(Random.Range(1.7f, 2.2f), Random.Range(0f, 0.8f), Random.Range(0.9f, 1.72f));
+                    rotation = Quaternion.Euler(180f, 53f, 90f);
+                    break;
+                case 2:
+                    position = GetObject(MonkeBlocksPath + "MonkeBlocksComputer/GorillaComputerObject/ComputerUI").transform.position + new Vector3(Random.Range(-0.4f, 0.75f), Random.Range(0.06f, 0.26f), Random.Range(-0.44f, 0.21f));
+                    rotation = Quaternion.Euler(180f, 90f, 180f);
+                    break;
+                case 3:
+                    position = GetObject("MonkeBlocksRoomScene/GameModeSelector_MonkeBlocks (prefab)").transform.position + new Vector3(Random.Range(-0.007f, 0.08f), Random.Range(0.34f, 0.73f), Random.Range(-0.49f, -0.2f));
+                    rotation = Quaternion.Euler(180f, 100f, 90f);
+                    break;
+                case 4:
+                    {
+                        string shrinkPath = MonkeBlocksPath + "ShrinkStations/SnapPieceShrink01";
+                        string glassPath = "/ScaleRoot/Builder_ShrinkStation/Builder_ShrinkStation_Glass";
+                        GameObject[] stations =
+                        {
+                            GetObject(shrinkPath + glassPath),
+                            GetObject(shrinkPath + " (1)" + glassPath),
+                            GetObject(shrinkPath + " (2)" + glassPath),
+                            GetObject(shrinkPath + " (3)" + glassPath)
+                        };
+                        GameObject station = stations[Random.Range(0, stations.Length)];
+                        position = station.transform.position + new Vector3(Random.Range(-0.1f, 0.1f), Random.Range(-0.1f, 0.5f), Random.Range(-0.1f, 0.1f));
+                        rotation = station.transform.rotation;
+                        break;
+                    }
+                case 5:
+                    {
+                        var table = ManagerRegistry.GetBuilderTable();
+                        if (table == null || table.allPrivatePlots.Count == 0)
+                            return;
+
+                        position = table.allPrivatePlots[Random.Range(0, table.allPrivatePlots.Count)].transform.position + new Vector3(Random.Range(-0.45f, 0.45f), Random.Range(0f, 1.2f), Random.Range(-0.45f, 0.45f));
+                        rotation = Quaternion.identity;
+                        break;
+                    }
+                case 6:
+                    position = GetObject("Environment Objects/05Maze_PersistentObjects/GhostReactorElevatorManager/MonkeBlocksElevator/HasVisualComponents/GhostReactor_Elevator/GhostReactor_Elevator_Door_Top").transform.position + new Vector3(Random.Range(0.6f, 0.7f), Random.Range(-0.62f, 0.91f), Random.Range(-1.3f, 0.1f));
+                    rotation = Quaternion.Euler(0f, 355f, 85f);
+                    break;
+                case 7:
+                    position = new Vector3(Random.Range(-123.9f, -121.48f), Random.Range(18.8016f, 20.8f), -233.4f);
+                    rotation = Quaternion.Euler(0f, 75f, 85f);
+                    break;
+                default:
+                    return;
+            }
+
+            Qubit.Libraries.Entities.Blocks.CreatePiece(CoverPieceType, position, rotation, 0, overrideFreeze: true);
+        }
+
+        #endregion
+
+        #region Log Spam
+
+        private static bool logSpamActive;
+        private static GorillaNetworking.GorillaNetworkJoinTrigger[] joinTriggers;
+
+        /// <summary>
+        /// Log Spam V1: teleports your rig to random map join triggers, filling everyone's logs with errors.
+        /// </summary>
+        public static void LogSpamAll()
+        {
+            if (!logSpamActive)
+            {
+                logSpamActive = true;
+                joinTriggers = GetAllType<GorillaNetworking.GorillaNetworkJoinTrigger>();
+            }
+
+            References.LocalRig.enabled = false;
+            if (joinTriggers != null && joinTriggers.Length > 0)
+                References.LocalRig.transform.position = joinTriggers[Random.Range(0, joinTriggers.Length)].transform.position;
+        }
+
+        public static void DisableLogSpamAll()
+        {
+            if (logSpamActive)
+            {
+                References.LocalRig.enabled = true;
+                logSpamActive = false;
+            }
+        }
+
+        /// <summary>
+        /// Log Spam V2: cycles the target range scores to int.MinValue and back, filling everyone's logs with errors.
+        /// </summary>
+        public static void LogSpamTargets()
+        {
+            if (!Networking.InRoom || Networking.IsMasterClient)
+            {
+                List<HitTargetNetworkState> targets = GetAllType<HitTargetNetworkState>().ToList();
+                bool someoneInMaps = Players.ActiveRigs.Any(rig =>
+                {
+                    GTZone zone = rig.zoneEntity.currentZone;
+                    return zone == GTZone.forest || zone == GTZone.canyon || zone == GTZone.mountain;
+                });
+
+                if (!someoneInMaps)
+                {
+                    Notifications.SendFormat("red", "ERROR", "Someone must be in forest, canyons, or mountains.");
+                    return;
+                }
+
+                foreach (HitTargetNetworkState target in targets)
+                {
+                    target.hitCooldownTime = 0;
+                    target.TargetHit(Vector3.zero, Vector3.zero);
+                    target.TargetHit(Vector3.zero, Vector3.zero);
+                }
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+        }
+
+        /// <summary>
+        /// Log Spam V3: spams the voice chat event with invalid data, filling everyone's logs with errors.
+        /// </summary>
+        public static void LogSpamVoice()
+        {
+            if (!Networking.InRoom)
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in a room.");
+                return;
+            }
+
+            var client = Photon.Voice.PUN.PhotonVoiceNetwork.Instance.Client;
+            object[] eventData = new object[]
+            {
+                (byte)0,
+                (byte)1,
+                new object[] { new Dictionary<byte, object> { { 1, 0 }, { 2, 0 }, { 3, 0 }, { 4, "QUBIT ON TOP" }, { 5, 0 } } }
+            };
+
+            client.OpRaiseEvent((byte)202, eventData, new Photon.Realtime.RaiseEventOptions { Receivers = Photon.Realtime.ReceiverGroup.All }, new ExitGames.Client.Photon.SendOptions { Reliability = false, Channel = 0 });
+        }
+
+        /// <summary>
+        /// Log Spam V4: drops a logging block in monke blocks, filling everyone's logs with errors.
+        /// </summary>
+        public static void LogSpamBlocks()
+        {
+            if (!Networking.IsMasterClient)
+            {
+                Notifications.SendFormat("red", "ERROR", "You are not master client.");
+                return;
+            }
+
+            if (!Players.ActiveRigs.Any(rig => rig.zoneEntity.currentZone == GTZone.monkeBlocks))
+            {
+                Notifications.SendFormat("red", "ERROR", "Someone must be in monke blocks.");
+                return;
+            }
+
+            Qubit.Libraries.Entities.Blocks.CreatePiece(-741198570,
+                References.LocalRig.transform.position, Quaternion.identity, 0);
+        }
+
+        /// <summary>
+        /// Log Spam V5/V6: spawns broken entities above you, filling everyone's logs with errors.
+        /// Locked to the ghost reactor map and super infection gamemodes, matching where the game allows these entities.
+        /// </summary>
+        public static void LogSpamEntities(int hash)
+        {
+            GTZone zone = References.LocalRig.zoneEntity.currentZone;
+            if (zone != GTZone.ghostReactor && zone != GTZone.ghostReactorDrill && zone != GTZone.ghostReactorTunnel && ManagerRegistry.GorillaGameManager.GameType() != GameModeType.SuperInfect)
+            {
+                Notifications.SendFormat("red", "ERROR", "You must be in ghost reactor or a super infection gamemode.");
+                return;
+            }
+
+            GameEntityManager manager = GameEntityManager.GetManagerForZone(zone);
+            if (manager == null)
+                return;
+
+            for (int i = 0; i < 50; i++)
+                Qubit.Libraries.Entities.GameEntities.CreateItem(RpcTarget.All, hash,
+                    References.LocalRig.transform.position + new Vector3(0f, 25f, 0f),
+                    Quaternion.identity, Vector3.zero, Vector3.zero, manager: manager);
+        }
+
+        #endregion
 
         public static void InfectionToTag()
         {

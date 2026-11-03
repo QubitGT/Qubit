@@ -23,7 +23,9 @@ using GorillaExtensions;
 using Qubit.Core;
 using Qubit.Libraries.Interface;
 using Qubit.Modules.Categories;
+using Qubit.Modules.Classes;
 using Qubit.Patches.Events;
+using System.Linq;
 using UnityEngine;
 using static Qubit.Extensions.Players;
 using static Qubit.Extensions.Random;
@@ -409,6 +411,114 @@ namespace Qubit.Libraries.Entities
                 return;
 
             FollowLocally(chaser, References.LocalRig.transform);
+        }
+
+        private static void Grab(VRRig rig)
+        {
+            HalloweenGhostChaser chaser = GetControlledChaser();
+            if (chaser == null)
+                return;
+
+            chaser.currentState = HalloweenGhostChaser.ChaseState.Grabbing;
+            chaser.grabTime = Time.time;
+            chaser.targetPlayer = rig.GetPlayer();
+            chaser.followTarget = rig.transform;
+        }
+
+        /// <summary>
+        /// Makes Lucy grab whoever touches you.
+        /// </summary>
+        public static void FloatOnTouch()
+        {
+            foreach (VRRig rig in ActiveRigs.Where(rig => !rig.IsLocal()))
+            {
+                if (Vector3.Distance(rig.transform.position, References.LocalRig.transform.position) < 1.2f && Time.time > nextGrabTime)
+                {
+                    nextGrabTime = Time.time + 1f;
+                    Grab(rig);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Makes Lucy orbit around you at a fixed radius.
+        /// </summary>
+        public static void Orbit()
+        {
+            HalloweenGhostChaser chaser = GetControlledChaser();
+            if (chaser == null)
+                return;
+
+            float angle = Time.time * 1.7f;
+            Vector3 offset = new Vector3(Mathf.Sin(angle) * 1.7f, 0f, Mathf.Cos(angle) * 1.7f);
+
+            chaser.currentState = HalloweenGhostChaser.ChaseState.Chasing;
+            chaser.targetPlayer = Qubit.Core.Networking.LocalPlayer;
+            chaser.transform.position = References.LocalRig.transform.position + offset;
+        }
+
+        /// <summary>
+        /// Makes Lucy chase whoever your hand desires, without grabbing them.
+        /// </summary>
+        public static void TargetGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                HalloweenGhostChaser chaser = GetControlledChaser();
+                if (chaser == null)
+                    return;
+
+                if (chaser.currentState == HalloweenGhostChaser.ChaseState.Dormant)
+                {
+                    Notifications.SendFormat("red", "ERROR", "Lucy isn't spawned.");
+                    return;
+                }
+
+                FollowLocally(chaser, gunTarget.transform);
+                chaser.targetPlayer = gunTarget.GetPlayer();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Randomizes Lucy's chase target every few frames.
+        /// </summary>
+        public static void TargetSpaz()
+        {
+            if (Time.time < nextSpazTime)
+                return;
+
+            HalloweenGhostChaser chaser = GetControlledChaser();
+            if (chaser == null)
+                return;
+
+            nextSpazTime = Time.time + 0.05f;
+
+            VRRig randomRig = ActiveRigs[Random.Range(0, ActiveRigs.Count)];
+            if (randomRig == null)
+                return;
+
+            FollowLocally(chaser, randomRig.transform);
+            chaser.targetPlayer = randomRig.GetPlayer();
+        }
+
+        private static float nextSpazTime;
+
+        /// <summary>
+        /// Moves Lucy to wherever your hand desires.
+        /// </summary>
+        public static void LucyGun()
+        {
+            GunLibrary.Point(pointer =>
+            {
+                HalloweenGhostChaser chaser = GetControlledChaser();
+                if (chaser == null)
+                    return;
+
+                chaser.currentState = HalloweenGhostChaser.ChaseState.Chasing;
+                chaser.targetPlayer = Qubit.Core.Networking.LocalPlayer;
+                chaser.followTarget = References.LocalRig.transform;
+                chaser.transform.position = pointer.transform.position + new Vector3(0f, 0.5f, 0f);
+            });
         }
     }
 }
