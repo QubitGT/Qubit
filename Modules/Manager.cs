@@ -1139,6 +1139,13 @@ namespace Qubit.Modules
                 new Module { name = "Break SuperGameMode", method = SIGadgets.BreakSuperGameMode, isTogglable = false, toolTip = "Makes the terminals unusable, items wont spawn, and cant claim resources. Requires master client."},
                 new Module { name = "Disable Map Barriers", method = SIGadgets.DisableMapBarriers, isTogglable = false, toolTip = "Removes the map barriers in super infection."},
                 new Module { name = "Complete Bonus Points", method = SIGadgets.CompleteBonusPoints, isTogglable = false, toolTip = "Instantly completes your bonus points progress."},
+
+                new Module { name = "Break Audio All", method = SIGadgets.BreakAudioAll, isTogglable = false, toolTip = "Breaks everyones audio in ghost reactor."},
+                new Module { name = "Break Audio Gun", method = SIGadgets.BreakAudioGun, toolTip = "Breaks whoever your hand desires's audio in ghost reactor."},
+                new Module { name = "Instant Crash All", method = SIGadgets.InstantCrashAll, isTogglable = false, toolTip = "Practically instantly crashes everyone in ghost reactor."},
+                new Module { name = "Instant Crash Gun", method = SIGadgets.InstantCrashGun, toolTip = "Practically instantly crashes whoever your hand desires in ghost reactor."},
+                new Module { name = "Item Insta Sphere Gun", method = SIGadgets.ItemInstaSphereGun, isTogglable = false, toolTip = "Shoot and instantly spawn a sphere of 102 selected items."},
+                new Module { name = "Item Ellipsoid Gun", method = SIGadgets.ItemEllipsoidGun, isTogglable = false, toolTip = "Shoot and make circles along each axis with selected items."},
                 new Module { name = "Destroy Gadget Gun", method = SIGadgets.DestroyGadgetGun, toolTip = "Destroys any gadget which your hand desires."},
 
             },
@@ -2703,6 +2710,22 @@ namespace Qubit.Modules
                 new Module { name = "Critters Crash Gun", method = Overpowered.CrashGun, toolTip = "Crashes whoever your hand desires using critter ownership. Requires master client." },
                 new Module { name = "Critters Crash All", method = Overpowered.CrashLobby, isTogglable = false, toolTip = "Crashes everyone in the room using critter ownership. Requires master client." },
                 new Module { name = "Critters Freeze Master", method = Overpowered.CrittersFreeze, isTogglable = false, toolTip = "Repeatedly crashes whoever owns the critters guard until nobody is left. Works without master client." },
+
+                new Module { name = "Tag State Gun", method = Overpowered.TagStateGun, toolTip = "Corrupts the master client's last-tagged-by state for whoever your hand desires, no distance check." },
+                new Module { name = "Tag State All", method = Overpowered.TagStateAll, toolTip = "Corrupts the master client's last-tagged-by state for everyone in the room, no distance check." },
+
+                new Module { name = "Ghost Lab Doors Open", method = Overpowered.GhostLabDoorsOpen, isTogglable = false, toolTip = "Opens the Ghost Lab entrance doors for everyone." },
+                new Module { name = "Ghost Lab Doors Close", method = Overpowered.GhostLabDoorsClose, isTogglable = false, toolTip = "Closes the Ghost Lab entrance doors for everyone." },
+                new Module { name = "Ghost Lab Doors Spam", method = Overpowered.GhostLabDoorsSpam, toolTip = "Rapidly toggles the Ghost Lab entrance doors for everyone." },
+                new Module { name = "Ghost Lab Door Crash All", method = Overpowered.GhostLabDoorCrashAll, toolTip = "Spams a negative door index to crash whoever owns the Ghost Lab door state." },
+                new Module { name = "Ghost Lab Door Crash Gun", method = Overpowered.GhostLabDoorCrashGun, toolTip = "Crashes the Ghost Lab door state for whoever your hand desires." },
+                new Module { name = "Whack-a-Mole All", method = Overpowered.WhackAMoleAll, toolTip = "Starts whack-a-mole for everyone in the room." },
+                new Module { name = "Whack-a-Mole Gun", method = Overpowered.WhackAMoleGun, toolTip = "Starts whack-a-mole for whoever your hand desires." },
+                new Module { name = "Cauldron Ingredients All", method = Overpowered.CauldronAll, toolTip = "Throws random ingredients into the magic cauldron for everyone." },
+                new Module { name = "Cauldron Ingredients Gun", method = Overpowered.CauldronGun, toolTip = "Throws random ingredients into the magic cauldron for whoever your hand desires." },
+                new Module { name = "Skeleton Scare All", method = Overpowered.SkeletonScareAll, toolTip = "Triggers the second-look skeleton ghost on everyone." },
+                new Module { name = "Skeleton Scare Gun", method = Overpowered.SkeletonScareGun, toolTip = "Triggers the second-look skeleton ghost on whoever your hand desires." },
+                new Module { name = "Party Merge Pollution", method = Overpowered.PartyMergeAll, toolTip = "Floods everyone's party merge data with junk actor numbers." },
 
                 new Module { name = "Fake Kick Gun", method = Overpowered.FakeKickGun, isTogglable = false, toolTip = "Makes whoever your hand desires appear to have left the game. This mod is client sided." },
                 new Module { name = "Fake Kick All", method = Overpowered.FakeKickAll, isTogglable = false, toolTip = "Makes everyone in the room appear to have left the game. This mod is client sided." },
@@ -4727,3 +4750,4 @@ new ButtonInfo { name = "Destroy on Grab", postMethod =() => Overpowered.Directi
 new ButtonInfo { name = "Obliterate on Grab", postMethod =() => Overpowered.DirectionOnGrab(Vector3.up), disableMethod =() => VRRig.LocalRig.enabled = true, toolTip = "Obliterates the player when they grab you." },
 new ButtonInfo { name = "Towards Point on Grab Gun", postMethod = Overpowered.TowardsPointOnGrab, disableMethod = Overpowered.DisableTowardsPointOnGrab, toolTip = "Sends the player to your target position when they grab you." },
  */
+

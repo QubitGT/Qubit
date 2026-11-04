@@ -19,6 +19,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+using GorillaTag;
 using Photon.Pun;
 using Qubit.Core;
 using Qubit.Extensions;
@@ -29,6 +30,7 @@ using static Qubit.Core.Security;
 using static Qubit.Extensions.GameObj;
 using static Qubit.Extensions.Players;
 using static Qubit.Libraries.Networking.LocalPlayer;
+using static Qubit.Modules.Classes.GunLibrary;
 
 namespace Qubit.Modules.Categories
 {
@@ -144,5 +146,50 @@ namespace Qubit.Modules.Categories
                 AngryBeeSwarm.Emerge(target, target);
             }
         }
+
+        #region Exploit: Science Experiment balloon chain (content not present this build)
+
+        private static float balloonDelay;
+
+        /// <summary>
+        /// ValidateLocalPlayerWaterBalloonHitRPC checks only
+        /// playerId == LocalPlayer.ActorNumber. The validation chain
+        /// ends with the target client self-reporting
+        /// PlayerHitByWaterBalloonRPC to the master, clearing their
+        /// touchedLiquid state. Science Experiment is not live in this
+        /// build; kept for when it returns.
+        /// </summary>
+        private static void SendBalloon(VRRig target)
+        {
+            ScienceExperimentManager manager = UnityEngine.Object.FindObjectsOfType<ScienceExperimentManager>().FirstOrDefault();
+            if (manager == null || target == null) return;
+
+            NetPlayer targetPlayer = target.GetPlayer();
+            manager.GetView.RPC("ValidateLocalPlayerWaterBalloonHitRPC", targetPlayer.GetPlayerRef(),
+                targetPlayer.ActorNumber);
+            Qubit.Core.Security.RPCProtection();
+        }
+
+        public static void BalloonUnlavaGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!GetGunInput(true) || Time.time < balloonDelay) return;
+                balloonDelay = Time.time + 0.25f;
+                SendBalloon(gunTarget);
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        public static void BalloonUnlavaAll()
+        {
+            if (!Networking.InRoom || Time.time < balloonDelay) return;
+            balloonDelay = Time.time + 0.5f;
+
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => !r.IsLocal()))
+                SendBalloon(rig);
+        }
+
+        #endregion
     }
 }
+

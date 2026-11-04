@@ -29,6 +29,7 @@ using Qubit.Libraries.Interface;
 using Qubit.Libraries.Networking;
 using Qubit.Modules.Classes;
 using Qubit.Patches.Netcode;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -42,6 +43,7 @@ using static Qubit.Modules.Classes.GunLibrary;
 using static Qubit.Extensions.GameObj;
 using Random = UnityEngine.Random;
 using Security = Qubit.Core.Security;
+using static Qubit.Core.Security;
 
 namespace Qubit.Modules.Categories.Gamemode
 {
@@ -603,6 +605,341 @@ namespace Qubit.Modules.Categories.Gamemode
         {
             for (int i = 0; i < 10; i++)
                 SIPlayer.LocalPlayer.GetBonusProgress(SuperInfectionManager.activeSuperInfectionManager);
+        }
+
+        #endregion
+
+        #region Malachi 9.1 Additions
+
+        private const int BreakMovementEntityHash = 1517967647;
+        private const int AudioBreakEntityHash = 1551901997;
+        private const int InstantBatchCount = 102;
+
+        /// <summary>
+        /// Sends a CreateItemsRPC payload straight to specific actor numbers through a raw
+        /// Photon raise event, bypassing the rpc spam limiter and hitting only the targets.
+        /// </summary>
+        private static void RaiseCreateItems(GameEntityManager manager, int[] actorNumbers, object[] createData)
+        {
+            PhotonView view = manager.photonView;
+
+            // Split payloads over 45 items in half with a 75ms gap, like the game's own chunking.
+            bool oversized = ((int[])createData[0]).Length > 45;
+            object[][] parts = oversized ? new[] { SplitPayload(createData, true), SplitPayload(createData, false) } : new[] { createData };
+
+            foreach (object[] part in parts)
+            {
+                SendRaiseEvent(view, actorNumbers, part);
+                if (oversized)
+                    System.Threading.Tasks.Task.Delay(75).Wait();
+            }
+        }
+
+        private static object[] SplitPayload(object[] payload, bool firstHalf)
+        {
+            return payload.Select(x =>
+            {
+                Array array = (Array)x;
+                Array half = Array.CreateInstance(array.GetType().GetElementType(), array.Length / 2);
+                if (firstHalf)
+                    Array.Copy(array, half, half.Length);
+                else
+                    Array.Copy(array, array.Length - half.Length, half, 0, half.Length);
+                return half;
+            }).ToArray();
+        }
+
+        private static void SendRaiseEvent(PhotonView view, int[] actorNumbers, object[] parameters)
+        {
+            ExitGames.Client.Photon.Hashtable content = new ExitGames.Client.Photon.Hashtable();
+            content.Add(0, view.ViewID);
+            content.Add(2, PhotonNetwork.ServerTimestamp);
+            content.Add(3, "CreateItemsRPC");
+            content.Add(4, parameters);
+            content.Add(5, (byte)PhotonNetwork.PhotonServerSettings.RpcList.IndexOf("CreateItemsRPC"));
+
+            RaiseEventOptions options = new RaiseEventOptions();
+            options.TargetActors = actorNumbers;
+            ExitGames.Client.Photon.SendOptions sendOptions = default(ExitGames.Client.Photon.SendOptions);
+            sendOptions.DeliveryMode = ExitGames.Client.Photon.DeliveryMode.Reliable;
+            sendOptions.Encrypt = false;
+            sendOptions.Reliability = true;
+
+            PhotonNetwork.NetworkingClient.LoadBalancingPeer.OpRaiseEvent(200, content, options, sendOptions);
+        }
+
+        /// <summary>
+        /// Builds the CreateItemsRPC payload the game expects — net ids, hashes,
+        /// packed positions, packed rotations, create data and invalid net ids.
+        /// </summary>
+        private static object[] BuildCreateItemsPayload(GameEntityManager manager, int[] hashes, Vector3[] positions, Quaternion[] rotations)
+        {
+            int invalidNetId = manager.GetNetIdFromEntityId(GameEntityId.Invalid);
+
+            List<int> netIds = new List<int>();
+            List<long> packedPositions = new List<long>();
+            List<int> packedRotations = new List<int>();
+            List<long> createData = new List<long>();
+
+            for (int i = 0; i < hashes.Length; i++)
+            {
+                netIds.Add(manager.CreateTypeNetId(hashes[i]));
+                packedPositions.Add(BitPackUtils.PackWorldPosForNetwork(positions[i]));
+                packedRotations.Add(BitPackUtils.PackQuaternionForNetwork(rotations[i]));
+                createData.Add(0L);
+            }
+
+            return new object[]
+            {
+                netIds.ToArray(),
+                hashes.ToArray(),
+                packedPositions.ToArray(),
+                packedRotations.ToArray(),
+                createData.ToArray(),
+                Enumerable.Repeat(invalidNetId, hashes.Length).ToArray()
+            };
+        }
+
+        private static bool ZoneHasEntities(GameEntityManager manager, int typeId, int minCount)
+        {
+            int count = 0;
+            foreach (GameEntity entity in manager.entities)
+            {
+                if (entity != null && entity.typeId == typeId)
+                {
+                    count++;
+                    if (count >= minCount)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        private static void CleanZoneEntities(GameEntityManager manager, int typeId)
+        {
+            List<int> netIds = new List<int>();
+            foreach (GameEntity entity in manager.entities)
+            {
+                if (entity == null || entity.IsScenePlaced)
+                    continue;
+
+                if (typeId != 0 && entity.typeId != typeId)
+                    continue;
+
+                entity.gameObject.SetActive(true);
+                netIds.Add(entity.GetNetId());
+            }
+
+            if (netIds.Count > 0)
+            {
+                manager.photonView.RPC("DestroyItemRPC", RpcTarget.All, new object[] { netIds.ToArray() });
+                Security.RPCProtection();
+            }
+        }
+
+        private static GameEntityManager CurrentZoneManager() =>
+            GameEntityManager.GetManagerForZone(References.LocalRig.zoneEntity.currentZone);
+
+        private static bool InGhostReactor(VRRig rig) =>
+            rig.zoneEntity.currentZone == GTZone.ghostReactor || rig.zoneEntity.currentZone == GTZone.ghostReactorDrill;
+
+        /// <summary>
+        /// Breaks everyone's audio in ghost reactor by burying them in audio entities.
+        /// </summary>
+        public static void BreakAudioAll()
+        {
+            List<Player> inZone = PhotonNetwork.PlayerList.Where(p => p.IsLocal == false && InGhostReactor(Qubit.Extensions.Players.GetVRRigFromPlayer(p))).ToList();
+            if (inZone.Count == 0)
+            {
+                Notifications.SendFormat("red", "ERROR", "People must be in ghost reactor.");
+                return;
+            }
+
+            GameEntityManager manager = CurrentZoneManager();
+            if (manager == null)
+                return;
+
+            if (ZoneHasEntities(manager, AudioBreakEntityHash, 100))
+                CleanZoneEntities(manager, AudioBreakEntityHash);
+
+            Quaternion[] rotations = Enumerable.Repeat(Quaternion.Euler(90f, 0f, 0f), InstantBatchCount).ToArray();
+            int[] hashes = Enumerable.Repeat(AudioBreakEntityHash, InstantBatchCount).ToArray();
+
+            RaiseCreateItems(manager, inZone.Select(p => p.ActorNumber).ToArray(), BuildCreateItemsPayload(manager, hashes, new Vector3[InstantBatchCount], rotations));
+            RPCProtection();
+        }
+
+        /// <summary>
+        /// Breaks whoever your hand desires's audio in ghost reactor by burying them in audio entities.
+        /// </summary>
+        public static void BreakAudioGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!InGhostReactor(gunTarget))
+                {
+                    Notifications.SendFormat("red", "ERROR", "This player must be in ghost reactor.");
+                    return;
+                }
+
+                GameEntityManager manager = GameEntityManager.GetManagerForZone(gunTarget.zoneEntity.currentZone);
+                if (manager == null)
+                    return;
+
+                Quaternion[] rotations = Enumerable.Repeat(Quaternion.Euler(90f, 0f, 0f), InstantBatchCount).ToArray();
+                int[] hashes = Enumerable.Repeat(AudioBreakEntityHash, InstantBatchCount).ToArray();
+                Vector3[] positions = Enumerable.Repeat(gunTarget.transform.position, InstantBatchCount).ToArray();
+
+                RaiseCreateItems(manager, new[] { gunTarget.Creator.ActorNumber, PhotonNetwork.LocalPlayer.ActorNumber }, BuildCreateItemsPayload(manager, hashes, positions, rotations));
+                RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Practically instantly crashes everyone in ghost reactor with a raw targeted item blitz.
+        /// </summary>
+        public static void InstantCrashAll()
+        {
+            List<Player> inZone = PhotonNetwork.PlayerList.Where(p => p.IsLocal == false && InGhostReactor(Qubit.Extensions.Players.GetVRRigFromPlayer(p))).ToList();
+            if (inZone.Count == 0)
+            {
+                Notifications.SendFormat("red", "ERROR", "People must be in ghost reactor.");
+                return;
+            }
+
+            GameEntityManager manager = CurrentZoneManager();
+            if (manager == null)
+                return;
+
+            Quaternion[] rotations = Enumerable.Repeat(Quaternion.Euler(90f, 0f, 0f), InstantBatchCount).ToArray();
+            int[] hashes = Enumerable.Repeat(AudioBreakEntityHash, InstantBatchCount).ToArray();
+
+            RaiseCreateItems(manager, inZone.Select(p => p.ActorNumber).ToArray(), BuildCreateItemsPayload(manager, hashes, new Vector3[InstantBatchCount], rotations));
+
+            // Hide the mess locally after the blitz lands.
+            foreach (GameEntity entity in manager.entities)
+            {
+                if (entity != null && entity.typeId == AudioBreakEntityHash)
+                    entity.gameObject.SetActive(false);
+            }
+
+            RPCProtection();
+        }
+
+        /// <summary>
+        /// Practically instantly crashes whoever your hand desires with a raw targeted item blitz.
+        /// </summary>
+        public static void InstantCrashGun()
+        {
+            GunLibrary.Target(gunTarget =>
+            {
+                if (!InGhostReactor(gunTarget))
+                {
+                    Notifications.SendFormat("red", "ERROR", "This player must be in ghost reactor.");
+                    return;
+                }
+
+                GameEntityManager manager = GameEntityManager.GetManagerForZone(gunTarget.zoneEntity.currentZone);
+                if (manager == null)
+                    return;
+
+                Quaternion[] rotations = Enumerable.Repeat(Quaternion.Euler(90f, 0f, 0f), InstantBatchCount).ToArray();
+                int[] hashes = Enumerable.Repeat(AudioBreakEntityHash, InstantBatchCount).ToArray();
+                Vector3[] positions = Enumerable.Repeat(gunTarget.transform.position - new Vector3(0f, 4f, 0f), InstantBatchCount).ToArray();
+
+                RaiseCreateItems(manager, new[] { gunTarget.Creator.ActorNumber, PhotonNetwork.LocalPlayer.ActorNumber }, BuildCreateItemsPayload(manager, hashes, positions, rotations));
+
+                foreach (GameEntity entity in manager.entities)
+                {
+                    if (entity != null && entity.typeId == AudioBreakEntityHash)
+                        entity.gameObject.SetActive(false);
+                }
+
+                RPCProtection();
+            }, new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Shoot and instantly spawn a sphere of 102 selected items.
+        /// </summary>
+        public static void ItemInstaSphereGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                Vector3 center = NewPointer.transform.position + new Vector3(0f, 0.9f, 0f);
+
+                Vector3[] positions = new Vector3[InstantBatchCount];
+                Quaternion[] rotations = new Quaternion[InstantBatchCount];
+                for (int i = 0; i < InstantBatchCount; i++)
+                {
+                    positions[i] = center + Random.onUnitSphere * 0.85f;
+                    rotations[i] = Quaternion.LookRotation(center - positions[i]);
+                }
+
+                GameEntityManager manager = ManagerRegistry.SuperInfection.GameEntityManager;
+                RaiseCreateItems(manager, new[] { PhotonNetwork.LocalPlayer.ActorNumber }, BuildCreateItemsPayload(manager, Enumerable.Repeat(SelectedItemId, InstantBatchCount).ToArray(), positions, rotations));
+                RPCProtection();
+            });
+        }
+
+        private static int ellipsoidAxis = 1;
+        private static float ellipsoidAngle;
+        private static Vector3 ellipsoidCenter;
+        private static bool ellipsoidActive;
+
+        /// <summary>
+        /// Shoot and make circles along each axis with selected items, cycling X, Y, Z every shot.
+        /// </summary>
+        public static void ItemEllipsoidGun()
+        {
+            GunLibrary.Point(NewPointer =>
+            {
+                if (!ellipsoidActive || ellipsoidCenter == Vector3.zero)
+                {
+                    ellipsoidCenter = NewPointer.transform.position + new Vector3(0f, 1f, 0f);
+                    ellipsoidActive = true;
+                }
+
+                ellipsoidAngle += 3f;
+                float angleRad = ellipsoidAngle * Mathf.Deg2Rad;
+
+                Vector3 position;
+                Quaternion rotation;
+                switch (ellipsoidAxis)
+                {
+                    case 1: // circle in the X plane
+                        position = ellipsoidCenter + new Vector3(0f, Mathf.Cos(angleRad) * 0.8f, Mathf.Sin(angleRad) * 0.8f);
+                        rotation = Quaternion.LookRotation(Vector3.forward, ellipsoidCenter - position);
+                        break;
+                    case 2: // circle in the Y plane
+                        position = ellipsoidCenter + new Vector3(Mathf.Cos(angleRad) * 0.9f, 0f, Mathf.Sin(angleRad) * 0.9f);
+                        rotation = Quaternion.LookRotation(ellipsoidCenter - position);
+                        break;
+                    default: // circle in the Z plane
+                        position = ellipsoidCenter + new Vector3(Mathf.Cos(angleRad) * 0.9f, Mathf.Sin(angleRad) * 0.9f, 0f);
+                        rotation = Quaternion.LookRotation(Vector3.right, ellipsoidCenter - position);
+                        break;
+                }
+
+                GameEntityManager manager = ManagerRegistry.SuperInfection.GameEntityManager;
+                RaiseCreateItems(manager, new[] { PhotonNetwork.LocalPlayer.ActorNumber }, BuildCreateItemsPayload(manager, new[] { SelectedItemId }, new[] { position }, new[] { rotation }));
+                RPCProtection();
+
+                if (ellipsoidAngle >= 360f)
+                {
+                    ellipsoidAngle = 0f;
+                    ellipsoidAxis = ellipsoidAxis >= 3 ? 1 : ellipsoidAxis + 1;
+                }
+            }, new GunLibrary.GunSettings
+            {
+                onIdle = () =>
+                {
+                    ellipsoidCenter = Vector3.zero;
+                    ellipsoidActive = false;
+                    ellipsoidAngle = 0f;
+                    ellipsoidAxis = 1;
+                }
+            });
         }
 
         #endregion
