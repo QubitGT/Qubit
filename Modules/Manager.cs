@@ -1116,6 +1116,7 @@ namespace Qubit.Modules
                 new Module { name = "Item Sphere Gun", method = SIGadgets.ItemSphereGun, toolTip = "Spawns the selected item in a sphere at wherever your hand desires."},
                 new Module { name = "Destroy All Items", method = SIGadgets.DestroyAllItems, isTogglable = false, toolTip = "Destroys all the items."},
                 ButtonHelper.Create("Change Item", () => Gadgets.GadgetByName.Keys.ToArray(), SIGadgets.SelectedItemId, id => SIGadgets.SelectedItemId = id, "Changes the item used by the item mods."),
+                ButtonHelper.Create("Change Item Randomizer", () => new[] { "Off", "Random All", "Random SuperInfection", "Random GhostReactor", "Random Grabbables", "Random GR Grabbables", "Random Non-Grabbables" }, 0, SIGadgets.SetItemRandomizer, "Randomizes the item used by the item mods every spawn."),
 
                 new Module { name = "Infinite Thruster Fuel", enableMethod =() => Qubit.Patches.GadgetPatches.infiniteThrusterFuel = true, disableMethod =() => Qubit.Patches.GadgetPatches.infiniteThrusterFuel = false, toolTip = "Never runs out of fuel for the thrusters."},
                 ButtonHelper.Create("Change Thrusters Speed", () => new[] { "Normal", "Fast", "Super Fast", "Slow" }, 0, v => Qubit.Patches.GadgetPatches.thrusterSpeedMode = v, "Changes how fast the thrusters send you when used."),
@@ -1642,11 +1643,14 @@ namespace Qubit.Modules
                 new Module { name = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Rig.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the lurker ghost." },
                 new Module { name = "Anti Lurker", enableMethod =() => LurkerStates.enabled = true, disableMethod =() => LurkerStates.enabled = false, toolTip = "Prevents the lurker ghost from possessing you." },
 
-                new Module { name = "Mines App Quit Gun", method = MinesSkeleton.AppQuitGun, toolTip = "Catches whoever your hand desires with the mines skeleton, force quitting their game if their skeleton urn is opened. Requires master client." },
+                new Module { name = "Skeleton Drag Player", method = MinesSkeleton.AppQuitGun, toolTip = "Shoot someone to make the mines skeleton drag them under the map, force quitting their game if their skeleton urn is opened. Requires master client." },
                 new Module { name = "App Quit Gun", method = Blocks.QuitBoxGun, toolTip = "Moves the quit box to whoever your hand desires, force quitting their game." },
                 new Module { name = "Activate Mines Skeleton", method =() => MinesSkeleton.Catch(true), isTogglable = false, toolTip = "Wakes up the mines skeleton for everyone. Requires master client." },
                 new Module { name = "Reset Mines Skeleton", method =() => MinesSkeleton.Catch(false), isTogglable = false, toolTip = "Puts the mines skeleton back to sleep for everyone. Requires master client." },
                 new Module { name = "Anti App Quit", enableMethod =() => AntiAppQuitFloat.enabled = true, disableMethod =() => AntiAppQuitFloat.enabled = false, toolTip = "Prevents the mines skeleton from force quitting your game." },
+                new Module { name = "Anti Break Audio", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabled = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabled = false, toolTip = "Makes it so your audio wont break from modders."},
+                new Module { name = "Anti Break Movement", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledBreakMovement = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledBreakMovement = false, toolTip = "Makes it so your movement wont get broken from modders."},
+                new Module { name = "Anti Zone Kick", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledKick = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledKick = false, toolTip = "Makes it so you cant get kicked from modders using kick mods."},
 
                 new Module { name = "No Respawn Purple Flower", enableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable", 50f), toolTip = "Doesn't respawn the purple flower if it goes too far outside the bounds of forest."},
                 new Module { name = "No Respawn Yellow Flower", enableMethod =() => Flowers.SetRespawnDistance("YellowFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("YellowFlowerThrowable", 50f), toolTip = "Doesn't respawn the yellow flower if it goes too far outside the bounds of forest."},
@@ -2480,6 +2484,17 @@ namespace Qubit.Modules
                 new Module { name = "Ghost Reactor Crash All", method = Master.GhostReactorCrashAll, toolTip = "Crashes everyone in the ghost reactor."},
                 new Module { name = "Zone Table Crash Gun", method = Master.ZoneTableCrashGun, toolTip = "Crashes whoever your hand desires with a poisoned zone table stream."},
                 new Module { name = "Zone Table Crash All", method = Master.ZoneTableCrashAll, isTogglable = false, toolTip = "Crashes everyone with a poisoned zone table stream."},
+
+                new Module { name = "Kick All", method = Master.ZoneKickAll, isTogglable = false, toolTip = "Kicks everyone in ghost reactor from the lobby."},
+                new Module { name = "Kick Gun", method = Master.ZoneKickGun, toolTip = "Shoot someone to kick them from the lobby."},
+                new Module { name = "Kick Touch", method = Master.ZoneKickTouch, toolTip = "Touch someone to kick them from the lobby."},
+                new Module { name = "Kick On Touch", method = Master.ZoneKickOnTouch, toolTip = "When someone touches you, they will get kicked from the lobby."},
+                new Module { name = "App Quit All", method = Master.ZoneAppQuitAll, isTogglable = false, toolTip = "App quits everyone in ghost reactor."},
+                new Module { name = "App Quit Gun", method = Master.ZoneAppQuitGun, toolTip = "Shoot someone to app quit them."},
+                new Module { name = "App Quit Touch", method = Master.ZoneAppQuitTouch, toolTip = "Touch someone to app quit them."},
+                new Module { name = "App Quit On Touch", method = Master.ZoneAppQuitOnTouch, toolTip = "When someone touches you, they will get app quitted."},
+                new Module { name = "App Quit On Enter", enableMethod =() => Qubit.Patches.Safety.AppQuitOnEnter.enabled = true, disableMethod =() => Qubit.Patches.Safety.AppQuitOnEnter.enabled = false, toolTip = "When someone enters your zone, they will app quit."},
+                new Module { name = "Auto Try Get Zone Auth", enableMethod =() => Qubit.Patches.Safety.AutoZoneAuth.enabled = true, disableMethod =() => Qubit.Patches.Safety.AutoZoneAuth.enabled = false, toolTip = "When you go into a map by yourself, you will have zone auth."},
 
                 new Module { name = "Super Infection Crash Gun", method = Master.SuperInfectionCrashGun, toolTip = "Crashes whoever your hand desires in the Super Infection gamemode."},
                 new Module { name = "Super Infection Crash All", method = Master.SuperInfectionCrashAll, toolTip = "Crashes everyone in the Super Infection gamemode."},

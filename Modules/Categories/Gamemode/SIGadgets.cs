@@ -402,29 +402,78 @@ namespace Qubit.Modules.Categories.Gamemode
         public static int SelectedItemId { get; set; } =
             Gadgets.GadgetByName.TryGetValue("SI_Resource_VibratingSpring", out int springId) ? springId : 0;
 
+        /// <summary>Random item mode: 0 off, 1 all, 2 SuperInfection, 3 GhostReactor, 4 grabbables, 5 GR grabbables, 6 non-grabbables.</summary>
+        public static int ItemRandomizerMode;
+
+        public static void SetItemRandomizer(int mode) =>
+            ItemRandomizerMode = mode;
+
+        private static int cachedRandomItemId;
+        private static float randomItemCacheTime;
+
+        /// <summary>
+        /// Resolves the item id to spawn: the selected item, or a random pick per spawn
+        /// based on the randomizer mode.
+        /// </summary>
+        private static int ResolveItemId()
+        {
+            if (ItemRandomizerMode == 0)
+                return SelectedItemId;
+
+            // Re-roll every 0.2s so bursts share one pick, like a per-shot random.
+            if (Time.time - randomItemCacheTime > 0.2f)
+            {
+                randomItemCacheTime = Time.time;
+
+                GameEntityManager manager = ManagerRegistry.SuperInfection.GameEntityManager;
+                IEnumerable<KeyValuePair<int, GameObject>> factory = GameEntityManager.itemPrefabFactory;
+
+                IEnumerable<KeyValuePair<int, GameObject>> pool = ItemRandomizerMode switch
+                {
+                    2 => factory.Where(e => e.Value.name.StartsWith("SI_")),
+                    3 => factory.Where(e => e.Value.name.Contains("GhostReactor")),
+                    4 => factory.Where(e => e.Value.GetComponent<GameEntity>() != null && e.Value.GetComponent<GameEntity>().pickupable),
+                    5 => factory.Where(e => e.Value.name.Contains("GhostReactor") && e.Value.GetComponent<GameEntity>() != null && e.Value.GetComponent<GameEntity>().pickupable),
+                    6 => factory.Where(e => e.Value.GetComponent<GameEntity>() == null || !e.Value.GetComponent<GameEntity>().pickupable),
+                    _ => factory
+                };
+
+                List<KeyValuePair<int, GameObject>> candidates = pool.ToList();
+                cachedRandomItemId = candidates.Count > 0 ? candidates[Random.Range(0, candidates.Count)].Key : SelectedItemId;
+            }
+
+            return cachedRandomItemId;
+        }
+
         private static float itemDelay;
 
         /// <summary>
-        /// Spawns the selected item out of your hand when holding grip.
+        /// Spawns the selected item out of either hand when holding grip.
         /// </summary>
         public static void ItemSpammer()
         {
-            if (rightGrab && Time.time > itemDelay)
+            if (Time.time > itemDelay)
             {
                 itemDelay = Time.time + 0.1f;
-                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, References.RightHand.position + new Vector3(0f, 0.15f, 0f), Quaternion.identity, Vector3.down * 0.1f, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                if (rightGrab)
+                    GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), References.RightHand.position + new Vector3(0f, 0.15f, 0f), References.RightHand.rotation, Vector3.down * 0.1f, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                else if (leftGrab)
+                    GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), References.LeftHand.position + new Vector3(0f, 0.15f, 0f), References.LeftHand.rotation, Vector3.down * 0.1f, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
             }
         }
 
         /// <summary>
-        /// Shoots the selected item out of your hand when holding grip.
+        /// Shoots the selected item out of either hand when holding grip.
         /// </summary>
         public static void ItemMinigun()
         {
-            if (rightGrab && Time.time > itemDelay)
+            if (Time.time > itemDelay)
             {
                 itemDelay = Time.time + 0.1f;
-                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, References.RightHand.position, Quaternion.identity, References.RightHand.rotation * Vector3.forward * -15f, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                if (rightGrab)
+                    GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), References.RightHand.position, References.RightHand.rotation, References.RightHand.rotation * Vector3.forward * -15f, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                else if (leftGrab)
+                    GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), References.LeftHand.position, References.LeftHand.rotation, References.LeftHand.rotation * Vector3.forward * -15f, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
             }
         }
 
@@ -438,7 +487,7 @@ namespace Qubit.Modules.Categories.Gamemode
                 itemDelay = Time.time + 0.1f;
                 float angle = Time.frameCount / 30f;
                 Vector3 position = References.LocalRig.transform.position + new Vector3(Mathf.Cos(angle) * 0.9f, 0f, Mathf.Sin(angle) * 0.9f);
-                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, position, Quaternion.LookRotation(Vector3.up, References.LocalRig.transform.position - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), position, Quaternion.LookRotation(Vector3.up, References.LocalRig.transform.position - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
             }
         }
 
@@ -449,7 +498,7 @@ namespace Qubit.Modules.Categories.Gamemode
         {
             GunLibrary.Point(NewPointer =>
             {
-                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, NewPointer.transform.position + new Vector3(0f, 0.14f, 0f), Quaternion.identity, Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), NewPointer.transform.position + new Vector3(0f, 0.14f, 0f), Quaternion.identity, Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
             });
         }
 
@@ -460,7 +509,7 @@ namespace Qubit.Modules.Categories.Gamemode
         {
             Vector3 randomDirection = Random.onUnitSphere;
             Vector3 position = References.LocalRig.transform.position + randomDirection * 1.2f;
-            GameEntities.CreateItem(RpcTarget.All, SelectedItemId, position, Quaternion.LookRotation(References.LocalRig.transform.position - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+            GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), position, Quaternion.LookRotation(References.LocalRig.transform.position - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
         }
 
         /// <summary>
@@ -472,7 +521,7 @@ namespace Qubit.Modules.Categories.Gamemode
             {
                 Vector3 randomDirection = Random.onUnitSphere;
                 Vector3 position = NewPointer.transform.position + new Vector3(0f, 0.9f, 0f) + randomDirection * 0.85f;
-                GameEntities.CreateItem(RpcTarget.All, SelectedItemId, position, Quaternion.LookRotation(NewPointer.transform.position + new Vector3(0f, 0.9f, 0f) - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
+                GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), position, Quaternion.LookRotation(NewPointer.transform.position + new Vector3(0f, 0.9f, 0f) - position), Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
             });
         }
 
@@ -877,7 +926,7 @@ namespace Qubit.Modules.Categories.Gamemode
                 }
 
                 GameEntityManager manager = ManagerRegistry.SuperInfection.GameEntityManager;
-                RaiseCreateItems(manager, new[] { PhotonNetwork.LocalPlayer.ActorNumber }, BuildCreateItemsPayload(manager, Enumerable.Repeat(SelectedItemId, InstantBatchCount).ToArray(), positions, rotations));
+                RaiseCreateItems(manager, new[] { PhotonNetwork.LocalPlayer.ActorNumber }, BuildCreateItemsPayload(manager, Enumerable.Repeat(ResolveItemId(), InstantBatchCount).ToArray(), positions, rotations));
                 RPCProtection();
             });
         }
@@ -888,7 +937,7 @@ namespace Qubit.Modules.Categories.Gamemode
         private static bool ellipsoidActive;
 
         /// <summary>
-        /// Shoot and make circles along each axis with selected items, cycling X, Y, Z every shot.
+        /// Shoot and make circles along each axis with selected items, cycling X, Y, Z every full revolution.
         /// </summary>
         public static void ItemEllipsoidGun()
         {
@@ -900,29 +949,28 @@ namespace Qubit.Modules.Categories.Gamemode
                     ellipsoidActive = true;
                 }
 
-                ellipsoidAngle += 3f;
-                float angleRad = ellipsoidAngle * Mathf.Deg2Rad;
+                ellipsoidAngle += 3f * Time.deltaTime * 60f;
+                float a = ellipsoidAngle * Mathf.Deg2Rad;
 
                 Vector3 position;
                 Quaternion rotation;
                 switch (ellipsoidAxis)
                 {
-                    case 1: // circle in the X plane
-                        position = ellipsoidCenter + new Vector3(0f, Mathf.Cos(angleRad) * 0.8f, Mathf.Sin(angleRad) * 0.8f);
-                        rotation = Quaternion.LookRotation(Vector3.forward, ellipsoidCenter - position);
-                        break;
-                    case 2: // circle in the Y plane
-                        position = ellipsoidCenter + new Vector3(Mathf.Cos(angleRad) * 0.9f, 0f, Mathf.Sin(angleRad) * 0.9f);
+                    case 1: // horizontal circle in X/Z
+                        position = ellipsoidCenter + new Vector3(Mathf.Cos(a) * 0.8f, 0f, Mathf.Sin(a) * 0.8f);
                         rotation = Quaternion.LookRotation(ellipsoidCenter - position);
                         break;
-                    default: // circle in the Z plane
-                        position = ellipsoidCenter + new Vector3(Mathf.Cos(angleRad) * 0.9f, Mathf.Sin(angleRad) * 0.9f, 0f);
+                    case 2: // vertical circle in X/Y
+                        position = ellipsoidCenter + new Vector3(Mathf.Cos(a) * 0.9f, Mathf.Sin(a) * 0.8f, 0f);
+                        rotation = Quaternion.LookRotation(Vector3.forward, ellipsoidCenter - position);
+                        break;
+                    default: // vertical circle in Y/Z
+                        position = ellipsoidCenter + new Vector3(0f, Mathf.Cos(a) * 0.8f, Mathf.Sin(a) * 0.9f);
                         rotation = Quaternion.LookRotation(Vector3.right, ellipsoidCenter - position);
                         break;
                 }
 
-                GameEntityManager manager = ManagerRegistry.SuperInfection.GameEntityManager;
-                RaiseCreateItems(manager, new[] { PhotonNetwork.LocalPlayer.ActorNumber }, BuildCreateItemsPayload(manager, new[] { SelectedItemId }, new[] { position }, new[] { rotation }));
+                GameEntities.CreateItem(RpcTarget.All, ResolveItemId(), position, rotation, Vector3.zero, Vector3.zero, 0L, ManagerRegistry.SuperInfection.GameEntityManager);
                 RPCProtection();
 
                 if (ellipsoidAngle >= 360f)
