@@ -643,6 +643,9 @@ namespace Qubit.Modules
                 new Module { name = "Exit Safety Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
 
                 new Module { name = "Panic Button", method = Safety.PanicButton, isTogglable = false, toolTip = "Disables every mod, closes the menu, resets your identity and flushes RPCs. Press again to restore the mods you had on." },
+                new Module { name = "Anti Break Audio", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabled = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabled = false, toolTip = "Makes it so your audio wont break from modders."},
+                new Module { name = "Anti Break Movement", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledBreakMovement = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledBreakMovement = false, toolTip = "Makes it so your movement wont get broken from modders."},
+                new Module { name = "Anti Zone Kick", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledKick = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledKick = false, toolTip = "Makes it so you cant get kicked from modders using kick mods."},
                 new Module { name = "Watchdog Auto-Leave", method = Safety.WatchdogAutoLeave, toolTip = "Automatically leaves the room whenever a player on your watchlist joins or is already in it." },
                 new Module { name = "Watchdog Mark All", aliases = new[] { "Mark All Players" }, method = Safety.WatchdogMarkAll, isTogglable = false, toolTip = "Adds everyone currently in the room to your watchlist." },
                 new Module { name = "Watchdog Clear", method = Safety.WatchdogClear, isTogglable = false, toolTip = "Clears your watchlist." },
@@ -1642,14 +1645,6 @@ namespace Qubit.Modules
                 new Module { name = "Annoying Lurker", method = Overpowered.AnnoyingLurker, toolTip = "Makes the lurker ghost really annoying, by attacking everyone." },
                 new Module { name = "Become Lurker", method = Overpowered.BecomeLurker, disableMethod =() => { Rig.EnableRig(); ViewSerialization.OverrideSerialization = null; }, toolTip = "Turns you into the lurker ghost." },
                 new Module { name = "Anti Lurker", enableMethod =() => LurkerStates.enabled = true, disableMethod =() => LurkerStates.enabled = false, toolTip = "Prevents the lurker ghost from possessing you." },
-
-                new Module { name = "Skeleton Drag Player", method = MinesSkeleton.AppQuitGun, toolTip = "Shoot someone to make the mines skeleton drag them under the map, force quitting their game if their skeleton urn is opened. Requires master client." },
-                new Module { name = "App Quit Gun", method = Blocks.QuitBoxGun, toolTip = "Moves the quit box to whoever your hand desires, force quitting their game." },
-                new Module { name = "Activate Mines Skeleton", method =() => MinesSkeleton.Catch(true), isTogglable = false, toolTip = "Wakes up the mines skeleton for everyone. Requires master client." },
-                new Module { name = "Reset Mines Skeleton", method =() => MinesSkeleton.Catch(false), isTogglable = false, toolTip = "Puts the mines skeleton back to sleep for everyone. Requires master client." },
-                new Module { name = "Anti Break Audio", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabled = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabled = false, toolTip = "Makes it so your audio wont break from modders."},
-                new Module { name = "Anti Break Movement", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledBreakMovement = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledBreakMovement = false, toolTip = "Makes it so your movement wont get broken from modders."},
-                new Module { name = "Anti Zone Kick", enableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledKick = true, disableMethod =() => Qubit.Patches.Safety.AntiBreakAudio.enabledKick = false, toolTip = "Makes it so you cant get kicked from modders using kick mods."},
 
                 new Module { name = "No Respawn Purple Flower", enableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("PurpleFlowerThrowable", 50f), toolTip = "Doesn't respawn the purple flower if it goes too far outside the bounds of forest."},
                 new Module { name = "No Respawn Yellow Flower", enableMethod =() => Flowers.SetRespawnDistance("YellowFlowerThrowable"), disableMethod =() => Flowers.SetRespawnDistance("YellowFlowerThrowable", 50f), toolTip = "Doesn't respawn the yellow flower if it goes too far outside the bounds of forest."},
@@ -2723,6 +2718,10 @@ namespace Qubit.Modules
             ["Overpowered Mods"] = new[]
             {
                 new Module { name = "Exit Overpowered Mods", method =() => CurrentCategoryName = "Main", isTogglable = false, toolTip = "Returns you back to the main page.", legal = true},
+
+                new Module { name = "Skeleton Drag Player", method = MinesSkeleton.AppQuitGun, toolTip = "Shoot someone to make the mines skeleton drag them under the map, force quitting their game if their skeleton urn is opened. Requires master client." },
+                new Module { name = "Activate Mines Skeleton", method =() => MinesSkeleton.Catch(true), isTogglable = false, toolTip = "Wakes up the mines skeleton for everyone. Requires master client." },
+                new Module { name = "Reset Mines Skeleton", method =() => MinesSkeleton.Catch(false), isTogglable = false, toolTip = "Puts the mines skeleton back to sleep for everyone. Requires master client." },
 
                 new Module { name = "Critters Crash Gun", method = Overpowered.CrashGun, toolTip = "Crashes whoever your hand desires using critter ownership. Requires master client." },
                 new Module { name = "Critters Crash All", method = Overpowered.CrashLobby, isTogglable = false, toolTip = "Crashes everyone in the room using critter ownership. Requires master client." },

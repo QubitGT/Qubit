@@ -1186,19 +1186,5 @@ namespace Qubit.Libraries.Entities
                 }
             }, new GunLibrary.GunSettings { when = () => Time.time > blockCrashExceptDelay });
         }
-
-        /// <summary>
-        /// Moves the quit box to a player, force quitting their game.
-        /// </summary>
-        public static void QuitBoxGun()
-        {
-            GunLibrary.Target(gunTarget =>
-            {
-                if (!Qubit.Core.Networking.IsMasterClient) { Notifications.SendFormat("red", "ERROR", "You are not master client."); return; }
-                GameObject quitBox = GetObject("Environment Objects/TriggerZones_Prefab/ZoneTransitions_Prefab/QuitBox");
-                if (quitBox != null)
-                    quitBox.transform.position = gunTarget.headMesh.transform.position;
-            }, new GunLibrary.GunSettings { locks = true });
-        }
     }
 }
