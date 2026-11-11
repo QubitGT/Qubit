@@ -48,10 +48,10 @@ namespace Qubit.Modules
         public bool hideFromArraylist;
         public bool label;
         public bool incremental;
-        public bool detected;
-        public bool legacy;
-
-        public bool legal;
+    public bool detected;
+    public bool legacy;
+    public bool legal;
+    public bool master;
 
         public string customBind;
         public string rebindKey;
