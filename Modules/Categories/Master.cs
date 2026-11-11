@@ -3219,6 +3219,44 @@ namespace Qubit.Modules.Categories
             }
         }
 
+        /// <summary>
+        /// Kicks everyone that comes near you.
+        /// </summary>
+        public static void ZoneKickAura()
+        {
+            if (!Networking.IsMasterClient)
+                return;
+
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => r != null && !r.IsLocal() && Vector3.Distance(r.transform.position, References.LocalRig.transform.position) < 3f))
+                ZoneKick(rig);
+        }
+
+        /// <summary>
+        /// Instantly crashes everyone that comes near you.
+        /// </summary>
+        public static void InstantCrashAura()
+        {
+            foreach (VRRig rig in Players.ActiveRigs.Where(r => r != null && !r.IsLocal() && Vector3.Distance(r.transform.position, References.LocalRig.transform.position) < 3f))
+                ZoneAppQuit(rig);
+        }
+
+        /// <summary>
+        /// Kicks everyone above you on the leaderboard — everyone with a lower actor
+        /// number — from the top down until you are the master client.
+        /// </summary>
+        public static void SetMasterClientByKick()
+        {
+            if (Networking.IsMasterClient)
+                return;
+
+            int myActor = PhotonNetwork.LocalPlayer.ActorNumber;
+
+            foreach (Player player in PhotonNetwork.PlayerList.Where(p => p.ActorNumber < myActor).OrderByDescending(p => p.ActorNumber))
+                PhotonNetwork.OpRemoveCompleteCacheOfPlayer(player.ActorNumber);
+
+            RPCProtection();
+        }
+
         #endregion
 
         #endregion
