@@ -1,7 +1,7 @@
 <p align="center">
   <br><br>
   <a href="#"><img src="Resources/GitHub/title.png" width="700"></a>
-  <br><sub>Forked from Seralyth, ii's Stupid Menu</sub><br>
+  <br><sub>Forked from Seralyth, ii's Stupid Menu<br><b>Built by the community</b></sub><br>
 </p>
 
 ---
@@ -47,7 +47,7 @@ Let's bring back the collaboration of modding. No paywalls, no secrets, no malwa
   <summary><b>⬇️ Downloads</b></summary>
 
 ### Latest Release
-Grab the newest build from the **[releases page](https://github.com/QubitGT/Qubit/releases/latest)** — always free, always open.
+Grab the newest build from the **[releases page](https://github.com/QubitGT/Qubit/releases/latest)** - always free, always open.
 
 ### Discord
 Need help, want to suggest a mod, or just hang out?<br>
@@ -155,9 +155,4 @@ If you wish to support us, here are some of the ways you can!
 > You should have received a copy of the GNU General Public License
 > along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-> This product is not affiliated with Another Axiom Inc. or its videogames Gorilla Tag and Orion Drift and is not endorsed or otherwise sponsored by Another Axiom. Portions of the materials contained herein are property of Another Axiom. c2026 Another Axiom Inc.
-
-<p align="center">
-  <b>QUBIT</b><br>
-  <sub>Built by the community. Powered by imagination.</sub>
-</p>
+> This product is not affiliated with Another Axiom Inc. or its videogames Gorilla Tag and Orion Drift and is not endorsed or otherwise sponsored by Another Axiom. Portions of the materials contained herein are property of Another Axiom. (C) 2026 Another Axiom Inc.
