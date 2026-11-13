@@ -668,7 +668,7 @@ namespace Qubit.Modules
                 new Module { name = "Rapid Master Switch Protection", enableMethod =() => Rooms.rapidMasterSwitchProtection = true, disableMethod =() => Rooms.rapidMasterSwitchProtection = false, toolTip = "Disconnects you if the master client changes five times within three seconds, a sign of a room being crashed."},
 
                 new Module { name = "Flush RPCs", method = Security.RPCProtection, isTogglable = false, toolTip = "Flushes all RPC calls, good after you stop spamming." },
-                new Module { name = "Anti Crash", displayName = "Exploit Guard", aliases = new[] { "Anti Crash", "Anti App Quit" }, enableMethod =() => { AntiCrashPatches.enabled = true; AntiAppQuitFloat.enabled = true; }, disableMethod =() => { AntiCrashPatches.enabled = false; AntiAppQuitFloat.enabled = false; }, toolTip = "Prevents crashers from completely annihilating your computer, including the mines skeleton force quit.", legal = true},
+                new Module { name = "Anti Crash",  aliases = new[] { "Anti Crash", "Anti App Quit", "Exploit Guard" }, enableMethod =() => { AntiCrashPatches.enabled = true; AntiAppQuitFloat.enabled = true; }, disableMethod =() => { AntiCrashPatches.enabled = false; AntiAppQuitFloat.enabled = false; }, toolTip = "Prevents crashers from completely annihilating your computer, including the mines skeleton force quit.", legal = true},
                 new Module { name = "Anti Ban Crash", enableMethod =() => AntiBanCrash1.enabled = true, disableMethod =() => AntiBanCrash1.enabled = false, toolTip = "Prevents your game from crashing when you are banned."},
                 new Module { name = "Anti Kick", enableMethod = Safety.OnlySerializeNecessary, disableMethod =() => ViewSerialization.OverrideSerialization = null, toolTip = "Only networks the necessities to prevent getting kicked."},
                 new Module { name = "Anti Name Ban", enableMethod =() => BanPatches.enabled = true, method = Safety.AntiNameBan, disableMethod =() => BanPatches.enabled = false, toolTip = "Prevents you from getting banned for setting your name to bad things."},
@@ -1193,10 +1193,10 @@ namespace Qubit.Modules
                 new Module { name = "Disable Map Barriers", method = SIGadgets.DisableMapBarriers, isTogglable = false, toolTip = "Removes the map barriers in super infection."},
                 new Module { name = "Complete Bonus Points", method = SIGadgets.CompleteBonusPoints, isTogglable = false, toolTip = "Instantly completes your bonus points progress."},
 
-                new Module { name = "Break Audio Gun", method = SIGadgets.BreakAudioGun, toolTip = "Breaks whoever your hand desires's audio in ghost reactor."},
-                new Module { name = "Break Audio All", method = SIGadgets.BreakAudioAll, isTogglable = false, toolTip = "Breaks everyones audio in ghost reactor."},
-                new Module { name = "Instant Crash Gun", method = SIGadgets.InstantCrashGun, toolTip = "Practically instantly crashes whoever your hand desires in ghost reactor."},
-                new Module { name = "Instant Crash All", method = SIGadgets.InstantCrashAll, isTogglable = false, toolTip = "Practically instantly crashes everyone in ghost reactor."},
+                new Module { name = "Ghost Reactor Break Audio Gun", method = SIGadgets.BreakAudioGun, toolTip = "Breaks whoever your hand desires's audio in ghost reactor."},
+                new Module { name = "Ghost Reactor Break Audio All", method = SIGadgets.BreakAudioAll, isTogglable = false, toolTip = "Breaks everyones audio in ghost reactor."},
+                new Module { name = "Ghost Reactor Instant Crash Gun", method = SIGadgets.InstantCrashGun, toolTip = "Practically instantly crashes whoever your hand desires in ghost reactor."},
+                new Module { name = "Ghost Reactor Instant Crash All", method = SIGadgets.InstantCrashAll, isTogglable = false, toolTip = "Practically instantly crashes everyone in ghost reactor."},
                 new Module { name = "Item Insta Sphere Gun", method = SIGadgets.ItemInstaSphereGun, isTogglable = false, toolTip = "Shoot and instantly spawn a sphere of 102 selected items."},
                 new Module { name = "Item Ellipsoid Gun", method = SIGadgets.ItemEllipsoidGun, isTogglable = false, toolTip = "Shoot and make circles along each axis with selected items."},
                 new Module { name = "Destroy Gadget Gun", method = SIGadgets.DestroyGadgetGun, toolTip = "Destroys any gadget which your hand desires."},
